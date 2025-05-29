@@ -15,8 +15,8 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.nameSegments
@@ -36,14 +36,14 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
 
   }
 
-  fun runNameMatchQuery(qualifiedName: WebSymbolQualifiedName,
+  fun runNameMatchQuery(qualifiedName: PolySymbolQualifiedName,
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
                         strictScope: Boolean = false): List<PolySymbol> =
     WebSymbolsQueryExecutorFactory.create(tag)
       .runNameMatchQuery(listOf(qualifiedName), virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
-  fun runListSymbolsQuery(qualifiedKind: WebSymbolQualifiedKind,
+  fun runListSymbolsQuery(qualifiedKind: PolySymbolQualifiedKind,
                           expandPatterns: Boolean,
                           virtualSymbols: Boolean = true,
                           abstractSymbols: Boolean = false,
@@ -51,7 +51,7 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
     WebSymbolsQueryExecutorFactory.create(tag)
       .runListSymbolsQuery(qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
-  fun runCodeCompletionQuery(qualifiedKind: WebSymbolQualifiedKind,
+  fun runCodeCompletionQuery(qualifiedKind: PolySymbolQualifiedKind,
                              name: String,
                              /** Position to complete at in the last segment of the path **/
                              position: Int,

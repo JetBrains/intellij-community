@@ -14,7 +14,7 @@ import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -58,16 +58,16 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
 
   companion object {
 
-    private val exclusiveKindMap: MutableMap<CompletionProcess, Set<WebSymbolQualifiedKind>> = ContainerUtil.createConcurrentWeakMap()
+    private val exclusiveKindMap: MutableMap<CompletionProcess, Set<PolySymbolQualifiedKind>> = ContainerUtil.createConcurrentWeakMap()
 
 
     @JvmStatic
-    fun preventFurtherCodeCompletionsFor(parameters: CompletionParameters, qualifiedKind: WebSymbolQualifiedKind) {
+    fun preventFurtherCodeCompletionsFor(parameters: CompletionParameters, qualifiedKind: PolySymbolQualifiedKind) {
       exclusiveKindMap.merge(parameters.process, setOf(qualifiedKind)) { s1, s2 -> s1 + s2 }
     }
 
     @JvmStatic
-    fun noMoreCodeCompletionsFor(parameters: CompletionParameters, vararg qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    fun noMoreCodeCompletionsFor(parameters: CompletionParameters, vararg qualifiedKind: PolySymbolQualifiedKind): Boolean =
       exclusiveKindMap[parameters.process]?.let { exclusive -> qualifiedKind.any { exclusive.contains(it) } } == true
 
 
@@ -75,7 +75,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
     fun processCompletionQueryResults(
       queryExecutor: WebSymbolsQueryExecutor,
       result: CompletionResultSet,
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       name: String,
       position: Int,
       location: PsiElement,
@@ -94,7 +94,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
     fun processWebSymbolCodeCompletionItems(
       symbols: List<WebSymbolCodeCompletionItem>,
       result: CompletionResultSet,
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       name: String,
       framework: FrameworkId?,
       location: PsiElement,

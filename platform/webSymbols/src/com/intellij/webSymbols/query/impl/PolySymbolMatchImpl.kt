@@ -263,7 +263,7 @@ internal open class PolySymbolMatchImpl private constructor(
 
   class BuilderImpl(
     private var matchedName: String,
-    private var qualifiedKind: WebSymbolQualifiedKind,
+    private var qualifiedKind: PolySymbolQualifiedKind,
     private var origin: WebSymbolOrigin,
   ) : WebSymbolMatchBuilder {
 

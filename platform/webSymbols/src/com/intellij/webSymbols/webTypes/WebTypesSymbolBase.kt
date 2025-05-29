@@ -74,23 +74,23 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     this.queryExecutor = queryExecutor
   }
 
-  final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
-                                  params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+  final override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
+                                        params: WebSymbolsNameMatchQueryParams,
+                                        scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     base.rootScope
       .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
       .toList()
 
-  final override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
-                          params: WebSymbolsListSymbolsQueryParams,
-                          scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+  final override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
+                                params: WebSymbolsListSymbolsQueryParams,
+                                scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     base.rootScope
       .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, qualifiedKind, params)
       .toList()
 
-  final override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
-                                  params: WebSymbolsCodeCompletionQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
+  final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
+                                        params: WebSymbolsCodeCompletionQueryParams,
+                                        scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     base.rootScope
       .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
       .toList()
@@ -191,7 +191,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       .plus(this)
       .toList()
 
-  final override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+  final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     base.isExclusiveFor(qualifiedKind)
         || superContributions.any { it.isExclusiveFor(qualifiedKind) }
 

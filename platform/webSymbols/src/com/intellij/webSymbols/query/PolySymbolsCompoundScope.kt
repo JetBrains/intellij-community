@@ -4,8 +4,8 @@ package com.intellij.webSymbols.query
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 
@@ -37,22 +37,22 @@ abstract class PolySymbolsCompoundScope : PolySymbolsScope {
 
   protected open fun requiresResolve(): Boolean = true
 
-  final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+  final override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
                                         scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
-  final override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+  final override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
                                 params: WebSymbolsListSymbolsQueryParams,
                                 scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
-  final override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
+  final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
-  final override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+  final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
   abstract override fun createPointer(): Pointer<out PolySymbolsCompoundScope>

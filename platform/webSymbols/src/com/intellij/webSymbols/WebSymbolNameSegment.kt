@@ -27,7 +27,7 @@ interface WebSymbolNameSegment {
 
   val proximity: Int?
 
-  val symbolKinds: Set<WebSymbolQualifiedKind>
+  val symbolKinds: Set<PolySymbolQualifiedKind>
 
   fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
@@ -52,7 +52,7 @@ interface WebSymbolNameSegment {
       problem: MatchProblem? = null,
       displayName: @NlsSafe String? = null,
       matchScore: Int = end - start,
-      symbolKinds: Set<WebSymbolQualifiedKind>? = null,
+      symbolKinds: Set<PolySymbolQualifiedKind>? = null,
       explicitApiStatus: PolySymbolApiStatus? = null,
       explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,

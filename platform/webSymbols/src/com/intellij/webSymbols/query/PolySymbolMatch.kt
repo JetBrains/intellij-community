@@ -27,7 +27,7 @@ interface PolySymbolMatch : CompositePolySymbol {
       explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,
     ): PolySymbolMatch =
-      PolySymbolMatchImpl.BuilderImpl(matchedName, WebSymbolQualifiedKind(namespace, kind), origin)
+      PolySymbolMatchImpl.BuilderImpl(matchedName, PolySymbolQualifiedKind(namespace, kind), origin)
         .also { builder ->
           builder.addNameSegments(nameSegments)
           explicitProximity?.let { builder.explicitProximity(it) }
@@ -38,7 +38,7 @@ interface PolySymbolMatch : CompositePolySymbol {
     @JvmStatic
     fun create(
       matchedName: String,
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       origin: WebSymbolOrigin,
       builder: (WebSymbolMatchBuilder.() -> Unit),
     ): PolySymbolMatch =
@@ -49,7 +49,7 @@ interface PolySymbolMatch : CompositePolySymbol {
     @JvmStatic
     fun create(
       matchedName: String,
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       origin: WebSymbolOrigin,
       vararg nameSegments: WebSymbolNameSegment,
     ): PolySymbolMatch =

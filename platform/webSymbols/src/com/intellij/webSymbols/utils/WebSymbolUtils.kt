@@ -72,7 +72,7 @@ fun PolySymbol.withMatchedName(matchedName: String): PolySymbol =
   }
   else this
 
-fun PolySymbol.withMatchedKind(qualifiedKind: WebSymbolQualifiedKind): PolySymbol =
+fun PolySymbol.withMatchedKind(qualifiedKind: PolySymbolQualifiedKind): PolySymbol =
   if (qualifiedKind != this.qualifiedKind) {
     val matchedName = this.asSafely<PolySymbolMatch>()?.matchedName ?: name
     val nameSegment = if (this is PolySymbolMatch && nameSegments.size == 1)
@@ -190,22 +190,22 @@ fun PolySymbol.toCodeCompletionItems(
     }
   }
   ?: params.queryExecutor.namesProvider
-    .getNames(WebSymbolQualifiedName(namespace, kind, this.name), WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+    .getNames(PolySymbolQualifiedName(namespace, kind, this.name), WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
 fun PolySymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
   val queryNames = queryExecutor.namesProvider.getNames(
-    WebSymbolQualifiedName(this.namespace, this.kind, name), WebSymbolNamesProvider.Target.NAMES_QUERY)
+    PolySymbolQualifiedName(this.namespace, this.kind, name), WebSymbolNamesProvider.Target.NAMES_QUERY)
   val symbolNames = queryExecutor.namesProvider.getNames(
-    WebSymbolQualifiedName(this.namespace, this.kind, this.name), WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
+    PolySymbolQualifiedName(this.namespace, this.kind, this.name), WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return queryNames.any { symbolNames.contains(it) }
 }
 
-val PolySymbol.qualifiedName: WebSymbolQualifiedName
-  get() = WebSymbolQualifiedName(namespace, kind, name)
+val PolySymbol.qualifiedName: PolySymbolQualifiedName
+  get() = PolySymbolQualifiedName(namespace, kind, name)
 
-val PolySymbol.qualifiedKind: WebSymbolQualifiedKind
-  get() = WebSymbolQualifiedKind(namespace, kind)
+val PolySymbol.qualifiedKind: PolySymbolQualifiedKind
+  get() = PolySymbolQualifiedKind(namespace, kind)
 
 fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
   when (problem) {
@@ -388,7 +388,7 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
 }
 
 fun PolySymbolsScope.getDefaultCodeCompletions(
-  qualifiedName: WebSymbolQualifiedName,
+  qualifiedName: PolySymbolQualifiedName,
   params: WebSymbolsCodeCompletionQueryParams,
   scope: Stack<PolySymbolsScope>,
 ): List<WebSymbolCodeCompletionItem> =

@@ -4,7 +4,7 @@ package com.intellij.webSymbols.webTypes.impl
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.webTypes.WebTypesSymbolFactory
 
 class WebTypesSymbolFactoryEP internal constructor() : CustomLoadingExtensionPointBean<WebTypesSymbolFactory>() {
@@ -12,8 +12,8 @@ class WebTypesSymbolFactoryEP internal constructor() : CustomLoadingExtensionPoi
   companion object {
     private val EP_NAME = ExtensionPointName<WebTypesSymbolFactoryEP>("com.intellij.webSymbols.webTypes.symbolFactory")
 
-    fun get(qualifiedKind: WebSymbolQualifiedKind): WebTypesSymbolFactory? =
-      EP_NAME.getByKey(qualifiedKind, WebTypesSymbolFactory::class.java) { WebSymbolQualifiedKind(it.namespace ?: "", it.kind ?: "") }
+    fun get(qualifiedKind: PolySymbolQualifiedKind): WebTypesSymbolFactory? =
+      EP_NAME.getByKey(qualifiedKind, WebTypesSymbolFactory::class.java) { PolySymbolQualifiedKind(it.namespace ?: "", it.kind ?: "") }
         ?.instance
   }
 

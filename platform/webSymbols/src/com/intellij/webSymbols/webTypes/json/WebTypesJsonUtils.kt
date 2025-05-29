@@ -173,7 +173,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
       )
       .toMap()
 
-internal fun Reference.getSymbolKind(context: PolySymbol?): WebSymbolQualifiedKind? =
+internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedKind? =
   when (val reference = this.value) {
     is String -> reference
     is ReferenceWithProps -> reference.path
@@ -182,7 +182,7 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): WebSymbolQualifiedKi
     .let { parseWebTypesPath(it, context) }
     .lastOrNull()
     ?.let {
-      WebSymbolQualifiedKind(it.namespace, it.kind)
+      PolySymbolQualifiedKind(it.namespace, it.kind)
     }
 
 internal fun Reference.resolve(name: String,
@@ -226,7 +226,7 @@ private fun Reference.processWebSymbols(
   queryExecutor: WebSymbolsQueryExecutor,
   virtualSymbols: Boolean,
   abstractSymbols: Boolean,
-  queryRunner: WebSymbolsQueryExecutor.(List<WebSymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>
+  queryRunner: WebSymbolsQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>
 ): List<PolySymbol> {
   ProgressManager.checkCanceled()
   return when (val reference = this.value) {
@@ -439,13 +439,13 @@ private fun ReferenceWithProps.createNameConversionRules(context: PolySymbol?): 
 
   val builder = WebSymbolNameConversionRules.builder()
 
-  fun buildConvertersMap(value: Any?, addToBuilder: (WebSymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
+  fun buildConvertersMap(value: Any?, addToBuilder: (PolySymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
     when (value) {
       is NameConverter -> mergeConverters(listOf(value))?.let {
-        addToBuilder(WebSymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
+        addToBuilder(PolySymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
       }
       is List<*> -> mergeConverters(value.filterIsInstance<NameConverter>())?.let {
-        addToBuilder(WebSymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
+        addToBuilder(PolySymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
       }
       is NameConversionRulesSingle -> buildNameConverters(value.additionalProperties, { mergeConverters(listOf(it)) }, addToBuilder)
       is NameConversionRulesMultiple -> buildNameConverters(value.additionalProperties, { mergeConverters(it) }, addToBuilder)
@@ -484,7 +484,7 @@ internal fun mergeConverters(converters: List<NameConverter>): WebSymbolNameConv
 
 internal fun <T> buildNameConverters(map: Map<String, T>?,
                                      mapper: (T) -> (WebSymbolNameConverter?),
-                                     addToBuilder: (WebSymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
+                                     addToBuilder: (PolySymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
   for ((key, value) in map?.entries ?: return) {
     val path = key.splitToSequence('/')
                  .filter { it.isNotEmpty() }
@@ -492,7 +492,7 @@ internal fun <T> buildNameConverters(map: Map<String, T>?,
     val namespace = path[0].asWebTypesSymbolNamespace() ?: continue
     val symbolKind = path[1]
     val converter = mapper(value) ?: continue
-    addToBuilder(WebSymbolQualifiedKind(namespace, symbolKind), converter)
+    addToBuilder(PolySymbolQualifiedKind(namespace, symbolKind), converter)
   }
 }
 
@@ -517,13 +517,13 @@ internal fun RequiredContextBase?.evaluate(context: WebSymbolsContext): Boolean 
     else -> throw IllegalStateException(this.javaClass.simpleName)
   }
 
-fun parseWebTypesPath(path: String?, context: PolySymbol?): List<WebSymbolQualifiedName> =
+fun parseWebTypesPath(path: String?, context: PolySymbol?): List<PolySymbolQualifiedName> =
   if (path != null)
     parseWebTypesPath(StringUtil.split(path, "/", true, true), context)
   else
     emptyList()
 
-internal fun List<WebSymbolQualifiedName>.withLastSegmentName(name: String) =
+internal fun List<PolySymbolQualifiedName>.withLastSegmentName(name: String) =
   if (isNotEmpty())
     subList(0, size - 1) + last().copy(name = name)
   else
@@ -532,10 +532,10 @@ internal fun List<WebSymbolQualifiedName>.withLastSegmentName(name: String) =
 internal fun String.asWebTypesSymbolNamespace(): SymbolNamespace? =
   takeIf { it == NAMESPACE_JS || it == NAMESPACE_HTML || it == NAMESPACE_CSS }
 
-private fun parseWebTypesPath(path: List<String>, context: PolySymbol?): List<WebSymbolQualifiedName> {
+private fun parseWebTypesPath(path: List<String>, context: PolySymbol?): List<PolySymbolQualifiedName> {
   var i = 0
   var prevNamespace: SymbolNamespace = context?.namespace ?: NAMESPACE_HTML
-  val result = mutableListOf<WebSymbolQualifiedName>()
+  val result = mutableListOf<PolySymbolQualifiedName>()
   while (i < path.size) {
     var namespace = path[i].asWebTypesSymbolNamespace()
     if (namespace != null) {
@@ -548,7 +548,7 @@ private fun parseWebTypesPath(path: List<String>, context: PolySymbol?): List<We
     if (i >= path.size) break
     val kind = path[i++]
     val name = if (i >= path.size) "" else path[i++]
-    result.add(WebSymbolQualifiedName(namespace, kind, name))
+    result.add(PolySymbolQualifiedName(namespace, kind, name))
   }
   return result
 }

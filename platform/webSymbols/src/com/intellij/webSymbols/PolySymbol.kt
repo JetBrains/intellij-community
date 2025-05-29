@@ -369,23 +369,23 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPr
     const val KIND_JS_SYMBOLS: String = "symbols"
     const val KIND_JS_STRING_LITERALS: String = "string-literals"
 
-    val HTML_ELEMENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ELEMENTS)
-    val HTML_ATTRIBUTES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES)
-    val HTML_ATTRIBUTE_VALUES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTE_VALUES)
-    val HTML_SLOTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_SLOTS)
+    val HTML_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ELEMENTS)
+    val HTML_ATTRIBUTES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES)
+    val HTML_ATTRIBUTE_VALUES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTE_VALUES)
+    val HTML_SLOTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_SLOTS)
 
-    val CSS_PROPERTIES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PROPERTIES)
-    val CSS_PSEUDO_ELEMENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_ELEMENTS)
-    val CSS_PSEUDO_CLASSES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_CLASSES)
-    val CSS_FUNCTIONS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_FUNCTIONS)
-    val CSS_CLASSES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_CLASSES)
-    val CSS_PARTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PARTS)
+    val CSS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PROPERTIES)
+    val CSS_PSEUDO_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_ELEMENTS)
+    val CSS_PSEUDO_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_CLASSES)
+    val CSS_FUNCTIONS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_FUNCTIONS)
+    val CSS_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_CLASSES)
+    val CSS_PARTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PARTS)
 
-    val JS_EVENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
-    val JS_PROPERTIES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
-    val JS_KEYWORDS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, "keywords")
-    val JS_SYMBOLS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
-    val JS_STRING_LITERALS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
+    val JS_EVENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
+    val JS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
+    val JS_KEYWORDS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "keywords")
+    val JS_SYMBOLS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
+    val JS_STRING_LITERALS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
 
     /**
      * Supported by `html/elements` and `html/attributes` symbols,

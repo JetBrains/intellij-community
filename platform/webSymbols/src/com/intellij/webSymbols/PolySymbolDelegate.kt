@@ -82,23 +82,23 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()
 
-  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     delegate.getMatchingSymbols(qualifiedName, params, scope)
 
 
-  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
                           params: WebSymbolsListSymbolsQueryParams,
                           scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     delegate.getSymbols(qualifiedKind, params, scope)
 
-  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
+  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     delegate.getCodeCompletions(qualifiedName, params, scope)
 
-  override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+  override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     delegate.isExclusiveFor(qualifiedKind)
 
   override val searchTarget: WebSymbolSearchTarget?

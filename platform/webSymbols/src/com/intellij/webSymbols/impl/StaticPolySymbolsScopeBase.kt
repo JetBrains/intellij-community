@@ -32,21 +32,21 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   final override fun getModificationCount(): Long =
     modCount
 
-  final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+  final override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
                                         scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     getMaps(params).flatMap {
       it.getMatchingSymbols(qualifiedName, params, Stack(scope))
     }.toList()
 
-  final override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+  final override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
                                 params: WebSymbolsListSymbolsQueryParams,
                                 scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     getMaps(params).flatMap {
       it.getSymbols(qualifiedKind, params)
     }.toList()
 
-  final override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
+  final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getMaps(params).flatMap {
@@ -55,7 +55,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   internal fun getMatchingSymbols(contribution: Contribution,
                                   origin: Origin,
-                                  qualifiedName: WebSymbolQualifiedName,
+                                  qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
                                   scopeStack: Stack<PolySymbolsScope>): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
@@ -64,7 +64,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   internal fun getSymbols(contribution: Contribution,
                           origin: Origin,
-                          qualifiedKind: WebSymbolQualifiedKind,
+                          qualifiedKind: PolySymbolQualifiedKind,
                           params: WebSymbolsListSymbolsQueryParams): List<PolySymbolsScope> =
     getMap(params.queryExecutor, contribution, origin)
       .getSymbols(qualifiedKind, params)
@@ -72,7 +72,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   internal fun getCodeCompletions(contribution: Contribution,
                                   origin: Origin,
-                                  qualifiedName: WebSymbolQualifiedName,
+                                  qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scopeStack: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)
@@ -173,7 +173,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     : SearchMap<StaticSymbolContributionAdapter>(namesProvider) {
 
     fun add(item: StaticSymbolContributionAdapter) {
-      add(WebSymbolQualifiedName(item.namespace, item.kind, item.name), item.pattern, item)
+      add(PolySymbolQualifiedName(item.namespace, item.kind, item.name), item.pattern, item)
     }
 
     override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol> {

@@ -3,17 +3,17 @@ package com.intellij.webSymbols
 
 import com.intellij.openapi.util.NlsSafe
 
-data class WebSymbolQualifiedName(
+data class PolySymbolQualifiedName(
   val namespace: @NlsSafe SymbolNamespace,
   val kind: @NlsSafe SymbolKind,
   val name: @NlsSafe String,
 ) {
-  val qualifiedKind: WebSymbolQualifiedKind = WebSymbolQualifiedKind(namespace, kind)
+  val qualifiedKind: PolySymbolQualifiedKind = PolySymbolQualifiedKind(namespace, kind)
 
-  fun matches(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+  fun matches(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     qualifiedKind.kind == kind && qualifiedKind.namespace == namespace
 
-  fun matches(qualifiedKind: WebSymbolQualifiedKind, vararg qualifiedKinds: WebSymbolQualifiedKind): Boolean =
+  fun matches(qualifiedKind: PolySymbolQualifiedKind, vararg qualifiedKinds: PolySymbolQualifiedKind): Boolean =
     sequenceOf(qualifiedKind).plus(qualifiedKinds).any(::matches)
 
   override fun toString(): String = "/$namespace/$kind/$name"

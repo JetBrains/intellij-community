@@ -59,7 +59,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
    * Allows optimizing queries and to avoid scope initialization.
    * Return `false` if particular symbol kind cannot be provided by the scope.
    */
-  protected abstract fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean
+  protected abstract fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean
 
   abstract override fun createPointer(): Pointer<out WebSymbolsScopeWithCache<T, K>>
 
@@ -113,7 +113,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
-  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
@@ -123,7 +123,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
     }
     else emptyList()
 
-  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
                           params: WebSymbolsListSymbolsQueryParams,
                           scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
@@ -133,7 +133,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
     }
     else emptyList()
 
-  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
+  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)

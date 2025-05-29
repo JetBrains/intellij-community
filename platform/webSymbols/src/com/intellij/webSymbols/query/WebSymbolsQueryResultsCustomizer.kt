@@ -12,9 +12,9 @@ interface WebSymbolsQueryResultsCustomizer : ModificationTracker {
 
   fun apply(matches: List<PolySymbol>,
             strict: Boolean,
-            qualifiedName: WebSymbolQualifiedName): List<PolySymbol>
+            qualifiedName: PolySymbolQualifiedName): List<PolySymbol>
 
   fun apply(item: WebSymbolCodeCompletionItem,
-            qualifiedKind: WebSymbolQualifiedKind): WebSymbolCodeCompletionItem?
+            qualifiedKind: PolySymbolQualifiedKind): WebSymbolCodeCompletionItem?
 
 }

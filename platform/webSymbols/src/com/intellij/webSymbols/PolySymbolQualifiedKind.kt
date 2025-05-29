@@ -3,11 +3,11 @@ package com.intellij.webSymbols
 
 import com.intellij.openapi.util.NlsSafe
 
-data class WebSymbolQualifiedKind(
+data class PolySymbolQualifiedKind(
   val namespace: @NlsSafe SymbolNamespace,
   val kind: @NlsSafe SymbolKind,
 ) {
-  fun withName(name: String): WebSymbolQualifiedName = WebSymbolQualifiedName(namespace, kind, name)
+  fun withName(name: String): PolySymbolQualifiedName = PolySymbolQualifiedName(namespace, kind, name)
 
   override fun toString(): String = "/$namespace/$kind"
 }

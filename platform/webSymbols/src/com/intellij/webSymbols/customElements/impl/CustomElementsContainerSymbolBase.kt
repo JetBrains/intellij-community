@@ -4,8 +4,8 @@ package com.intellij.webSymbols.customElements.impl
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
@@ -23,21 +23,21 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
   private val rootScope: CustomElementsManifestScopeBase,
 ) : CustomElementsContributionSymbol<Container>(name, container, origin) {
 
-  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     rootScope
       .getMatchingSymbols(contribution, this.origin, qualifiedName, params, scope)
       .toList()
 
-  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
                           params: WebSymbolsListSymbolsQueryParams,
                           scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     rootScope
       .getSymbols(contribution, this.origin, qualifiedKind, params)
       .toList()
 
-  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
+  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     rootScope

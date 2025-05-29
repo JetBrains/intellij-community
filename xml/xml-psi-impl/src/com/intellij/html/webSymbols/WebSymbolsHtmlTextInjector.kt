@@ -19,7 +19,7 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 import java.util.*
@@ -49,8 +49,8 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
             val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
               queryExecutor.runNameMatchQuery(listOf(
-                WebSymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, tag.name),
-                WebSymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTES, attr.name))
+                PolySymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, tag.name),
+                PolySymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTES, attr.name))
               ).getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )

@@ -4,13 +4,13 @@ package com.intellij.webSymbols.completion
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 
 interface WebSymbolCodeCompletionItemCustomizer {
 
   fun customize(item: WebSymbolCodeCompletionItem,
                 framework: FrameworkId?,
-                qualifiedKind: WebSymbolQualifiedKind,
+                qualifiedKind: PolySymbolQualifiedKind,
                 location: PsiElement): WebSymbolCodeCompletionItem?
 
   companion object {
@@ -19,7 +19,7 @@ interface WebSymbolCodeCompletionItemCustomizer {
 
     internal fun Sequence<WebSymbolCodeCompletionItem>.customizeItems(
       framework: FrameworkId?,
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       location: PsiElement
     ): Sequence<WebSymbolCodeCompletionItem> {
       val customizers = EP_NAME.extensionList

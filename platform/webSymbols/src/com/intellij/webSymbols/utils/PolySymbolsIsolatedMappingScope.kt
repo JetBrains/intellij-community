@@ -17,7 +17,7 @@ import com.intellij.webSymbols.query.*
 import java.util.*
 
 abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
-  protected val mappings: Map<WebSymbolQualifiedKind, WebSymbolQualifiedKind>,
+  protected val mappings: Map<PolySymbolQualifiedKind, PolySymbolQualifiedKind>,
   /**
    * Allows to optimize for symbols with a particular [WebSymbolOrigin.framework].
    * If `null` all symbols will be accepted and scope will be queried in all contexts.
@@ -33,7 +33,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
 
   protected abstract val subScopeBuilder: (WebSymbolsQueryExecutor, T) -> List<PolySymbolsScope>
 
-  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName, params: WebSymbolsCodeCompletionQueryParams, scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> {
+  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: WebSymbolsCodeCompletionQueryParams, scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
@@ -45,7 +45,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName, params: WebSymbolsNameMatchQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbol> {
+  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName, params: WebSymbolsNameMatchQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
@@ -58,7 +58,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> {
+  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedKind] ?: return emptyList()

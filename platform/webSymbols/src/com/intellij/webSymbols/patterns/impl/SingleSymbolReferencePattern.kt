@@ -4,7 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -14,7 +14,7 @@ import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.nameMatches
 import com.intellij.webSymbols.utils.qualifiedName
 
-class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName>,
+class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedName>,
                                    private val virtualSymbols: Boolean = true,
                                    private val abstractSymbols: Boolean = false) : WebSymbolsPattern() {
   override fun getStaticPrefixes(): Sequence<String> =

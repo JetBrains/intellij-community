@@ -18,21 +18,21 @@ class ReferencingPolySymbol private constructor(
   override val kind: SymbolKind,
   override val name: String,
   override val origin: WebSymbolOrigin,
-  vararg references: WebSymbolQualifiedKind,
+  vararg references: PolySymbolQualifiedKind,
   override val priority: PolySymbol.Priority?,
-  private val location: List<WebSymbolQualifiedName> = emptyList(),
+  private val location: List<PolySymbolQualifiedName> = emptyList(),
 ) : PolySymbol {
 
   companion object {
     @JvmStatic
     @JvmOverloads
     fun create(
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       name: String,
       origin: WebSymbolOrigin,
-      vararg qualifiedKinds: WebSymbolQualifiedKind,
+      vararg qualifiedKinds: PolySymbolQualifiedKind,
       priority: PolySymbol.Priority? = null,
-      location: List<WebSymbolQualifiedName> = emptyList(),
+      location: List<PolySymbolQualifiedName> = emptyList(),
     ): ReferencingPolySymbol =
       ReferencingPolySymbol(
         qualifiedKind.namespace, qualifiedKind.kind, name,

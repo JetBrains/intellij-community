@@ -3,21 +3,21 @@ package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 
 internal class WebSymbolsCompoundQueryResultsCustomizer(private val customizers: List<WebSymbolsQueryResultsCustomizer>) : WebSymbolsQueryResultsCustomizer {
 
   override fun apply(matches: List<PolySymbol>, strict: Boolean,
-                     qualifiedName: WebSymbolQualifiedName): List<PolySymbol> =
+                     qualifiedName: PolySymbolQualifiedName): List<PolySymbol> =
     customizers.foldRight(matches) { scope, list ->
       scope.apply(list, strict, qualifiedName)
     }
 
   override fun apply(item: WebSymbolCodeCompletionItem,
-                     qualifiedKind: WebSymbolQualifiedKind): WebSymbolCodeCompletionItem? =
+                     qualifiedKind: PolySymbolQualifiedKind): WebSymbolCodeCompletionItem? =
     customizers.foldRight(item as WebSymbolCodeCompletionItem?) { scope, i ->
       i?.let { scope.apply(it, qualifiedKind) }
     }

@@ -23,7 +23,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal abstract fun Sequence<T>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol>
 
-  internal fun add(qualifiedName: WebSymbolQualifiedName,
+  internal fun add(qualifiedName: PolySymbolQualifiedName,
                    pattern: WebSymbolsPattern?,
                    item: T) {
     if (pattern == null) {
@@ -46,7 +46,7 @@ internal abstract class SearchMap<T> internal constructor(
         }
   }
 
-  internal fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+  internal fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
                                   scope: Stack<PolySymbolsScope>): Sequence<PolySymbol> =
     namesProvider.getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY)
@@ -56,14 +56,14 @@ internal abstract class SearchMap<T> internal constructor(
       .map { it.withMatchedName(qualifiedName.name) }
       .plus(collectPatternContributions(qualifiedName, params, scope))
 
-  internal fun getSymbols(qualifiedKind: WebSymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams): Sequence<PolySymbolsScope> =
+  internal fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams): Sequence<PolySymbolsScope> =
     statics.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true))
       .values.asSequence()
       .plus(patterns.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true)).values)
       .distinct()
       .flatMapWithQueryParameters(params)
 
-  internal fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
+  internal fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<PolySymbolsScope>): Sequence<WebSymbolCodeCompletionItem> =
     collectStaticCompletionResults(qualifiedName, params, scope)
@@ -71,7 +71,7 @@ internal abstract class SearchMap<T> internal constructor(
       .plus(collectPatternCompletionResults(qualifiedName, params, scope))
       .distinct()
 
-  private fun collectStaticCompletionResults(qualifiedName: WebSymbolQualifiedName,
+  private fun collectStaticCompletionResults(qualifiedName: PolySymbolQualifiedName,
                                              params: WebSymbolsCodeCompletionQueryParams,
                                              scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     statics.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
@@ -82,7 +82,7 @@ internal abstract class SearchMap<T> internal constructor(
       .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, scope) }
       .toList()
 
-  private fun collectPatternCompletionResults(qualifiedName: WebSymbolQualifiedName,
+  private fun collectPatternCompletionResults(qualifiedName: PolySymbolQualifiedName,
                                               params: WebSymbolsCodeCompletionQueryParams,
                                               scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     patterns.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
@@ -94,7 +94,7 @@ internal abstract class SearchMap<T> internal constructor(
       .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, scope) }
       .toList()
 
-  private fun collectPatternContributions(qualifiedName: WebSymbolQualifiedName,
+  private fun collectPatternContributions(qualifiedName: PolySymbolQualifiedName,
                                           params: WebSymbolsNameMatchQueryParams,
                                           scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     collectPatternsToProcess(qualifiedName)
@@ -110,7 +110,7 @@ internal abstract class SearchMap<T> internal constructor(
       }
       .toList()
 
-  private fun collectPatternsToProcess(qualifiedName: WebSymbolQualifiedName): Collection<T> {
+  private fun collectPatternsToProcess(qualifiedName: PolySymbolQualifiedName): Collection<T> {
     val toProcess = SmartList<T>()
     for (p in 0..qualifiedName.name.length) {
       val check = SearchMapEntry(qualifiedName.qualifiedKind, CharSequenceSubSequence(qualifiedName.name, 0, p))
@@ -137,7 +137,7 @@ internal abstract class SearchMap<T> internal constructor(
                                     val name: CharSequence = "",
                                     val kindExclusive: Boolean = false) : Comparable<SearchMapEntry> {
 
-    constructor(qualifiedKind: WebSymbolQualifiedKind, name: CharSequence = "", kindExclusive: Boolean = false) :
+    constructor(qualifiedKind: PolySymbolQualifiedKind, name: CharSequence = "", kindExclusive: Boolean = false) :
       this(qualifiedKind.namespace, qualifiedKind.kind, name, kindExclusive)
 
     override fun compareTo(other: SearchMapEntry): Int {

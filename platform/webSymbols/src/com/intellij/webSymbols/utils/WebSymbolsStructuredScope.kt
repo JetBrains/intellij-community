@@ -11,7 +11,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.takeWhileInclusive
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.query.PolySymbolsCompoundScope
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
@@ -23,7 +23,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
 
   protected abstract val scopesBuilderProvider: (rootPsiScope: R, holder: WebSymbolsPsiScopesHolder) -> PsiElementVisitor?
 
-  protected abstract val providedSymbolKinds: Set<WebSymbolQualifiedKind>
+  protected abstract val providedSymbolKinds: Set<PolySymbolQualifiedKind>
 
   override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
     getCurrentScope()
@@ -67,7 +67,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
   protected open fun findBestMatchingScope(rootScope: PolySymbolsPsiScope): PolySymbolsPsiScope? =
     (rootScope as PolySymbolsPsiScopeImpl).findBestMatchingScope(location.textOffset)
 
-  protected class WebSymbolsPsiScopesHolder(val rootElement: PsiElement, val providedSymbolKinds: Set<WebSymbolQualifiedKind>) {
+  protected class WebSymbolsPsiScopesHolder(val rootElement: PsiElement, val providedSymbolKinds: Set<PolySymbolQualifiedKind>) {
     private val scopes = Stack<PolySymbolsPsiScope>()
 
     internal val topLevelScope: PolySymbolsPsiScope
@@ -93,7 +93,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     fun pushScope(
       scopePsiElement: PsiElement,
       properties: Map<String, Any> = emptyMap(),
-      exclusiveSymbolKinds: Set<WebSymbolQualifiedKind> = emptySet(),
+      exclusiveSymbolKinds: Set<PolySymbolQualifiedKind> = emptySet(),
       updater: (ScopeModifier.() -> Unit)? = null,
     ) {
       val scope = PolySymbolsPsiScopeImpl(scopePsiElement, properties,
@@ -135,7 +135,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     val properties: Map<String, Any>
     val children: List<PolySymbolsPsiScope>
     val localSymbols: List<PolySymbol>
-    fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<PolySymbol>
+    fun getAllSymbols(qualifiedKind: PolySymbolQualifiedKind): List<PolySymbol>
   }
 
   private class WebSymbolsPsiScopeWithPointer(
@@ -159,8 +159,8 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     override val source: PsiElement,
     override val properties: Map<String, Any>,
     override val parent: PolySymbolsPsiScopeImpl?,
-    private val providedSymbolKinds: Set<WebSymbolQualifiedKind>,
-    private val exclusiveSymbolKinds: Set<WebSymbolQualifiedKind>,
+    private val providedSymbolKinds: Set<PolySymbolQualifiedKind>,
+    private val exclusiveSymbolKinds: Set<PolySymbolQualifiedKind>,
   ) : PolySymbolsPsiScope {
 
     override val children = ArrayList<PolySymbolsPsiScopeImpl>()
@@ -193,17 +193,17 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       return curScope
     }
 
-    override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
       scopesInHierarchy.any { it.exclusiveSymbolKinds.contains(qualifiedKind) }
 
     override fun getSymbols(
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       params: WebSymbolsListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbolsScope> =
       getAllSymbols(qualifiedKind)
 
-    override fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<PolySymbol> =
+    override fun getAllSymbols(qualifiedKind: PolySymbolQualifiedKind): List<PolySymbol> =
       if (qualifiedKind in providedSymbolKinds)
       // TODO - consider optimizing in case there are many symbols in the scope
         scopesInHierarchy

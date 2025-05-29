@@ -3,8 +3,8 @@ package com.intellij.webSymbols.patterns
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.canUnwrapSymbols
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : WebSymbolsPatternSymbolsResolver {
-  override fun getSymbolKinds(context: PolySymbol?): Set<WebSymbolQualifiedKind> =
+  override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
     items.asSequence().map { it.qualifiedKind }.toSet()
 
   override val delegate: PolySymbol?
@@ -46,8 +46,8 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
     items.flatMap { it.listSymbols(scopeStack, queryExecutor, expandPatterns) }
 
   data class Reference(
-    val location: List<WebSymbolQualifiedName> = emptyList(),
-    val qualifiedKind: WebSymbolQualifiedKind,
+    val location: List<PolySymbolQualifiedName> = emptyList(),
+    val qualifiedKind: PolySymbolQualifiedKind,
     val includeVirtual: Boolean = true,
     val includeAbstract: Boolean = false,
     val filter: WebSymbolsFilter? = null,
@@ -58,7 +58,7 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
                 queryExecutor: WebSymbolsQueryExecutor
     ): List<PolySymbol> {
       val matches = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runNameMatchQuery(location + WebSymbolQualifiedName(qualifiedKind.namespace, qualifiedKind.kind, name),
+        .runNameMatchQuery(location + PolySymbolQualifiedName(qualifiedKind.namespace, qualifiedKind.kind, name),
                            includeVirtual, includeAbstract, false, scope)
       if (filter == null) return matches
       return filter.filterNameMatches(matches, queryExecutor, scope, emptyMap())
@@ -79,7 +79,7 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
                        queryExecutor: WebSymbolsQueryExecutor,
                        position: Int): List<WebSymbolCodeCompletionItem> {
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runCodeCompletionQuery(location + WebSymbolQualifiedName(qualifiedKind.namespace, qualifiedKind.kind, name),
+        .runCodeCompletionQuery(location + PolySymbolQualifiedName(qualifiedKind.namespace, qualifiedKind.kind, name),
                                 position, includeVirtual, scopeStack)
       if (filter == null) return codeCompletions
       return filter.filterCodeCompletions(codeCompletions, queryExecutor, scopeStack, emptyMap())

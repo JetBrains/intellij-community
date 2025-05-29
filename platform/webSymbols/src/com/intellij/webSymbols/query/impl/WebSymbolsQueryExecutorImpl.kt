@@ -13,8 +13,8 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
@@ -78,7 +78,7 @@ class WebSymbolsQueryExecutorImpl(
   }
 
   override fun runNameMatchQuery(
-    path: List<WebSymbolQualifiedName>,
+    path: List<PolySymbolQualifiedName>,
     virtualSymbols: Boolean,
     abstractSymbols: Boolean,
     strictScope: Boolean,
@@ -87,8 +87,8 @@ class WebSymbolsQueryExecutorImpl(
     runNameMatchQuery(path, WebSymbolsNameMatchQueryParams.create(this, virtualSymbols, abstractSymbols, strictScope), additionalScope)
 
   override fun runListSymbolsQuery(
-    path: List<WebSymbolQualifiedName>,
-    qualifiedKind: WebSymbolQualifiedKind,
+    path: List<PolySymbolQualifiedName>,
+    qualifiedKind: PolySymbolQualifiedKind,
     expandPatterns: Boolean,
     virtualSymbols: Boolean,
     abstractSymbols: Boolean,
@@ -100,7 +100,7 @@ class WebSymbolsQueryExecutorImpl(
                                                                 abstractSymbols = abstractSymbols, strictScope = strictScope), additionalScope)
 
   override fun runCodeCompletionQuery(
-    path: List<WebSymbolQualifiedName>,
+    path: List<PolySymbolQualifiedName>,
     position: Int,
     virtualSymbols: Boolean,
     additionalScope: List<PolySymbolsScope>,
@@ -113,7 +113,7 @@ class WebSymbolsQueryExecutorImpl(
     else
       WebSymbolsQueryExecutorImpl(location, rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
-  override fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<PolySymbolsScope>): Boolean {
+  override fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolsScope>): Boolean {
     return buildQueryScope(scope).any { it.isExclusiveFor(qualifiedKind) }
   }
 
@@ -149,13 +149,13 @@ class WebSymbolsQueryExecutorImpl(
   }
 
   private fun runNameMatchQuery(
-    path: List<WebSymbolQualifiedName>,
+    path: List<PolySymbolQualifiedName>,
     queryParams: WebSymbolsNameMatchQueryParams,
     additionalScope: List<PolySymbolsScope>,
   ): List<PolySymbol> =
     runQuery(path, queryParams, additionalScope) {
         finalContext: Collection<PolySymbolsScope>,
-        qualifiedName: WebSymbolQualifiedName,
+        qualifiedName: PolySymbolQualifiedName,
         params: WebSymbolsNameMatchQueryParams,
       ->
       val result = finalContext
@@ -183,12 +183,12 @@ class WebSymbolsQueryExecutorImpl(
     }
 
   private fun runListSymbolsQuery(
-    path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsListSymbolsQueryParams,
+    path: List<PolySymbolQualifiedName>, queryParams: WebSymbolsListSymbolsQueryParams,
     additionalScope: List<PolySymbolsScope>,
   ): List<PolySymbol> =
     runQuery(path, queryParams, additionalScope) {
         finalContext: Collection<PolySymbolsScope>,
-        qualifiedName: WebSymbolQualifiedName,
+        qualifiedName: PolySymbolQualifiedName,
         params: WebSymbolsListSymbolsQueryParams,
       ->
       val result = finalContext
@@ -234,12 +234,12 @@ class WebSymbolsQueryExecutorImpl(
     }
 
   private fun runCodeCompletionQuery(
-    path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsCodeCompletionQueryParams,
+    path: List<PolySymbolQualifiedName>, queryParams: WebSymbolsCodeCompletionQueryParams,
     additionalScope: List<PolySymbolsScope>,
   ): List<WebSymbolCodeCompletionItem> =
     runQuery(path, queryParams, additionalScope) {
         finalContext: Collection<PolySymbolsScope>,
-        pathSection: WebSymbolQualifiedName,
+        pathSection: PolySymbolQualifiedName,
         params: WebSymbolsCodeCompletionQueryParams,
       ->
       var proximityBase = 0
@@ -283,12 +283,12 @@ class WebSymbolsQueryExecutorImpl(
 
   @RequiresReadLock
   private fun <T, P : WebSymbolsQueryParams> runQuery(
-    path: List<WebSymbolQualifiedName>,
+    path: List<PolySymbolQualifiedName>,
     params: P,
     additionalScope: List<PolySymbolsScope>,
     finalProcessor: (
       context: Collection<PolySymbolsScope>,
-      pathSection: WebSymbolQualifiedName,
+      pathSection: PolySymbolQualifiedName,
       params: P,
     ) -> List<T>,
   ): List<T> {
@@ -342,7 +342,7 @@ class WebSymbolsQueryExecutorImpl(
     }
   }
 
-  private fun Collection<PolySymbolsScope>.takeLastUntilExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind): List<PolySymbolsScope> =
+  private fun Collection<PolySymbolsScope>.takeLastUntilExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind): List<PolySymbolsScope> =
     toList()
       .let { list ->
         list.subList(max(0, list.indexOfLast { it.isExclusiveFor(qualifiedKind) }), list.size)
@@ -389,7 +389,7 @@ class WebSymbolsQueryExecutorImpl(
       }
     } ?: listOf(this)
 
-  private fun List<PolySymbol>.customizeMatches(strict: Boolean, qualifiedName: WebSymbolQualifiedName): List<PolySymbol> =
+  private fun List<PolySymbol>.customizeMatches(strict: Boolean, qualifiedName: PolySymbolQualifiedName): List<PolySymbol> =
     if (isEmpty())
       this
     else {

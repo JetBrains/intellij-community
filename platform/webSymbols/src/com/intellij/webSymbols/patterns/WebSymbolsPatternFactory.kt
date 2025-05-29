@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.patterns
 
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -60,7 +60,7 @@ object WebSymbolsPatternFactory {
   fun createCompletionAutoPopup(isSticky: Boolean): WebSymbolsPattern =
     CompletionAutoPopupPattern(isSticky)
 
-  fun createSingleSymbolReferencePattern(path: List<WebSymbolQualifiedName>): WebSymbolsPattern =
+  fun createSingleSymbolReferencePattern(path: List<PolySymbolQualifiedName>): WebSymbolsPattern =
     SingleSymbolReferencePattern(path.toList())
 
 }

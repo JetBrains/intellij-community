@@ -32,7 +32,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer
@@ -86,7 +86,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
     val segment: WebSymbolNameSegment,
     val offset: Int,
     val depth: Int,
-    val parentKind: WebSymbolQualifiedKind?,
+    val parentKind: PolySymbolQualifiedKind?,
     val parentTextAttributesKey: TextAttributesKey?,
     val additionalChildSegments: List<Pair<Int, WebSymbolNameSegment>>,
   )

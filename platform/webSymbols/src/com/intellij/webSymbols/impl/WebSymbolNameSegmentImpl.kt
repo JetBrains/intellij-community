@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.utils.matchedNameOrName
 
 class WebSymbolNameSegmentImpl internal constructor(
@@ -16,7 +16,7 @@ class WebSymbolNameSegmentImpl internal constructor(
   override val problem: WebSymbolNameSegment.MatchProblem?,
   override val displayName: @NlsSafe String?,
   override val matchScore: Int,
-  symbolKinds: Set<WebSymbolQualifiedKind>?,
+  symbolKinds: Set<PolySymbolQualifiedKind>?,
   private val explicitApiStatus: PolySymbolApiStatus?,
   private val explicitPriority: PolySymbol.Priority?,
   private val explicitProximity: Int?,
@@ -38,10 +38,10 @@ class WebSymbolNameSegmentImpl internal constructor(
   override val proximity: Int?
     get() = explicitProximity ?: symbols.asSequence().mapNotNull { it.proximity }.maxOrNull()
 
-  override val symbolKinds: Set<WebSymbolQualifiedKind>
+  override val symbolKinds: Set<PolySymbolQualifiedKind>
     get() =
       forcedSymbolKinds
-      ?: symbols.asSequence().map { WebSymbolQualifiedKind(it.namespace, it.kind) }.toSet()
+      ?: symbols.asSequence().map { PolySymbolQualifiedKind(it.namespace, it.kind) }.toSet()
 
   override fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)

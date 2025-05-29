@@ -7,7 +7,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.WebSymbolOrigin
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.query.PolySymbolMatch
 
 interface PsiWebSymbolReferenceProvider<T : PsiExternalReferenceHost> {
@@ -26,7 +26,7 @@ interface PsiWebSymbolReferenceProvider<T : PsiExternalReferenceHost> {
   companion object {
 
     @JvmStatic
-    fun unresolvedSymbol(qualifiedKind: WebSymbolQualifiedKind, name: String, framework: String? = null): PolySymbolMatch =
+    fun unresolvedSymbol(qualifiedKind: PolySymbolQualifiedKind, name: String, framework: String? = null): PolySymbolMatch =
       PolySymbolMatch.create(
         name, qualifiedKind, WebSymbolOrigin.create(framework),
         WebSymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)

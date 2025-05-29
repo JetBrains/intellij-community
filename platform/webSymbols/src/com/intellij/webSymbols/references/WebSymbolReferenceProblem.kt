@@ -2,11 +2,11 @@
 package com.intellij.webSymbols.references
 
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 
 sealed interface WebSymbolReferenceProblem {
-  val symbolKinds: Set<WebSymbolQualifiedKind>
+  val symbolKinds: Set<PolySymbolQualifiedKind>
   val kind: ProblemKind
   val descriptor: ProblemDescriptor
 
@@ -20,7 +20,7 @@ sealed interface WebSymbolReferenceProblem {
 
   companion object {
     fun create(
-      symbolKinds: Set<WebSymbolQualifiedKind>,
+      symbolKinds: Set<PolySymbolQualifiedKind>,
       kind: ProblemKind,
       descriptor: ProblemDescriptor,
     ): WebSymbolReferenceProblem =
@@ -29,7 +29,7 @@ sealed interface WebSymbolReferenceProblem {
 }
 
 private data class WebSymbolReferenceProblemData(
-  override val symbolKinds: Set<WebSymbolQualifiedKind>,
+  override val symbolKinds: Set<PolySymbolQualifiedKind>,
   override val kind: ProblemKind,
   override val descriptor: ProblemDescriptor,
 ) : WebSymbolReferenceProblem

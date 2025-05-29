@@ -93,7 +93,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
   class HtmlSymbolsCodeCompletionItemCustomizer : WebSymbolCodeCompletionItemCustomizer {
     override fun customize(item: WebSymbolCodeCompletionItem,
                            framework: FrameworkId?,
-                           qualifiedKind: WebSymbolQualifiedKind,
+                           qualifiedKind: PolySymbolQualifiedKind,
                            location: PsiElement): WebSymbolCodeCompletionItem =
       when (qualifiedKind) {
         PolySymbol.HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
@@ -121,7 +121,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       }
     }
 
-    override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+    override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
                             params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
       if (params.queryExecutor.allowResolve) {
@@ -146,7 +146,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       }
       else emptyList()
 
-    override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+    override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
                                     scope: Stack<PolySymbolsScope>): List<PolySymbol> {
       if (params.queryExecutor.allowResolve) {
@@ -275,7 +275,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       }
 
     override fun getSymbols(
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       params: WebSymbolsListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbolsScope> =

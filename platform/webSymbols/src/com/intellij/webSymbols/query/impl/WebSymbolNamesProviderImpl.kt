@@ -5,8 +5,8 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.framework.WebSymbolsFramework
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
@@ -22,21 +22,21 @@ class WebSymbolNamesProviderImpl(
   private val modificationTracker: ModificationTracker,
 ) : WebSymbolNamesProvider {
 
-  private val canonicalNamesProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  private val canonicalNamesProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
 
-  private val matchNamesProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  private val matchNamesProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
 
-  private val completionVariantsProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  private val completionVariantsProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
 
-  private val renameProviders: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  private val renameProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
 
   private val webSymbolsFramework get() = framework?.let { WebSymbolsFramework.get(it) }
 
   init {
-    val canonicalNamesProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
-    val matchNamesProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
-    val completionVariantsProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
-    val renameProviders = mutableMapOf<WebSymbolQualifiedKind, WebSymbolNameConverter>()
+    val canonicalNamesProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
+    val matchNamesProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
+    val completionVariantsProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
+    val renameProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
     configuration.forEach { config ->
       config.canonicalNames.forEach { canonicalNamesProviders.putIfAbsent(it.key, it.value) }
       config.matchNames.forEach { matchNamesProviders.putIfAbsent(it.key, it.value) }
@@ -66,7 +66,7 @@ class WebSymbolNamesProviderImpl(
   override fun withRules(rules: List<WebSymbolNameConversionRules>): WebSymbolNamesProvider =
     WebSymbolNamesProviderImpl(framework, rules + configuration, modificationTracker)
 
-  override fun getNames(qualifiedName: WebSymbolQualifiedName, target: WebSymbolNamesProvider.Target): List<String> =
+  override fun getNames(qualifiedName: PolySymbolQualifiedName, target: WebSymbolNamesProvider.Target): List<String> =
     when (target) {
       CODE_COMPLETION_VARIANTS -> completionVariantsProviders[qualifiedName.qualifiedKind]
       NAMES_MAP_STORAGE -> canonicalNamesProviders[qualifiedName.qualifiedKind]
@@ -87,7 +87,7 @@ class WebSymbolNamesProviderImpl(
       listOf(qualifiedName.name)
 
   override fun adjustRename(
-    qualifiedName: WebSymbolQualifiedName,
+    qualifiedName: PolySymbolQualifiedName,
     newName: String,
     occurence: String,
   ): String {

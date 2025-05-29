@@ -109,21 +109,21 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
       }
     }
 
-    override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+    override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
                                     scope: Stack<PolySymbolsScope>): List<PolySymbol> =
       base.rootScope
         .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()
 
-    override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+    override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
                             params: WebSymbolsListSymbolsQueryParams,
                             scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
       base.rootScope
         .getSymbols(base.declaration, this.origin, qualifiedKind, params)
         .toList()
 
-    override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
+    override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                                     params: WebSymbolsCodeCompletionQueryParams,
                                     scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
       base.rootScope

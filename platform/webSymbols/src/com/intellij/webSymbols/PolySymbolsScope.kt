@@ -39,7 +39,7 @@ interface PolySymbolsScope : ModificationTracker {
    * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
    *
    */
-  fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+  fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                          params: WebSymbolsNameMatchQueryParams,
                          scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     getSymbols(qualifiedName.qualifiedKind,
@@ -57,7 +57,7 @@ interface PolySymbolsScope : ModificationTracker {
    *
    * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
    */
-  fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+  fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
                  params: WebSymbolsListSymbolsQueryParams,
                  scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     emptyList()
@@ -71,7 +71,7 @@ interface PolySymbolsScope : ModificationTracker {
    *
    * Default implementation calls `getSymbols` and runs [PolySymbol.toCodeCompletionItems] on each symbol.
    */
-  fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
+  fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
                          params: WebSymbolsCodeCompletionQueryParams,
                          scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getDefaultCodeCompletions(qualifiedName, params, scope)
@@ -79,7 +79,7 @@ interface PolySymbolsScope : ModificationTracker {
   /**
    * When scope is exclusive for a particular namespace and kind, resolve will not continue down the stack during pattern matching.
    */
-  fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+  fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     false
 
 }

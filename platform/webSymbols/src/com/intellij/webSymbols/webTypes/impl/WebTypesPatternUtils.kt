@@ -4,7 +4,7 @@ package com.intellij.webSymbols.webTypes.impl
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.canUnwrapSymbols
@@ -108,8 +108,8 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
         }
 
   private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
-    override fun getSymbolKinds(context: PolySymbol?): Set<WebSymbolQualifiedKind> =
-      setOf(WebSymbolQualifiedKind(delegate.namespace, delegate.kind))
+    override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
+      setOf(PolySymbolQualifiedKind(delegate.namespace, delegate.kind))
 
     override fun codeCompletion(name: String,
                                 position: Int,
@@ -165,7 +165,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
   }
 
   private class PatternSymbolsResolver(val items: ListReference) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
-    override fun getSymbolKinds(context: PolySymbol?): Set<WebSymbolQualifiedKind> =
+    override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
       items.asSequence().mapNotNull { it.getSymbolKind(context) }.toSet()
 
     override val delegate: PolySymbol?

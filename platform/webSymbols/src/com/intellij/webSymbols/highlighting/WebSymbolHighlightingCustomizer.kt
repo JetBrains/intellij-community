@@ -5,11 +5,11 @@ import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 
 interface WebSymbolHighlightingCustomizer {
 
-  fun getSymbolKindTextAttributes(qualifiedKind: WebSymbolQualifiedKind): TextAttributesKey? = null
+  fun getSymbolKindTextAttributes(qualifiedKind: PolySymbolQualifiedKind): TextAttributesKey? = null
 
   fun getDefaultHostClassTextAttributes(): Map<Class<out PsiExternalReferenceHost>, TextAttributesKey> = emptyMap()
 
@@ -23,7 +23,7 @@ interface WebSymbolHighlightingCustomizer {
     internal fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: PolySymbol, level: Int): TextAttributesKey? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolTextAttributes(host, symbol, level) }
 
-    internal fun getTextAttributesFor(kind: WebSymbolQualifiedKind): TextAttributesKey? =
+    internal fun getTextAttributesFor(kind: PolySymbolQualifiedKind): TextAttributesKey? =
       EP_NAME.computeIfAbsent(kind, WebSymbolHighlightingCustomizer::class.java) { kind ->
         listOfNotNull(EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolKindTextAttributes(kind) })
       }.firstOrNull()

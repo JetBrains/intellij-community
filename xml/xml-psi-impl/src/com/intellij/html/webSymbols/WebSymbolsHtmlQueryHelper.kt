@@ -8,7 +8,7 @@ import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.WebSymbolsScopeWithCache
 import org.jetbrains.annotations.ApiStatus
@@ -40,7 +40,7 @@ object WebSymbolsHtmlQueryHelper {
       cacheDependencies.add(ModificationTracker.NEVER_CHANGED)
     }
 
-    override fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    override fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean =
       qualifiedKind == PolySymbol.HTML_ELEMENTS
 
     override fun createPointer(): Pointer<StandardHtmlElementSymbolsScope> =
@@ -62,7 +62,7 @@ object WebSymbolsHtmlQueryHelper {
       cacheDependencies.add(ModificationTracker.NEVER_CHANGED)
     }
 
-    override fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    override fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean =
       qualifiedKind == PolySymbol.HTML_ATTRIBUTES
 
     override fun createPointer(): Pointer<StandardHtmlAttributeSymbolsScope> =

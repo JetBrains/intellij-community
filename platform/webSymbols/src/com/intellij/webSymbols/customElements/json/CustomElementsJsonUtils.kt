@@ -3,7 +3,7 @@ package com.intellij.webSymbols.customElements.json
 
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolTypeSupport
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsManifestScopeBase
@@ -22,14 +22,14 @@ fun Reference.resolve(origin: CustomElementsJsonOrigin, queryExecutor: WebSymbol
     ?.let { queryExecutor.runNameMatchQuery(it) }
   ?: emptyList()
 
-private fun Reference.createQueryPathList(origin: CustomElementsJsonOrigin): List<WebSymbolQualifiedName>? {
+private fun Reference.createQueryPathList(origin: CustomElementsJsonOrigin): List<PolySymbolQualifiedName>? {
   val pkg = `package` ?: origin.library
   val module = module ?: ""
   val refName = name ?: return null
   return listOf(
-    WebSymbolQualifiedName(CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, CustomElementsSymbol.KIND_CEM_PACKAGES, pkg),
-    WebSymbolQualifiedName(CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, CustomElementsSymbol.KIND_CEM_MODULES, module),
-    WebSymbolQualifiedName(CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, CustomElementsSymbol.KIND_CEM_DECLARATIONS, refName)
+    PolySymbolQualifiedName(CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, CustomElementsSymbol.KIND_CEM_PACKAGES, pkg),
+    PolySymbolQualifiedName(CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, CustomElementsSymbol.KIND_CEM_MODULES, module),
+    PolySymbolQualifiedName(CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, CustomElementsSymbol.KIND_CEM_DECLARATIONS, refName)
   )
 }
 

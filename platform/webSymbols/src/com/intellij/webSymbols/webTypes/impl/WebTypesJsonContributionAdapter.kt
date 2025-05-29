@@ -11,7 +11,7 @@ import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbolQualifiedKind
+import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -66,12 +66,12 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
 
   open val contributionForQuery: GenericContributionsHost get() = contribution
 
-  private var exclusiveContributions: Set<WebSymbolQualifiedKind>? = null
+  private var exclusiveContributions: Set<PolySymbolQualifiedKind>? = null
 
   override fun matchContext(context: WebSymbolsContext): Boolean =
     super.matchContext(context) && contribution.requiredContext.evaluate(context)
 
-  fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+  fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     (exclusiveContributions
      ?: when {
        contribution.exclusiveContributions.isEmpty() -> emptySet()
@@ -84,14 +84,14 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
            val n = path.substring(1, slash).asWebTypesSymbolNamespace()
                    ?: return@mapNotNull null
            val k = path.substring(slash + 1, path.length)
-           WebSymbolQualifiedKind(n, k)
+           PolySymbolQualifiedKind(n, k)
          }
          .toSet()
      }.also { exclusiveContributions = it }
     ).contains(qualifiedKind)
 
   override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
-    (WebTypesSymbolFactoryEP.get(WebSymbolQualifiedKind(namespace, kind))?.create() ?: WebTypesSymbolBase())
+    (WebTypesSymbolFactoryEP.get(PolySymbolQualifiedKind(namespace, kind))?.create() ?: WebTypesSymbolBase())
       .also { it.init(this, queryExecutor) }
 
   abstract fun createPointer(): Pointer<out WebTypesJsonContributionAdapter>

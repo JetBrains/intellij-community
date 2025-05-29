@@ -20,7 +20,7 @@ class MappedPolySymbol private constructor(
   override val kind: SymbolKind,
   override val name: String,
   override val origin: WebSymbolOrigin,
-  vararg mappingPath: WebSymbolQualifiedName,
+  vararg mappingPath: PolySymbolQualifiedName,
   override val priority: PolySymbol.Priority? = null,
 ) : PolySymbol {
 
@@ -28,10 +28,10 @@ class MappedPolySymbol private constructor(
     @JvmOverloads
     @JvmStatic
     fun create(
-      qualifiedKind: WebSymbolQualifiedKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       name: String,
       origin: WebSymbolOrigin,
-      vararg mappingPath: WebSymbolQualifiedName,
+      vararg mappingPath: PolySymbolQualifiedName,
       priority: PolySymbol.Priority? = null
     ): MappedPolySymbol =
       MappedPolySymbol(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *mappingPath, priority = priority)
