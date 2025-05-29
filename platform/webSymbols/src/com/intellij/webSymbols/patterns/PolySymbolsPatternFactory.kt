@@ -9,7 +9,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object WebSymbolsPatternFactory {
+object PolySymbolsPatternFactory {
 
   fun createComplexPattern(optionsProvider: (queryExecutor: WebSymbolsQueryExecutor, contextStack: Stack<PolySymbolsScope>) -> ComplexPatternOptions,
                            isStaticAndRequiredProvider: () -> Boolean,
