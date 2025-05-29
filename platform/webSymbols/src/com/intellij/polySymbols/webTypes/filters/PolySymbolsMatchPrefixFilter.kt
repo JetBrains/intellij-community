@@ -8,7 +8,7 @@ import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class WebSymbolsMatchPrefixFilter : WebSymbolsFilter {
+class PolySymbolsMatchPrefixFilter : PolySymbolsFilter {
 
   override fun filterCodeCompletions(codeCompletions: List<PolySymbolCodeCompletionItem>,
                                      queryExecutor: PolySymbolsQueryExecutor,

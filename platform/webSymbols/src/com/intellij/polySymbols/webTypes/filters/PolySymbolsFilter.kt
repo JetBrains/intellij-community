@@ -7,7 +7,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.webTypes.impl.WebSymbolsFilterEP
 
-interface WebSymbolsFilter {
+interface PolySymbolsFilter {
 
   fun filterCodeCompletions(codeCompletions: List<PolySymbolCodeCompletionItem>,
                             queryExecutor: PolySymbolsQueryExecutor,
@@ -23,7 +23,7 @@ interface WebSymbolsFilter {
   companion object {
 
     @JvmStatic
-    fun get(name: String): WebSymbolsFilter = WebSymbolsFilterEP.get(name)
+    fun get(name: String): PolySymbolsFilter = WebSymbolsFilterEP.get(name)
 
   }
 

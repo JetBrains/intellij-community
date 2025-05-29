@@ -29,7 +29,7 @@
     <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.filter"
                     beanClass="com.intellij.polySymbols.webTypes.impl.WebSymbolsFilterEP"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.filters.WebSymbolsFilter"/>
+      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.symbolFactory"
                     beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesSymbolFactoryEP"

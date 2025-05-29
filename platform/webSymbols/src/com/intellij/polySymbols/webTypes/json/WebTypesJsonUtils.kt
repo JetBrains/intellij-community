@@ -41,7 +41,7 @@ import com.intellij.polySymbols.utils.NameCaseUtils
 import com.intellij.polySymbols.utils.lastPolySymbol
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
-import com.intellij.polySymbols.webTypes.filters.WebSymbolsFilter
+import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
 import com.intellij.polySymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import java.util.*
 import java.util.function.Function
@@ -241,7 +241,7 @@ private fun Reference.processWebSymbols(
         path, reference.includeVirtual ?: virtualSymbols, reference.includeAbstract ?: abstractSymbols)
       if (reference.filter == null) return matches
       val properties = reference.additionalProperties.toMap()
-      WebSymbolsFilter.get(reference.filter)
+      PolySymbolsFilter.get(reference.filter)
         .filterNameMatches(matches, queryExecutor, scope, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
@@ -274,7 +274,7 @@ internal fun Reference.codeCompletion(name: String,
         .runCodeCompletionQuery(path, position, reference.includeVirtual ?: virtualSymbols, scope)
       if (reference.filter == null) return codeCompletions
       val properties = reference.additionalProperties.toMap()
-      WebSymbolsFilter.get(reference.filter)
+      PolySymbolsFilter.get(reference.filter)
         .filterCodeCompletions(codeCompletions, queryExecutor, scope, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)

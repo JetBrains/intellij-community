@@ -11,7 +11,7 @@ import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.webTypes.filters.WebSymbolsFilter
+import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -50,7 +50,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
     val qualifiedKind: PolySymbolQualifiedKind,
     val includeVirtual: Boolean = true,
     val includeAbstract: Boolean = false,
-    val filter: WebSymbolsFilter? = null,
+    val filter: PolySymbolsFilter? = null,
     val nameConversionRules: List<PolySymbolNameConversionRules> = emptyList(),
   ) {
     fun resolve(name: String,

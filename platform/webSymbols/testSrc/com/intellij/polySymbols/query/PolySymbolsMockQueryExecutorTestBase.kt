@@ -14,7 +14,7 @@ import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionPoint
 import com.intellij.polySymbols.query.impl.CustomElementsManifestMockScopeImpl
 import com.intellij.polySymbols.query.impl.PolySymbolsMockQueryExecutorFactory
 import com.intellij.polySymbols.query.impl.WebTypesMockScopeImpl
-import com.intellij.polySymbols.webTypes.filters.WebSymbolsMatchPrefixFilter
+import com.intellij.polySymbols.webTypes.filters.PolySymbolsMatchPrefixFilter
 import com.intellij.polySymbols.webTypes.impl.WebSymbolsFilterEP
 import java.io.File
 
@@ -48,7 +48,7 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       true
     )
     val mockPluginDescriptor = DefaultPluginDescriptor(PluginId.getId("mock"),
-                                                       WebSymbolsMatchPrefixFilter::class.java.classLoader)
+                                                       PolySymbolsMatchPrefixFilter::class.java.classLoader)
     application.extensionArea.getExtensionPoint<WebSymbolsFilterEP>("com.intellij.webSymbols.webTypes.filter")
       .registerExtension(
         WebSymbolsFilterEP().also {
