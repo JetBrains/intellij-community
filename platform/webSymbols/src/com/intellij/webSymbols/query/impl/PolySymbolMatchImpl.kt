@@ -15,7 +15,7 @@ import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.documentation.PolySymbolDocumentationTarget
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.PolySymbolMatch
-import com.intellij.webSymbols.query.WebSymbolMatchBuilder
+import com.intellij.webSymbols.query.PolySymbolMatchBuilder
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.coalesceApiStatus
@@ -265,7 +265,7 @@ internal open class PolySymbolMatchImpl private constructor(
     private var matchedName: String,
     private var qualifiedKind: PolySymbolQualifiedKind,
     private var origin: PolySymbolOrigin,
-  ) : WebSymbolMatchBuilder {
+  ) : PolySymbolMatchBuilder {
 
     private var nameSegments = mutableListOf<PolySymbolNameSegment>()
     private var properties = mutableMapOf<String, Any>()
@@ -276,27 +276,27 @@ internal open class PolySymbolMatchImpl private constructor(
       create(matchedName, nameSegments, qualifiedKind.namespace, qualifiedKind.kind,
              origin, explicitPriority, explicitProximity, properties)
 
-    override fun addNameSegments(value: List<PolySymbolNameSegment>): WebSymbolMatchBuilder = this.also {
+    override fun addNameSegments(value: List<PolySymbolNameSegment>): PolySymbolMatchBuilder = this.also {
       nameSegments.addAll(value)
     }
 
-    override fun addNameSegments(vararg value: PolySymbolNameSegment): WebSymbolMatchBuilder = this.also {
+    override fun addNameSegments(vararg value: PolySymbolNameSegment): PolySymbolMatchBuilder = this.also {
       nameSegments.addAll(value)
     }
 
-    override fun addNameSegment(value: PolySymbolNameSegment): WebSymbolMatchBuilder = this.also {
+    override fun addNameSegment(value: PolySymbolNameSegment): PolySymbolMatchBuilder = this.also {
       nameSegments.add(value)
     }
 
-    override fun explicitPriority(value: Priority): WebSymbolMatchBuilder = this.also {
+    override fun explicitPriority(value: Priority): PolySymbolMatchBuilder = this.also {
       explicitPriority = value
     }
 
-    override fun explicitProximity(value: Int): WebSymbolMatchBuilder = this.also {
+    override fun explicitProximity(value: Int): PolySymbolMatchBuilder = this.also {
       explicitProximity = value
     }
 
-    override fun setProperty(name: String, value: Any): WebSymbolMatchBuilder = this.also {
+    override fun setProperty(name: String, value: Any): PolySymbolMatchBuilder = this.also {
       properties[name] = value
     }
   }

@@ -40,7 +40,7 @@ interface PolySymbolMatch : CompositePolySymbol {
       matchedName: String,
       qualifiedKind: PolySymbolQualifiedKind,
       origin: PolySymbolOrigin,
-      builder: (WebSymbolMatchBuilder.() -> Unit),
+      builder: (PolySymbolMatchBuilder.() -> Unit),
     ): PolySymbolMatch =
       PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { builder.invoke(it) }
