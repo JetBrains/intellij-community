@@ -4,7 +4,7 @@ package com.intellij.webSymbols.customElements.json
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolQualifiedName
-import com.intellij.webSymbols.WebSymbolTypeSupport
+import com.intellij.webSymbols.PolySymbolTypeSupport
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
@@ -64,11 +64,11 @@ fun CustomElementClassOrMixinDeclaration.adaptAllContributions(origin: CustomEle
    + slots.asSequence().mapNotNull { CustomElementsSlotSymbol.create(it, origin) }
   )
 
-fun ClassMethod.buildFunctionType(): List<WebSymbolTypeSupport.TypeReference> =
+fun ClassMethod.buildFunctionType(): List<PolySymbolTypeSupport.TypeReference> =
   if (parameters.isEmpty() && `return` == null)
     emptyList()
   else
-    listOf(WebSymbolTypeSupport.TypeReference.create(
+    listOf(PolySymbolTypeSupport.TypeReference.create(
       null,
       "(" + parameters.asSequence()
         .mapIndexed { index, parameter ->
@@ -77,7 +77,7 @@ fun ClassMethod.buildFunctionType(): List<WebSymbolTypeSupport.TypeReference> =
         .joinToString() +
       ") => ${`return`?.type?.text ?: "any"}"))
 
-fun Type.mapToReferenceList(): List<WebSymbolTypeSupport.TypeReference> =
+fun Type.mapToReferenceList(): List<PolySymbolTypeSupport.TypeReference> =
   this.text?.let {
-    listOf(WebSymbolTypeSupport.TypeReference.create(null, it))
+    listOf(PolySymbolTypeSupport.TypeReference.create(null, it))
   } ?: emptyList()

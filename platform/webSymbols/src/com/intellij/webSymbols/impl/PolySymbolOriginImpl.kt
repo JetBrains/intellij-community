@@ -3,14 +3,14 @@ package com.intellij.webSymbols.impl
 
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolOrigin
-import com.intellij.webSymbols.WebSymbolTypeSupport
+import com.intellij.webSymbols.PolySymbolTypeSupport
 import javax.swing.Icon
 
 internal data class PolySymbolOriginImpl(override val framework: FrameworkId?,
                                          override val library: String?,
                                          override val version: String?,
                                          override val defaultIcon: Icon?,
-                                         override val typeSupport: WebSymbolTypeSupport?) : PolySymbolOrigin {
+                                         override val typeSupport: PolySymbolTypeSupport?) : PolySymbolOrigin {
   companion object {
     val empty = PolySymbolOriginImpl(null, null, null, null, null)
   }

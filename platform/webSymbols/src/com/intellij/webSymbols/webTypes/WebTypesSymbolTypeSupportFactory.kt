@@ -3,7 +3,7 @@ package com.intellij.webSymbols.webTypes
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.webSymbols.WebSymbolTypeSupport
+import com.intellij.webSymbols.PolySymbolTypeSupport
 import com.intellij.webSymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP
 import com.intellij.webSymbols.webTypes.json.WebTypes
 import com.intellij.webSymbols.webTypes.json.jsTypesSyntaxWithLegacy
@@ -13,14 +13,14 @@ import java.util.*
 @ApiStatus.Internal
 interface WebTypesSymbolTypeSupportFactory {
 
-  fun createTypeSupport(webTypes: WebTypes, project: Project?, context: List<VirtualFile>): WebSymbolTypeSupport
+  fun createTypeSupport(webTypes: WebTypes, project: Project?, context: List<VirtualFile>): PolySymbolTypeSupport
 
   companion object {
 
     private const val DEFAULT_TYPE_SYNTAX = "typescript"
 
     @JvmStatic
-    fun get(webTypes: WebTypes, project: Project? = null, context: List<VirtualFile> = emptyList()): WebSymbolTypeSupport =
+    fun get(webTypes: WebTypes, project: Project? = null, context: List<VirtualFile> = emptyList()): PolySymbolTypeSupport =
       (webTypes.jsTypesSyntaxWithLegacy?.name ?: DEFAULT_TYPE_SYNTAX)
         .let { syntax -> WebTypesSymbolTypeSupportFactoryEP.EP_NAME.forKey(syntax.lowercase(Locale.US)) }
         .map { it.createTypeSupport(webTypes, project, context) }
@@ -31,8 +31,8 @@ interface WebTypesSymbolTypeSupportFactory {
           }
         }
 
-    private object EmptySupport : WebSymbolTypeSupport {
-      override fun resolve(types: List<WebSymbolTypeSupport.TypeReference>): Any? = null
+    private object EmptySupport : PolySymbolTypeSupport {
+      override fun resolve(types: List<PolySymbolTypeSupport.TypeReference>): Any? = null
     }
 
   }

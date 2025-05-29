@@ -4,10 +4,10 @@ package com.intellij.html.webSymbols.attributes
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolTypeSupport
+import com.intellij.webSymbols.PolySymbolTypeSupport
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 
-interface WebSymbolHtmlAttributeValueTypeSupport : WebSymbolTypeSupport {
+interface PolySymbolHtmlAttributeValueTypeSupport : PolySymbolTypeSupport {
 
   /**
    * @return [ThreeState.YES] if the type is equal to boolean ignoring null or undefined values,

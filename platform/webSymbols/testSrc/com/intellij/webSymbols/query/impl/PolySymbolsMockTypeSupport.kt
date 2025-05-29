@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.query.impl
 
-import com.intellij.webSymbols.WebSymbolTypeSupport
+import com.intellij.webSymbols.PolySymbolTypeSupport
 
-object WebSymbolsMockTypeSupport : WebSymbolTypeSupport {
-  override fun resolve(types: List<WebSymbolTypeSupport.TypeReference>): Any? =
+object PolySymbolsMockTypeSupport : PolySymbolTypeSupport {
+  override fun resolve(types: List<PolySymbolTypeSupport.TypeReference>): Any? =
     types.map {
       if (it.module != null) "${it.module}:${it.name}"
       else it.name

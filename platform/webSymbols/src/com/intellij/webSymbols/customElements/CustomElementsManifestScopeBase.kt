@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.WebSymbolTypeSupport
+import com.intellij.webSymbols.PolySymbolTypeSupport
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.customElements.json.*
@@ -68,7 +68,7 @@ abstract class CustomElementsManifestScopeBase :
     override val library: String,
     private val project: Project,
     override val version: String? = null,
-    override val typeSupport: WebSymbolTypeSupport? = null,
+    override val typeSupport: PolySymbolTypeSupport? = null,
     private val sourceSymbolResolver: (source: SourceReference, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
   ) : CustomElementsJsonOrigin {
 

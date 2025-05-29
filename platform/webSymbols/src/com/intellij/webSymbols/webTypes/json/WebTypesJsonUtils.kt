@@ -496,12 +496,12 @@ internal fun <T> buildNameConverters(map: Map<String, T>?,
   }
 }
 
-internal fun List<Type>.mapToTypeReferences(): List<WebSymbolTypeSupport.TypeReference> =
+internal fun List<Type>.mapToTypeReferences(): List<PolySymbolTypeSupport.TypeReference> =
   mapNotNull {
     when (val reference = it.value) {
-      is String -> WebSymbolTypeSupport.TypeReference.create(null, reference)
+      is String -> PolySymbolTypeSupport.TypeReference.create(null, reference)
       is TypeReference -> if (reference.name != null)
-        WebSymbolTypeSupport.TypeReference.create(reference.module, reference.name)
+        PolySymbolTypeSupport.TypeReference.create(reference.module, reference.name)
       else null
       else -> null
     }

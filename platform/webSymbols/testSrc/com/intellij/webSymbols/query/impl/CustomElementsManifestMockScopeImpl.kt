@@ -15,7 +15,7 @@ internal class CustomElementsManifestMockScopeImpl(private val disposable: Dispo
     val context = CustomElementsManifestJsonOriginImpl(
       file.name.takeWhile { it != '.' },
       project = MockProjectEx(disposable),
-      typeSupport = WebSymbolsMockTypeSupport
+      typeSupport = PolySymbolsMockTypeSupport
     )
     addCustomElementsManifest(manifest, context)
   }

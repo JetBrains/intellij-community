@@ -3,7 +3,7 @@ package com.intellij.webSymbols
 
 import com.intellij.webSymbols.impl.WebSymbolTypeSupportTypeReferenceData
 
-interface WebSymbolTypeSupport {
+interface PolySymbolTypeSupport {
 
   fun resolve(types: List<TypeReference>): Any?
 

@@ -14,7 +14,7 @@ internal class WebTypesMockScopeImpl(private val disposable: Disposable) : WebTy
     val webTypes = WebTypesJsonFilesCache.fromUrlNoCache(file.toURI().toString())
     val context = WebTypesJsonOriginImpl(
       webTypes,
-      typeSupport = WebSymbolsMockTypeSupport,
+      typeSupport = PolySymbolsMockTypeSupport,
       project = MockProjectEx(disposable),
     )
     addWebTypes(webTypes, context)

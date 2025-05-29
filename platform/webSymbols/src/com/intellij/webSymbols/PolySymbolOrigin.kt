@@ -21,7 +21,7 @@ interface PolySymbolOrigin {
   val defaultIcon: Icon?
     get() = null
 
-  val typeSupport: WebSymbolTypeSupport?
+  val typeSupport: PolySymbolTypeSupport?
     get() = null
 
   fun loadIcon(path: String): Icon? = null
@@ -32,7 +32,7 @@ interface PolySymbolOrigin {
                library: String? = null,
                version: String? = null,
                defaultIcon: Icon? = null,
-               typeSupport: WebSymbolTypeSupport? = null): PolySymbolOrigin =
+               typeSupport: PolySymbolTypeSupport? = null): PolySymbolOrigin =
       PolySymbolOriginImpl(framework, library, version, defaultIcon, typeSupport)
 
     @JvmStatic

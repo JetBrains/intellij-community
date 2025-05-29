@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols.attributes.impl
 
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
-import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeValueTypeSupport
+import com.intellij.html.webSymbols.attributes.PolySymbolHtmlAttributeValueTypeSupport
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.webSymbols.PolySymbol
@@ -88,7 +88,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
       symbol: PolySymbol,
       context: PsiElement,
     ): WebSymbolHtmlAttributeInfo {
-      val typeSupport = symbol.origin.typeSupport as? WebSymbolHtmlAttributeValueTypeSupport
+      val typeSupport = symbol.origin.typeSupport as? PolySymbolHtmlAttributeValueTypeSupport
       val attrValue = symbol.attributeValue
       val kind = attrValue?.kind ?: WebSymbolHtmlAttributeValue.Kind.PLAIN
       val type = attrValue?.type ?: WebSymbolHtmlAttributeValue.Type.STRING

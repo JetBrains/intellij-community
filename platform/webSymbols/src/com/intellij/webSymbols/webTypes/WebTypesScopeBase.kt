@@ -14,7 +14,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.WebSymbolTypeSupport
+import com.intellij.webSymbols.PolySymbolTypeSupport
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
@@ -167,7 +167,7 @@ abstract class WebTypesScopeBase :
 
   protected class WebTypesJsonOriginImpl(
     webTypes: WebTypes,
-    override val typeSupport: WebSymbolTypeSupport,
+    override val typeSupport: PolySymbolTypeSupport,
     private val project: Project,
     private val symbolLocationResolver: (source: SourceBase) -> WebTypesSymbol.Location? = { null },
     private val sourceSymbolResolver: (location: WebTypesSymbol.Location, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
