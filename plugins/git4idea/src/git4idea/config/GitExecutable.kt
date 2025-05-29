@@ -29,6 +29,8 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.Throws
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 
 sealed class GitExecutable {
   private companion object {
@@ -71,12 +73,12 @@ sealed class GitExecutable {
   /**
    * Convert an absolute file path into a form that can be passed into executable arguments.
    */
-  abstract fun convertFilePath(file: File): String
+  abstract fun convertFilePath(file: Path): String
 
   /**
    * Convert a file path, returned by git, to be used by IDE.
    */
-  abstract fun convertFilePathBack(path: String, workingDir: File): File
+  abstract fun convertFilePathBack(path: String, workingDir: Path): Path
 
   @Throws(ExecutionException::class)
   abstract fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext)
@@ -93,13 +95,13 @@ sealed class GitExecutable {
     override val isLocal: Boolean = true
     override fun toString(): String = exePath
 
-    override fun convertFilePath(file: File): String = file.absolutePath
+    override fun convertFilePath(file: Path): String = file.absolutePathString()
 
-    override fun convertFilePathBack(path: String, workingDir: File): File {
+    override fun convertFilePathBack(path: String, workingDir: Path): Path {
       if (SystemInfo.isWindows && path.startsWith(CYGDRIVE_PREFIX)) {
         val prefixSize = CYGDRIVE_PREFIX.length
         val localPath = path.substring(prefixSize, prefixSize + 1) + ":" + path.substring(prefixSize + 1)
-        return File(localPath)
+        return Path(localPath)
       }
       return workingDir.resolve(path)
     }
@@ -164,8 +166,8 @@ sealed class GitExecutable {
     override val id: @NonNls String = eel.descriptor.toString()
     override val isLocal: Boolean = eel.descriptor === LocalEelDescriptor
 
-    override fun convertFilePath(file: File): String {
-      return if (isLocal) delegate.convertFilePath(file) else file.toPath().asEelPath().toString()
+    override fun convertFilePath(file: Path): String {
+      return if (isLocal) delegate.convertFilePath(file) else file.asEelPath().toString()
     }
 
     override fun getModificationTime(): Long {
@@ -176,8 +178,8 @@ sealed class GitExecutable {
       )
     }
 
-    override fun convertFilePathBack(path: String, workingDir: File): File {
-      return if (isLocal) delegate.convertFilePathBack(path, workingDir) else workingDir.toPath().resolve(path).toFile()
+    override fun convertFilePathBack(path: String, workingDir: Path): Path {
+      return if (isLocal) delegate.convertFilePathBack(path, workingDir) else workingDir.resolve(path)
     }
 
     override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {
@@ -205,17 +207,17 @@ sealed class GitExecutable {
       return 0
     }
 
-    override fun convertFilePath(file: File): String {
-      val path = file.absolutePath
+    override fun convertFilePath(file: Path): String {
+      val path = file.absolutePathString()
 
       // 'C:\Users\file.txt' -> '/mnt/c/Users/file.txt'
-      val wslPath = distribution.getWslPath(file.toPath().toAbsolutePath())
+      val wslPath = distribution.getWslPath(file.toAbsolutePath())
       return wslPath ?: path
     }
 
-    override fun convertFilePathBack(path: String, workingDir: File): File =
+    override fun convertFilePathBack(path: String, workingDir: Path): Path =
       // '/mnt/c/Users/file.txt' -> 'C:\Users\file.txt'
-      File(distribution.getWindowsPath(path))
+      Path(distribution.getWindowsPath(path))
 
     override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {
       if (executableContext.isWithNoTty) {
@@ -302,8 +304,8 @@ sealed class GitExecutable {
       return 0
     }
 
-    override fun convertFilePath(file: File): String = file.absolutePath
-    override fun convertFilePathBack(path: String, workingDir: File): File = File(path)
+    override fun convertFilePath(file: Path): String = file.absolutePathString()
+    override fun convertFilePathBack(path: String, workingDir: Path): Path = Path(path)
 
     override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {
       throw ExecutionException(errorMessage)

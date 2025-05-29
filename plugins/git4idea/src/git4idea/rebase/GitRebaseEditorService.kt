@@ -9,8 +9,8 @@ import com.intellij.openapi.components.service
 import git4idea.config.GitExecutable
 import git4idea.editor.GitRebaseEditorApp
 import git4idea.editor.GitRebaseEditorAppHandler
-import java.io.File
 import java.util.*
+import kotlin.io.path.Path
 
 @Service(Service.Level.APP)
 internal class GitRebaseEditorService : ExternalProcessHandlerService<GitRebaseEditorAppHandler>(
@@ -37,8 +37,8 @@ internal class GitRebaseEditorService : ExternalProcessHandlerService<GitRebaseE
   private class RebaseEditorAppHandler(private val editorHandler: GitRebaseEditorHandler,
                                        private val executable: GitExecutable) : GitRebaseEditorAppHandler {
     override fun editCommits(path: String, workingDir: String): Int {
-      val file = executable.convertFilePathBack(path, File(workingDir))
-      return editorHandler.editCommits(file)
+      val file = executable.convertFilePathBack(path, Path(workingDir))
+      return editorHandler.editCommits(file.toFile())
     }
   }
 }

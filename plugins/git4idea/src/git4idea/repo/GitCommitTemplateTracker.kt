@@ -34,6 +34,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.coroutines.coroutineContext
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 private val LOG = logger<GitCommitTemplateTracker>()
 
@@ -190,9 +193,9 @@ internal class GitCommitTemplateTracker(
 
   private fun resolvePathAsAbsolute(repository: GitRepository, gitCommitTemplatePath: String): String? {
     val executable = GitExecutableManager.getInstance().getExecutable(repository.project)
-    val localPath = executable.convertFilePathBack(gitCommitTemplatePath, File(repository.root.path))
+    val localPath = executable.convertFilePathBack(gitCommitTemplatePath, Path(repository.root.path))
     if (localPath.exists()) {
-      return localPath.path
+      return localPath.pathString
     }
 
     return null

@@ -252,7 +252,7 @@ public abstract class GitHandler {
   }
 
   public void addAbsoluteFile(@NotNull File file) {
-    myCommandLine.addParameter(myExecutable.convertFilePath(file));
+    myCommandLine.addParameter(myExecutable.convertFilePath(file.toPath()));
   }
 
   /**
