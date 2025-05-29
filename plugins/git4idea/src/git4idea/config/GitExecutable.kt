@@ -160,7 +160,7 @@ sealed class GitExecutable {
     override fun getLocaleEnv(): Map<String, String> = VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git")
   }
 
-  data class Eel(override val exePath: @NonNls String, private val eel: EelApi) : GitExecutable() {
+  data class Eel(override val exePath: @NonNls String, val eel: EelApi) : GitExecutable() {
     private val delegate = Local(exePath)
 
     override val id: @NonNls String = eel.descriptor.toString()
