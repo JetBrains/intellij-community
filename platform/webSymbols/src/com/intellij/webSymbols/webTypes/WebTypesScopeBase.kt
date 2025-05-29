@@ -23,7 +23,7 @@ import com.intellij.webSymbols.context.PolyContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.PolyContextRulesProvider
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.query.PolySymbolNameConversionRules
-import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
+import com.intellij.webSymbols.query.PolySymbolNameConversionRulesProvider
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter.Companion.wrap
 import com.intellij.webSymbols.webTypes.json.*
@@ -44,7 +44,7 @@ abstract class WebTypesScopeBase :
 
   abstract override fun createPointer(): Pointer<out WebTypesScopeBase>
 
-  override fun getNameConversionRulesProvider(framework: FrameworkId): WebSymbolNameConversionRulesProvider {
+  override fun getNameConversionRulesProvider(framework: FrameworkId): PolySymbolNameConversionRulesProvider {
     return WebTypesSymbolNameConversionRulesProvider(framework, this, nameConversionRulesCache)
   }
 
@@ -213,12 +213,12 @@ private class WebTypesSymbolNameConversionRulesProvider(
   private val framework: FrameworkId,
   private val scope: WebTypesScopeBase,
   private val nameConversionRulesCache: ClearableLazyValue<Map<FrameworkId, PolySymbolNameConversionRules>>,
-) : WebSymbolNameConversionRulesProvider {
+) : PolySymbolNameConversionRulesProvider {
   override fun getNameConversionRules(): PolySymbolNameConversionRules {
     return nameConversionRulesCache.value[framework] ?: PolySymbolNameConversionRules.empty()
   }
 
-  override fun createPointer(): Pointer<out WebSymbolNameConversionRulesProvider> {
+  override fun createPointer(): Pointer<out PolySymbolNameConversionRulesProvider> {
     val framework = framework
     val scopePtr = scope.createPointer()
     return Pointer {

@@ -4,10 +4,10 @@ package com.intellij.webSymbols.query
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 
-interface WebSymbolNameConversionRulesProvider : ModificationTracker {
+interface PolySymbolNameConversionRulesProvider : ModificationTracker {
 
   fun getNameConversionRules(): PolySymbolNameConversionRules
 
-  fun createPointer(): Pointer<out WebSymbolNameConversionRulesProvider>
+  fun createPointer(): Pointer<out PolySymbolNameConversionRulesProvider>
 
 }

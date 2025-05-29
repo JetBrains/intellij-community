@@ -9,7 +9,7 @@ import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.framework.PolySymbolsFramework
 import com.intellij.webSymbols.query.PolySymbolNameConversionRules
-import com.intellij.webSymbols.query.WebSymbolNameConverter
+import com.intellij.webSymbols.query.PolySymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.*
 import org.jetbrains.annotations.ApiStatus
@@ -22,21 +22,21 @@ class WebSymbolNamesProviderImpl(
   private val modificationTracker: ModificationTracker,
 ) : WebSymbolNamesProvider {
 
-  private val canonicalNamesProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
+  private val canonicalNamesProviders: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
-  private val matchNamesProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
+  private val matchNamesProviders: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
-  private val completionVariantsProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
+  private val completionVariantsProviders: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
-  private val renameProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
+  private val renameProviders: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
   private val polySymbolsFramework get() = framework?.let { PolySymbolsFramework.get(it) }
 
   init {
-    val canonicalNamesProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
-    val matchNamesProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
-    val completionVariantsProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
-    val renameProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
+    val canonicalNamesProviders = mutableMapOf<PolySymbolQualifiedKind, PolySymbolNameConverter>()
+    val matchNamesProviders = mutableMapOf<PolySymbolQualifiedKind, PolySymbolNameConverter>()
+    val completionVariantsProviders = mutableMapOf<PolySymbolQualifiedKind, PolySymbolNameConverter>()
+    val renameProviders = mutableMapOf<PolySymbolQualifiedKind, PolySymbolNameConverter>()
     configuration.forEach { config ->
       config.canonicalNames.forEach { canonicalNamesProviders.putIfAbsent(it.key, it.value) }
       config.matchNames.forEach { matchNamesProviders.putIfAbsent(it.key, it.value) }

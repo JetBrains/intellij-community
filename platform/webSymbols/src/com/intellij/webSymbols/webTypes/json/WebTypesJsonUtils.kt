@@ -35,7 +35,7 @@ import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.js.PolySymbolJsKind
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.PolySymbolNameConversionRules
-import com.intellij.webSymbols.query.WebSymbolNameConverter
+import com.intellij.webSymbols.query.PolySymbolNameConverter
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.utils.lastPolySymbol
@@ -439,7 +439,7 @@ private fun ReferenceWithProps.createNameConversionRules(context: PolySymbol?): 
 
   val builder = PolySymbolNameConversionRules.builder()
 
-  fun buildConvertersMap(value: Any?, addToBuilder: (PolySymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
+  fun buildConvertersMap(value: Any?, addToBuilder: (PolySymbolQualifiedKind, PolySymbolNameConverter) -> Unit) {
     when (value) {
       is NameConverter -> mergeConverters(listOf(value))?.let {
         addToBuilder(PolySymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
@@ -474,17 +474,17 @@ private fun NameConverter.toFunction(): Function<String, String> =
     NameConverter.SNAKE_CASE -> Function { NameCaseUtils.toSnakeCase(it) }
   }
 
-internal fun mergeConverters(converters: List<NameConverter>): WebSymbolNameConverter? {
+internal fun mergeConverters(converters: List<NameConverter>): PolySymbolNameConverter? {
   if (converters.isEmpty()) return null
   val all = converters.map { it.toFunction() }
-  return WebSymbolNameConverter { name ->
+  return PolySymbolNameConverter { name ->
     all.map { it.apply(name) }
   }
 }
 
 internal fun <T> buildNameConverters(map: Map<String, T>?,
-                                     mapper: (T) -> (WebSymbolNameConverter?),
-                                     addToBuilder: (PolySymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
+                                     mapper: (T) -> (PolySymbolNameConverter?),
+                                     addToBuilder: (PolySymbolQualifiedKind, PolySymbolNameConverter) -> Unit) {
   for ((key, value) in map?.entries ?: return) {
     val path = key.splitToSequence('/')
                  .filter { it.isNotEmpty() }

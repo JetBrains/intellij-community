@@ -5,11 +5,11 @@ import com.intellij.model.Pointer
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.PolyContextRulesProvider
-import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
+import com.intellij.webSymbols.query.PolySymbolNameConversionRulesProvider
 
 interface StaticPolySymbolsScope : PolySymbolsScope, PolyContextRulesProvider {
 
   override fun createPointer(): Pointer<out StaticPolySymbolsScope>
 
-  fun getNameConversionRulesProvider(framework: FrameworkId): WebSymbolNameConversionRulesProvider
+  fun getNameConversionRulesProvider(framework: FrameworkId): PolySymbolNameConversionRulesProvider
 }

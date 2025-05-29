@@ -11,46 +11,46 @@ interface PolySymbolNameConversionRules {
    *
    * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE]
    */
-  val canonicalNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
+  val canonicalNames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
   /**
    * Used for matching symbols.
    *
    * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.NAMES_QUERY]
    */
-  val matchNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
+  val matchNames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
   /**
    * Used for renaming symbols.
    *
    * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.RENAME_QUERY]
    */
-  val renames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
+  val renames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
   /**
    * Used for code completion.
    *
    * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS]
    */
-  val completionVariants: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
+  val completionVariants: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
   companion object {
 
     @JvmStatic
     fun create(
-      canonicalNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
-      matchNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
-      completionVariants: Map<PolySymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
-      renames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
+      canonicalNames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter> = emptyMap(),
+      matchNames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter> = emptyMap(),
+      completionVariants: Map<PolySymbolQualifiedKind, PolySymbolNameConverter> = emptyMap(),
+      renames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter> = emptyMap(),
     ): PolySymbolNameConversionRules =
       PolySymbolNameConversionRulesImpl(canonicalNames, matchNames, completionVariants, renames)
 
     @JvmStatic
-    fun create(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): PolySymbolNameConversionRules =
+    fun create(symbolKind: PolySymbolQualifiedKind, converter: PolySymbolNameConverter): PolySymbolNameConversionRules =
       PolySymbolNameConversionRulesBuilder().addRule(symbolKind, converter).build()
 
     @JvmStatic
-    fun create(vararg rules: Pair<PolySymbolQualifiedKind, WebSymbolNameConverter>): PolySymbolNameConversionRules =
+    fun create(vararg rules: Pair<PolySymbolQualifiedKind, PolySymbolNameConverter>): PolySymbolNameConversionRules =
       PolySymbolNameConversionRulesBuilder().apply { rules.forEach { rule -> addRule(rule.first, rule.second) } }.build()
 
     @JvmStatic

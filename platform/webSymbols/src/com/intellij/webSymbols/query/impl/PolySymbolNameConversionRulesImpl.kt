@@ -3,13 +3,13 @@ package com.intellij.webSymbols.query.impl
 
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.query.PolySymbolNameConversionRules
-import com.intellij.webSymbols.query.WebSymbolNameConverter
+import com.intellij.webSymbols.query.PolySymbolNameConverter
 
 internal data class PolySymbolNameConversionRulesImpl(
-  override val canonicalNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>,
-  override val matchNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>,
-  override val completionVariants: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>,
-  override val renames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>,
+  override val canonicalNames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>,
+  override val matchNames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>,
+  override val completionVariants: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>,
+  override val renames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>,
 ) : PolySymbolNameConversionRules {
   companion object {
     val EMPTY = PolySymbolNameConversionRulesImpl(emptyMap(), emptyMap(), emptyMap(), emptyMap())

@@ -21,7 +21,7 @@ interface PolySymbolsQueryConfigurator {
 
   fun getNameConversionRulesProviders(project: Project,
                                       element: PsiElement?,
-                                      context: PolyContext): List<WebSymbolNameConversionRulesProvider> =
+                                      context: PolyContext): List<PolySymbolNameConversionRulesProvider> =
     emptyList()
 
   fun beforeQueryExecutorCreation(project: Project) {
