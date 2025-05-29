@@ -7,7 +7,7 @@ import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolHtmlElementInfo
 import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.framework.WebSymbolsFramework
+import com.intellij.webSymbols.framework.PolySymbolsFramework
 import java.util.function.Predicate
 
 interface WebSymbolsFrameworkHtmlSupport {
@@ -23,7 +23,7 @@ interface WebSymbolsFrameworkHtmlSupport {
   companion object {
     @JvmStatic
     fun get(id: FrameworkId?): WebSymbolsFrameworkHtmlSupport =
-      WebSymbolsFramework.get(id ?: "") as? WebSymbolsFrameworkHtmlSupport
+      PolySymbolsFramework.get(id ?: "") as? WebSymbolsFrameworkHtmlSupport
       ?: DefaultHtmlSupport
 
   }

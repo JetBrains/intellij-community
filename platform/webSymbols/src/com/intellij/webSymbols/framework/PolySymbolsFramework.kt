@@ -11,7 +11,7 @@ import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import javax.swing.Icon
 
-abstract class WebSymbolsFramework {
+abstract class PolySymbolsFramework {
 
   lateinit var id: String
     internal set
@@ -32,30 +32,30 @@ abstract class WebSymbolsFramework {
 
   companion object {
 
-    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<WebSymbolsFramework, String>("com.intellij.webSymbols.framework") {
+    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<PolySymbolsFramework, String>("com.intellij.webSymbols.framework") {
       val all get() = extensions.asSequence().map { it.instance }
     }
 
     @JvmStatic
-    fun get(id: String): WebSymbolsFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
+    fun get(id: String): PolySymbolsFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
 
     @JvmStatic
-    fun inLocation(location: VirtualFile, project: Project): WebSymbolsFramework? = PolyContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
+    fun inLocation(location: VirtualFile, project: Project): PolySymbolsFramework? = PolyContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
 
     @JvmStatic
-    fun inLocation(location: PsiElement): WebSymbolsFramework? = PolyContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
+    fun inLocation(location: PsiElement): PolySymbolsFramework? = PolyContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
 
     @JvmStatic
-    val all: List<WebSymbolsFramework>
+    val all: List<PolySymbolsFramework>
       get() = WEB_FRAMEWORK_EP.all.toList()
 
     @JvmStatic
-    internal val allAsSequence: Sequence<WebSymbolsFramework>
+    internal val allAsSequence: Sequence<PolySymbolsFramework>
       get() = WEB_FRAMEWORK_EP.all
 
   }
 
-  private class UnregisteredWebFramework(id: String) : WebSymbolsFramework() {
+  private class UnregisteredWebFramework(id: String) : PolySymbolsFramework() {
     init {
       this.id = id
     }

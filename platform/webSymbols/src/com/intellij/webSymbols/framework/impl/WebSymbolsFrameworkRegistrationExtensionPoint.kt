@@ -7,10 +7,10 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.webSymbols.framework.WebSymbolsFramework
+import com.intellij.webSymbols.framework.PolySymbolsFramework
 import org.jetbrains.annotations.TestOnly
 
-class WebSymbolsFrameworkRegistrationExtensionPoint<T : WebSymbolsFramework> : BaseKeyedLazyInstance<T>, KeyedLazyInstance<T> {
+class WebSymbolsFrameworkRegistrationExtensionPoint<T : PolySymbolsFramework> : BaseKeyedLazyInstance<T>, KeyedLazyInstance<T> {
   @Attribute("id")
   @RequiredElement
   var id: String? = null

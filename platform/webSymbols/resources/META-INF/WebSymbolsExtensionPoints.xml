@@ -3,7 +3,7 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.framework"
                     beanClass="com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkRegistrationExtensionPoint"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.framework.WebSymbolsFramework"/>
+      <with attribute="implementation" implements="com.intellij.webSymbols.framework.PolySymbolsFramework"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.context"
                     beanClass="com.intellij.webSymbols.context.impl.PolyContextProviderExtensionPoint"

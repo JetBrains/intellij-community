@@ -7,7 +7,7 @@ import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
-import com.intellij.webSymbols.framework.WebSymbolsFramework
+import com.intellij.webSymbols.framework.PolySymbolsFramework
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
@@ -30,7 +30,7 @@ class WebSymbolNamesProviderImpl(
 
   private val renameProviders: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>
 
-  private val webSymbolsFramework get() = framework?.let { WebSymbolsFramework.get(it) }
+  private val polySymbolsFramework get() = framework?.let { PolySymbolsFramework.get(it) }
 
   init {
     val canonicalNamesProviders = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
@@ -77,7 +77,7 @@ class WebSymbolNamesProviderImpl(
                       ?: canonicalNamesProviders[qualifiedName.qualifiedKind]
     }
       ?.getNames(qualifiedName.name)
-    ?: webSymbolsFramework
+    ?: polySymbolsFramework
       ?.getNames(qualifiedName, target)
       ?.takeIf { it.isNotEmpty() }
     ?: if (target != CODE_COMPLETION_VARIANTS &&
