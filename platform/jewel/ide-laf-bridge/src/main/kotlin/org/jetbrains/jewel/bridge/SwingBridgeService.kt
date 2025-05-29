@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
 import org.jetbrains.jewel.bridge.theme.createBridgeComponentStyling
 import org.jetbrains.jewel.bridge.theme.createBridgeThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
@@ -23,14 +24,15 @@ import org.jetbrains.jewel.ui.component.copyWithSize
 internal class SwingBridgeService {
     private val scrollbarHelper = ScrollbarHelper.getInstance()
     private val settingsFlow: Flow<UISettings> =
-        ApplicationManager.getApplication().messageBus.subscribeAsFlow(UISettingsListener.TOPIC) {
-            UISettingsListener { uiSettings -> trySend(uiSettings) }
-        }
+        ApplicationManager.getApplication()
+            .messageBus
+            .subscribeAsFlow(UISettingsListener.TOPIC) { UISettingsListener { uiSettings -> trySend(uiSettings) } }
+            .onStart { emit(UISettings.getInstance()) }
 
     internal val currentBridgeThemeData: StateFlow<BridgeThemeData> =
-        LafFlowService.getInstance().customLafFlowState(BridgeThemeData.DEFAULT) { flow ->
+        LafFlowService.getInstance().customLafFlowState(BridgeThemeData.DEFAULT) { lafChangeFlow ->
             combine(
-                flow,
+                lafChangeFlow,
                 scrollbarHelper.scrollbarVisibilityStyleFlow,
                 scrollbarHelper.trackClickBehaviorFlow,
                 settingsFlow,
