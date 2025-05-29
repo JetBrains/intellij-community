@@ -7,7 +7,7 @@ import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.webSymbols.context.PolyContextProvider
 import java.util.concurrent.ConcurrentHashMap
 
-class WebSymbolsContextProviderExtensionCollector(private val epName: ExtensionPointName<WebSymbolsContextProviderExtensionPoint>)
+class PolyContextProviderExtensionCollector(private val epName: ExtensionPointName<WebSymbolsContextProviderExtensionPoint>)
   : KeyedExtensionCollector<PolyContextProvider, String>(epName) {
 
   private val allKinds = ClearableLazyValue.create {

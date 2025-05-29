@@ -10,7 +10,7 @@ import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.context.impl.PolyContextImpl
-import com.intellij.webSymbols.context.impl.WebSymbolsContextProviderExtensionCollector
+import com.intellij.webSymbols.context.impl.PolyContextProviderExtensionCollector
 import com.intellij.webSymbols.context.impl.findWebSymbolsContext
 import org.jetbrains.annotations.TestOnly
 
@@ -27,7 +27,7 @@ interface PolyContext {
     @TestOnly
     @JvmField
     val WEB_SYMBOLS_CONTEXT_EP: KeyedExtensionCollector<PolyContextProvider, String> =
-      WebSymbolsContextProviderExtensionCollector(ExtensionPointName("com.intellij.webSymbols.context"))
+      PolyContextProviderExtensionCollector(ExtensionPointName("com.intellij.webSymbols.context"))
 
     @JvmField
     val KIND_FRAMEWORK: String = "framework"

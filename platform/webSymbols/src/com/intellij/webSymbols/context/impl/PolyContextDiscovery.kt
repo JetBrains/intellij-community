@@ -57,7 +57,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-private val WEB_SYMBOLS_CONTEXT_EP get() = PolyContext.WEB_SYMBOLS_CONTEXT_EP as WebSymbolsContextProviderExtensionCollector
+private val WEB_SYMBOLS_CONTEXT_EP get() = PolyContext.WEB_SYMBOLS_CONTEXT_EP as PolyContextProviderExtensionCollector
 private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("web.isContext.reloadMarker")
 private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(PolyContext::class.java)
