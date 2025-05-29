@@ -15,7 +15,7 @@ interface WebSymbolNamesProvider : ModificationTracker {
                    newName: String,
                    occurence: String): String
 
-  fun withRules(rules: List<WebSymbolNameConversionRules>): WebSymbolNamesProvider
+  fun withRules(rules: List<PolySymbolNameConversionRules>): WebSymbolNamesProvider
 
   enum class Target {
     CODE_COMPLETION_VARIANTS,

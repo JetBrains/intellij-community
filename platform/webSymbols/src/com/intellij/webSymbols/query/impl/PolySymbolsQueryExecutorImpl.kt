@@ -107,7 +107,7 @@ class PolySymbolsQueryExecutorImpl(
   ): List<PolySymbolCodeCompletionItem> =
     runCodeCompletionQuery(path, WebSymbolsCodeCompletionQueryParams.create(this, position, virtualSymbols), additionalScope)
 
-  override fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): PolySymbolsQueryExecutor =
+  override fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolsQueryExecutor =
     if (rules.isEmpty())
       this
     else

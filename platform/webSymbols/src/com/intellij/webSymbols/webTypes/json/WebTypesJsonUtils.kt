@@ -34,7 +34,7 @@ import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.js.PolySymbolJsKind
 import com.intellij.webSymbols.query.PolySymbolMatch
-import com.intellij.webSymbols.query.WebSymbolNameConversionRules
+import com.intellij.webSymbols.query.PolySymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.utils.NameCaseUtils
@@ -431,13 +431,13 @@ private fun Any.toGenericHtmlPropertyValue(): GenericHtmlContributions =
     list.add(GenericHtmlContributionOrProperty().also { it.value = this })
   }
 
-private fun ReferenceWithProps.createNameConversionRules(context: PolySymbol?): List<WebSymbolNameConversionRules> {
+private fun ReferenceWithProps.createNameConversionRules(context: PolySymbol?): List<PolySymbolNameConversionRules> {
   val rules = nameConversion ?: return emptyList()
   val lastPath = parseWebTypesPath(path, context).lastOrNull()
   if (lastPath == null)
     return emptyList()
 
-  val builder = WebSymbolNameConversionRules.builder()
+  val builder = PolySymbolNameConversionRules.builder()
 
   fun buildConvertersMap(value: Any?, addToBuilder: (PolySymbolQualifiedKind, WebSymbolNameConverter) -> Unit) {
     when (value) {

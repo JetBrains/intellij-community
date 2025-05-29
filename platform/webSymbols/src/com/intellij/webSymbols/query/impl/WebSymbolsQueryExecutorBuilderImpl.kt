@@ -7,7 +7,7 @@ import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.impl.PolyContextImpl
-import com.intellij.webSymbols.query.WebSymbolNameConversionRules
+import com.intellij.webSymbols.query.PolySymbolNameConversionRules
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory.WebSymbolsQueryExecutorBuilder
 import com.intellij.webSymbols.query.PolySymbolsQueryResultsCustomizer
@@ -15,7 +15,7 @@ import com.intellij.webSymbols.query.PolySymbolsQueryResultsCustomizer
 class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolsScope>()
   private val customizers = mutableListOf<PolySymbolsQueryResultsCustomizer>()
-  private val nameConversionRules = mutableListOf<WebSymbolNameConversionRules>()
+  private val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
   private val context = mutableMapOf<ContextKind, ContextName>()
   private var allowResolve = true
 
@@ -31,7 +31,7 @@ class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
     customizers.add(customizer)
   }
 
-  override fun addNameConversionRules(rules: WebSymbolNameConversionRules): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addNameConversionRules(rules: PolySymbolNameConversionRules): WebSymbolsQueryExecutorBuilder = apply {
     nameConversionRules.add(rules)
   }
 

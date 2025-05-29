@@ -2,9 +2,9 @@
 package com.intellij.webSymbols.query
 
 import com.intellij.webSymbols.PolySymbolQualifiedKind
-import com.intellij.webSymbols.query.impl.WebSymbolNameConversionRulesImpl
+import com.intellij.webSymbols.query.impl.PolySymbolNameConversionRulesImpl
 
-interface WebSymbolNameConversionRules {
+interface PolySymbolNameConversionRules {
 
   /**
    * Used for storing and comparing symbols.
@@ -42,20 +42,20 @@ interface WebSymbolNameConversionRules {
       matchNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
       completionVariants: Map<PolySymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
       renames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter> = emptyMap(),
-    ): WebSymbolNameConversionRules =
-      WebSymbolNameConversionRulesImpl(canonicalNames, matchNames, completionVariants, renames)
+    ): PolySymbolNameConversionRules =
+      PolySymbolNameConversionRulesImpl(canonicalNames, matchNames, completionVariants, renames)
 
     @JvmStatic
-    fun create(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRules =
+    fun create(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): PolySymbolNameConversionRules =
       WebSymbolNameConversionRulesBuilder().addRule(symbolKind, converter).build()
 
     @JvmStatic
-    fun create(vararg rules: Pair<PolySymbolQualifiedKind, WebSymbolNameConverter>): WebSymbolNameConversionRules =
+    fun create(vararg rules: Pair<PolySymbolQualifiedKind, WebSymbolNameConverter>): PolySymbolNameConversionRules =
       WebSymbolNameConversionRulesBuilder().apply { rules.forEach { rule -> addRule(rule.first, rule.second) } }.build()
 
     @JvmStatic
-    fun empty(): WebSymbolNameConversionRules =
-      WebSymbolNameConversionRulesImpl.EMPTY
+    fun empty(): PolySymbolNameConversionRules =
+      PolySymbolNameConversionRulesImpl.EMPTY
 
     @JvmStatic
     fun builder(): WebSymbolNameConversionRulesBuilder =

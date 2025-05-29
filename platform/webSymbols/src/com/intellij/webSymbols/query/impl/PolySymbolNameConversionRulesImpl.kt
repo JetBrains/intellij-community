@@ -2,16 +2,16 @@
 package com.intellij.webSymbols.query.impl
 
 import com.intellij.webSymbols.PolySymbolQualifiedKind
-import com.intellij.webSymbols.query.WebSymbolNameConversionRules
+import com.intellij.webSymbols.query.PolySymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 
-internal data class WebSymbolNameConversionRulesImpl(
+internal data class PolySymbolNameConversionRulesImpl(
   override val canonicalNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>,
   override val matchNames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>,
   override val completionVariants: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>,
   override val renames: Map<PolySymbolQualifiedKind, WebSymbolNameConverter>,
-) : WebSymbolNameConversionRules {
+) : PolySymbolNameConversionRules {
   companion object {
-    val EMPTY = WebSymbolNameConversionRulesImpl(emptyMap(), emptyMap(), emptyMap(), emptyMap())
+    val EMPTY = PolySymbolNameConversionRulesImpl(emptyMap(), emptyMap(), emptyMap(), emptyMap())
   }
 }

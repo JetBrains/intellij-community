@@ -9,7 +9,7 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.query.PolySymbolMatch
-import com.intellij.webSymbols.query.WebSymbolNameConversionRules
+import com.intellij.webSymbols.query.PolySymbolNameConversionRules
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import org.jetbrains.annotations.ApiStatus
@@ -51,7 +51,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
     val includeVirtual: Boolean = true,
     val includeAbstract: Boolean = false,
     val filter: WebSymbolsFilter? = null,
-    val nameConversionRules: List<WebSymbolNameConversionRules> = emptyList(),
+    val nameConversionRules: List<PolySymbolNameConversionRules> = emptyList(),
   ) {
     fun resolve(name: String,
                 scope: Stack<PolySymbolsScope>,

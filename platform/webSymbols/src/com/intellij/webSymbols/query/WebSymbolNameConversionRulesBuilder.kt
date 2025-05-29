@@ -33,8 +33,8 @@ class WebSymbolNameConversionRulesBuilder internal constructor() {
     addCompletionVariantsRule(symbolKind, converter)
   }
 
-  fun build(): WebSymbolNameConversionRules =
-    WebSymbolNameConversionRules.create(canonicalNames.toMap(), matchNames.toMap(), completionVariants.toMap(), renameRules.toMap())
+  fun build(): PolySymbolNameConversionRules =
+    PolySymbolNameConversionRules.create(canonicalNames.toMap(), matchNames.toMap(), completionVariants.toMap(), renameRules.toMap())
 
   fun isEmpty(): Boolean =
     canonicalNames.isEmpty() && matchNames.isEmpty() && completionVariants.isEmpty()

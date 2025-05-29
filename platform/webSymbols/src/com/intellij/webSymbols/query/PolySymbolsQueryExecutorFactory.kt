@@ -29,7 +29,7 @@ interface PolySymbolsQueryExecutorFactory : Disposable {
 
     fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder
 
-    fun addNameConversionRules(rules: WebSymbolNameConversionRules): WebSymbolsQueryExecutorBuilder
+    fun addNameConversionRules(rules: PolySymbolNameConversionRules): WebSymbolsQueryExecutorBuilder
 
     fun setFramework(framework: String): WebSymbolsQueryExecutorBuilder
 

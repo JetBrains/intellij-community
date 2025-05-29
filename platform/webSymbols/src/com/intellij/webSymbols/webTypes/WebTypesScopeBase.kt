@@ -22,7 +22,7 @@ import com.intellij.webSymbols.context.PolyContextKindRules.DisablementRules
 import com.intellij.webSymbols.context.PolyContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.PolyContextRulesProvider
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.webSymbols.query.WebSymbolNameConversionRules
+import com.intellij.webSymbols.query.PolySymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter.Companion.wrap
@@ -148,13 +148,13 @@ abstract class WebTypesScopeBase :
     }
   }
 
-  private fun createNameConversionRulesCache(): ClearableLazyValue<Map<FrameworkId, WebSymbolNameConversionRules>> =
+  private fun createNameConversionRulesCache(): ClearableLazyValue<Map<FrameworkId, PolySymbolNameConversionRules>> =
     ClearableLazyValue.create {
       frameworkConfigs
         .asSequence()
         .mapNotNull { (webTypes, config) ->
           val framework = webTypes.framework ?: return@mapNotNull null
-          val builder = WebSymbolNameConversionRules.builder()
+          val builder = PolySymbolNameConversionRules.builder()
 
           buildNameConverters(config.canonicalNames?.additionalProperties, { mergeConverters(listOf(it)) }, builder::addCanonicalNamesRule)
           buildNameConverters(config.matchNames?.additionalProperties, { mergeConverters(it) }, builder::addMatchNamesRule)
@@ -212,10 +212,10 @@ abstract class WebTypesScopeBase :
 private class WebTypesSymbolNameConversionRulesProvider(
   private val framework: FrameworkId,
   private val scope: WebTypesScopeBase,
-  private val nameConversionRulesCache: ClearableLazyValue<Map<FrameworkId, WebSymbolNameConversionRules>>,
+  private val nameConversionRulesCache: ClearableLazyValue<Map<FrameworkId, PolySymbolNameConversionRules>>,
 ) : WebSymbolNameConversionRulesProvider {
-  override fun getNameConversionRules(): WebSymbolNameConversionRules {
-    return nameConversionRulesCache.value[framework] ?: WebSymbolNameConversionRules.empty()
+  override fun getNameConversionRules(): PolySymbolNameConversionRules {
+    return nameConversionRulesCache.value[framework] ?: PolySymbolNameConversionRules.empty()
   }
 
   override fun createPointer(): Pointer<out WebSymbolNameConversionRulesProvider> {

@@ -108,7 +108,7 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
   }
 
   private fun createNamesProvider(project: Project, location: PsiElement?, context: PolyContext): WebSymbolNamesProvider {
-    val nameConversionRules = mutableListOf<WebSymbolNameConversionRules>()
+    val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
     val providers = mutableListOf<Pointer<out WebSymbolNameConversionRulesProvider>>()
     PolySymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { provider ->
       provider.getNameConversionRulesProviders(project, location, context)

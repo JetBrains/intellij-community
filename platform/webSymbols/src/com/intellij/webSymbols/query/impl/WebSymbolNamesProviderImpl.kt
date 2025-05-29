@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.framework.PolySymbolsFramework
-import com.intellij.webSymbols.query.WebSymbolNameConversionRules
+import com.intellij.webSymbols.query.PolySymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.*
@@ -18,7 +18,7 @@ import java.util.*
 @ApiStatus.Internal
 class WebSymbolNamesProviderImpl(
   private val framework: FrameworkId?,
-  private val configuration: List<WebSymbolNameConversionRules>,
+  private val configuration: List<PolySymbolNameConversionRules>,
   private val modificationTracker: ModificationTracker,
 ) : WebSymbolNamesProvider {
 
@@ -63,7 +63,7 @@ class WebSymbolNamesProviderImpl(
   override fun getModificationCount(): Long =
     modificationTracker.modificationCount
 
-  override fun withRules(rules: List<WebSymbolNameConversionRules>): WebSymbolNamesProvider =
+  override fun withRules(rules: List<PolySymbolNameConversionRules>): WebSymbolNamesProvider =
     WebSymbolNamesProviderImpl(framework, rules + configuration, modificationTracker)
 
   override fun getNames(qualifiedName: PolySymbolQualifiedName, target: WebSymbolNamesProvider.Target): List<String> =

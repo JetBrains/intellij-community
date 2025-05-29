@@ -14,7 +14,7 @@ import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContextKindRules
 import com.intellij.webSymbols.customElements.json.*
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.webSymbols.query.WebSymbolNameConversionRules
+import com.intellij.webSymbols.query.PolySymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
 import org.jetbrains.annotations.ApiStatus
 
@@ -59,7 +59,7 @@ abstract class CustomElementsManifestScopeBase :
 
   override fun getNameConversionRulesProvider(framework: FrameworkId): WebSymbolNameConversionRulesProvider =
     object : WebSymbolNameConversionRulesProvider {
-      override fun getNameConversionRules(): WebSymbolNameConversionRules = WebSymbolNameConversionRules.empty()
+      override fun getNameConversionRules(): PolySymbolNameConversionRules = PolySymbolNameConversionRules.empty()
       override fun createPointer(): Pointer<out WebSymbolNameConversionRulesProvider> = Pointer.hardPointer(this)
       override fun getModificationCount(): Long = 0
     }

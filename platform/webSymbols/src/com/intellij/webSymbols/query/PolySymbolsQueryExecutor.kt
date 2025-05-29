@@ -99,7 +99,7 @@ interface PolySymbolsQueryExecutor : ModificationTracker {
                              virtualSymbols: Boolean = true,
                              additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbolCodeCompletionItem>
 
-  fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): PolySymbolsQueryExecutor
+  fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolsQueryExecutor
 
   fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolsScope> = emptyList()): Boolean
 

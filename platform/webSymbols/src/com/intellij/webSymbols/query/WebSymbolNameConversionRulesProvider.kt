@@ -6,7 +6,7 @@ import com.intellij.openapi.util.ModificationTracker
 
 interface WebSymbolNameConversionRulesProvider : ModificationTracker {
 
-  fun getNameConversionRules(): WebSymbolNameConversionRules
+  fun getNameConversionRules(): PolySymbolNameConversionRules
 
   fun createPointer(): Pointer<out WebSymbolNameConversionRulesProvider>
 
