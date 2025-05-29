@@ -51,7 +51,7 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
   internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> =
     CachedValuesManager.getCachedValue(element, CachedValuesManager.getManager(element.project).getKeyForClass(this.javaClass)) {
-      val beans = PsiWebSymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
+      val beans = PsiPolySymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
       val result = SmartList<PolySymbolReference>()
       val offsets = MultiMap.createSet<Int, PolySymbol>()
       for (bean in beans) {

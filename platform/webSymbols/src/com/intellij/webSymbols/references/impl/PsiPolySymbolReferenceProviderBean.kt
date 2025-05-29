@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
 
-class PsiWebSymbolReferenceProviderBean : CustomLoadingExtensionPointBean<PsiPolySymbolReferenceProvider<*>>() {
+class PsiPolySymbolReferenceProviderBean : CustomLoadingExtensionPointBean<PsiPolySymbolReferenceProvider<*>>() {
   /**
    * [id][Language.getID] of the language for which references are provided.<br></br>
    * The references will be provided for the specified language and its [base languages][Language.getBaseLanguage].

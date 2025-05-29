@@ -7,18 +7,18 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object PsiWebSymbolReferenceProviders {
-  private val EP_NAME = ExtensionPointName<PsiWebSymbolReferenceProviderBean>("com.intellij.webSymbols.psiReferenceProvider")
+object PsiPolySymbolReferenceProviders {
+  private val EP_NAME = ExtensionPointName<PsiPolySymbolReferenceProviderBean>("com.intellij.webSymbols.psiReferenceProvider")
 
   /**
    * Given language of a host element returns list of providers that could provide references from this language.
    */
   internal fun byLanguage(language: Language): PolySymbolLanguageReferenceProviders {
-    return EP_NAME.computeIfAbsent(language, PsiWebSymbolReferenceProviders::class.java) { byLanguageInner(it) }
+    return EP_NAME.computeIfAbsent(language, PsiPolySymbolReferenceProviders::class.java) { byLanguageInner(it) }
   }
 
   private fun byLanguageInner(language: Language): PolySymbolLanguageReferenceProviders {
-    val result = mutableListOf<PsiWebSymbolReferenceProviderBean>()
+    val result = mutableListOf<PsiPolySymbolReferenceProviderBean>()
     for (bean in EP_NAME.extensionList) {
       val hostLanguage = bean.getHostLanguage()
       val matches = if (hostLanguage is MetaLanguage)
