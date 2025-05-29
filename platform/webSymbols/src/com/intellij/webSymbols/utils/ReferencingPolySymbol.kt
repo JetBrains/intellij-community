@@ -6,7 +6,7 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.PolySymbolsPatternFactory
-import com.intellij.webSymbols.patterns.WebSymbolsPatternReferenceResolver
+import com.intellij.webSymbols.patterns.PolySymbolsPatternReferenceResolver
 import java.util.Objects
 
 /**
@@ -46,9 +46,9 @@ class ReferencingPolySymbol private constructor(
     PolySymbolsPatternFactory.createComplexPattern(
       ComplexPatternOptions(
         priority = priority,
-        symbolsResolver = WebSymbolsPatternReferenceResolver(
+        symbolsResolver = PolySymbolsPatternReferenceResolver(
           *references.map {
-            WebSymbolsPatternReferenceResolver.Reference(qualifiedKind = it, location = location)
+            PolySymbolsPatternReferenceResolver.Reference(qualifiedKind = it, location = location)
           }.toTypedArray()
         )), false,
       PolySymbolsPatternFactory.createPatternSequence(

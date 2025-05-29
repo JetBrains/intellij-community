@@ -15,7 +15,7 @@ import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : WebSymbolsPatternSymbolsResolver {
+class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) : WebSymbolsPatternSymbolsResolver {
   override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
     items.asSequence().map { it.qualifiedKind }.toSet()
 
