@@ -23,7 +23,7 @@ import com.intellij.psi.util.walkUp
 import com.intellij.util.Query
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
+import com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.references.WebSymbolReference
@@ -73,7 +73,7 @@ object WebSymbolUsageQueries {
         }
 
         if (element is PsiExternalReferenceHost) {
-          val declarations = WebSymbolDeclarationProvider.getAllEquivalentDeclarations(element, offsetInElement, symbol)
+          val declarations = PolySymbolDeclarationProvider.getAllEquivalentDeclarations(element, offsetInElement, symbol)
           if (declarations.isNotEmpty()) {
             return declarations
               .map {

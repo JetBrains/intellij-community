@@ -49,7 +49,7 @@
                     interface="com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizerFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.declarationProvider"
-                    interface="com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider"
+                    interface="com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.psiReferenceProvider"
                     beanClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderBean"

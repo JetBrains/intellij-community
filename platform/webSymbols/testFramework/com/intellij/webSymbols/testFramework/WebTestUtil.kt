@@ -56,7 +56,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.declarations.PolySymbolDeclaration
-import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
+import com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
@@ -404,7 +404,7 @@ private fun Collection<PsiSymbolReference>.resolveToWebSymbols(): List<PolySymbo
 
 private fun PsiFile.webSymbolDeclarationsAt(offset: Int): Collection<PolySymbolDeclaration> {
   for ((element, offsetInElement) in elementsAtOffsetUp(offset)) {
-    val declarations = WebSymbolDeclarationProvider.getAllDeclarations(element, offsetInElement)
+    val declarations = PolySymbolDeclarationProvider.getAllDeclarations(element, offsetInElement)
     if (declarations.isNotEmpty()) {
       return declarations
     }

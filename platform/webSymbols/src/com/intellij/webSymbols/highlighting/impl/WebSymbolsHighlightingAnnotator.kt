@@ -34,7 +34,7 @@ import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsBundle
-import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
+import com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer
 import com.intellij.webSymbols.highlighting.newSilentAnnotationWithDebugInfo
 import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
@@ -71,7 +71,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
       // provide automatic symbol kind highlighting
       val multiMap = symbolReferencesProvider.getSymbolOffsetsAndReferences(element, WebSymbolReferenceHints.NO_HINTS).first.copy()
 
-      WebSymbolDeclarationProvider.getAllDeclarations(element, -1).forEach { declaration ->
+      PolySymbolDeclarationProvider.getAllDeclarations(element, -1).forEach { declaration ->
         multiMap.putValue(declaration.rangeInDeclaringElement.startOffset, declaration.symbol)
       }
 

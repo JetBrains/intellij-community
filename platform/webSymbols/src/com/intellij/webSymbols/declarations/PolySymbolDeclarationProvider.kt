@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
 
-interface WebSymbolDeclarationProvider {
+interface PolySymbolDeclarationProvider {
   /**
    * If `offsetInElement < 0` provide all declarations in the element,
    * otherwise try to provide only those at the hinted offset. Declarations outside the offset
@@ -18,7 +18,7 @@ interface WebSymbolDeclarationProvider {
       .filter { it.symbol.isEquivalentTo(target) }
 
   companion object {
-    private val EP_NAME = ExtensionPointName<WebSymbolDeclarationProvider>("com.intellij.webSymbols.declarationProvider")
+    private val EP_NAME = ExtensionPointName<PolySymbolDeclarationProvider>("com.intellij.webSymbols.declarationProvider")
 
     @JvmStatic
     fun getAllEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<PolySymbolDeclaration> {
