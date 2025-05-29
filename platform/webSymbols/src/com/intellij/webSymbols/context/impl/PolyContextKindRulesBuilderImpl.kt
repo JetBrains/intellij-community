@@ -6,7 +6,7 @@ import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.PolyContextKindRules
 import java.util.Collections.unmodifiableList
 
-class WebSymbolsContextKindRulesBuilderImpl : PolyContextKindRules.Builder {
+class PolyContextKindRulesBuilderImpl : PolyContextKindRules.Builder {
 
   private val contextNames = mutableMapOf<ContextName, ContextKindBuilderImpl>()
 

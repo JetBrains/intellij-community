@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.context
 
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.context.impl.WebSymbolsContextKindRulesBuilderImpl
+import com.intellij.webSymbols.context.impl.PolyContextKindRulesBuilderImpl
 import com.intellij.webSymbols.context.impl.PolyContextKindRulesImpl
 import org.jetbrains.annotations.ApiStatus
 
@@ -65,23 +65,23 @@ interface PolyContextKindRules {
 
     @JvmStatic
     fun create(builder: Builder.() -> Unit): PolyContextKindRules =
-      WebSymbolsContextKindRulesBuilderImpl().apply(builder).build()
+      PolyContextKindRulesBuilderImpl().apply(builder).build()
 
     @JvmStatic
     fun createEnablementRules(builder: EnablementRulesBuilder.() -> Unit): EnablementRules =
-      WebSymbolsContextKindRulesBuilderImpl.EnablementRulesBuilderImpl().apply(builder).build()
+      PolyContextKindRulesBuilderImpl.EnablementRulesBuilderImpl().apply(builder).build()
 
     @JvmStatic
     fun createDisablementRules(builder: DisablementRulesBuilder.() -> Unit): DisablementRules =
-      WebSymbolsContextKindRulesBuilderImpl.DisablementRulesBuilderImpl().apply(builder).build()
+      PolyContextKindRulesBuilderImpl.DisablementRulesBuilderImpl().apply(builder).build()
 
     @JvmStatic
     fun enablementRulesBuilder(): EnablementRulesBuilder =
-      WebSymbolsContextKindRulesBuilderImpl.EnablementRulesBuilderImpl()
+      PolyContextKindRulesBuilderImpl.EnablementRulesBuilderImpl()
 
     @JvmStatic
     fun disablementRulesBuilder(): DisablementRulesBuilder =
-      WebSymbolsContextKindRulesBuilderImpl.DisablementRulesBuilderImpl()
+      PolyContextKindRulesBuilderImpl.DisablementRulesBuilderImpl()
   }
 
 }
