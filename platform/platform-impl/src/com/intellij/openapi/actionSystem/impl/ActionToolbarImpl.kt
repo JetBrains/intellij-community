@@ -1096,9 +1096,21 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     return true
   }
 
-  // don't call getPreferredSize for "best parent" if it isn't popup or lightweight hint
+  /**
+   * Automatic container window size adjustment is performed only if:
+   * 
+   * - the window is a popup or a lightweight hint;
+   * - and fast track actions update is not suppressed.
+   * 
+   * Fast track action update is normally enabled for regular toolbars inside popups
+   * but it's usually suppressed for toolbars of a "floating" nature,
+   * and for such toolbars size adjustment can create UI bugs like IJPL-187340,
+   * when the popup is resized over and over again every time the toolbar is shown.
+   */
   private fun skipSizeAdjustments(): Boolean {
-    return PopupUtil.getPopupContainerFor(this) == null && getParentLightweightHintComponent(this) == null
+    return (PopupUtil.getPopupContainerFor(this) == null &&
+            getParentLightweightHintComponent(this) == null) ||
+           ClientProperty.isTrue(this, SUPPRESS_FAST_TRACK)
   }
 
   private fun adjustContainerWindowSize(
