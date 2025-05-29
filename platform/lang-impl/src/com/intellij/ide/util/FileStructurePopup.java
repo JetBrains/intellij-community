@@ -476,7 +476,9 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     int checkBoxCount = fileStructureNodeProviders.size() + fileStructureFilters.size();
     JPanel panel = new JPanel(new BorderLayout());
     panel.setPreferredSize(JBUI.size(540, 500));
-    JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3,
+    var cols = checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3;
+    var singleRow = checkBoxCount <= cols;
+    JPanel chkPanel = new JPanel(new GridLayout(0, cols,
                                                 JBUIScale.scale(UIUtil.DEFAULT_HGAP), 0));
     chkPanel.setOpaque(false);
 
@@ -520,7 +522,9 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     topPanel.setBackground(JBUI.CurrentTheme.Popup.toolbarPanelColor());
     Dimension prefSize = topPanel.getPreferredSize();
-    prefSize.height = JBUI.CurrentTheme.Popup.toolbarHeight();
+    if (singleRow) {
+      prefSize.height = JBUI.CurrentTheme.Popup.toolbarHeight();
+    }
     topPanel.setPreferredSize(prefSize);
     topPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
 
