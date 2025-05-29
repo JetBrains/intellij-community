@@ -393,7 +393,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
         "com.intellij.notification.impl.NotificationGroupEP.DisplayType",
         "com.intellij.codeInsight.hints.InlayGroup",
-        "com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind" // Kotlin naming style
+        "com.intellij.polySymbols.references.WebSymbolReferenceProblem.ProblemKind" // Kotlin naming style
       );
 
     private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =

@@ -56,7 +56,7 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
     private static final String DECLARATIVE_INLAY_PROVIDER_EP = InlayHintsProviderExtensionBean.class.getName();
 
     private static final String WEB_SYMBOLS_INSPECTION_TOOL_MAPPING_EP =
-      "com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP";
+      "com.intellij.polySymbols.inspections.impl.WebSymbolsInspectionToolMappingEP";
   }
 
   @Override
