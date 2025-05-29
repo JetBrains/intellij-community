@@ -29,7 +29,7 @@ import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_RUBY_GEMS
 import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_NODE_PACKAGES
 import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules
+import com.intellij.webSymbols.context.PolyContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.js.WebSymbolJsKind
@@ -281,8 +281,8 @@ internal fun Reference.codeCompletion(name: String,
   }
 }
 
-internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules =
-  WebSymbolsContextKindRules.createEnablementRules {
+internal fun EnablementRules.wrap(): PolyContextKindRules.EnablementRules =
+  PolyContextKindRules.createEnablementRules {
     pkgManagerDependencies(PKG_MANAGER_NODE_PACKAGES, nodePackages)
     pkgManagerDependencies(PKG_MANAGER_RUBY_GEMS, rubyGems)
     pkgManagerDependencies(PKG_MANAGER_SYMFONY_BUNDLES, symfonyBundles)
@@ -293,8 +293,8 @@ internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules 
     fileNamePatterns(fileNamePatterns.mapNotNull { it.toRegex() })
   }
 
-internal fun DisablementRules.wrap(): WebSymbolsContextKindRules.DisablementRules =
-  WebSymbolsContextKindRules.createDisablementRules {
+internal fun DisablementRules.wrap(): PolyContextKindRules.DisablementRules =
+  PolyContextKindRules.createDisablementRules {
     fileExtensions(fileExtensions)
     fileNamePatterns(fileNamePatterns.mapNotNull { it.toRegex() })
   }

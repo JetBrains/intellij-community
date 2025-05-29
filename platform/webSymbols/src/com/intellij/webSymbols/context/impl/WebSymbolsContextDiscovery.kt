@@ -43,8 +43,8 @@ import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.PolyContextChangeListener
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
+import com.intellij.webSymbols.context.PolyContextKindRules
+import com.intellij.webSymbols.context.PolyContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider
 import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.Companion.mergeProximity
 import com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider.SourceKind
@@ -251,7 +251,7 @@ private fun loadContextRulesConfiguration(project: Project, directory: VirtualFi
           .flatMap { (name, rules) -> rules.asSequence().map { Pair(name, it) } }
       }
       .groupBy({ it.first }, { it.second })
-    WebSymbolsContextKindRules.create(enableWhen, disableWhen)
+    PolyContextKindRules.create(enableWhen, disableWhen)
   })
 
   return ContextRulesConfigInDir(project, directory, flatRules, listOf(tracker))
@@ -259,7 +259,7 @@ private fun loadContextRulesConfiguration(project: Project, directory: VirtualFi
 
 private class ContextRulesConfigInDir(val project: Project,
                                       val directory: VirtualFile,
-                                      val rules: Map<ContextKind, WebSymbolsContextKindRules>,
+                                      val rules: Map<ContextKind, PolyContextKindRules>,
                                       val dependencies: List<Any>) {
 
   private val contextByFile = ConcurrentHashMap<Pair<ContextKind, String>, ContextName>()
@@ -324,7 +324,7 @@ private fun isForbiddenFromProviders(kind: ContextKind,
                                      name: ContextName,
                                      file: VirtualFile,
                                      project: Project,
-                                     disableWhen: List<WebSymbolsContextKindRules.DisablementRules>?): Boolean =
+                                     disableWhen: List<PolyContextKindRules.DisablementRules>?): Boolean =
   WEB_SYMBOLS_CONTEXT_EP.allFor(kind, name).any { it.isForbidden(file, project) }
   || disableWhen?.any { matchFileName(file.name, it.fileNamePatterns) || matchFileExt(file.name, it.fileExtensions) } == true
 

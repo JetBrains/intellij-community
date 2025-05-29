@@ -3,10 +3,10 @@ package com.intellij.webSymbols.context
 
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.impl.WebSymbolsContextKindRulesBuilderImpl
-import com.intellij.webSymbols.context.impl.WebSymbolsContextKindRulesImpl
+import com.intellij.webSymbols.context.impl.PolyContextKindRulesImpl
 import org.jetbrains.annotations.ApiStatus
 
-interface WebSymbolsContextKindRules {
+interface PolyContextKindRules {
 
   val enable: Map<ContextName, List<EnablementRules>>
   val disable: Map<ContextName, List<DisablementRules>>
@@ -59,12 +59,12 @@ interface WebSymbolsContextKindRules {
 
     @JvmStatic
     fun create(enable: Map<ContextName, List<EnablementRules>>,
-               disable: Map<ContextName, List<DisablementRules>>): WebSymbolsContextKindRules =
-      WebSymbolsContextKindRulesImpl(enable, disable)
+               disable: Map<ContextName, List<DisablementRules>>): PolyContextKindRules =
+      PolyContextKindRulesImpl(enable, disable)
 
 
     @JvmStatic
-    fun create(builder: Builder.() -> Unit): WebSymbolsContextKindRules =
+    fun create(builder: Builder.() -> Unit): PolyContextKindRules =
       WebSymbolsContextKindRulesBuilderImpl().apply(builder).build()
 
     @JvmStatic

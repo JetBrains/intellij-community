@@ -8,7 +8,7 @@ import com.intellij.webSymbols.ContextKind
 
 interface WebSymbolsContextRulesProvider : ModificationTracker {
 
-  fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules>
+  fun getContextRules(): MultiMap<ContextKind, PolyContextKindRules>
 
   fun createPointer(): Pointer<out WebSymbolsContextRulesProvider>
 

@@ -18,7 +18,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolsPrioritizedScope
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules
+import com.intellij.webSymbols.context.PolyContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 import com.intellij.webSymbols.context.impl.buildWebSymbolsContext
 import com.intellij.webSymbols.query.*
@@ -86,8 +86,8 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
   }
 
   internal fun getContextRules(project: Project,
-                               dir: VirtualFile): Pair<MultiMap<ContextKind, WebSymbolsContextKindRules>, ModificationTracker> {
-    val result = MultiMap<ContextKind, WebSymbolsContextKindRules>()
+                               dir: VirtualFile): Pair<MultiMap<ContextKind, PolyContextKindRules>, ModificationTracker> {
+    val result = MultiMap<ContextKind, PolyContextKindRules>()
 
     getCustomScope(dir)
       .filterIsInstance<WebSymbolsContextRulesProvider>()

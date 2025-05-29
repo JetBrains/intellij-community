@@ -11,7 +11,7 @@ import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolTypeSupport
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules
+import com.intellij.webSymbols.context.PolyContextKindRules
 import com.intellij.webSymbols.customElements.json.*
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
@@ -55,7 +55,7 @@ abstract class CustomElementsManifestScopeBase :
   override fun matchContext(origin: CustomElementsJsonOrigin, context: PolyContext): Boolean =
     true
 
-  override fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules> = MultiMap.empty()
+  override fun getContextRules(): MultiMap<ContextKind, PolyContextKindRules> = MultiMap.empty()
 
   override fun getNameConversionRulesProvider(framework: FrameworkId): WebSymbolNameConversionRulesProvider =
     object : WebSymbolNameConversionRulesProvider {

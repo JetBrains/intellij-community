@@ -17,9 +17,9 @@ import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolTypeSupport
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules.DisablementRules
-import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
+import com.intellij.webSymbols.context.PolyContextKindRules
+import com.intellij.webSymbols.context.PolyContextKindRules.DisablementRules
+import com.intellij.webSymbols.context.PolyContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
@@ -38,7 +38,7 @@ abstract class WebTypesScopeBase :
   private val frameworkConfigs = mutableMapOf<WebTypes, FrameworkConfig>()
   private val contextsConfigs = mutableMapOf<WebTypes, ContextsConfig>()
 
-  private val contextRulesCache: ClearableLazyValue<MultiMap<ContextKind, WebSymbolsContextKindRules>> = createContextRulesCache()
+  private val contextRulesCache: ClearableLazyValue<MultiMap<ContextKind, PolyContextKindRules>> = createContextRulesCache()
 
   private val nameConversionRulesCache = createNameConversionRulesCache()
 
@@ -48,7 +48,7 @@ abstract class WebTypesScopeBase :
     return WebTypesSymbolNameConversionRulesProvider(framework, this, nameConversionRulesCache)
   }
 
-  override fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules> = contextRulesCache.value
+  override fun getContextRules(): MultiMap<ContextKind, PolyContextKindRules> = contextRulesCache.value
 
   protected open fun addWebTypes(webTypes: WebTypes, context: WebTypesJsonOrigin) {
     addRoot(webTypes.contributions, context)
@@ -108,7 +108,7 @@ abstract class WebTypesScopeBase :
         list.map { it.wrap(origin, this@WebTypesScopeBase, namespace, kind) }
       }
 
-  private fun createContextRulesCache(): ClearableLazyValue<MultiMap<ContextKind, WebSymbolsContextKindRules>> {
+  private fun createContextRulesCache(): ClearableLazyValue<MultiMap<ContextKind, PolyContextKindRules>> {
     return ClearableLazyValue.create {
       val deprecatedContextConfigRules = contextsConfigs.values.asSequence()
         .flatMap { it.additionalProperties.entries }
@@ -137,12 +137,12 @@ abstract class WebTypesScopeBase :
         .plus(frameworkConfigRules)
         .groupBy { it.kind }
 
-      val result = MultiMap.create<ContextKind, WebSymbolsContextKindRules>()
+      val result = MultiMap.create<ContextKind, PolyContextKindRules>()
       rulesPerKind.forEach { (kind, rules) ->
         val rulesPerName = rules.groupBy { it.name }
         val enablementRules = rulesPerName.mapValues { (_, entries) -> entries.mapNotNull { it.enablementRules } }
         val disablementRules = rulesPerName.mapValues { (_, entries) -> entries.mapNotNull { it.disablementRules } }
-        result.putValue(kind, WebSymbolsContextKindRules.create(enablementRules, disablementRules))
+        result.putValue(kind, PolyContextKindRules.create(enablementRules, disablementRules))
       }
       result
     }
