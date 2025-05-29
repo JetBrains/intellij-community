@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorBuilderImpl
+import com.intellij.webSymbols.query.impl.PolySymbolsQueryExecutorBuilderImpl
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -49,10 +49,10 @@ interface PolySymbolsQueryExecutorFactory : Disposable {
       getInstance(location.project).create(location, allowResolve)
 
     fun createCustom(): WebSymbolsQueryExecutorBuilder =
-      WebSymbolsQueryExecutorBuilderImpl()
+      PolySymbolsQueryExecutorBuilderImpl()
 
     fun createCustom(setup: WebSymbolsQueryExecutorBuilder.() -> Unit): PolySymbolsQueryExecutor =
-      WebSymbolsQueryExecutorBuilderImpl()
+      PolySymbolsQueryExecutorBuilderImpl()
         .let { setup(it); it.create() }
 
   }

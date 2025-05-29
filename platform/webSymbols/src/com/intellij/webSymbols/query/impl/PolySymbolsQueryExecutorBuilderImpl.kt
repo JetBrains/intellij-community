@@ -12,7 +12,7 @@ import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory.WebSymbolsQueryExecutorBuilder
 import com.intellij.webSymbols.query.PolySymbolsQueryResultsCustomizer
 
-class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
+class PolySymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolsScope>()
   private val customizers = mutableListOf<PolySymbolsQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
