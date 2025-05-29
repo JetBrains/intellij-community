@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.project.ProjectId
@@ -58,6 +59,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun recalculatePluginUpdates(sessionId: String)
   suspend fun disposeUpdaterService(sessionId: String)
   suspend fun notifyUpdateFinished(sessionId: String)
+  suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

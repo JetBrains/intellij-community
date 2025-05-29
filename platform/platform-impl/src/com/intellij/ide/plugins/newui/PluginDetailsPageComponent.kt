@@ -10,7 +10,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil.getProjectForComponent
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.PluginManagerCore.getPlugin
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.api.ReviewsPageContainer
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
@@ -1169,11 +1168,11 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val installedWithoutRestart = InstalledPluginsState.getInstance().wasInstalledWithoutRestart(plugin!!.pluginId)
     if (isMarketplace) {
-      val installed = InstalledPluginsState.getInstance().wasInstalled(plugin!!.pluginId)
-      restartButton!!.isVisible = installed
+      val pluginState = UiPluginManager.getInstance().getPluginInstallationState(plugin!!.pluginId)
+      val installed = pluginState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART
+      restartButton!!.isVisible = pluginState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART
 
-      installButton!!.setEnabled(getPlugin(
-        plugin!!.pluginId) == null && !installedWithoutRestart,
+      installButton!!.setEnabled(!pluginState.fullyInstalled && pluginState.status != PluginStatus.INSTALLED_WITHOUT_RESTART,
                                  IdeBundle.message("plugins.configurable.installed"))
       installButton!!.setVisible(!installed)
 

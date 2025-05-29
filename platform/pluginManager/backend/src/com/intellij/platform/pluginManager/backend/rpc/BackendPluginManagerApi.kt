@@ -12,7 +12,9 @@ import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
+import com.intellij.ide.plugins.newui.PluginStatus
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
@@ -77,6 +79,10 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
     return DefaultUiPluginManagerController.hasPluginsAvailableForEnableDisable(pluginIds)
+  }
+
+  override suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+    return DefaultUiPluginManagerController.getPluginInstallationState(pluginId)
   }
 
   override suspend fun getCustomRepoPlugins(): List<PluginUiModel> {

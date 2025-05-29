@@ -72,6 +72,7 @@ interface UiPluginManagerController {
   fun connectToUpdateServiceWithCounter(sessionId: String, callback: (Int?) -> Unit): PluginUpdatesService
   fun getAllPluginsTags(): Set<String>
   fun getAllVendors(): Set<String>
+  fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
 
   suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
 

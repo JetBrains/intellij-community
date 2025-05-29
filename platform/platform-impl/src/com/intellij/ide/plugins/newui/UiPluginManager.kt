@@ -235,6 +235,10 @@ class UiPluginManager {
     return getController().isNeedUpdate(pluginId)
   }
 
+  fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+    return getController().getPluginInstallationState(pluginId)
+  }
+
   fun getController(): UiPluginManagerController {
     if (Registry.`is`("reworked.plugin.manager.enabled")) {
       return UiPluginManagerController.EP_NAME.extensionList.firstOrNull() ?: DefaultUiPluginManagerController

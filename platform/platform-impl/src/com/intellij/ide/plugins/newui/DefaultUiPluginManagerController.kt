@@ -221,6 +221,19 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return MarketplaceRequests.getInstance().marketplaceVendorsSupplier.get()
   }
 
+  override fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+    val plugin = PluginManagerCore.getPlugin(pluginId)
+    val pluginsState = InstalledPluginsState.getInstance()
+    val status = when {
+      pluginsState.wasInstalledWithoutRestart(pluginId) -> PluginStatus.INSTALLED_WITHOUT_RESTART
+      pluginsState.wasUninstalledWithoutRestart(pluginId) -> PluginStatus.UNINSTALLED_WITHOUT_RESTART
+      pluginsState.wasInstalled(pluginId) -> PluginStatus.INSTALLED_AND_REQUIRED_RESTART
+      else -> null
+    }
+    return PluginInstallationState(plugin != null, status)
+
+  }
+
   override fun performInstallOperation(
     request: InstallPluginRequest,
     parentComponent: JComponent?,

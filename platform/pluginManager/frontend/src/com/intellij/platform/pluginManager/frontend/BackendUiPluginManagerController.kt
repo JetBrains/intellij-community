@@ -13,6 +13,8 @@ import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginStatus
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.UiPluginManagerController
@@ -99,6 +101,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun isPluginInstalled(pluginId: PluginId): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().isPluginInstalled(pluginId) }
+  }
+
+  override fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
+    return awaitForResult { PluginManagerApi.getInstance().getPluginInstallationState(pluginId) }
   }
 
   override fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
