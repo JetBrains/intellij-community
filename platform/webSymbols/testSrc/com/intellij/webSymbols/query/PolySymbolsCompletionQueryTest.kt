@@ -14,7 +14,7 @@ import com.intellij.webSymbols.testFramework.query.printCodeCompletionItems
 import com.intellij.webSymbols.webSymbolsTestsDataPath
 import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
-class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
+class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
   override val testPath: String = "$webSymbolsTestsDataPath/query/completion"
 

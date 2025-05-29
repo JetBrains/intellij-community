@@ -18,7 +18,7 @@ import com.intellij.webSymbols.webTypes.filters.WebSymbolsMatchPrefixFilter
 import com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP
 import java.io.File
 
-abstract class WebSymbolsMockQueryExecutorTestBase : UsefulTestCase() {
+abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
 
   abstract val testPath: String
 

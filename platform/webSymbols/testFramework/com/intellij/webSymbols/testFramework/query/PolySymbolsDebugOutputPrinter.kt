@@ -14,7 +14,7 @@ import com.intellij.webSymbols.utils.nameSegments
 import java.util.Locale
 import java.util.Stack
 
-open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
+open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
   private val parents = Stack<PolySymbol>()
 

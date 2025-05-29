@@ -8,7 +8,7 @@ import com.intellij.webSymbols.utils.completeMatch
 import com.intellij.webSymbols.webSymbolsTestsDataPath
 import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
-class WebSymbolsListQueryTest : WebSymbolsMockQueryExecutorTestBase() {
+class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
   override val testPath: String = "$webSymbolsTestsDataPath/query/list"
 

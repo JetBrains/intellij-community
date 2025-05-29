@@ -27,7 +27,7 @@ fun UsefulTestCase.doTest(testPath: String, test: () -> String) {
 }
 
 fun printCodeCompletionItems(items: List<PolySymbolCodeCompletionItem>,
-                             printer: DebugOutputPrinter = WebSymbolsDebugOutputPrinter()): String =
+                             printer: DebugOutputPrinter = PolySymbolsDebugOutputPrinter()): String =
   printer.printValue(
     items.sortedWith(Comparator
                        .comparing<PolySymbolCodeCompletionItem, PolySymbol.Priority> {
@@ -36,7 +36,7 @@ fun printCodeCompletionItems(items: List<PolySymbolCodeCompletionItem>,
                        .thenComparing(Function { it.name })
                        .thenComparing(Function { it.offset })))
 
-fun printMatches(matches: List<PolySymbol>, printer: DebugOutputPrinter = WebSymbolsDebugOutputPrinter()): String =
+fun printMatches(matches: List<PolySymbol>, printer: DebugOutputPrinter = PolySymbolsDebugOutputPrinter()): String =
   printer.printValue(
     matches
       .sortedWith(Comparator
