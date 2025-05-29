@@ -37,7 +37,7 @@
       <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolFactory"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.documentationCustomizer"
-                    interface="com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer"
+                    interface="com.intellij.webSymbols.documentation.PolySymbolDocumentationCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.codeCompletionItemCustomizer"
                     interface="com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer"

@@ -19,7 +19,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.documentation.PolySymbolDocumentation
-import com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
+import com.intellij.webSymbols.documentation.PolySymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.WebSymbolJsKind
@@ -295,7 +295,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
    * Returns [PolySymbolDocumentation] - an interface holding information required to render documentation for the symbol.
    * By default, it's contents are build from the available Web Symbol information.
    *
-   * To customize symbols documentation, one can override the method, or implement [WebSymbolDocumentationCustomizer].
+   * To customize symbols documentation, one can override the method, or implement [PolySymbolDocumentationCustomizer].
    *
    * [PolySymbolDocumentation] interface provides builder methods for customizing the documentation.
    * `with*` methods return a copy of the documentation with customized fields.

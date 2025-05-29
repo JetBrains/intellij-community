@@ -5,12 +5,12 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
 
-interface WebSymbolDocumentationCustomizer {
+interface PolySymbolDocumentationCustomizer {
 
   fun customize(symbol: PolySymbol, location: PsiElement?, documentation: PolySymbolDocumentation): PolySymbolDocumentation
 
   companion object {
-    val EP_NAME: ExtensionPointName<WebSymbolDocumentationCustomizer> = ExtensionPointName.create<WebSymbolDocumentationCustomizer>(
+    val EP_NAME: ExtensionPointName<PolySymbolDocumentationCustomizer> = ExtensionPointName.create<PolySymbolDocumentationCustomizer>(
       "com.intellij.webSymbols.documentationCustomizer")
   }
 }

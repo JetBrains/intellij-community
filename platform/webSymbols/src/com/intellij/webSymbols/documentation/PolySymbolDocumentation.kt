@@ -155,7 +155,7 @@ interface PolySymbolDocumentation {
       PolySymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, required, defaultValue, library, icon,
                                   descriptionSections, footnote, null)
         .let { doc: PolySymbolDocumentation ->
-          WebSymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
+          PolySymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
             customizer.customize(symbol, location, documentation)
           }
         }
