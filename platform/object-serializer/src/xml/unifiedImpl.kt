@@ -53,6 +53,11 @@ fun deserializeAsJdomElement(
 
 @SettingsInternalApi
 fun createSettingKey(componentName: String, binding: NestedBinding?): String {
+  return createSettingKey(componentName, binding?.propertyName)
+}
+
+@SettingsInternalApi
+fun createSettingKey(componentName: String, bindingName: String?): String {
   val normalizedComponentName = componentName.replace('.', '-')
-  return if (binding == null) normalizedComponentName else "$normalizedComponentName.${binding.propertyName}"
+  return if (bindingName == null) normalizedComponentName else "$normalizedComponentName.$bindingName"
 }

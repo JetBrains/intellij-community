@@ -5,6 +5,8 @@ import com.intellij.ide.settings.RemoteSettingInfo
 import com.intellij.ide.settings.RemoteSettingInfoProvider
 
 internal class GitRemoteSettingsInfoProvider : RemoteSettingInfoProvider {
+  private val gitSettingsKeyNoDots = GitVcsSettings.SETTINGS_KEY.replace('.', '-')
+
   override fun getRemoteSettingsInfo(): Map<String, RemoteSettingInfo> =
-    mapOf(GitVcsSettings.SETTINGS_KEY to RemoteSettingInfo(RemoteSettingInfo.Direction.OnlyFromBackend))
+    mapOf(gitSettingsKeyNoDots to RemoteSettingInfo(RemoteSettingInfo.Direction.OnlyFromBackend))
 }
