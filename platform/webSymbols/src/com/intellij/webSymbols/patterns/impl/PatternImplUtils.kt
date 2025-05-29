@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
@@ -20,7 +20,7 @@ internal val WebSymbolCodeCompletionItem.stopSequencePatternEvaluation
   get() = (this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation
 
 internal fun <T : MatchResult> T.addOwner(owner: PolySymbol): T {
-  val newSegments = mutableListOf<WebSymbolNameSegment>()
+  val newSegments = mutableListOf<PolySymbolNameSegment>()
   var foundNonEmpty = false
   var applied = false
   for (segment in segments) {
@@ -45,13 +45,13 @@ internal fun <T : MatchResult> T.addOwner(owner: PolySymbol): T {
     }
   }
   if (!applied) {
-    newSegments.add(0, WebSymbolNameSegment.create(start, start, owner).copy(highlightEnd = end))
+    newSegments.add(0, PolySymbolNameSegment.create(start, start, owner).copy(highlightEnd = end))
   }
   return copy(segments = newSegments)
 }
 
 @Suppress("UNCHECKED_CAST")
-internal fun <T : MatchResult> T.copy(segments: List<WebSymbolNameSegment>): T =
+internal fun <T : MatchResult> T.copy(segments: List<PolySymbolNameSegment>): T =
   when (this) {
     is ListResult -> ListResult(name, segments)
     else -> MatchResult(segments)
@@ -89,7 +89,7 @@ internal fun getPatternCompletablePrefix(pattern: String?): String {
 
 internal fun <T> withPrevMatchScope(
   scopeStack: Stack<PolySymbolsScope>,
-  prevResult: List<WebSymbolNameSegment>?,
+  prevResult: List<PolySymbolNameSegment>?,
   action: () -> T,
 ): T =
   if (prevResult.isNullOrEmpty()) {
@@ -137,7 +137,7 @@ internal fun MatchResult.removeEmptySegments(): MatchResult =
       .ifEmpty { listOf(segments.first()) }
   )
 
-internal fun WebSymbolNameSegment.isEmpty() =
+internal fun PolySymbolNameSegment.isEmpty() =
   start == end && problem == null && symbols.isEmpty() && apiStatus == null
 
 internal fun MatchResult.prefixedWith(prevResult: MatchResult?): MatchResult =

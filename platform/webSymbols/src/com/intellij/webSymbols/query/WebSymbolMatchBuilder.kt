@@ -2,12 +2,12 @@
 package com.intellij.webSymbols.query
 
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 
 interface WebSymbolMatchBuilder {
-  fun addNameSegments(value: List<WebSymbolNameSegment>): WebSymbolMatchBuilder
-  fun addNameSegments(vararg value: WebSymbolNameSegment): WebSymbolMatchBuilder
-  fun addNameSegment(value: WebSymbolNameSegment): WebSymbolMatchBuilder
+  fun addNameSegments(value: List<PolySymbolNameSegment>): WebSymbolMatchBuilder
+  fun addNameSegments(vararg value: PolySymbolNameSegment): WebSymbolMatchBuilder
+  fun addNameSegment(value: PolySymbolNameSegment): WebSymbolMatchBuilder
   fun explicitPriority(value: PolySymbol.Priority): WebSymbolMatchBuilder
   fun explicitProximity(value: Int): WebSymbolMatchBuilder
   fun setProperty(name: String, value: Any): WebSymbolMatchBuilder

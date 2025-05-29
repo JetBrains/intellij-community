@@ -6,7 +6,7 @@ import com.intellij.webSymbols.testFramework.DebugOutputPrinter
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.utils.completeMatch
@@ -23,7 +23,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       is WebSymbolCodeCompletionItem -> builder.printCodeCompletionItem(level, value)
       is PolySymbol -> builder.printSymbol(level, value)
       is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
-      is WebSymbolNameSegment -> builder.printSegment(level, value)
+      is PolySymbolNameSegment -> builder.printSegment(level, value)
       is PolySymbolApiStatus -> builder.printApiStatus(value)
       is Set<*> -> builder.printSet(value)
       else -> super.printValueImpl(builder, level, value)
@@ -89,7 +89,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
 
   private fun StringBuilder.printSegment(topLevel: Int,
-                                         segment: WebSymbolNameSegment
+                                         segment: PolySymbolNameSegment
   ): StringBuilder =
     printObject(topLevel) { level ->
       printProperty(level, "name-part", parents.peek().let { if (it.pattern == null) segment.getName(parents.peek()) else "" })

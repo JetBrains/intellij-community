@@ -30,14 +30,14 @@ import com.intellij.util.SmartList
 import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
+import com.intellij.webSymbols.PolySymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer
 import com.intellij.webSymbols.highlighting.newSilentAnnotationWithDebugInfo
-import com.intellij.webSymbols.impl.WebSymbolNameSegmentImpl
+import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.highlightingEnd
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.WebSymbolReference
@@ -83,19 +83,19 @@ class WebSymbolsHighlightingAnnotator : Annotator {
   }
 
   private data class SegmentHighlightingInfo(
-    val segment: WebSymbolNameSegment,
+    val segment: PolySymbolNameSegment,
     val offset: Int,
     val depth: Int,
     val parentKind: PolySymbolQualifiedKind?,
     val parentTextAttributesKey: TextAttributesKey?,
-    val additionalChildSegments: List<Pair<Int, WebSymbolNameSegment>>,
+    val additionalChildSegments: List<Pair<Int, PolySymbolNameSegment>>,
   )
 
   private fun highlightSymbols(offsetInFile: Int, topLevelSymbols: Collection<PolySymbol>, host: PsiExternalReferenceHost, holder: AnnotationHolder) {
     val result = MultiMap<TextRange, Pair<Int, TextAttributesKey>>()
 
     val queue = LinkedList(topLevelSymbols.map {
-      SegmentHighlightingInfo(WebSymbolNameSegment.create(it), offsetInFile, 0, null,
+      SegmentHighlightingInfo(PolySymbolNameSegment.create(it), offsetInFile, 0, null,
                               WebSymbolHighlightingCustomizer.getDefaultHostTextAttributes(host), emptyList())
     })
     val processedSymbols = mutableSetOf<PolySymbol>()
@@ -103,7 +103,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
       val (nameSegment, offset, depth, parentKind, parentTextAttributesKey, additionalChildSegments) = queue.removeFirst()
       val symbols = nameSegment.symbols
       val range = TextRange(nameSegment.start + offset,
-                            (nameSegment as WebSymbolNameSegmentImpl).let { it.highlightingEnd ?: it.end } + offset)
+                            (nameSegment as PolySymbolNameSegmentImpl).let { it.highlightingEnd ?: it.end } + offset)
       if (symbols.isEmpty()) {
         val segmentKind = nameSegment.symbolKinds.singleOrNull()
         if (nameSegment.problem == MatchProblem.UNKNOWN_SYMBOL && segmentKind != null) {
@@ -149,7 +149,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
             while (i < allNestedSegments.size) {
               val (nestedOffset, segment) = allNestedSegments[i++]
               if (segment.start == segment.end) continue
-              val segmentNestedSegments = SmartList<Pair<Int, WebSymbolNameSegment>>()
+              val segmentNestedSegments = SmartList<Pair<Int, PolySymbolNameSegment>>()
               // Matched sequence patterns are not wrapped with complex patterns, so they appear flattened
               // Expand such patterns using highlightingEnd
               if ((segment.highlightingEnd ?: segment.end) != segment.end && segment.symbols.isNotEmpty()) {

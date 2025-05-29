@@ -24,7 +24,7 @@ import javax.swing.Icon
 
 internal open class PolySymbolMatchImpl private constructor(
   override val matchedName: String,
-  override val nameSegments: List<WebSymbolNameSegment>,
+  override val nameSegments: List<PolySymbolNameSegment>,
   override val namespace: SymbolNamespace,
   override val kind: SymbolKind,
   override val origin: PolySymbolOrigin,
@@ -170,7 +170,7 @@ internal open class PolySymbolMatchImpl private constructor(
 
   override fun hashCode(): Int = name.hashCode()
 
-  internal fun withSegments(segments: List<WebSymbolNameSegment>): PolySymbolMatch =
+  internal fun withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
     create(matchedName, segments, namespace, kind, origin, explicitPriority, explicitProximity, additionalProperties)
 
   class ReverseListIterator<T>(list: List<T>) : Iterator<T> {
@@ -191,7 +191,7 @@ internal open class PolySymbolMatchImpl private constructor(
 
     private fun create(
       matchedName: String,
-      nameSegments: List<WebSymbolNameSegment>,
+      nameSegments: List<PolySymbolNameSegment>,
       namespace: SymbolNamespace,
       kind: SymbolKind,
       origin: PolySymbolOrigin,
@@ -205,7 +205,7 @@ internal open class PolySymbolMatchImpl private constructor(
       else PolySymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin,
                                explicitPriority, explicitProximity, additionalProperties)
 
-    private fun List<WebSymbolNameSegment>.equalsIgnoreOffset(other: List<WebSymbolNameSegment>): Boolean {
+    private fun List<PolySymbolNameSegment>.equalsIgnoreOffset(other: List<PolySymbolNameSegment>): Boolean {
       if (size != other.size) return false
       if (this.isEmpty()) return true
       val startOffset1 = this[0].start
@@ -232,7 +232,7 @@ internal open class PolySymbolMatchImpl private constructor(
 
   private class PsiSourcedPolySymbolMatch(
     matchedName: String,
-    nameSegments: List<WebSymbolNameSegment>,
+    nameSegments: List<PolySymbolNameSegment>,
     namespace: SymbolNamespace,
     kind: SymbolKind,
     origin: PolySymbolOrigin,
@@ -267,7 +267,7 @@ internal open class PolySymbolMatchImpl private constructor(
     private var origin: PolySymbolOrigin,
   ) : WebSymbolMatchBuilder {
 
-    private var nameSegments = mutableListOf<WebSymbolNameSegment>()
+    private var nameSegments = mutableListOf<PolySymbolNameSegment>()
     private var properties = mutableMapOf<String, Any>()
     private var explicitPriority: Priority? = null
     private var explicitProximity: Int? = null
@@ -276,15 +276,15 @@ internal open class PolySymbolMatchImpl private constructor(
       create(matchedName, nameSegments, qualifiedKind.namespace, qualifiedKind.kind,
              origin, explicitPriority, explicitProximity, properties)
 
-    override fun addNameSegments(value: List<WebSymbolNameSegment>): WebSymbolMatchBuilder = this.also {
+    override fun addNameSegments(value: List<PolySymbolNameSegment>): WebSymbolMatchBuilder = this.also {
       nameSegments.addAll(value)
     }
 
-    override fun addNameSegments(vararg value: WebSymbolNameSegment): WebSymbolMatchBuilder = this.also {
+    override fun addNameSegments(vararg value: PolySymbolNameSegment): WebSymbolMatchBuilder = this.also {
       nameSegments.addAll(value)
     }
 
-    override fun addNameSegment(value: WebSymbolNameSegment): WebSymbolMatchBuilder = this.also {
+    override fun addNameSegment(value: PolySymbolNameSegment): WebSymbolMatchBuilder = this.also {
       nameSegments.add(value)
     }
 
@@ -305,7 +305,7 @@ internal open class PolySymbolMatchImpl private constructor(
     webSymbolMatch: PolySymbolMatchImpl,
     private val newInstanceProvider: (
       matchedName: String,
-      nameSegments: List<WebSymbolNameSegment>,
+      nameSegments: List<PolySymbolNameSegment>,
       namespace: SymbolNamespace,
       kind: SymbolKind,
       origin: PolySymbolOrigin,
@@ -335,7 +335,7 @@ internal open class PolySymbolMatchImpl private constructor(
           if (dereferencingProblems.get()) return null
 
           @Suppress("UNCHECKED_CAST")
-          newInstanceProvider(matchedName, it as List<WebSymbolNameSegment>, namespace, kind, origin,
+          newInstanceProvider(matchedName, it as List<PolySymbolNameSegment>, namespace, kind, origin,
                               explicitPriority, explicitProximity, dereferencedProperties)
         }
 

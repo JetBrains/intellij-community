@@ -22,7 +22,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.webSymbols.impl.removeZeroLengthSegmentsRecursively
@@ -71,7 +71,7 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
 internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: PolySymbol, showProblems: Boolean): List<WebSymbolReference> {
   val problemOnlyRanges = mutableMapOf<TextRange, Boolean>()
-  val result = MultiMap<TextRange, WebSymbolNameSegment>()
+  val result = MultiMap<TextRange, PolySymbolNameSegment>()
 
   val queue = LinkedList(symbol.nameSegments.map { Pair(it, 0) })
   while (queue.isNotEmpty()) {
@@ -95,7 +95,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: P
         .takeWhile { it.nameSegments.size == 1 }
 
       if (unwrappedSymbols.isNotEmpty()) {
-        result.putValue(range, WebSymbolNameSegment.create(0, nameSegment.end, unwrappedSymbols))
+        result.putValue(range, PolySymbolNameSegment.create(0, nameSegment.end, unwrappedSymbols))
         problemOnlyRanges[range] = false
       }
       else {
@@ -137,7 +137,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: P
 private open class NameSegmentReference(
   private val element: PsiElement,
   private val rangeInElement: TextRange,
-  val nameSegments: Collection<WebSymbolNameSegment>,
+  val nameSegments: Collection<PolySymbolNameSegment>,
 ) : WebSymbolReference {
 
   override fun getElement(): PsiElement = element
@@ -163,7 +163,7 @@ private class NameSegmentReferenceWithProblem(
   element: PsiElement,
   private val symbol: PolySymbol,
   rangeInElement: TextRange,
-  nameSegments: Collection<WebSymbolNameSegment>,
+  nameSegments: Collection<PolySymbolNameSegment>,
   private val segmentsOffset: Int,
   private val apiStatus: PolySymbolApiStatus?,
   private val problemOnly: Boolean,

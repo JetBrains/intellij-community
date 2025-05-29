@@ -8,7 +8,7 @@ import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.impl.copy
 import com.intellij.webSymbols.impl.selectBest
@@ -50,7 +50,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           if (!isRequired)
             matchResults.filter { matchResult ->
               matchResult.segments
-                .all { it.problem != WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART }
+                .all { it.problem != PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART }
             }
           else
             matchResults
@@ -58,9 +58,9 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         .postProcess(owner, apiStatus, priority, proximity)
         .let { matchResults ->
           if (!isRequired)
-            matchResults + MatchResult(WebSymbolNameSegment.create(start, start))
+            matchResults + MatchResult(PolySymbolNameSegment.create(start, start))
           else if (matchResults.isEmpty())
-            listOf(MatchResult(WebSymbolNameSegment.create(start, start, problem = WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART)))
+            listOf(MatchResult(PolySymbolNameSegment.create(start, start, problem = PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART)))
           else
             matchResults
         }
@@ -76,7 +76,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         if (isRequired)
           emptyList()
         else
-          listOf(ListResult("", WebSymbolNameSegment.create(0, 0)))
+          listOf(ListResult("", PolySymbolNameSegment.create(0, 0)))
       else
         patterns
           .flatMap { it.list(null, scopeStack, newSymbolsResolver, params) }
@@ -85,7 +85,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           .flatMap { it.postProcess(owner, apiStatus, priority, proximity) }
           .let {
             if (!isRequired)
-              it + ListResult("", WebSymbolNameSegment.create(0, 0))
+              it + ListResult("", PolySymbolNameSegment.create(0, 0))
             else
               it
           }
@@ -264,8 +264,8 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                 if (StringUtil.equals(prev, cur)) {
                   matchResult = MatchResult(
                     matchResult.segments.map { segment ->
-                      if (segment.problem == null || segment.problem == WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL)
-                        segment.copy(problem = WebSymbolNameSegment.MatchProblem.DUPLICATE)
+                      if (segment.problem == null || segment.problem == PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL)
+                        segment.copy(problem = PolySymbolNameSegment.MatchProblem.DUPLICATE)
                       else segment
                     }
                   )
@@ -413,7 +413,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     val start: Int,
     val end: Int,
     val prevNames: Set<String>,
-    val prevMatchScope: List<WebSymbolNameSegment>,
+    val prevMatchScope: List<PolySymbolNameSegment>,
   )
 
   override fun toString(): String =

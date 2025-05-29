@@ -5,15 +5,15 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.utils.matchedNameOrName
 
-class WebSymbolNameSegmentImpl internal constructor(
+class PolySymbolNameSegmentImpl internal constructor(
   override val start: Int,
   override val end: Int,
   override val symbols: List<PolySymbol>,
-  override val problem: WebSymbolNameSegment.MatchProblem?,
+  override val problem: PolySymbolNameSegment.MatchProblem?,
   override val displayName: @NlsSafe String?,
   override val matchScore: Int,
   symbolKinds: Set<PolySymbolQualifiedKind>?,
@@ -21,7 +21,7 @@ class WebSymbolNameSegmentImpl internal constructor(
   private val explicitPriority: PolySymbol.Priority?,
   private val explicitProximity: Int?,
   internal val highlightingEnd: Int?,
-) : WebSymbolNameSegment {
+) : PolySymbolNameSegment {
 
   init {
     assert(start <= end)
@@ -46,36 +46,36 @@ class WebSymbolNameSegmentImpl internal constructor(
   override fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
 
-  internal fun withOffset(offset: Int): WebSymbolNameSegmentImpl =
-    WebSymbolNameSegmentImpl(start + offset, end + offset, symbols, problem, displayName,
-                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                             highlightingEnd?.let { it + offset })
+  internal fun withOffset(offset: Int): PolySymbolNameSegmentImpl =
+    PolySymbolNameSegmentImpl(start + offset, end + offset, symbols, problem, displayName,
+                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
+                              highlightingEnd?.let { it + offset })
 
   internal fun withDisplayName(displayName: String?) =
-    WebSymbolNameSegmentImpl(start, end, symbols, problem, this.displayName ?: displayName,
-                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                             highlightingEnd)
+    PolySymbolNameSegmentImpl(start, end, symbols, problem, this.displayName ?: displayName,
+                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
+                              highlightingEnd)
 
   internal fun withRange(start: Int, end: Int) =
-    WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName,
-                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                             null)
+    PolySymbolNameSegmentImpl(start, end, symbols, problem, displayName,
+                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
+                              null)
 
   internal fun withSymbols(symbols: List<PolySymbol>) =
-    WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName,
-                             matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                             highlightingEnd)
+    PolySymbolNameSegmentImpl(start, end, symbols, problem, displayName,
+                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
+                              highlightingEnd)
 
   internal fun copy(
     apiStatus: PolySymbolApiStatus?,
     priority: PolySymbol.Priority?,
     proximity: Int?,
-    problem: WebSymbolNameSegment.MatchProblem?,
+    problem: PolySymbolNameSegment.MatchProblem?,
     symbols: List<PolySymbol>,
     highlightEnd: Int? = null,
-  ): WebSymbolNameSegmentImpl =
-    WebSymbolNameSegmentImpl(start, end, this.symbols + symbols, problem ?: this.problem,
-                             displayName, matchScore, forcedSymbolKinds,
+  ): PolySymbolNameSegmentImpl =
+    PolySymbolNameSegmentImpl(start, end, this.symbols + symbols, problem ?: this.problem,
+                              displayName, matchScore, forcedSymbolKinds,
                              apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
                              proximity ?: this.explicitProximity, highlightEnd ?: this.highlightingEnd)
 
@@ -88,14 +88,14 @@ class WebSymbolNameSegmentImpl internal constructor(
     && explicitProximity == null
     && symbols.isNotEmpty()
 
-  override fun createPointer(): Pointer<WebSymbolNameSegment> =
+  override fun createPointer(): Pointer<PolySymbolNameSegment> =
     NameSegmentPointer(this)
 
   override fun toString(): String =
     "<$start:$end${if (problem != null) ":$problem" else ""}-${symbols.size}cs>"
 
 
-  private class NameSegmentPointer(nameSegment: WebSymbolNameSegmentImpl) : Pointer<WebSymbolNameSegment> {
+  private class NameSegmentPointer(nameSegment: PolySymbolNameSegmentImpl) : Pointer<PolySymbolNameSegment> {
 
     private val start = nameSegment.start
     private val end = nameSegment.end
@@ -111,13 +111,13 @@ class WebSymbolNameSegmentImpl internal constructor(
     private val explicitProximity = nameSegment.explicitProximity
     private val highlightingEnd = nameSegment.highlightingEnd
 
-    override fun dereference(): WebSymbolNameSegmentImpl? =
+    override fun dereference(): PolySymbolNameSegmentImpl? =
       symbols.map { it.dereference() }
         .takeIf { it.all { symbol -> symbol != null } }
         ?.let {
           @Suppress("UNCHECKED_CAST")
-          (WebSymbolNameSegmentImpl(start, end, it as List<PolySymbol>, problem, displayName, matchScore,
-                                    types, explicitApiStatus, explicitPriority, explicitProximity, highlightingEnd))
+          (PolySymbolNameSegmentImpl(start, end, it as List<PolySymbol>, problem, displayName, matchScore,
+                                     types, explicitApiStatus, explicitPriority, explicitProximity, highlightingEnd))
         }
 
   }

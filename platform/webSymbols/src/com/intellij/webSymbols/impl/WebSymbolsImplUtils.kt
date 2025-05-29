@@ -12,7 +12,7 @@ import com.intellij.util.containers.Interner
 import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -39,7 +39,7 @@ internal fun Icon.scaleToHeight(height: Int): Icon {
 }
 
 internal fun <T> List<T>.selectBest(
-  segmentsProvider: (T) -> List<WebSymbolNameSegment>,
+  segmentsProvider: (T) -> List<PolySymbolNameSegment>,
   priorityProvider: (T) -> PolySymbol.Priority?,
   isExtension: (T) -> Boolean,
 ) =
@@ -95,32 +95,32 @@ internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: WebSymbols
     && (params.virtualSymbols != false || !symbol.virtual)
   }
 
-internal fun WebSymbolNameSegment.withOffset(offset: Int): WebSymbolNameSegmentImpl =
-  (this as WebSymbolNameSegmentImpl).withOffset(offset)
+internal fun PolySymbolNameSegment.withOffset(offset: Int): PolySymbolNameSegmentImpl =
+  (this as PolySymbolNameSegmentImpl).withOffset(offset)
 
-internal fun WebSymbolNameSegment.withDisplayName(displayName: String?) =
-  (this as WebSymbolNameSegmentImpl).withDisplayName(displayName)
+internal fun PolySymbolNameSegment.withDisplayName(displayName: String?) =
+  (this as PolySymbolNameSegmentImpl).withDisplayName(displayName)
 
-internal fun WebSymbolNameSegment.withRange(start: Int, end: Int) =
-  (this as WebSymbolNameSegmentImpl).withRange(start, end)
+internal fun PolySymbolNameSegment.withRange(start: Int, end: Int) =
+  (this as PolySymbolNameSegmentImpl).withRange(start, end)
 
-internal val WebSymbolNameSegment.highlightingEnd: Int?
+internal val PolySymbolNameSegment.highlightingEnd: Int?
   get() =
-    (this as WebSymbolNameSegmentImpl).highlightingEnd
+    (this as PolySymbolNameSegmentImpl).highlightingEnd
 
-internal fun WebSymbolNameSegment.copy(
+internal fun PolySymbolNameSegment.copy(
   apiStatus: PolySymbolApiStatus? = null,
   priority: PolySymbol.Priority? = null,
   proximity: Int? = null,
-  problem: WebSymbolNameSegment.MatchProblem? = null,
+  problem: PolySymbolNameSegment.MatchProblem? = null,
   symbols: List<PolySymbol> = emptyList(),
   highlightEnd: Int? = null,
-): WebSymbolNameSegmentImpl =
-  (this as WebSymbolNameSegmentImpl).copy(apiStatus, priority, proximity, problem, symbols, highlightEnd)
+): PolySymbolNameSegmentImpl =
+  (this as PolySymbolNameSegmentImpl).copy(apiStatus, priority, proximity, problem, symbols, highlightEnd)
 
 @ApiStatus.Internal
-fun WebSymbolNameSegment.canUnwrapSymbols(): Boolean =
-  (this as WebSymbolNameSegmentImpl).canUnwrapSymbols()
+fun PolySymbolNameSegment.canUnwrapSymbols(): Boolean =
+  (this as PolySymbolNameSegmentImpl).canUnwrapSymbols()
 
 internal fun PolySymbol.removeZeroLengthSegmentsRecursively(): List<PolySymbol> {
   if (this !is PolySymbolMatch) return listOf(this)

@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -85,8 +85,8 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     var stop = false
     process(
       listOf(SequenceCompletionResult(
-        MatchResult(WebSymbolNameSegment.create(start, start)),
-        MatchResult(WebSymbolNameSegment.create(start, start)),
+        MatchResult(PolySymbolNameSegment.create(start, start)),
+        MatchResult(PolySymbolNameSegment.create(start, start)),
         null))
     ) { matches, pattern, staticPrefixes ->
       val completeAfterChars = staticPrefixes.mapNotNull { it.getOrNull(0) }.toList()
@@ -155,11 +155,11 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
       ?.let {
         if (pattern is CompletionAutoPopupPattern && !pattern.isSticky)
-          if (symbolsResolver == null || matchResult.segments.any { it.problem == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART })
+          if (symbolsResolver == null || matchResult.segments.any { it.problem == PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART })
             emptyList()
           else
-            listOf(SequenceCompletionResult(MatchResult(WebSymbolNameSegment.create(matchResult.end, matchResult.end)),
-                                            MatchResult(WebSymbolNameSegment.create(matchResult.end, matchResult.end)),
+            listOf(SequenceCompletionResult(MatchResult(PolySymbolNameSegment.create(matchResult.end, matchResult.end)),
+                                            MatchResult(PolySymbolNameSegment.create(matchResult.end, matchResult.end)),
                                             null))
         else
           listOf(SequenceCompletionResult(matchResult, matchResult, null))
@@ -266,13 +266,13 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
       if (matchResult != null
           && matchResult.end >= completionPos
-          && matchResult.segments.all { it.problem != WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART }) {
+          && matchResult.segments.all { it.problem != PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART }) {
         if (pattern.isSticky)
           results.add(SequenceCompletionResult(matchResult, matchResult, requiredPart))
         else
           results.add(SequenceCompletionResult(
-            MatchResult(WebSymbolNameSegment.create(matchResult.end, matchResult.end)),
-            MatchResult(WebSymbolNameSegment.create(matchResult.end, matchResult.end)), null)
+            MatchResult(PolySymbolNameSegment.create(matchResult.end, matchResult.end)),
+            MatchResult(PolySymbolNameSegment.create(matchResult.end, matchResult.end)), null)
           )
       }
     }
@@ -304,7 +304,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
         // Ensure that if we have a proper regex match,
         // we have that in completion items to correctly complete following segments
         if (lastMatchedSegment != null
-            && lastMatchedSegment.problem.let { it == null || it == WebSymbolNameSegment.MatchProblem.DUPLICATE }
+            && lastMatchedSegment.problem.let { it == null || it == PolySymbolNameSegment.MatchProblem.DUPLICATE }
             && lastMatchedSegment.start <= params.position
             && matchResult.segments.size - 1 == (prevResult?.segments?.size ?: 0)
             && lastMatchedSegment.start < lastMatchedSegment.end
@@ -387,13 +387,13 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
 
   private fun concatSymbols(name: String, firstNameLength: Int, first: PolySymbol?, second: PolySymbol?): PolySymbol? {
 
-    fun PolySymbol?.toNameSegments(nameStart: Int, nameEnd: Int): List<WebSymbolNameSegment> =
+    fun PolySymbol?.toNameSegments(nameStart: Int, nameEnd: Int): List<PolySymbolNameSegment> =
       if (this == null)
-        listOf(WebSymbolNameSegment.create(nameStart, nameEnd))
+        listOf(PolySymbolNameSegment.create(nameStart, nameEnd))
       else if (this is PolySymbolMatch && StringUtil.equals(matchedName, CharSequenceSubSequence(name, nameStart, nameEnd)))
         this.nameSegments.withOffset(nameStart)
       else
-        listOf(WebSymbolNameSegment.create(nameStart, nameEnd, this))
+        listOf(PolySymbolNameSegment.create(nameStart, nameEnd, this))
 
     val mainSymbol = second ?: first ?: return null
 

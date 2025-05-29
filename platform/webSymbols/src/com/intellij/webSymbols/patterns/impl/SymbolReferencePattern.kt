@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.applyIf
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.impl.withDisplayName
@@ -30,9 +30,9 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
                      end: Int): List<MatchResult> {
     if (start == end) {
       // TODO should be "missing required part", but needs improvements in sequence pattern code completion
-      return listOf(MatchResult(listOf(WebSymbolNameSegment.create(
+      return listOf(MatchResult(listOf(PolySymbolNameSegment.create(
         start, end, emptyList(),
-        problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
+        problem = PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
         displayName = displayName,
         symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: scopeStack.lastPolySymbol) ?: emptySet()
       ))))
@@ -52,14 +52,14 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
           }
 
         hits.isNotEmpty() ->
-          listOf(WebSymbolNameSegment.create(
+          listOf(PolySymbolNameSegment.create(
             start, end, hits, displayName = displayName
           ))
 
-        else -> listOf(WebSymbolNameSegment.create(
+        else -> listOf(PolySymbolNameSegment.create(
           start, end,
           emptyList(),
-          problem = WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
+          problem = PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
           displayName = displayName,
           symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: scopeStack.lastPolySymbol) ?: emptySet(),
         ))
@@ -83,7 +83,7 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
             }
 
           list.isNotEmpty() ->
-            listOf(ListResult(name, WebSymbolNameSegment.create(
+            listOf(ListResult(name, PolySymbolNameSegment.create(
               0, name.length, list, displayName = displayName
             )))
 

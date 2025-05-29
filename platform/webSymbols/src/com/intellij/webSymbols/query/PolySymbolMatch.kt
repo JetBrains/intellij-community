@@ -20,7 +20,7 @@ interface PolySymbolMatch : CompositePolySymbol {
     @ApiStatus.Internal
     fun create(
       matchedName: String,
-      nameSegments: List<WebSymbolNameSegment>,
+      nameSegments: List<PolySymbolNameSegment>,
       namespace: SymbolNamespace,
       kind: SymbolKind,
       origin: PolySymbolOrigin,
@@ -51,7 +51,7 @@ interface PolySymbolMatch : CompositePolySymbol {
       matchedName: String,
       qualifiedKind: PolySymbolQualifiedKind,
       origin: PolySymbolOrigin,
-      vararg nameSegments: WebSymbolNameSegment,
+      vararg nameSegments: PolySymbolNameSegment,
     ): PolySymbolMatch =
       PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { it.addNameSegments(*nameSegments) }

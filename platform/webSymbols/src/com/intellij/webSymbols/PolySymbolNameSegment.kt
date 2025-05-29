@@ -3,12 +3,12 @@ package com.intellij.webSymbols
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.webSymbols.impl.WebSymbolNameSegmentImpl
+import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.utils.matchedNameOrName
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
-interface WebSymbolNameSegment {
+interface PolySymbolNameSegment {
   val start: Int
 
   val end: Int
@@ -32,17 +32,17 @@ interface WebSymbolNameSegment {
   fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
 
-  fun createPointer(): Pointer<WebSymbolNameSegment>
+  fun createPointer(): Pointer<PolySymbolNameSegment>
 
   companion object {
 
-    fun create(symbol: PolySymbol): WebSymbolNameSegment =
+    fun create(symbol: PolySymbol): PolySymbolNameSegment =
       create(0, symbol.name.length, listOf(symbol))
 
-    fun create(start: Int, end: Int, symbol: PolySymbol): WebSymbolNameSegment =
+    fun create(start: Int, end: Int, symbol: PolySymbol): PolySymbolNameSegment =
       create(start, end, listOf(symbol))
 
-    fun create(start: Int, end: Int, vararg symbols: PolySymbol): WebSymbolNameSegment =
+    fun create(start: Int, end: Int, vararg symbols: PolySymbol): PolySymbolNameSegment =
       create(start, end, symbols.toList())
 
     fun create(
@@ -56,9 +56,9 @@ interface WebSymbolNameSegment {
       explicitApiStatus: PolySymbolApiStatus? = null,
       explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,
-    ): WebSymbolNameSegment =
-      WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName, matchScore,
-                               symbolKinds, explicitApiStatus, explicitPriority, explicitProximity, null)
+    ): PolySymbolNameSegment =
+      PolySymbolNameSegmentImpl(start, end, symbols, problem, displayName, matchScore,
+                                symbolKinds, explicitApiStatus, explicitPriority, explicitProximity, null)
   }
 
   enum class MatchProblem {

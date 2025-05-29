@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 
 interface WebSymbolsProblemQuickFixProvider {
@@ -13,7 +13,7 @@ interface WebSymbolsProblemQuickFixProvider {
   fun getQuickFixes(
     element: PsiElement,
     symbol: PolySymbol,
-    segment: WebSymbolNameSegment,
+    segment: PolySymbolNameSegment,
     problemKind: WebSymbolReferenceProblem.ProblemKind,
   ): List<LocalQuickFix>
 
@@ -21,7 +21,7 @@ interface WebSymbolsProblemQuickFixProvider {
     val EP_NAME: ExtensionPointName<WebSymbolsProblemQuickFixProvider> =
       ExtensionPointName<WebSymbolsProblemQuickFixProvider>("com.intellij.webSymbols.problemQuickFixProvider")
 
-    fun getQuickFixes(element: PsiElement, symbol: PolySymbol, segment: WebSymbolNameSegment, problemKind: WebSymbolReferenceProblem.ProblemKind): List<LocalQuickFix> =
+    fun getQuickFixes(element: PsiElement, symbol: PolySymbol, segment: PolySymbolNameSegment, problemKind: WebSymbolReferenceProblem.ProblemKind): List<LocalQuickFix> =
       EP_NAME.extensionList.flatMap { it.getQuickFixes(element, symbol, segment, problemKind) }
   }
 }

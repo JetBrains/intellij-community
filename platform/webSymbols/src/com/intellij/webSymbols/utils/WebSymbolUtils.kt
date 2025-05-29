@@ -20,7 +20,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.impl.WebSymbolNameSegmentImpl
+import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
 import com.intellij.webSymbols.impl.withOffset
 import com.intellij.webSymbols.impl.withRange
@@ -59,7 +59,7 @@ fun List<PolySymbol>.asSingleSymbol(force: Boolean = false): PolySymbol? =
       null
     else
       PolySymbolMatch.create(first.name, first.qualifiedKind, first.origin,
-                             WebSymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority()))
+                             PolySymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority()))
   }
 
 fun PolySymbol.withMatchedName(matchedName: String): PolySymbol =
@@ -67,7 +67,7 @@ fun PolySymbol.withMatchedName(matchedName: String): PolySymbol =
     val nameSegment = if (this is PolySymbolMatch && nameSegments.size == 1)
       nameSegments[0].withRange(0, matchedName.length)
     else
-      WebSymbolNameSegment.create(0, matchedName.length, this)
+      PolySymbolNameSegment.create(0, matchedName.length, this)
     PolySymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
   }
   else this
@@ -78,7 +78,7 @@ fun PolySymbol.withMatchedKind(qualifiedKind: PolySymbolQualifiedKind): PolySymb
     val nameSegment = if (this is PolySymbolMatch && nameSegments.size == 1)
       nameSegments[0].withRange(0, matchedName.length)
     else
-      WebSymbolNameSegment.create(0, matchedName.length, this)
+      PolySymbolNameSegment.create(0, matchedName.length, this)
     PolySymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
   }
   else this
@@ -135,10 +135,10 @@ fun PolySymbol.unwrapMatchedSymbols(): Sequence<PolySymbol> =
   else
     sequenceOf(this)
 
-fun WebSymbolNameSegment.withSymbols(symbols: List<PolySymbol>): WebSymbolNameSegment =
-  (this as WebSymbolNameSegmentImpl).withSymbols(symbols)
+fun PolySymbolNameSegment.withSymbols(symbols: List<PolySymbol>): PolySymbolNameSegment =
+  (this as PolySymbolNameSegmentImpl).withSymbols(symbols)
 
-fun PolySymbolMatch.withSegments(segments: List<WebSymbolNameSegment>): PolySymbolMatch =
+fun PolySymbolMatch.withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
   (this as PolySymbolMatchImpl).withSegments(segments)
 
 fun PolySymbol.match(
@@ -207,15 +207,15 @@ val PolySymbol.qualifiedName: PolySymbolQualifiedName
 val PolySymbol.qualifiedKind: PolySymbolQualifiedKind
   get() = PolySymbolQualifiedKind(namespace, kind)
 
-fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
+fun PolySymbolNameSegment.getProblemKind(): ProblemKind? =
   when (problem) {
-    WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART -> ProblemKind.MissingRequiredPart
-    WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL ->
+    PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART -> ProblemKind.MissingRequiredPart
+    PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL ->
       if (start == end)
         ProblemKind.MissingRequiredPart
       else
         ProblemKind.UnknownSymbol
-    WebSymbolNameSegment.MatchProblem.DUPLICATE -> ProblemKind.DuplicatedPart
+    PolySymbolNameSegment.MatchProblem.DUPLICATE -> ProblemKind.DuplicatedPart
     null -> null
   }
 
@@ -224,17 +224,17 @@ val PolySymbol.completeMatch: Boolean
           || (nameSegments.all { segment -> segment.problem == null && segment.symbols.all { it.completeMatch } }
               && (nameSegments.lastOrNull()?.end ?: 0) == matchedNameOrName.length)
 
-val PolySymbol.nameSegments: List<WebSymbolNameSegment>
+val PolySymbol.nameSegments: List<PolySymbolNameSegment>
   get() = (this as? CompositePolySymbol)?.nameSegments
-          ?: pattern?.let { listOf(WebSymbolNameSegment.create(0, 0, this)) }
-          ?: listOf(WebSymbolNameSegment.create(this))
+          ?: pattern?.let { listOf(PolySymbolNameSegment.create(0, 0, this)) }
+          ?: listOf(PolySymbolNameSegment.create(this))
 
-val PolySymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment>
+val PolySymbol.nameSegmentsWithProblems: Sequence<PolySymbolNameSegment>
   get() =
     Sequence {
-      object : Iterator<WebSymbolNameSegment> {
-        private var next: WebSymbolNameSegment? = null
-        val fifo = LinkedList<WebSymbolNameSegment>()
+      object : Iterator<PolySymbolNameSegment> {
+        private var next: PolySymbolNameSegment? = null
+        val fifo = LinkedList<PolySymbolNameSegment>()
         val visitedSymbols = mutableSetOf<PolySymbol>()
 
         init {
@@ -265,7 +265,7 @@ val PolySymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment>
         override fun hasNext(): Boolean =
           next != null
 
-        override fun next(): WebSymbolNameSegment =
+        override fun next(): PolySymbolNameSegment =
           next!!.also { advance() }
       }
     }
@@ -277,10 +277,10 @@ val PolySymbol.hideFromCompletion: Boolean
   get() =
     properties[PolySymbol.PROP_HIDE_FROM_COMPLETION] == true
 
-val (WebSymbolNameSegment.MatchProblem?).isCritical: Boolean
-  get() = this == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL
+val (PolySymbolNameSegment.MatchProblem?).isCritical: Boolean
+  get() = this == PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL
 
-fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegment> =
+fun List<PolySymbolNameSegment>.withOffset(offset: Int): List<PolySymbolNameSegment> =
   if (offset != 0) map { it.withOffset(offset) }
   else this
 

@@ -3,7 +3,7 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -19,14 +19,14 @@ internal class StaticPattern(val content: String) : WebSymbolsPattern() {
                      start: Int,
                      end: Int): List<MatchResult> =
     if (content.length <= end - start && params.name.startsWith(content, start))
-      listOf(MatchResult(WebSymbolNameSegment.create(start, start + content.length)))
+      listOf(MatchResult(PolySymbolNameSegment.create(start, start + content.length)))
     else emptyList()
 
   override fun list(owner: PolySymbol?,
                     scopeStack: Stack<PolySymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
-    listOf(ListResult(content, WebSymbolNameSegment.create(0, content.length)))
+    listOf(ListResult(content, PolySymbolNameSegment.create(0, content.length)))
 
   override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<PolySymbolsScope>,

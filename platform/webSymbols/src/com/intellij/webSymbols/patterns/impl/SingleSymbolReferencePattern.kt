@@ -3,7 +3,7 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -29,7 +29,7 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
     if (owner?.nameMatches(params.name.substring(start, end), params.queryExecutor) == true)
       params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
         .asSingleSymbol()
-        ?.let { listOf(MatchResult(WebSymbolNameSegment.create(start, end, it))) }
+        ?.let { listOf(MatchResult(PolySymbolNameSegment.create(start, end, it))) }
       ?: emptyList()
     else
       emptyList()
@@ -41,7 +41,7 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
     if (owner != null) {
       params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
         .asSingleSymbol()
-        ?.let { listOf(ListResult(owner.name, WebSymbolNameSegment.create(0, owner.name.length, it))) }
+        ?.let { listOf(ListResult(owner.name, PolySymbolNameSegment.create(0, owner.name.length, it))) }
       ?: emptyList()
     }
     else emptyList()
