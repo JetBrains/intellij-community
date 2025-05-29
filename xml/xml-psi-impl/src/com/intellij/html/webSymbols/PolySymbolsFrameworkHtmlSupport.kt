@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols
 
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
-import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
+import com.intellij.html.webSymbols.attributes.PolySymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolHtmlElementInfo
 import com.intellij.psi.xml.XmlTag
@@ -10,9 +10,9 @@ import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.framework.PolySymbolsFramework
 import java.util.function.Predicate
 
-interface WebSymbolsFrameworkHtmlSupport {
+interface PolySymbolsFrameworkHtmlSupport {
 
-  fun createHtmlAttributeDescriptor(info: WebSymbolHtmlAttributeInfo, tag: XmlTag?): WebSymbolAttributeDescriptor =
+  fun createHtmlAttributeDescriptor(info: PolySymbolHtmlAttributeInfo, tag: XmlTag?): WebSymbolAttributeDescriptor =
     WebSymbolAttributeDescriptor(info, tag)
 
   fun createHtmlElementDescriptor(info: WebSymbolHtmlElementInfo, tag: XmlTag): WebSymbolElementDescriptor =
@@ -22,12 +22,12 @@ interface WebSymbolsFrameworkHtmlSupport {
 
   companion object {
     @JvmStatic
-    fun get(id: FrameworkId?): WebSymbolsFrameworkHtmlSupport =
-      PolySymbolsFramework.get(id ?: "") as? WebSymbolsFrameworkHtmlSupport
+    fun get(id: FrameworkId?): PolySymbolsFrameworkHtmlSupport =
+      PolySymbolsFramework.get(id ?: "") as? PolySymbolsFrameworkHtmlSupport
       ?: DefaultHtmlSupport
 
   }
 
-  private object DefaultHtmlSupport : WebSymbolsFrameworkHtmlSupport
+  private object DefaultHtmlSupport : PolySymbolsFrameworkHtmlSupport
 
 }

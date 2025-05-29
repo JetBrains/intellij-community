@@ -3,7 +3,7 @@ package com.intellij.html.webSymbols.elements
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
-import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
+import com.intellij.html.webSymbols.PolySymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator.HtmlElementDescriptorBasedSymbol
 import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator.StandardHtmlSymbol
 import com.intellij.html.webSymbols.hasOnlyStandardHtmlSymbolsOrExtensions
@@ -153,7 +153,7 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
   companion object {
 
     fun WebSymbolHtmlElementInfo.toElementDescriptor(tag: XmlTag) =
-      WebSymbolsFrameworkHtmlSupport.get(this.symbol.origin.framework)
+      PolySymbolsFrameworkHtmlSupport.get(this.symbol.origin.framework)
         .createHtmlElementDescriptor(this, tag)
 
   }

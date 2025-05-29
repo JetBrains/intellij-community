@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols.attributes
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
+import com.intellij.html.webSymbols.PolySymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.util.text.StringUtil
@@ -35,7 +35,7 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
                                                             private val defaultValue: String?)
   : BasicXmlAttributeDescriptor(), XmlAttributeDescriptorEx, PsiPresentableMetaData {
 
-  constructor(info: WebSymbolHtmlAttributeInfo, tag: XmlTag?)
+  constructor(info: PolySymbolHtmlAttributeInfo, tag: XmlTag?)
     : this(tag, info.name, info.symbol, info.acceptsNoValue, info.acceptsValue, info.enumValues,
            info.strictEnumValues, info.type, info.icon, info.required, info.defaultValue)
 
@@ -132,8 +132,8 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
 
   companion object {
 
-    fun WebSymbolHtmlAttributeInfo.toAttributeDescriptor(tag: XmlTag?) =
-      WebSymbolsFrameworkHtmlSupport.get(this.symbol.origin.framework)
+    fun PolySymbolHtmlAttributeInfo.toAttributeDescriptor(tag: XmlTag?) =
+      PolySymbolsFrameworkHtmlSupport.get(this.symbol.origin.framework)
         .createHtmlAttributeDescriptor(this, tag)
 
   }

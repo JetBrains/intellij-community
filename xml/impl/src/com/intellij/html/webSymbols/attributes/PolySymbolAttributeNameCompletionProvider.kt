@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
 import com.intellij.html.webSymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
-import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
+import com.intellij.html.webSymbols.PolySymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -39,7 +39,7 @@ class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderB
 
     val providedAttributes = tag.attributes.asSequence().mapNotNull { it.name }.toMutableSet()
 
-    val attributesFilter = WebSymbolsFrameworkHtmlSupport.get(queryExecutor.framework)
+    val attributesFilter = PolySymbolsFrameworkHtmlSupport.get(queryExecutor.framework)
       .getAttributeNameCodeCompletionFilter(tag)
 
     val filteredOutStandardSymbols = getStandardHtmlAttributeDescriptors(tag)
@@ -77,7 +77,7 @@ class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderB
             val info = XmlTagInsertHandler.runWithTimeoutOrNull {
               val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
                             .asSingleSymbol() ?: return@runWithTimeoutOrNull null
-              WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
+              PolySymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
             }
             if (info != null && info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)
