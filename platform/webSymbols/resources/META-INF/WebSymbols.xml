@@ -16,7 +16,7 @@
 
     <platform.backend.documentation.targetProvider
       implementation="com.intellij.webSymbols.documentation.WebSymbolDocumentationTargetProvider"/>
-    <psi.declarationProvider implementation="com.intellij.webSymbols.declarations.impl.WebSymbolDeclarationProviderDelegate"/>
+    <psi.declarationProvider implementation="com.intellij.webSymbols.declarations.impl.PolySymbolDeclarationProviderDelegate"/>
 
     <!--suppress PluginXmlRegistrationCheck -->
     <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
