@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.context.PolyContextProvider
 import org.jetbrains.annotations.TestOnly
 
-class WebSymbolsContextProviderExtensionPoint : BaseKeyedLazyInstance<PolyContextProvider>, KeyedLazyInstance<PolyContextProvider> {
+class PolyContextProviderExtensionPoint : BaseKeyedLazyInstance<PolyContextProvider>, KeyedLazyInstance<PolyContextProvider> {
   // these must be public for scrambling compatibility
   @Attribute("kind")
   var kind: String? = null

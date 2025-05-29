@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
-import com.intellij.webSymbols.context.impl.WebSymbolsContextProviderExtensionPoint
+import com.intellij.webSymbols.context.impl.PolyContextProviderExtensionPoint
 import com.intellij.webSymbols.query.impl.CustomElementsManifestMockScopeImpl
 import com.intellij.webSymbols.query.impl.WebSymbolsMockQueryExecutorFactory
 import com.intellij.webSymbols.query.impl.WebTypesMockScopeImpl
@@ -43,7 +43,7 @@ abstract class WebSymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       ExtensionPoint.Kind.INTERFACE, true)
     application.extensionArea.registerExtensionPoint(
       "com.intellij.webSymbols.context",
-      WebSymbolsContextProviderExtensionPoint::class.java.name,
+      PolyContextProviderExtensionPoint::class.java.name,
       ExtensionPoint.Kind.BEAN_CLASS,
       true
     )
