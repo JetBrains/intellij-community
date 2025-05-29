@@ -11,7 +11,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.xml.HtmlXmlExtension
 
-open class WebSymbolsXmlExtension : HtmlXmlExtension() {
+open class PolySymbolsXmlExtension : HtmlXmlExtension() {
 
   override fun isAvailable(file: PsiFile?): Boolean =
     file?.let {

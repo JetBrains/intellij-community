@@ -573,7 +573,7 @@
                                   hostLanguage="HtmlCompatible"
                                   implementationClass="com.intellij.html.webSymbols.attributeValues.PolySymbolHtmlAttributeValueReferenceProvider"/>
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
-    <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
+    <xml.xmlExtension implementation="com.intellij.html.webSymbols.PolySymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>
 
     <xml.autoPopupEnabler implementation="com.intellij.xml.microservices.UrlReferencesXmlAutoPopupEnabler"/>
