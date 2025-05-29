@@ -157,7 +157,7 @@ abstract class ComponentManagerImpl(
               holder.getInstanceInCallerContext(keyClass = null)
             }
             in requireReadAction -> readActionBlocking {
-              holder.getOrCreateInstanceBlocking(debugString = instanceClassName, keyClass = null)
+              getOrCreateInstanceBlocking(holder = holder, debugString = instanceClassName, keyClass = null)
             }
             else -> holder.getInstanceInCallerContext(keyClass = null)
           }
@@ -278,7 +278,7 @@ abstract class ComponentManagerImpl(
       }
     }
     holder ?: return parent?.getComponentInstance(componentKey)
-    return holder.getOrCreateInstanceBlocking(componentKey.toString(), keyClass = null)
+    return getOrCreateInstanceBlocking(holder = holder, debugString = componentKey.toString(), keyClass = null)
   }
 
   fun forbidGettingServices(reason: String): AccessToken {
@@ -656,9 +656,8 @@ abstract class ComponentManagerImpl(
     when (adapter) {
       is HolderAdapter -> {
         // TODO asserts
-        val holder = adapter.holder
         @Suppress("UNCHECKED_CAST")
-        return holder.getOrCreateInstanceBlocking(key.name, key) as T
+        return getOrCreateInstanceBlocking(holder = adapter.holder, debugString = key.name, keyClass = key) as T
       }
       else -> {
         return null
@@ -723,7 +722,7 @@ abstract class ComponentManagerImpl(
         LOG.warn(IllegalStateException("${holder.instanceClassName()} is initialized during dispose"))
       }
       @Suppress("UNCHECKED_CAST")
-      return holder.getOrCreateInstanceBlocking(debugString = serviceClass.name, keyClass = serviceClass) as T
+      return getOrCreateInstanceBlocking(holder = holder, debugString = serviceClass.name, keyClass = serviceClass) as T
     }
     if (parent != null) {
       val result = parent.doGetService(serviceClass, createIfNeeded)
@@ -1178,10 +1177,11 @@ abstract class ComponentManagerImpl(
   }
 
   final override fun <T : Any> getServiceByClassName(serviceClassName: String): T? {
+    val holder = checkState { serviceContainer.getInstanceHolder(keyClassName = serviceClassName) }
+                   ?.takeIf(InstanceHolder::isStatic)
+                 ?: return null
     @Suppress("UNCHECKED_CAST")
-    return checkState { serviceContainer.getInstanceHolder(keyClassName = serviceClassName) }
-      ?.takeIf(InstanceHolder::isStatic)
-      ?.getOrCreateInstanceBlocking(serviceClassName, keyClass = null) as T?
+    return getOrCreateInstanceBlocking(holder = holder, debugString = serviceClassName, keyClass = null) as T?
   }
 
   final override fun getServiceImplementation(key: Class<*>): Class<*>? {
@@ -1203,12 +1203,12 @@ abstract class ComponentManagerImpl(
     return (componentContainer.instanceHolders().asSequence() + serviceContainer.instanceHolders()).mapNotNull { holder ->
       try {
         if (filter == null) {
-          holder.getInstanceBlocking(debugString = holder.instanceClassName(), keyClass = null, createIfNeeded = createIfNeeded)
+          getInstanceBlocking(holder = holder, debugString = holder.instanceClassName(), createIfNeeded = createIfNeeded)
         }
         else {
           val instanceClass = holder.instanceClass()
           if (filter(instanceClass)) {
-            holder.getInstanceBlocking(debugString = instanceClass.name, keyClass = null, createIfNeeded = createIfNeeded)
+            getInstanceBlocking(holder = holder, debugString = instanceClass.name, createIfNeeded = createIfNeeded)
           }
           else {
             null
@@ -1488,13 +1488,13 @@ private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
   "com.jetbrains.rider.projectView.workspace.impl.RiderWorkspaceModel",
 )
 
-private fun InstanceHolder.getInstanceBlocking(debugString: String, keyClass: Class<*>?, createIfNeeded: Boolean): Any? {
+private fun getInstanceBlocking(holder: InstanceHolder, debugString: String, createIfNeeded: Boolean): Any? {
   if (createIfNeeded) {
-    return getOrCreateInstanceBlocking(debugString = debugString, keyClass = keyClass)
+    return getOrCreateInstanceBlocking(holder = holder, debugString = debugString, keyClass = null)
   }
   else {
     try {
-      return tryGetInstance()
+      return holder.tryGetInstance()
     }
     catch (_: CancellationException) {
       return null
@@ -1502,12 +1502,12 @@ private fun InstanceHolder.getInstanceBlocking(debugString: String, keyClass: Cl
   }
 }
 
-internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, keyClass: Class<*>?): Any {
+internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: String, keyClass: Class<*>?): Any {
   // container scope might be canceled
   // => holder is initialized with CE
   // => caller should get PCE
   rethrowCEasPCE {
-    val instance = tryGetInstance()
+    val instance = holder.tryGetInstance()
     if (instance != null) {
       return instance
     }
@@ -1515,10 +1515,10 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
 
   if (!Cancellation.isInNonCancelableSection() && !checkOutsideClassInitializer(debugString)) {
     Cancellation.withNonCancelableSection().use {
-      return doGetOrCreateInstanceBlocking(keyClass)
+      return holder.doGetOrCreateInstanceBlocking(keyClass)
     }
   }
-  return doGetOrCreateInstanceBlocking(keyClass)
+  return holder.doGetOrCreateInstanceBlocking(keyClass)
 }
 
 private fun InstanceHolder.doGetOrCreateInstanceBlocking(keyClass: Class<*>?): Any {
