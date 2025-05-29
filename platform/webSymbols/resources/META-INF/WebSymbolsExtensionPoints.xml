@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.webSymbols.framework"
-                    beanClass="com.intellij.webSymbols.framework.impl.WebSymbolsFrameworkRegistrationExtensionPoint"
+                    beanClass="com.intellij.webSymbols.framework.impl.PolySymbolsFrameworkRegistrationExtensionPoint"
                     dynamic="true">
       <with attribute="implementation" implements="com.intellij.webSymbols.framework.PolySymbolsFramework"/>
     </extensionPoint>
