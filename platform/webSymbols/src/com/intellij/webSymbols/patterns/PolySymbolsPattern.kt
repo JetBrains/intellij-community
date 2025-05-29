@@ -12,7 +12,7 @@ import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
-abstract class WebSymbolsPattern internal constructor() {
+abstract class PolySymbolsPattern internal constructor() {
 
   internal abstract fun getStaticPrefixes(): Sequence<String>
 

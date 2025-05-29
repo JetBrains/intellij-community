@@ -10,14 +10,14 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.impl.withDisplayName
 import com.intellij.webSymbols.impl.withOffset
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.utils.lastPolySymbol
 import com.intellij.webSymbols.utils.nameSegments
 import kotlin.math.max
 
-internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPattern() {
+internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
   override fun isStaticAndRequired(): Boolean = false

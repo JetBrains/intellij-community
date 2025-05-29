@@ -6,11 +6,11 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.utils.hideFromCompletion
 
-internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPattern() {
+internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolsPattern() {
 
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 

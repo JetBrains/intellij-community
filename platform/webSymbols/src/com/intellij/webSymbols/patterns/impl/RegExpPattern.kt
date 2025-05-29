@@ -7,11 +7,11 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import java.util.regex.Pattern
 
-internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : WebSymbolsPattern() {
+internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : PolySymbolsPattern() {
   private val pattern: Pattern by lazy(LazyThreadSafetyMode.NONE) {
     if (caseSensitive)
       Pattern.compile(regex)

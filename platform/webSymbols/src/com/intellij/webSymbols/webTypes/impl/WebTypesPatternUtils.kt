@@ -9,7 +9,7 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -17,14 +17,14 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.json.*
 
-internal fun NamePatternRoot.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): WebSymbolsPattern =
+internal fun NamePatternRoot.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolsPattern =
   when (val value = value) {
     is String -> RegExpPattern(value)
     is NamePatternBase -> value.wrap(defaultDisplayName, origin)
     else -> throw IllegalArgumentException(value::class.java.name)
   }
 
-internal fun NamePatternBase.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): WebSymbolsPattern =
+internal fun NamePatternBase.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolsPattern =
   when (this) {
     is NamePatternRegex -> RegExpPattern(regex, caseSensitive == true)
     is NamePatternDefault -> ComplexPattern(WebTypesComplexPatternConfigProvider(this, defaultDisplayName, origin))
@@ -32,7 +32,7 @@ internal fun NamePatternBase.wrap(defaultDisplayName: String?, origin: WebTypesJ
   }
 
 @Suppress("UNCHECKED_CAST")
-internal fun NamePatternTemplate.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): WebSymbolsPattern =
+internal fun NamePatternTemplate.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolsPattern =
   when (val value = value) {
     is String -> when {
       value == "#item" -> SymbolReferencePattern(defaultDisplayName)
@@ -47,8 +47,8 @@ internal fun NamePatternTemplate.wrap(defaultDisplayName: String?, origin: WebTy
   }
 
 private class SequencePatternPatternsProvider(private val list: List<NamePatternTemplate>,
-                                              private val origin: WebTypesJsonOrigin) : () -> List<WebSymbolsPattern> {
-  override fun invoke(): List<WebSymbolsPattern> =
+                                              private val origin: WebTypesJsonOrigin) : () -> List<PolySymbolsPattern> {
+  override fun invoke(): List<PolySymbolsPattern> =
     list.map { it.wrap(null, origin) }
 }
 
@@ -56,7 +56,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
                                                    private val defaultDisplayName: String?,
                                                    private val origin: WebTypesJsonOrigin) : ComplexPatternConfigProvider {
 
-  override fun getPatterns(): List<WebSymbolsPattern> =
+  override fun getPatterns(): List<PolySymbolsPattern> =
     pattern.or.asSequence()
       .map { it.wrap(defaultDisplayName, origin) }
       .let {

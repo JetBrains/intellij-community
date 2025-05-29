@@ -14,7 +14,7 @@ import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.WebTypesScopeBase
@@ -61,7 +61,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
   open val contributionName: String = contribution.name ?: "<no-name>"
   abstract val jsonPattern: NamePatternRoot?
 
-  override val pattern: WebSymbolsPattern?
+  override val pattern: PolySymbolsPattern?
     get() = jsonPattern?.wrap(contribution.name, jsonOrigin)
 
   open val contributionForQuery: GenericContributionsHost get() = contribution

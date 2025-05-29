@@ -8,7 +8,7 @@ import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.filterByQueryParams
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.match
 import com.intellij.webSymbols.utils.toCodeCompletionItems
@@ -24,7 +24,7 @@ internal abstract class SearchMap<T> internal constructor(
   internal abstract fun Sequence<T>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol>
 
   internal fun add(qualifiedName: PolySymbolQualifiedName,
-                   pattern: WebSymbolsPattern?,
+                   pattern: PolySymbolsPattern?,
                    item: T) {
     if (pattern == null) {
       namesProvider.getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE)

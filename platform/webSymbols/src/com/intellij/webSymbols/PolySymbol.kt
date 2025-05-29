@@ -23,7 +23,7 @@ import com.intellij.webSymbols.documentation.PolySymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.PolySymbolJsKind
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
@@ -154,7 +154,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
    * For such places, appropriate segments with referenced Web Symbols will be created and navigation,
    * validation and refactoring support is available out-of-the-box.
    */
-  val pattern: WebSymbolsPattern?
+  val pattern: PolySymbolsPattern?
     get() = null
 
   /**

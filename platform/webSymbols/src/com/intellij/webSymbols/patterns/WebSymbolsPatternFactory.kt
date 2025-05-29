@@ -13,9 +13,9 @@ object WebSymbolsPatternFactory {
 
   fun createComplexPattern(optionsProvider: (queryExecutor: WebSymbolsQueryExecutor, contextStack: Stack<PolySymbolsScope>) -> ComplexPatternOptions,
                            isStaticAndRequiredProvider: () -> Boolean,
-                           patternsProvider: () -> List<WebSymbolsPattern>): WebSymbolsPattern =
+                           patternsProvider: () -> List<PolySymbolsPattern>): PolySymbolsPattern =
     ComplexPattern(object : ComplexPatternConfigProvider {
-      override fun getPatterns(): List<WebSymbolsPattern> =
+      override fun getPatterns(): List<PolySymbolsPattern> =
         patternsProvider()
 
       override fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions =
@@ -28,10 +28,10 @@ object WebSymbolsPatternFactory {
 
   fun createComplexPattern(options: ComplexPatternOptions,
                            isStaticAndRequired: Boolean,
-                           vararg patterns: WebSymbolsPattern): WebSymbolsPattern =
+                           vararg patterns: PolySymbolsPattern): PolySymbolsPattern =
 
     ComplexPattern(object : ComplexPatternConfigProvider {
-      override fun getPatterns(): List<WebSymbolsPattern> =
+      override fun getPatterns(): List<PolySymbolsPattern> =
         patterns.toList()
 
       override fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions =
@@ -42,25 +42,25 @@ object WebSymbolsPatternFactory {
 
     })
 
-  fun createPatternSequence(vararg patterns: WebSymbolsPattern): WebSymbolsPattern =
+  fun createPatternSequence(vararg patterns: PolySymbolsPattern): PolySymbolsPattern =
     SequencePattern { patterns.toList() }
 
-  fun createPatternSequence(patternsProvider: () -> List<WebSymbolsPattern>): WebSymbolsPattern =
+  fun createPatternSequence(patternsProvider: () -> List<PolySymbolsPattern>): PolySymbolsPattern =
     SequencePattern(patternsProvider)
 
-  fun createSymbolReferencePlaceholder(displayName: String? = null): WebSymbolsPattern =
+  fun createSymbolReferencePlaceholder(displayName: String? = null): PolySymbolsPattern =
     SymbolReferencePattern(displayName)
 
-  fun createStringMatch(content: String): WebSymbolsPattern =
+  fun createStringMatch(content: String): PolySymbolsPattern =
     StaticPattern(content)
 
-  fun createRegExMatch(regex: String, caseSensitive: Boolean = false): WebSymbolsPattern =
+  fun createRegExMatch(regex: String, caseSensitive: Boolean = false): PolySymbolsPattern =
     RegExpPattern(regex, caseSensitive)
 
-  fun createCompletionAutoPopup(isSticky: Boolean): WebSymbolsPattern =
+  fun createCompletionAutoPopup(isSticky: Boolean): PolySymbolsPattern =
     CompletionAutoPopupPattern(isSticky)
 
-  fun createSingleSymbolReferencePattern(path: List<PolySymbolQualifiedName>): WebSymbolsPattern =
+  fun createSingleSymbolReferencePattern(path: List<PolySymbolQualifiedName>): PolySymbolsPattern =
     SingleSymbolReferencePattern(path.toList())
 
 }

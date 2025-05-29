@@ -14,7 +14,7 @@ import com.intellij.webSymbols.customElements.json.CustomElementClassOrMixinDecl
 import com.intellij.webSymbols.customElements.json.resolve
 import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -35,7 +35,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val kind: String
     get() = CustomElementsSymbol.KIND_CEM_DECLARATIONS
 
-  override val pattern: WebSymbolsPattern?
+  override val pattern: PolySymbolsPattern?
     get() = null
 
   override val framework: FrameworkId?

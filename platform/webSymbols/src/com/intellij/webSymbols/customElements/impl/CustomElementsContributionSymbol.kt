@@ -12,7 +12,7 @@ import com.intellij.webSymbols.customElements.json.CustomElementsContribution
 import com.intellij.webSymbols.customElements.json.mapToReferenceList
 import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> protected constructor(
@@ -21,7 +21,7 @@ abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> 
   final override val origin: CustomElementsJsonOrigin,
 ) : CustomElementsSymbol, StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
 
-  final override val pattern: WebSymbolsPattern?
+  final override val pattern: PolySymbolsPattern?
     get() = null
 
   final override val framework: FrameworkId?

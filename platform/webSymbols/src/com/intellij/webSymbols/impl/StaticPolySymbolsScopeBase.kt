@@ -7,7 +7,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.SearchMap
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -162,7 +162,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     val namespace: SymbolNamespace
     val kind: String
     val name: String
-    val pattern: WebSymbolsPattern?
+    val pattern: PolySymbolsPattern?
     val framework: FrameworkId?
     fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol
     fun matchContext(context: PolyContext): Boolean =

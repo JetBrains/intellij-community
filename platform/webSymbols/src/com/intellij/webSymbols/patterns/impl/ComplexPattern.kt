@@ -12,7 +12,7 @@ import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.impl.copy
 import com.intellij.webSymbols.impl.selectBest
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.coalesceWith
@@ -24,9 +24,9 @@ import kotlin.math.min
  * Complex pattern matches any of the provided patterns
  * and allows for high level of customization.
  */
-internal class ComplexPattern(private val configProvider: ComplexPatternConfigProvider) : WebSymbolsPattern() {
+internal class ComplexPattern(private val configProvider: ComplexPatternConfigProvider) : PolySymbolsPattern() {
 
-  private val patterns: List<WebSymbolsPattern>
+  private val patterns: List<PolySymbolsPattern>
     get() = configProvider.getPatterns()
 
   override fun getStaticPrefixes(): Sequence<String> =
@@ -150,7 +150,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   private fun <T> process(scopeStack: Stack<PolySymbolsScope>,
                           queryExecutor: WebSymbolsQueryExecutor,
-                          action: (patterns: List<WebSymbolsPattern>,
+                          action: (patterns: List<PolySymbolsPattern>,
                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                    patternApiStatus: PolySymbolApiStatus?,
                                    patternRequired: Boolean,
@@ -210,7 +210,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   private fun performPatternMatch(params: MatchParameters,
                                   start: Int,
                                   end: Int,
-                                  patterns: List<WebSymbolsPattern>,
+                                  patterns: List<PolySymbolsPattern>,
                                   repeats: Boolean,
                                   unique: Boolean,
                                   contextStack: Stack<PolySymbolsScope>,
@@ -243,7 +243,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                     params: MatchParameters,
                                     staticPrefixes: Set<String>,
                                     scopeStack: Stack<PolySymbolsScope>,
-                                    patterns: List<WebSymbolsPattern>,
+                                    patterns: List<PolySymbolsPattern>,
                                     newSymbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                     unique: Boolean): SmartList<Pair<Int, List<MatchResult>>> {
     val complete = SmartList<Pair<Int, List<MatchResult>>>()

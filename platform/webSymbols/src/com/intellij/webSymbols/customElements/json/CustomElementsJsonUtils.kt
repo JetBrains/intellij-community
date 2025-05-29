@@ -10,11 +10,11 @@ import com.intellij.webSymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
 import com.intellij.webSymbols.customElements.impl.*
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternFactory
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
-fun Reference.createPattern(origin: CustomElementsJsonOrigin): WebSymbolsPattern? =
+fun Reference.createPattern(origin: CustomElementsJsonOrigin): PolySymbolsPattern? =
   createQueryPathList(origin)?.let { WebSymbolsPatternFactory.createSingleSymbolReferencePattern(it) }
 
 fun Reference.resolve(origin: CustomElementsJsonOrigin, queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol> =

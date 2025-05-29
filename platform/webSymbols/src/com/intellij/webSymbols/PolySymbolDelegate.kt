@@ -12,7 +12,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -68,7 +68,7 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
     get() = delegate.type
   override val attributeValue: PolySymbolHtmlAttributeValue?
     get() = delegate.attributeValue
-  override val pattern: WebSymbolsPattern?
+  override val pattern: PolySymbolsPattern?
     get() = delegate.pattern
   override val properties: Map<String, Any>
     get() = delegate.properties

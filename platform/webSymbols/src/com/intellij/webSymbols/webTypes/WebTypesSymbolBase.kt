@@ -9,7 +9,7 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
@@ -181,7 +181,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
             ?: (base.contribution as? HtmlAttribute)?.default
             ?: superContributions.firstOrNull()?.defaultValue
 
-  final override val pattern: WebSymbolsPattern?
+  final override val pattern: PolySymbolsPattern?
     get() = base.jsonPattern?.wrap(base.contribution.name, origin as WebTypesJsonOrigin)
 
 

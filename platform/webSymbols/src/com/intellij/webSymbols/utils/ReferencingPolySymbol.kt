@@ -4,7 +4,7 @@ package com.intellij.webSymbols.utils
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternFactory
 import com.intellij.webSymbols.patterns.WebSymbolsPatternReferenceResolver
 import java.util.Objects
@@ -42,7 +42,7 @@ class ReferencingPolySymbol private constructor(
 
   private val references = references.toList()
 
-  override val pattern: WebSymbolsPattern =
+  override val pattern: PolySymbolsPattern =
     WebSymbolsPatternFactory.createComplexPattern(
       ComplexPatternOptions(
         priority = priority,

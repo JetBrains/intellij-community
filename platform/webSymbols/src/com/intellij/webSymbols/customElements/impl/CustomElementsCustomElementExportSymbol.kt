@@ -10,13 +10,13 @@ import com.intellij.webSymbols.customElements.json.CustomElementExport
 import com.intellij.webSymbols.customElements.json.createPattern
 import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 class CustomElementsCustomElementExportSymbol private constructor(
   override val name: String,
   override val origin: PolySymbolOrigin,
-  override val pattern: WebSymbolsPattern,
+  override val pattern: PolySymbolsPattern,
   override val apiStatus: PolySymbolApiStatus,
 ) : CustomElementsSymbol, StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
   override val namespace: SymbolNamespace

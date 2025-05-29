@@ -3,7 +3,7 @@ package com.intellij.webSymbols.utils
 
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternFactory
 
 /**
@@ -37,7 +37,7 @@ class MappedPolySymbol private constructor(
       MappedPolySymbol(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *mappingPath, priority = priority)
   }
 
-  override val pattern: WebSymbolsPattern =
+  override val pattern: PolySymbolsPattern =
     WebSymbolsPatternFactory.createSingleSymbolReferencePattern(mappingPath.toList())
 
   override fun createPointer(): Pointer<out PolySymbol> =

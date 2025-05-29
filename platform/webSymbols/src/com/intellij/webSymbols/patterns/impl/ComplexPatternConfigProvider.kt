@@ -4,12 +4,12 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 internal interface ComplexPatternConfigProvider {
 
-  fun getPatterns(): List<WebSymbolsPattern>
+  fun getPatterns(): List<PolySymbolsPattern>
 
   fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions
 

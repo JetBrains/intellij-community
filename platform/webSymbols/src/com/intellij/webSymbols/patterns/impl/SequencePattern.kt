@@ -10,7 +10,7 @@ import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
-import com.intellij.webSymbols.patterns.WebSymbolsPattern
+import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
@@ -19,9 +19,9 @@ import com.intellij.webSymbols.utils.nameSegments
 import com.intellij.webSymbols.utils.qualifiedKind
 import com.intellij.webSymbols.utils.withOffset
 
-internal class SequencePattern(private val patternsProvider: () -> List<WebSymbolsPattern>) : WebSymbolsPattern() {
+internal class SequencePattern(private val patternsProvider: () -> List<PolySymbolsPattern>) : PolySymbolsPattern() {
 
-  constructor(vararg patterns: WebSymbolsPattern) : this({ patterns.toList() })
+  constructor(vararg patterns: PolySymbolsPattern) : this({ patterns.toList() })
 
   override fun getStaticPrefixes(): Sequence<String> {
     val patterns = patternsProvider()
@@ -140,7 +140,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     )
 
   private fun sliceRequiredPartIfNeeded(matchResult: MatchResult?,
-                                        pattern: WebSymbolsPattern,
+                                        pattern: PolySymbolsPattern,
                                         matchStart: Int,
                                         matchEnd: Int,
                                         prevResult: MatchResult?,
@@ -166,7 +166,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
 
   private fun processCompletionResults(matchResult: MatchResult?,
-                                       pattern: WebSymbolsPattern,
+                                       pattern: PolySymbolsPattern,
                                        matchStart: Int,
                                        completionResults: CompletionResults,
                                        params: CompletionParameters,
@@ -288,7 +288,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     return Pair(stop, results)
   }
 
-  private fun getCompletionResultsOnPattern(pattern: WebSymbolsPattern,
+  private fun getCompletionResultsOnPattern(pattern: PolySymbolsPattern,
                                             scopeStack: Stack<PolySymbolsScope>,
                                             symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                             matchResult: MatchResult?,
@@ -404,7 +404,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
   }
 
   private fun <T> process(initialMatches: List<T>,
-                          processor: (matches: List<T>, pattern: WebSymbolsPattern, staticPrefixes: Set<String>) -> List<T>): List<T> {
+                          processor: (matches: List<T>, pattern: PolySymbolsPattern, staticPrefixes: Set<String>) -> List<T>): List<T> {
     val list = patternsProvider()
     if (list.isEmpty()) return emptyList()
 
@@ -427,7 +427,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
   private fun findStaticStart(params: MatchParameters,
                               start: Int,
                               end: Int,
-                              pattern: WebSymbolsPattern,
+                              pattern: PolySymbolsPattern,
                               staticPrefixes: Set<String>): Int {
     if (end == start) return start
     val toMatch = CharSequenceSubSequence(params.name, start, end)
