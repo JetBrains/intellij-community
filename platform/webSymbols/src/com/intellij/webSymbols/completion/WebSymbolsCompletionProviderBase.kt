@@ -15,7 +15,7 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
@@ -79,7 +79,7 @@ abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProv
       name: String,
       position: Int,
       location: PsiElement,
-      queryContext: List<WebSymbolsScope> = emptyList(),
+      queryContext: List<PolySymbolsScope> = emptyList(),
       providedNames: MutableSet<String>? = null,
       filter: ((WebSymbolCodeCompletionItem) -> Boolean)? = null,
       consumer: (WebSymbolCodeCompletionItem) -> Unit,

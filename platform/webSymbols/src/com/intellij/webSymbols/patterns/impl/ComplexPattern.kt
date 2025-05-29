@@ -9,7 +9,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.impl.copy
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -38,7 +38,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     configProvider.isStaticAndRequired
 
   override fun match(owner: PolySymbol?,
-                     scopeStack: Stack<WebSymbolsScope>,
+                     scopeStack: Stack<PolySymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
@@ -67,7 +67,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
 
   override fun list(owner: PolySymbol?,
-                    scopeStack: Stack<WebSymbolsScope>,
+                    scopeStack: Stack<PolySymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     process(scopeStack, params.queryExecutor) { patterns, newSymbolsResolver, apiStatus,
@@ -93,7 +93,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
 
   override fun complete(owner: PolySymbol?,
-                        scopeStack: Stack<WebSymbolsScope>,
+                        scopeStack: Stack<PolySymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,
@@ -148,7 +148,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       CompletionResults(patternsItems, isRequired)
     }
 
-  private fun <T> process(scopeStack: Stack<WebSymbolsScope>,
+  private fun <T> process(scopeStack: Stack<PolySymbolsScope>,
                           queryExecutor: WebSymbolsQueryExecutor,
                           action: (patterns: List<WebSymbolsPattern>,
                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
@@ -213,7 +213,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                   patterns: List<WebSymbolsPattern>,
                                   repeats: Boolean,
                                   unique: Boolean,
-                                  contextStack: Stack<WebSymbolsScope>,
+                                  contextStack: Stack<PolySymbolsScope>,
                                   newSymbolsResolver: WebSymbolsPatternSymbolsResolver?): List<MatchResult> {
     // shortcut
     if (start == end) {
@@ -242,7 +242,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                     end: Int,
                                     params: MatchParameters,
                                     staticPrefixes: Set<String>,
-                                    scopeStack: Stack<WebSymbolsScope>,
+                                    scopeStack: Stack<PolySymbolsScope>,
                                     patterns: List<WebSymbolsPattern>,
                                     newSymbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                     unique: Boolean): SmartList<Pair<Int, List<MatchResult>>> {

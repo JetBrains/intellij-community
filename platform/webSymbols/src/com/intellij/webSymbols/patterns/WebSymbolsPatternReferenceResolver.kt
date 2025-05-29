@@ -5,7 +5,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.query.PolySymbolMatch
@@ -24,11 +24,11 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
 
   override fun codeCompletion(name: String,
                               position: Int,
-                              scopeStack: Stack<WebSymbolsScope>,
+                              scopeStack: Stack<PolySymbolsScope>,
                               queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem> =
     items.flatMap { it.codeCompletion(name, scopeStack, queryExecutor, position) }
 
-  override fun matchName(name: String, scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol> =
+  override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol> =
     items.asSequence()
       .flatMap { it.resolve(name, scopeStack, queryExecutor) }
       .flatMap {
@@ -40,7 +40,7 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
       }
       .toList()
 
-  override fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
+  override fun listSymbols(scopeStack: Stack<PolySymbolsScope>,
                            queryExecutor: WebSymbolsQueryExecutor,
                            expandPatterns: Boolean): List<PolySymbol> =
     items.flatMap { it.listSymbols(scopeStack, queryExecutor, expandPatterns) }
@@ -54,7 +54,7 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
     val nameConversionRules: List<WebSymbolNameConversionRules> = emptyList(),
   ) {
     fun resolve(name: String,
-                scope: Stack<WebSymbolsScope>,
+                scope: Stack<PolySymbolsScope>,
                 queryExecutor: WebSymbolsQueryExecutor
     ): List<PolySymbol> {
       val matches = queryExecutor.withNameConversionRules(nameConversionRules)
@@ -64,7 +64,7 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
       return filter.filterNameMatches(matches, queryExecutor, scope, emptyMap())
     }
 
-    fun listSymbols(scope: Stack<WebSymbolsScope>,
+    fun listSymbols(scope: Stack<PolySymbolsScope>,
                     queryExecutor: WebSymbolsQueryExecutor,
                     expandPatterns: Boolean): List<PolySymbol> {
       val symbols = queryExecutor.withNameConversionRules(nameConversionRules)
@@ -75,7 +75,7 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
     }
 
     fun codeCompletion(name: String,
-                       scopeStack: Stack<WebSymbolsScope>,
+                       scopeStack: Stack<PolySymbolsScope>,
                        queryExecutor: WebSymbolsQueryExecutor,
                        position: Int): List<WebSymbolCodeCompletionItem> {
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)

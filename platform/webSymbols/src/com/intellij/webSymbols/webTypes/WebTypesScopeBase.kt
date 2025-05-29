@@ -21,7 +21,7 @@ import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.DisablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
-import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
+import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter
@@ -32,7 +32,7 @@ import javax.swing.Icon
 
 @Internal
 abstract class WebTypesScopeBase :
-  StaticWebSymbolsScopeBase<Contributions, GenericContributionsHost, WebTypesJsonOrigin>(),
+  StaticPolySymbolsScopeBase<Contributions, GenericContributionsHost, WebTypesJsonOrigin>(),
   WebSymbolsContextRulesProvider {
 
   private val frameworkConfigs = mutableMapOf<WebTypes, FrameworkConfig>()

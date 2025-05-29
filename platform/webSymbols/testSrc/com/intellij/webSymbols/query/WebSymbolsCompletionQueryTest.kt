@@ -7,7 +7,7 @@ import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.testFramework.query.doTest
 import com.intellij.webSymbols.testFramework.query.printCodeCompletionItems
@@ -231,12 +231,12 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
   fun testNestedPattern1() {
     webSymbolsQueryExecutorFactory.addScope(
-      object : WebSymbolsScope {
-        override fun createPointer(): Pointer<out WebSymbolsScope> = Pointer.hardPointer(this)
+      object : PolySymbolsScope {
+        override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
 
         override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> {
+                                        scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> {
           return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
             listOf(WebSymbolCodeCompletionItem.create("bar"))
           }

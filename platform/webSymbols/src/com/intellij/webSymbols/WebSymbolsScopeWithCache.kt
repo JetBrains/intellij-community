@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 /**
- * Used when implementing a [WebSymbolsScope], which contains many elements.
+ * Used when implementing a [PolySymbolsScope], which contains many elements.
  *
  * Caches the list of symbols and uses efficient cache to speed up queries. When extending the class,
  * you only need to override the initialize method and provide parameters to the super constructor to specify how results should be cached.
@@ -42,7 +42,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
    * You can provide `Unit`, which would mean that there is only one scope of particular class.
    */
   protected val key: K
-) : WebSymbolsScope {
+) : PolySymbolsScope {
 
   /**
    * Called within a read action to initialize the scope's cache. Call [consumer] with all the
@@ -115,7 +115,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<WebSymbolsScope>): List<PolySymbol> =
+                                  scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {
@@ -125,7 +125,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                           params: WebSymbolsListSymbolsQueryParams,
-                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+                          scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedKind)) {
@@ -135,7 +135,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                  scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {

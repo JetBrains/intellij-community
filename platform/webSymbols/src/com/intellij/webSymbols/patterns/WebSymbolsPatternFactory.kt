@@ -3,7 +3,7 @@ package com.intellij.webSymbols.patterns
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.WebSymbolQualifiedName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
@@ -11,14 +11,14 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object WebSymbolsPatternFactory {
 
-  fun createComplexPattern(optionsProvider: (queryExecutor: WebSymbolsQueryExecutor, contextStack: Stack<WebSymbolsScope>) -> ComplexPatternOptions,
+  fun createComplexPattern(optionsProvider: (queryExecutor: WebSymbolsQueryExecutor, contextStack: Stack<PolySymbolsScope>) -> ComplexPatternOptions,
                            isStaticAndRequiredProvider: () -> Boolean,
                            patternsProvider: () -> List<WebSymbolsPattern>): WebSymbolsPattern =
     ComplexPattern(object : ComplexPatternConfigProvider {
       override fun getPatterns(): List<WebSymbolsPattern> =
         patternsProvider()
 
-      override fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions =
+      override fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions =
         optionsProvider(queryExecutor, scopeStack)
 
       override val isStaticAndRequired: Boolean
@@ -34,7 +34,7 @@ object WebSymbolsPatternFactory {
       override fun getPatterns(): List<WebSymbolsPattern> =
         patterns.toList()
 
-      override fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<WebSymbolsScope>): ComplexPatternOptions =
+      override fun getOptions(queryExecutor: WebSymbolsQueryExecutor, scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions =
         options
 
       override val isStaticAndRequired: Boolean

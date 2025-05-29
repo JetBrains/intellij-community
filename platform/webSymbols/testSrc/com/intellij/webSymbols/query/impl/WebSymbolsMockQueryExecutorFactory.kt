@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -15,7 +15,7 @@ import com.intellij.webSymbols.utils.createModificationTracker
 
 class WebSymbolsMockQueryExecutorFactory : WebSymbolsQueryExecutorFactory {
 
-  private val scopeList = mutableListOf<WebSymbolsScope>()
+  private val scopeList = mutableListOf<PolySymbolsScope>()
 
   val context: MutableMap<ContextKind, ContextName> = mutableMapOf()
 
@@ -35,7 +35,7 @@ class WebSymbolsMockQueryExecutorFactory : WebSymbolsQueryExecutorFactory {
                                 allowResolve)
 
   override fun addScope(
-    scope: WebSymbolsScope,
+    scope: PolySymbolsScope,
     contextDirectory: VirtualFile?,
     disposable: Disposable,
   ) {

@@ -50,7 +50,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface PolySymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrioritizedScope {
+interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrioritizedScope {
 
   /**
    * Specifies where this symbol comes from. Besides descriptive information like
@@ -161,7 +161,7 @@ interface PolySymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPri
    * When pattern is being evaluated, matched symbols can provide additional scope for further resolution in the pattern.
    * By default, the `queryScope` returns the symbol itself
    */
-  val queryScope: List<WebSymbolsScope>
+  val queryScope: List<PolySymbolsScope>
     get() = listOf(this)
 
   /**

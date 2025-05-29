@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
@@ -23,7 +23,7 @@ class WebSymbolsFilterEP() : CustomLoadingExtensionPointBean<WebSymbolsFilter>()
       override fun filterCodeCompletions(
         codeCompletions: List<WebSymbolCodeCompletionItem>,
         queryExecutor: WebSymbolsQueryExecutor,
-        scope: List<WebSymbolsScope>,
+        scope: List<PolySymbolsScope>,
         properties: Map<String, Any>,
       ): List<WebSymbolCodeCompletionItem> =
         codeCompletions
@@ -31,7 +31,7 @@ class WebSymbolsFilterEP() : CustomLoadingExtensionPointBean<WebSymbolsFilter>()
       override fun filterNameMatches(
         matches: List<PolySymbol>,
         queryExecutor: WebSymbolsQueryExecutor,
-        scope: List<WebSymbolsScope>,
+        scope: List<PolySymbolsScope>,
         properties: Map<String, Any>,
       ): List<PolySymbol> =
         matches

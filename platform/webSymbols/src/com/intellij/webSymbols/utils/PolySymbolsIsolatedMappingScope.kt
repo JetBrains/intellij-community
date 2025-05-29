@@ -16,7 +16,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.*
 import java.util.*
 
-abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
+abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
   protected val mappings: Map<WebSymbolQualifiedKind, WebSymbolQualifiedKind>,
   /**
    * Allows to optimize for symbols with a particular [WebSymbolOrigin.framework].
@@ -27,13 +27,13 @@ abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
    * Location for which the isolated query executor should be built.
    */
   protected val location: T,
-) : WebSymbolsScope {
+) : PolySymbolsScope {
 
   protected abstract fun acceptSymbol(symbol: PolySymbol): Boolean
 
-  protected abstract val subScopeBuilder: (WebSymbolsQueryExecutor, T) -> List<WebSymbolsScope>
+  protected abstract val subScopeBuilder: (WebSymbolsQueryExecutor, T) -> List<PolySymbolsScope>
 
-  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName, params: WebSymbolsCodeCompletionQueryParams, scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> {
+  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName, params: WebSymbolsCodeCompletionQueryParams, scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
@@ -45,7 +45,7 @@ abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName, params: WebSymbolsNameMatchQueryParams, scope: Stack<WebSymbolsScope>): List<PolySymbol> {
+  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName, params: WebSymbolsNameMatchQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
@@ -58,7 +58,7 @@ abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams, scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> {
+  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedKind] ?: return emptyList()
@@ -77,7 +77,7 @@ abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
   final override fun equals(other: Any?): Boolean =
     other === this
     || (other != null
-        && other is WebSymbolsIsolatedMappingScope<*>
+        && other is PolySymbolsIsolatedMappingScope<*>
         && other::class.java == this::class.java
         && other.framework == framework
         && other.location == location)
@@ -92,11 +92,11 @@ abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
     getCachedSubQueryExecutorAndScope().second
   }
 
-  private fun getCachedSubQueryExecutorAndScope(): Pair<WebSymbolsQueryExecutor, List<WebSymbolsScope>> {
-    val location = this@WebSymbolsIsolatedMappingScope.location
+  private fun getCachedSubQueryExecutorAndScope(): Pair<WebSymbolsQueryExecutor, List<PolySymbolsScope>> {
+    val location = this@PolySymbolsIsolatedMappingScope.location
     val builder = subScopeBuilder
     val manager = CachedValuesManager.getManager(location.project)
-    val cachedValueKey = manager.getKeyForClass<Pair<WebSymbolsQueryExecutor, List<WebSymbolsScope>>>(builder.javaClass)
+    val cachedValueKey = manager.getKeyForClass<Pair<WebSymbolsQueryExecutor, List<PolySymbolsScope>>>(builder.javaClass)
     return manager.getCachedValue(location, cachedValueKey, {
       val executor = WebSymbolsQueryExecutorFactory.create(location)
       val scope = builder(executor, location)

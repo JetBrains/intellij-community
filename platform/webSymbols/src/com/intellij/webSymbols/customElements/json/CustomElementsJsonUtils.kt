@@ -9,7 +9,7 @@ import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
 import com.intellij.webSymbols.customElements.impl.*
-import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
+import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternFactory
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -37,7 +37,7 @@ fun Deprecated?.toApiStatus(origin: CustomElementsJsonOrigin): PolySymbolApiStat
   this?.value?.let { msg -> PolySymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
 
 fun CustomElementsManifest.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase)
-  : Sequence<StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter> =
+  : Sequence<StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter> =
   modules.asSequence().flatMap { module ->
     module.exports.asSequence()
       .filterIsInstance<CustomElementExport>()
@@ -55,7 +55,7 @@ fun JavaScriptModule.adaptAllContributions(origin: CustomElementsJsonOrigin, roo
     .mapNotNull { CustomElementsClassOrMixinDeclarationAdapter.create(it, origin, rootScope) }
 
 fun CustomElementClassOrMixinDeclaration.adaptAllContributions(origin: CustomElementsJsonOrigin):
-  Sequence<StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter> =
+  Sequence<StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter> =
   (attributes.asSequence().mapNotNull { CustomElementsAttributeSymbol.create(it, origin) }
    + cssParts.asSequence().mapNotNull { CustomElementsCssPartSymbol.create(it, origin) }
    + cssProperties.asSequence().mapNotNull { CustomElementsCssCustomPropertySymbol.create(it, origin) }

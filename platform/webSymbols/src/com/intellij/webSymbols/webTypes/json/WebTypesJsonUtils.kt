@@ -186,7 +186,7 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): WebSymbolQualifiedKi
     }
 
 internal fun Reference.resolve(name: String,
-                               scope: List<WebSymbolsScope>,
+                               scope: List<PolySymbolsScope>,
                                queryExecutor: WebSymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
                                abstractSymbols: Boolean = false): List<PolySymbol> =
@@ -194,7 +194,7 @@ internal fun Reference.resolve(name: String,
     runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
   }
 
-internal fun Reference.resolve(scope: List<WebSymbolsScope>,
+internal fun Reference.resolve(scope: List<PolySymbolsScope>,
                                queryExecutor: WebSymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
                                abstractSymbols: Boolean = false): List<PolySymbol> =
@@ -208,7 +208,7 @@ internal fun Reference.resolve(scope: List<WebSymbolsScope>,
       runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
   }
 
-internal fun Reference.list(scope: List<WebSymbolsScope>,
+internal fun Reference.list(scope: List<PolySymbolsScope>,
                             queryExecutor: WebSymbolsQueryExecutor,
                             expandPatterns: Boolean,
                             virtualSymbols: Boolean = true,
@@ -222,7 +222,7 @@ internal fun Reference.list(scope: List<WebSymbolsScope>,
 
 private fun Reference.processWebSymbols(
   name: String?,
-  scope: List<WebSymbolsScope>,
+  scope: List<PolySymbolsScope>,
   queryExecutor: WebSymbolsQueryExecutor,
   virtualSymbols: Boolean,
   abstractSymbols: Boolean,
@@ -258,7 +258,7 @@ private fun Reference.processWebSymbols(
 }
 
 internal fun Reference.codeCompletion(name: String,
-                                      scope: List<WebSymbolsScope>,
+                                      scope: List<PolySymbolsScope>,
                                       queryExecutor: WebSymbolsQueryExecutor,
                                       position: Int = 0,
                                       virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> {

@@ -388,10 +388,10 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
 
   fun testNestedPattern1() {
     webSymbolsQueryExecutorFactory.addScope(
-      object : WebSymbolsScope {
+      object : PolySymbolsScope {
         override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<PolySymbol> {
+                                        scope: Stack<PolySymbolsScope>): List<PolySymbol> {
           return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
               override val origin: WebSymbolOrigin
@@ -412,7 +412,7 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
           else emptyList()
         }
 
-        override fun createPointer(): Pointer<out WebSymbolsScope> = Pointer.hardPointer(this)
+        override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
 
         override fun getModificationCount(): Long = 0
       }, null, testRootDisposable)

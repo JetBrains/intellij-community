@@ -5,7 +5,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
@@ -24,7 +24,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
   override fun isStaticAndRequired(): Boolean = false
 
   override fun match(owner: PolySymbol?,
-                     scopeStack: Stack<WebSymbolsScope>,
+                     scopeStack: Stack<PolySymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
@@ -40,13 +40,13 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
   }
 
   override fun list(owner: PolySymbol?,
-                    scopeStack: Stack<WebSymbolsScope>,
+                    scopeStack: Stack<PolySymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     emptyList()
 
   override fun complete(owner: PolySymbol?,
-                        scopeStack: Stack<WebSymbolsScope>,
+                        scopeStack: Stack<PolySymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,

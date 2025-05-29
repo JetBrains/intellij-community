@@ -13,14 +13,14 @@ import com.intellij.webSymbols.WebSymbolTypeSupport
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.customElements.json.*
-import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
+import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class CustomElementsManifestScopeBase :
-  StaticWebSymbolsScopeBase<CustomElementsManifest, Any, CustomElementsJsonOrigin>() {
+  StaticPolySymbolsScopeBase<CustomElementsManifest, Any, CustomElementsJsonOrigin>() {
 
   private val registeredContexts = mutableSetOf<String>()
 

@@ -6,7 +6,7 @@ import com.intellij.util.applyIf
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.impl.withDisplayName
 import com.intellij.webSymbols.impl.withOffset
@@ -23,7 +23,7 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
   override fun isStaticAndRequired(): Boolean = false
 
   override fun match(owner: PolySymbol?,
-                     scopeStack: Stack<WebSymbolsScope>,
+                     scopeStack: Stack<PolySymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
@@ -68,7 +68,7 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
   }
 
   override fun list(owner: PolySymbol?,
-                    scopeStack: Stack<WebSymbolsScope>,
+                    scopeStack: Stack<PolySymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     symbolsResolver
@@ -93,7 +93,7 @@ internal class SymbolReferencePattern(val displayName: String?) : WebSymbolsPatt
     ?: emptyList()
 
   override fun complete(owner: PolySymbol?,
-                        scopeStack: Stack<WebSymbolsScope>,
+                        scopeStack: Stack<PolySymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,

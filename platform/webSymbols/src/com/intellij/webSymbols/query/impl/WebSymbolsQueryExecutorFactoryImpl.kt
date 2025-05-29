@@ -16,7 +16,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolsPrioritizedScope
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
@@ -27,7 +27,7 @@ import com.intellij.webSymbols.utils.findOriginalFile
 
 class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymbolsQueryExecutorFactory, Disposable {
 
-  private val customScope = MultiMap<VirtualFile?, WebSymbolsScope>()
+  private val customScope = MultiMap<VirtualFile?, PolySymbolsScope>()
   private var modificationCount = 0L
 
   override fun create(location: PsiElement?, allowResolve: Boolean): WebSymbolsQueryExecutor {
@@ -39,7 +39,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
 
     val context = location?.let { buildWebSymbolsContext(it) } ?: WebSymbolsContext.empty()
 
-    val scopeList = mutableListOf<WebSymbolsScope>()
+    val scopeList = mutableListOf<PolySymbolsScope>()
     getCustomScope(location).forEach(scopeList::add)
     val internalMode = ApplicationManager.getApplication().isInternal
     val originalLocation = location?.originalElement
@@ -71,7 +71,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
                                        allowResolve)
   }
 
-  override fun addScope(scope: WebSymbolsScope,
+  override fun addScope(scope: PolySymbolsScope,
                         contextDirectory: VirtualFile?,
                         disposable: Disposable) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -119,7 +119,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
     return WebSymbolNamesProviderImpl(context.framework, nameConversionRules, createModificationTracker(providers))
   }
 
-  private fun getCustomScope(context: PsiElement?): List<WebSymbolsScope> =
+  private fun getCustomScope(context: PsiElement?): List<PolySymbolsScope> =
     context
       ?.let { InjectedLanguageManager.getInstance(it.project).getTopLevelFile(it) }
       ?.originalFile
@@ -128,8 +128,8 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
       ?.let { getCustomScope(it) }
     ?: emptyList()
 
-  private fun getCustomScope(context: VirtualFile): List<WebSymbolsScope> {
-    val result = mutableListOf<WebSymbolsScope>()
+  private fun getCustomScope(context: VirtualFile): List<PolySymbolsScope> {
+    val result = mutableListOf<PolySymbolsScope>()
     if (!customScope.isEmpty) {
       result.addAll(customScope.get(null))
       var f: VirtualFile? = context

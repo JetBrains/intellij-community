@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.webTypes.filters
 
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
@@ -12,7 +12,7 @@ class WebSymbolsMatchPrefixFilter : WebSymbolsFilter {
 
   override fun filterCodeCompletions(codeCompletions: List<WebSymbolCodeCompletionItem>,
                                      queryExecutor: WebSymbolsQueryExecutor,
-                                     scope: List<WebSymbolsScope>,
+                                     scope: List<PolySymbolsScope>,
                                      properties: Map<String, Any>): List<WebSymbolCodeCompletionItem> {
     val prefix = properties["prefix"] as? String ?: return codeCompletions
     return codeCompletions.filter { it.name.startsWith(prefix) }
@@ -20,7 +20,7 @@ class WebSymbolsMatchPrefixFilter : WebSymbolsFilter {
 
   override fun filterNameMatches(matches: List<PolySymbol>,
                                  queryExecutor: WebSymbolsQueryExecutor,
-                                 scope: List<WebSymbolsScope>,
+                                 scope: List<PolySymbolsScope>,
                                  properties: Map<String, Any>): List<PolySymbol> {
     val prefix = properties["prefix"] as? String ?: return matches
     return matches.filter { it.name.startsWith(prefix) }

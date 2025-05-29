@@ -4,7 +4,7 @@ package com.intellij.webSymbols.patterns
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
@@ -18,15 +18,15 @@ interface WebSymbolsPatternSymbolsResolver {
 
   fun codeCompletion(name: String,
                      position: Int,
-                     scopeStack: Stack<WebSymbolsScope>,
+                     scopeStack: Stack<PolySymbolsScope>,
                      queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem>
 
-  fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
+  fun listSymbols(scopeStack: Stack<PolySymbolsScope>,
                   queryExecutor: WebSymbolsQueryExecutor,
                   expandPatterns: Boolean): List<PolySymbol>
 
   fun matchName(name: String,
-                scopeStack: Stack<WebSymbolsScope>,
+                scopeStack: Stack<PolySymbolsScope>,
                 queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol>
 
 }

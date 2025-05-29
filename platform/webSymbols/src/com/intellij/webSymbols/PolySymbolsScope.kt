@@ -14,7 +14,7 @@ import com.intellij.webSymbols.utils.toCodeCompletionItems
 
 /**
  * Web Symbols are contained within a loose model built from Web Symbols scopes, each time anew for a particular context.
- * Each Web Symbol is also a [WebSymbolsScope] and it can contain other Web Symbols.
+ * Each Web Symbol is also a [PolySymbolsScope] and it can contain other Web Symbols.
  * For instance an HTML element symbol would contain some HTML attributes symbols,
  * or a JavaScript class symbol would contain fields and methods symbols.
  *
@@ -28,9 +28,9 @@ import com.intellij.webSymbols.utils.toCodeCompletionItems
  * to learn how queries are performed.
  *
  */
-interface WebSymbolsScope : ModificationTracker {
+interface PolySymbolsScope : ModificationTracker {
 
-  fun createPointer(): Pointer<out WebSymbolsScope>
+  fun createPointer(): Pointer<out PolySymbolsScope>
 
   /**
    * Returns symbols within the scope, which matches provided namespace, kind and name.
@@ -41,7 +41,7 @@ interface WebSymbolsScope : ModificationTracker {
    */
   fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                          params: WebSymbolsNameMatchQueryParams,
-                         scope: Stack<WebSymbolsScope>): List<PolySymbol> =
+                         scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     getSymbols(qualifiedName.qualifiedKind,
                WebSymbolsListSymbolsQueryParams.create(
                  params.queryExecutor, expandPatterns = false, virtualSymbols = params.virtualSymbols,
@@ -59,7 +59,7 @@ interface WebSymbolsScope : ModificationTracker {
    */
   fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                  params: WebSymbolsListSymbolsQueryParams,
-                 scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+                 scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     emptyList()
 
   /**
@@ -73,7 +73,7 @@ interface WebSymbolsScope : ModificationTracker {
    */
   fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                          params: WebSymbolsCodeCompletionQueryParams,
-                         scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                         scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getDefaultCodeCompletions(qualifiedName, params, scope)
 
   /**

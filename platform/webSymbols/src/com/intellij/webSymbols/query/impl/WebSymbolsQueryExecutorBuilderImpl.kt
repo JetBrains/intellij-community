@@ -4,7 +4,7 @@ package com.intellij.webSymbols.query.impl
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.impl.WebSymbolsContextImpl
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
@@ -13,17 +13,17 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory.WebSymbolsQu
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 
 class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
-  private val rootScopes = mutableListOf<WebSymbolsScope>()
+  private val rootScopes = mutableListOf<PolySymbolsScope>()
   private val customizers = mutableListOf<WebSymbolsQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<WebSymbolNameConversionRules>()
   private val context = mutableMapOf<ContextKind, ContextName>()
   private var allowResolve = true
 
-  override fun addRootScope(scope: WebSymbolsScope): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addRootScope(scope: PolySymbolsScope): WebSymbolsQueryExecutorBuilder = apply {
     rootScopes.add(scope)
   }
 
-  override fun addRootScopes(scope: List<WebSymbolsScope>): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addRootScopes(scope: List<PolySymbolsScope>): WebSymbolsQueryExecutorBuilder = apply {
     rootScopes.addAll(scope)
   }
 

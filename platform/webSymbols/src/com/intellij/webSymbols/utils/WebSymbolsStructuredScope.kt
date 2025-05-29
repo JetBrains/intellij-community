@@ -12,12 +12,12 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.takeWhileInclusive
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolsScope
-import com.intellij.webSymbols.query.WebSymbolsCompoundScope
+import com.intellij.webSymbols.PolySymbolsScope
+import com.intellij.webSymbols.query.PolySymbolsCompoundScope
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
-abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : WebSymbolsCompoundScope() {
+abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : PolySymbolsCompoundScope() {
 
   protected abstract val rootPsiElement: R?
 
@@ -25,12 +25,12 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
 
   protected abstract val providedSymbolKinds: Set<WebSymbolQualifiedKind>
 
-  override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (WebSymbolsScope) -> Unit) {
+  override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
     getCurrentScope()
       ?.let { consumer(it) }
   }
 
-  protected fun getCurrentScope(): WebSymbolsPsiScope? =
+  protected fun getCurrentScope(): PolySymbolsPsiScope? =
     getRootScope()
       ?.let { findBestMatchingScope(it) }
       ?.let {
@@ -40,7 +40,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
         }
       }
 
-  protected fun getRootScope(): WebSymbolsPsiScope? {
+  protected fun getRootScope(): PolySymbolsPsiScope? {
     val manager = CachedValuesManager.getManager(location.project)
     val rootPsiElement = rootPsiElement ?: return null
     val scopeBuilderProvider = scopesBuilderProvider
@@ -64,26 +64,26 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
   override fun hashCode(): Int =
     location.hashCode()
 
-  protected open fun findBestMatchingScope(rootScope: WebSymbolsPsiScope): WebSymbolsPsiScope? =
-    (rootScope as WebSymbolsPsiScopeImpl).findBestMatchingScope(location.textOffset)
+  protected open fun findBestMatchingScope(rootScope: PolySymbolsPsiScope): PolySymbolsPsiScope? =
+    (rootScope as PolySymbolsPsiScopeImpl).findBestMatchingScope(location.textOffset)
 
   protected class WebSymbolsPsiScopesHolder(val rootElement: PsiElement, val providedSymbolKinds: Set<WebSymbolQualifiedKind>) {
-    private val scopes = Stack<WebSymbolsPsiScope>()
+    private val scopes = Stack<PolySymbolsPsiScope>()
 
-    internal val topLevelScope: WebSymbolsPsiScope
+    internal val topLevelScope: PolySymbolsPsiScope
       get() {
         assert(scopes.size == 1)
         return scopes.peek()
       }
 
     init {
-      scopes.add(WebSymbolsPsiScopeImpl(rootElement, emptyMap(), null, providedSymbolKinds, emptySet()))
+      scopes.add(PolySymbolsPsiScopeImpl(rootElement, emptyMap(), null, providedSymbolKinds, emptySet()))
     }
 
-    fun currentScope(): WebSymbolsPsiScope =
+    fun currentScope(): PolySymbolsPsiScope =
       scopes.peek()
 
-    fun previousScope(): WebSymbolsPsiScope =
+    fun previousScope(): PolySymbolsPsiScope =
       scopes[scopes.size - 2]
 
     fun popScope() {
@@ -96,19 +96,19 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       exclusiveSymbolKinds: Set<WebSymbolQualifiedKind> = emptySet(),
       updater: (ScopeModifier.() -> Unit)? = null,
     ) {
-      val scope = WebSymbolsPsiScopeImpl(scopePsiElement, properties,
-                                         currentScope() as WebSymbolsPsiScopeImpl,
-                                         providedSymbolKinds, exclusiveSymbolKinds)
+      val scope = PolySymbolsPsiScopeImpl(scopePsiElement, properties,
+                                          currentScope() as PolySymbolsPsiScopeImpl,
+                                          providedSymbolKinds, exclusiveSymbolKinds)
       scopes.push(scope)
       if (updater != null) ScopeModifierImpl(scope).updater()
     }
 
     fun currentScope(updater: ScopeModifier.() -> Unit) {
-      ScopeModifierImpl(currentScope() as WebSymbolsPsiScopeImpl).updater()
+      ScopeModifierImpl(currentScope() as PolySymbolsPsiScopeImpl).updater()
     }
 
     fun previousScope(updater: ScopeModifier.() -> Unit) {
-      ScopeModifierImpl(previousScope() as WebSymbolsPsiScopeImpl).updater()
+      ScopeModifierImpl(previousScope() as PolySymbolsPsiScopeImpl).updater()
     }
 
     interface ScopeModifier {
@@ -116,7 +116,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       fun addSymbols(symbol: List<PolySymbol>)
     }
 
-    private inner class ScopeModifierImpl(private val scope: WebSymbolsPsiScopeImpl) : ScopeModifier {
+    private inner class ScopeModifierImpl(private val scope: PolySymbolsPsiScopeImpl) : ScopeModifier {
       override fun addSymbol(symbol: PolySymbol) {
         if (symbol.qualifiedKind !in providedSymbolKinds)
           throw IllegalStateException("WebSymbol of kind ${symbol.qualifiedKind} should not be provided by ${this::class.java.name}")
@@ -129,21 +129,21 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     }
   }
 
-  protected interface WebSymbolsPsiScope : WebSymbolsScope {
+  protected interface PolySymbolsPsiScope : PolySymbolsScope {
     val source: PsiElement
-    val parent: WebSymbolsPsiScope?
+    val parent: PolySymbolsPsiScope?
     val properties: Map<String, Any>
-    val children: List<WebSymbolsPsiScope>
+    val children: List<PolySymbolsPsiScope>
     val localSymbols: List<PolySymbol>
     fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<PolySymbol>
   }
 
   private class WebSymbolsPsiScopeWithPointer(
-    private val delegate: WebSymbolsPsiScope,
-    private val pointer: Pointer<out WebSymbolsPsiScope>,
-  ) : WebSymbolsPsiScope by delegate {
+    private val delegate: PolySymbolsPsiScope,
+    private val pointer: Pointer<out PolySymbolsPsiScope>,
+  ) : PolySymbolsPsiScope by delegate {
 
-    override fun createPointer(): Pointer<out WebSymbolsPsiScope> =
+    override fun createPointer(): Pointer<out PolySymbolsPsiScope> =
       pointer
 
     override fun equals(other: Any?): Boolean =
@@ -155,15 +155,15 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       delegate.hashCode()
   }
 
-  private class WebSymbolsPsiScopeImpl(
+  private class PolySymbolsPsiScopeImpl(
     override val source: PsiElement,
     override val properties: Map<String, Any>,
-    override val parent: WebSymbolsPsiScopeImpl?,
+    override val parent: PolySymbolsPsiScopeImpl?,
     private val providedSymbolKinds: Set<WebSymbolQualifiedKind>,
     private val exclusiveSymbolKinds: Set<WebSymbolQualifiedKind>,
-  ) : WebSymbolsPsiScope {
+  ) : PolySymbolsPsiScope {
 
-    override val children = ArrayList<WebSymbolsPsiScopeImpl>()
+    override val children = ArrayList<PolySymbolsPsiScopeImpl>()
     override val localSymbols = SmartList<PolySymbol>()
 
     private val textRange: TextRange get() = source.textRange
@@ -174,12 +174,12 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       parent?.add(this)
     }
 
-    fun findBestMatchingScope(offset: Int): WebSymbolsPsiScope? {
+    fun findBestMatchingScope(offset: Int): PolySymbolsPsiScope? {
       if (!textRange.contains(offset)) {
         return null
       }
-      var curScope: WebSymbolsPsiScopeImpl? = null
-      var innerScope: WebSymbolsPsiScopeImpl? = this
+      var curScope: PolySymbolsPsiScopeImpl? = null
+      var innerScope: PolySymbolsPsiScopeImpl? = this
       while (innerScope != null) {
         curScope = innerScope
         innerScope = null
@@ -199,8 +199,8 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     override fun getSymbols(
       qualifiedKind: WebSymbolQualifiedKind,
       params: WebSymbolsListSymbolsQueryParams,
-      scope: Stack<WebSymbolsScope>,
-    ): List<WebSymbolsScope> =
+      scope: Stack<PolySymbolsScope>,
+    ): List<PolySymbolsScope> =
       getAllSymbols(qualifiedKind)
 
     override fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<PolySymbol> =
@@ -219,19 +219,19 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       localSymbols.add(symbol)
     }
 
-    private fun add(scope: WebSymbolsPsiScopeImpl) {
+    private fun add(scope: PolySymbolsPsiScopeImpl) {
       children.add(scope)
     }
 
     override fun equals(other: Any?): Boolean =
-      other is WebSymbolsPsiScopeImpl
+      other is PolySymbolsPsiScopeImpl
       && other.source == source
       && other.textRange == textRange
 
     override fun hashCode(): Int =
       source.hashCode()
 
-    override fun createPointer(): Pointer<out WebSymbolsScope> =
+    override fun createPointer(): Pointer<out PolySymbolsScope> =
       throw IllegalStateException("WebSymbolsPsiScopeImpl cannot be pointed to. It should be wrapped with WebSymbolsPsiScopeWithPointer.")
 
     override fun getModificationCount(): Long = 0

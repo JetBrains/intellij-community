@@ -15,7 +15,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.filterByQueryParams
@@ -30,14 +30,14 @@ import kotlin.math.min
 @ApiStatus.Internal
 class WebSymbolsQueryExecutorImpl(
   override val location: PsiElement?,
-  rootScope: List<WebSymbolsScope>,
+  rootScope: List<PolySymbolsScope>,
   override val namesProvider: WebSymbolNamesProvider,
   override val resultsCustomizer: WebSymbolsQueryResultsCustomizer,
   override val context: WebSymbolsContext,
   override val allowResolve: Boolean,
 ) : WebSymbolsQueryExecutor {
 
-  private val rootScope: List<WebSymbolsScope> = initializeCompoundScopes(rootScope)
+  private val rootScope: List<PolySymbolsScope> = initializeCompoundScopes(rootScope)
   private var nestingLevel: Int = 0
 
   override var keepUnresolvedTopLevelReferences: Boolean = false
@@ -64,7 +64,7 @@ class WebSymbolsQueryExecutorImpl(
     return Pointer<WebSymbolsQueryExecutor> {
       @Suppress("UNCHECKED_CAST")
       val rootScope = rootScopePointers.map { it.dereference() }
-                        .takeIf { it.all { c -> c != null } } as? List<WebSymbolsScope>
+                        .takeIf { it.all { c -> c != null } } as? List<PolySymbolsScope>
                       ?: return@Pointer null
 
       val namesProvider = namesProviderPtr.dereference()
@@ -82,7 +82,7 @@ class WebSymbolsQueryExecutorImpl(
     virtualSymbols: Boolean,
     abstractSymbols: Boolean,
     strictScope: Boolean,
-    additionalScope: List<WebSymbolsScope>,
+    additionalScope: List<PolySymbolsScope>,
   ): List<PolySymbol> =
     runNameMatchQuery(path, WebSymbolsNameMatchQueryParams.create(this, virtualSymbols, abstractSymbols, strictScope), additionalScope)
 
@@ -93,7 +93,7 @@ class WebSymbolsQueryExecutorImpl(
     virtualSymbols: Boolean,
     abstractSymbols: Boolean,
     strictScope: Boolean,
-    additionalScope: List<WebSymbolsScope>,
+    additionalScope: List<PolySymbolsScope>,
   ): List<PolySymbol> =
     runListSymbolsQuery(path + qualifiedKind.withName(""),
                         WebSymbolsListSymbolsQueryParams.create(this, expandPatterns = expandPatterns, virtualSymbols = virtualSymbols,
@@ -103,7 +103,7 @@ class WebSymbolsQueryExecutorImpl(
     path: List<WebSymbolQualifiedName>,
     position: Int,
     virtualSymbols: Boolean,
-    additionalScope: List<WebSymbolsScope>,
+    additionalScope: List<PolySymbolsScope>,
   ): List<WebSymbolCodeCompletionItem> =
     runCodeCompletionQuery(path, WebSymbolsCodeCompletionQueryParams.create(this, position, virtualSymbols), additionalScope)
 
@@ -113,19 +113,19 @@ class WebSymbolsQueryExecutorImpl(
     else
       WebSymbolsQueryExecutorImpl(location, rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
-  override fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<WebSymbolsScope>): Boolean {
+  override fun hasExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind, scope: List<PolySymbolsScope>): Boolean {
     return buildQueryScope(scope).any { it.isExclusiveFor(qualifiedKind) }
   }
 
-  private fun initializeCompoundScopes(rootScope: List<WebSymbolsScope>): List<WebSymbolsScope> {
-    if (rootScope.any { it is WebSymbolsCompoundScope }) {
+  private fun initializeCompoundScopes(rootScope: List<PolySymbolsScope>): List<PolySymbolsScope> {
+    if (rootScope.any { it is PolySymbolsCompoundScope }) {
       val compoundScopeQueryExecutor = WebSymbolsQueryExecutorImpl(
         location,
-        rootScope.filter { it !is WebSymbolsCompoundScope },
+        rootScope.filter { it !is PolySymbolsCompoundScope },
         namesProvider, resultsCustomizer, context, allowResolve
       )
       return rootScope.flatMap {
-        if (it is WebSymbolsCompoundScope) {
+        if (it is PolySymbolsCompoundScope) {
           it.getScopes(compoundScopeQueryExecutor)
         }
         else {
@@ -136,11 +136,11 @@ class WebSymbolsQueryExecutorImpl(
     else return rootScope
   }
 
-  private fun buildQueryScope(additionalScope: List<WebSymbolsScope>): MutableSet<WebSymbolsScope> {
+  private fun buildQueryScope(additionalScope: List<PolySymbolsScope>): MutableSet<PolySymbolsScope> {
     val finalScope = rootScope.toMutableSet()
     additionalScope.flatMapTo(finalScope) {
       when (it) {
-        is WebSymbolsCompoundScope -> it.getScopes(this)
+        is PolySymbolsCompoundScope -> it.getScopes(this)
         is PolySymbol -> it.queryScope
         else -> listOf(it)
       }
@@ -151,12 +151,12 @@ class WebSymbolsQueryExecutorImpl(
   private fun runNameMatchQuery(
     path: List<WebSymbolQualifiedName>,
     queryParams: WebSymbolsNameMatchQueryParams,
-    additionalScope: List<WebSymbolsScope>,
+    additionalScope: List<PolySymbolsScope>,
   ): List<PolySymbol> =
     runQuery(path, queryParams, additionalScope) {
-      finalContext: Collection<WebSymbolsScope>,
-      qualifiedName: WebSymbolQualifiedName,
-      params: WebSymbolsNameMatchQueryParams,
+        finalContext: Collection<PolySymbolsScope>,
+        qualifiedName: WebSymbolQualifiedName,
+        params: WebSymbolsNameMatchQueryParams,
       ->
       val result = finalContext
         .takeLastUntilExclusiveScopeFor(qualifiedName.qualifiedKind)
@@ -184,12 +184,12 @@ class WebSymbolsQueryExecutorImpl(
 
   private fun runListSymbolsQuery(
     path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsListSymbolsQueryParams,
-    additionalScope: List<WebSymbolsScope>,
+    additionalScope: List<PolySymbolsScope>,
   ): List<PolySymbol> =
     runQuery(path, queryParams, additionalScope) {
-      finalContext: Collection<WebSymbolsScope>,
-      qualifiedName: WebSymbolQualifiedName,
-      params: WebSymbolsListSymbolsQueryParams,
+        finalContext: Collection<PolySymbolsScope>,
+        qualifiedName: WebSymbolQualifiedName,
+        params: WebSymbolsListSymbolsQueryParams,
       ->
       val result = finalContext
         .takeLastUntilExclusiveScopeFor(qualifiedName.qualifiedKind)
@@ -235,12 +235,12 @@ class WebSymbolsQueryExecutorImpl(
 
   private fun runCodeCompletionQuery(
     path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsCodeCompletionQueryParams,
-    additionalScope: List<WebSymbolsScope>,
+    additionalScope: List<PolySymbolsScope>,
   ): List<WebSymbolCodeCompletionItem> =
     runQuery(path, queryParams, additionalScope) {
-      finalContext: Collection<WebSymbolsScope>,
-      pathSection: WebSymbolQualifiedName,
-      params: WebSymbolsCodeCompletionQueryParams,
+        finalContext: Collection<PolySymbolsScope>,
+        pathSection: WebSymbolQualifiedName,
+        params: WebSymbolsCodeCompletionQueryParams,
       ->
       var proximityBase = 0
       var nextProximityBase = 0
@@ -285,9 +285,9 @@ class WebSymbolsQueryExecutorImpl(
   private fun <T, P : WebSymbolsQueryParams> runQuery(
     path: List<WebSymbolQualifiedName>,
     params: P,
-    additionalScope: List<WebSymbolsScope>,
+    additionalScope: List<PolySymbolsScope>,
     finalProcessor: (
-      context: Collection<WebSymbolsScope>,
+      context: Collection<PolySymbolsScope>,
       pathSection: WebSymbolQualifiedName,
       params: P,
     ) -> List<T>,
@@ -342,7 +342,7 @@ class WebSymbolsQueryExecutorImpl(
     }
   }
 
-  private fun Collection<WebSymbolsScope>.takeLastUntilExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind): List<WebSymbolsScope> =
+  private fun Collection<PolySymbolsScope>.takeLastUntilExclusiveScopeFor(qualifiedKind: WebSymbolQualifiedKind): List<PolySymbolsScope> =
     toList()
       .let { list ->
         list.subList(max(0, list.indexOfLast { it.isExclusiveFor(qualifiedKind) }), list.size)
@@ -372,7 +372,7 @@ class WebSymbolsQueryExecutorImpl(
     }
 
   private fun PolySymbol.expandPattern(
-    context: Stack<WebSymbolsScope>,
+    context: Stack<PolySymbolsScope>,
     params: WebSymbolsListSymbolsQueryParams,
   ): List<PolySymbol> =
     pattern?.let { pattern ->

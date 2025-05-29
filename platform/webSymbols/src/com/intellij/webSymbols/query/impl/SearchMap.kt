@@ -48,7 +48,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<WebSymbolsScope>): Sequence<PolySymbol> =
+                                  scope: Stack<PolySymbolsScope>): Sequence<PolySymbol> =
     namesProvider.getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY)
       .asSequence()
       .mapNotNull { statics[SearchMapEntry(qualifiedName.qualifiedKind, it)] }
@@ -56,7 +56,7 @@ internal abstract class SearchMap<T> internal constructor(
       .map { it.withMatchedName(qualifiedName.name) }
       .plus(collectPatternContributions(qualifiedName, params, scope))
 
-  internal fun getSymbols(qualifiedKind: WebSymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams): Sequence<WebSymbolsScope> =
+  internal fun getSymbols(qualifiedKind: WebSymbolQualifiedKind, params: WebSymbolsListSymbolsQueryParams): Sequence<PolySymbolsScope> =
     statics.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true))
       .values.asSequence()
       .plus(patterns.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true)).values)
@@ -65,7 +65,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scope: Stack<WebSymbolsScope>): Sequence<WebSymbolCodeCompletionItem> =
+                                  scope: Stack<PolySymbolsScope>): Sequence<WebSymbolCodeCompletionItem> =
     collectStaticCompletionResults(qualifiedName, params, scope)
       .asSequence()
       .plus(collectPatternCompletionResults(qualifiedName, params, scope))
@@ -73,7 +73,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectStaticCompletionResults(qualifiedName: WebSymbolQualifiedName,
                                              params: WebSymbolsCodeCompletionQueryParams,
-                                             scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                             scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     statics.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values
       .asSequence()
@@ -84,7 +84,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectPatternCompletionResults(qualifiedName: WebSymbolQualifiedName,
                                               params: WebSymbolsCodeCompletionQueryParams,
-                                              scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                              scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     patterns.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values.asSequence()
       .flatMap { it.asSequence() }
@@ -96,7 +96,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectPatternContributions(qualifiedName: WebSymbolQualifiedName,
                                           params: WebSymbolsNameMatchQueryParams,
-                                          scope: Stack<WebSymbolsScope>): List<PolySymbol> =
+                                          scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     collectPatternsToProcess(qualifiedName)
       .let {
         if (it.size > 2)

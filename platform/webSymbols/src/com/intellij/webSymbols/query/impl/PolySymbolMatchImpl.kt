@@ -82,7 +82,7 @@ internal open class PolySymbolMatchImpl private constructor(
   override val proximity: Int?
     get() = explicitProximity ?: reversedSegments().mapNotNull { it.proximity }.firstOrNull()
 
-  override val queryScope: List<WebSymbolsScope>
+  override val queryScope: List<PolySymbolsScope>
     get() = nameSegments.asSequence()
       .flatMap { it.symbols }
       .flatMap { it.queryScope }

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.WebSymbolsScopeWithCache
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,14 +19,14 @@ object WebSymbolsHtmlQueryHelper {
   @JvmStatic
   fun getStandardHtmlElementSymbolsScope(
     project: Project,
-  ): WebSymbolsScope =
+  ): PolySymbolsScope =
     StandardHtmlElementSymbolsScope(project)
 
   @JvmStatic
   fun getStandardHtmlAttributeSymbolsScopeForTag(
     project: Project,
     tagName: String,
-  ): WebSymbolsScope =
+  ): PolySymbolsScope =
     StandardHtmlAttributeSymbolsScope(project, tagName)
 
   private class StandardHtmlElementSymbolsScope(project: Project) : WebSymbolsScopeWithCache<Project, Unit>(null, project, project, Unit) {

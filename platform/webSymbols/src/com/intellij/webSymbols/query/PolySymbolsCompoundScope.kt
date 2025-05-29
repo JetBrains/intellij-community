@@ -6,26 +6,26 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 
 /**
  * A special purpose scope, which provides other scopes, possibly calling a [WebSymbolsQueryExecutor] to retrieve them.
  * This scope is useful if your [WebSymbolsQueryConfigurator] needs to provide scopes based on the location and these
  * in turn require to query the model. It can also be added as an additional scope to any WebSymbol query, or be used
- * just to encompass logic related to building a list of scopes. [WebSymbolsCompoundScope] cannot be nested within each
+ * just to encompass logic related to building a list of scopes. [PolySymbolsCompoundScope] cannot be nested within each
  * other to prevent any recursive inclusion problems.
  */
-abstract class WebSymbolsCompoundScope : WebSymbolsScope {
+abstract class PolySymbolsCompoundScope : PolySymbolsScope {
 
   protected abstract fun build(queryExecutor: WebSymbolsQueryExecutor,
-                               consumer: (WebSymbolsScope) -> Unit)
+                               consumer: (PolySymbolsScope) -> Unit)
 
-  fun getScopes(queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolsScope> {
+  fun getScopes(queryExecutor: WebSymbolsQueryExecutor): List<PolySymbolsScope> {
     if (requiresResolve() && !queryExecutor.allowResolve) return emptyList()
-    val list = mutableListOf<WebSymbolsScope>()
+    val list = mutableListOf<PolySymbolsScope>()
     build(queryExecutor) {
-      if (it is WebSymbolsCompoundScope)
+      if (it is PolySymbolsCompoundScope)
         throw IllegalArgumentException("WebSymbolsCompoundScope cannot be nested: $it")
       if (it is PolySymbol)
         list.addAll(it.queryScope)
@@ -39,23 +39,23 @@ abstract class WebSymbolsCompoundScope : WebSymbolsScope {
 
   final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<PolySymbol> =
+                                        scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
   final override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                                 params: WebSymbolsListSymbolsQueryParams,
-                                scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+                                scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
   final override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                        scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
   final override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
-  abstract override fun createPointer(): Pointer<out WebSymbolsCompoundScope>
+  abstract override fun createPointer(): Pointer<out PolySymbolsCompoundScope>
 
   final override fun getModificationCount(): Long = 0
 

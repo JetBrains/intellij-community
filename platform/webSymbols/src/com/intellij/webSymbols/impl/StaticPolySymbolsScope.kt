@@ -3,13 +3,13 @@ package com.intellij.webSymbols.impl
 
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
 
-interface StaticWebSymbolsScope : WebSymbolsScope, WebSymbolsContextRulesProvider {
+interface StaticPolySymbolsScope : PolySymbolsScope, WebSymbolsContextRulesProvider {
 
-  override fun createPointer(): Pointer<out StaticWebSymbolsScope>
+  override fun createPointer(): Pointer<out StaticPolySymbolsScope>
 
   fun getNameConversionRulesProvider(framework: FrameworkId): WebSymbolNameConversionRulesProvider
 }

@@ -144,7 +144,7 @@ fun PolySymbolMatch.withSegments(segments: List<WebSymbolNameSegment>): PolySymb
 fun PolySymbol.match(
   nameToMatch: String,
   params: WebSymbolsNameMatchQueryParams,
-  context: Stack<WebSymbolsScope>,
+  context: Stack<PolySymbolsScope>,
 ): List<PolySymbol> {
   pattern?.let { pattern ->
     context.push(this)
@@ -177,7 +177,7 @@ fun PolySymbol.match(
 fun PolySymbol.toCodeCompletionItems(
   name: String,
   params: WebSymbolsCodeCompletionQueryParams,
-  context: Stack<WebSymbolsScope>,
+  context: Stack<PolySymbolsScope>,
 ): List<WebSymbolCodeCompletionItem> =
   pattern?.let { pattern ->
     context.push(this)
@@ -387,10 +387,10 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
   }
 }
 
-fun WebSymbolsScope.getDefaultCodeCompletions(
+fun PolySymbolsScope.getDefaultCodeCompletions(
   qualifiedName: WebSymbolQualifiedName,
   params: WebSymbolsCodeCompletionQueryParams,
-  scope: Stack<WebSymbolsScope>,
+  scope: Stack<PolySymbolsScope>,
 ): List<WebSymbolCodeCompletionItem> =
   getSymbols(qualifiedName.qualifiedKind,
              WebSymbolsListSymbolsQueryParams.create(
@@ -400,7 +400,7 @@ fun WebSymbolsScope.getDefaultCodeCompletions(
              ), scope)
     .flatMap { (it as? PolySymbol)?.toCodeCompletionItems(qualifiedName.name, params, scope) ?: emptyList() }
 
-internal val List<WebSymbolsScope>.lastPolySymbol: PolySymbol?
+internal val List<PolySymbolsScope>.lastPolySymbol: PolySymbol?
   get() = this.lastOrNull { it is PolySymbol } as? PolySymbol
 
 @ApiStatus.Internal

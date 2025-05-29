@@ -36,18 +36,18 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
   override fun getScope(project: Project,
                         location: PsiElement?,
                         context: WebSymbolsContext,
-                        allowResolve: Boolean): List<WebSymbolsScope> =
+                        allowResolve: Boolean): List<PolySymbolsScope> =
     if (location is XmlElement) {
       listOfNotNull(
-        location.takeIf { it !is XmlTag }?.let { HtmlContextualWebSymbolsScope(it) },
+        location.takeIf { it !is XmlTag }?.let { HtmlContextualPolySymbolsScope(it) },
         location.parentOfType<XmlTag>(withSelf = true)?.let { StandardHtmlSymbolsScope(it) },
       )
     }
     else emptyList()
 
   @ApiStatus.Internal
-  class HtmlContextualWebSymbolsScope(private val location: PsiElement)
-    : WebSymbolsCompoundScope(), WebSymbolsPrioritizedScope {
+  class HtmlContextualPolySymbolsScope(private val location: PsiElement)
+    : PolySymbolsCompoundScope(), WebSymbolsPrioritizedScope {
 
     init {
       assert(location !is XmlTag) { "Cannot create HtmlContextualWebSymbolsScope on a tag." }
@@ -58,7 +58,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override fun requiresResolve(): Boolean = false
 
-    override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (WebSymbolsScope) -> Unit) {
+    override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
       val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope = element.takeIf { queryExecutor.allowResolve }
@@ -75,16 +75,16 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
         .forEach(consumer)
     }
 
-    override fun createPointer(): Pointer<out WebSymbolsCompoundScope> {
+    override fun createPointer(): Pointer<out PolySymbolsCompoundScope> {
       val attributePtr = location.createSmartPointer()
       return Pointer {
-        attributePtr.dereference()?.let { HtmlContextualWebSymbolsScope(location) }
+        attributePtr.dereference()?.let { HtmlContextualPolySymbolsScope(location) }
       }
     }
 
     override fun equals(other: Any?): Boolean =
       other === this ||
-      other is HtmlContextualWebSymbolsScope && other.location == location
+      other is HtmlContextualPolySymbolsScope && other.location == location
 
     override fun hashCode(): Int =
       location.hashCode()
@@ -102,7 +102,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       }
   }
 
-  private class StandardHtmlSymbolsScope(private val tag: XmlTag) : WebSymbolsScope {
+  private class StandardHtmlSymbolsScope(private val tag: XmlTag) : PolySymbolsScope {
 
     override fun equals(other: Any?): Boolean =
       other is StandardHtmlSymbolsScope
@@ -123,7 +123,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                             params: WebSymbolsListSymbolsQueryParams,
-                            scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+                            scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
       if (params.queryExecutor.allowResolve) {
         when (qualifiedKind) {
           PolySymbol.HTML_ELEMENTS ->
@@ -148,7 +148,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
-                                    scope: Stack<WebSymbolsScope>): List<PolySymbol> {
+                                    scope: Stack<PolySymbolsScope>): List<PolySymbol> {
       if (params.queryExecutor.allowResolve) {
         when (qualifiedName.qualifiedKind) {
           PolySymbol.HTML_ELEMENTS ->
@@ -277,8 +277,8 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     override fun getSymbols(
       qualifiedKind: WebSymbolQualifiedKind,
       params: WebSymbolsListSymbolsQueryParams,
-      scope: Stack<WebSymbolsScope>,
-    ): List<WebSymbolsScope> =
+      scope: Stack<PolySymbolsScope>,
+    ): List<PolySymbolsScope> =
       if (qualifiedKind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)
         descriptor.enumeratedValues?.map { HtmlAttributeValueSymbol(it) } ?: emptyList()
       else

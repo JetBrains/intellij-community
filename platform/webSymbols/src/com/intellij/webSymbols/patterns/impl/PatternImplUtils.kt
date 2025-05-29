@@ -6,7 +6,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
 import com.intellij.webSymbols.impl.copy
@@ -88,7 +88,7 @@ internal fun getPatternCompletablePrefix(pattern: String?): String {
 }
 
 internal fun <T> withPrevMatchScope(
-  scopeStack: Stack<WebSymbolsScope>,
+  scopeStack: Stack<PolySymbolsScope>,
   prevResult: List<WebSymbolNameSegment>?,
   action: () -> T,
 ): T =

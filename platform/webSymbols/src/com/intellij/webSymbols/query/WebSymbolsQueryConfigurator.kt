@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly
 
 interface WebSymbolsQueryConfigurator {
 
-  fun getScope(project: Project, location: PsiElement?, context: WebSymbolsContext, allowResolve: Boolean): List<WebSymbolsScope> =
+  fun getScope(project: Project, location: PsiElement?, context: WebSymbolsContext, allowResolve: Boolean): List<PolySymbolsScope> =
     emptyList()
 
   fun getContextRulesProviders(project: Project, dir: VirtualFile): List<WebSymbolsContextRulesProvider> =

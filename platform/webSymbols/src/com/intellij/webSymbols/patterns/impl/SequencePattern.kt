@@ -7,7 +7,7 @@ import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolOrigin
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
@@ -34,7 +34,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
   }
 
   override fun match(owner: PolySymbol?,
-                     scopeStack: Stack<WebSymbolsScope>,
+                     scopeStack: Stack<PolySymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
@@ -58,7 +58,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     }
 
   override fun list(owner: PolySymbol?,
-                    scopeStack: Stack<WebSymbolsScope>,
+                    scopeStack: Stack<PolySymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     process(emptyList()) { matches, pattern, _ ->
@@ -76,7 +76,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
     }
 
   override fun complete(owner: PolySymbol?,
-                        scopeStack: Stack<WebSymbolsScope>,
+                        scopeStack: Stack<PolySymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,
@@ -289,7 +289,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
   }
 
   private fun getCompletionResultsOnPattern(pattern: WebSymbolsPattern,
-                                            scopeStack: Stack<WebSymbolsScope>,
+                                            scopeStack: Stack<PolySymbolsScope>,
                                             symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                             matchResult: MatchResult?,
                                             params: CompletionParameters,

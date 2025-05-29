@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
 @Internal
-abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin : WebSymbolOrigin> : StaticWebSymbolsScope {
+abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin : WebSymbolOrigin> : StaticPolySymbolsScope {
 
   private val namesProviderCache: MutableMap<WebSymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0
@@ -27,28 +27,28 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
   @JvmField
   protected var modCount: Long = 0
 
-  abstract override fun createPointer(): Pointer<out StaticWebSymbolsScopeBase<Root, Contribution, Origin>>
+  abstract override fun createPointer(): Pointer<out StaticPolySymbolsScopeBase<Root, Contribution, Origin>>
 
   final override fun getModificationCount(): Long =
     modCount
 
   final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<PolySymbol> =
+                                        scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     getMaps(params).flatMap {
       it.getMatchingSymbols(qualifiedName, params, Stack(scope))
     }.toList()
 
   final override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                                 params: WebSymbolsListSymbolsQueryParams,
-                                scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+                                scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     getMaps(params).flatMap {
       it.getSymbols(qualifiedKind, params)
     }.toList()
 
   final override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                        scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getMaps(params).flatMap {
       it.getCodeCompletions(qualifiedName, params, Stack(scope))
     }.toList()
@@ -57,7 +57,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
                                   origin: Origin,
                                   qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scopeStack: Stack<WebSymbolsScope>): List<PolySymbol> =
+                                  scopeStack: Stack<PolySymbolsScope>): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
       .getMatchingSymbols(qualifiedName, params, scopeStack)
       .toList()
@@ -65,7 +65,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
   internal fun getSymbols(contribution: Contribution,
                           origin: Origin,
                           qualifiedKind: WebSymbolQualifiedKind,
-                          params: WebSymbolsListSymbolsQueryParams): List<WebSymbolsScope> =
+                          params: WebSymbolsListSymbolsQueryParams): List<PolySymbolsScope> =
     getMap(params.queryExecutor, contribution, origin)
       .getSymbols(qualifiedKind, params)
       .toList()
@@ -74,7 +74,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
                                   origin: Origin,
                                   qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scopeStack: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                  scopeStack: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)
       .getCodeCompletions(qualifiedName, params, scopeStack)
       .toList()

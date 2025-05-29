@@ -9,7 +9,7 @@ import com.intellij.webSymbols.customElements.CustomElementsSymbol
 import com.intellij.webSymbols.customElements.json.CustomElementExport
 import com.intellij.webSymbols.customElements.json.createPattern
 import com.intellij.webSymbols.customElements.json.toApiStatus
-import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
+import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
@@ -18,7 +18,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val origin: WebSymbolOrigin,
   override val pattern: WebSymbolsPattern,
   override val apiStatus: PolySymbolApiStatus,
-) : CustomElementsSymbol, StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter {
+) : CustomElementsSymbol, StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
   override val namespace: SymbolNamespace
     get() = PolySymbol.NAMESPACE_HTML
   override val kind: SymbolKind

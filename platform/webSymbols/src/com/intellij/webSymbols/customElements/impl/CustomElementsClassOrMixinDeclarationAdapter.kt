@@ -13,7 +13,7 @@ import com.intellij.webSymbols.customElements.CustomElementsSymbol
 import com.intellij.webSymbols.customElements.json.CustomElementClassOrMixinDeclaration
 import com.intellij.webSymbols.customElements.json.resolve
 import com.intellij.webSymbols.customElements.json.toApiStatus
-import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
+import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
@@ -25,7 +25,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   private val declaration: CustomElementClassOrMixinDeclaration,
   private val origin: CustomElementsJsonOrigin,
   private val rootScope: CustomElementsManifestScopeBase
-) : StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter {
+) : StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
 
   private val cacheHolder = UserDataHolderBase()
 
@@ -90,7 +90,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override val apiStatus: PolySymbolApiStatus
       get() = base.declaration.deprecated.toApiStatus(origin) ?: PolySymbolApiStatus.Stable
 
-    override val queryScope: List<WebSymbolsScope>
+    override val queryScope: List<PolySymbolsScope>
       get() = superContributions.asSequence()
         .flatMap { it.queryScope }
         .plus(this)
@@ -111,21 +111,21 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
-                                    scope: Stack<WebSymbolsScope>): List<PolySymbol> =
+                                    scope: Stack<PolySymbolsScope>): List<PolySymbol> =
       base.rootScope
         .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()
 
     override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                             params: WebSymbolsListSymbolsQueryParams,
-                            scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+                            scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
       base.rootScope
         .getSymbols(base.declaration, this.origin, qualifiedKind, params)
         .toList()
 
     override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsCodeCompletionQueryParams,
-                                    scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                    scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
       base.rootScope
         .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()

@@ -13,7 +13,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.context.WebSymbolsContext
-import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
+import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
@@ -29,7 +29,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
                                                                    internal val rootScope: WebTypesScopeBase,
                                                                    override val namespace: SymbolNamespace,
                                                                    override val kind: String) :
-  StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter {
+  StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
 
 
   companion object {

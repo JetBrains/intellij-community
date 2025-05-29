@@ -36,7 +36,7 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
   override fun getModificationCount(): Long =
     delegate.modificationCount
 
-  override val queryScope: List<WebSymbolsScope>
+  override val queryScope: List<PolySymbolsScope>
     get() = delegate.queryScope
   override val name: String
     get() = delegate.name
@@ -84,18 +84,18 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
 
   override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<WebSymbolsScope>): List<PolySymbol> =
+                                  scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     delegate.getMatchingSymbols(qualifiedName, params, scope)
 
 
   override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
                           params: WebSymbolsListSymbolsQueryParams,
-                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+                          scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     delegate.getSymbols(qualifiedKind, params, scope)
 
   override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
-                                  scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
+                                  scope: Stack<PolySymbolsScope>): List<WebSymbolCodeCompletionItem> =
     delegate.getCodeCompletions(qualifiedName, params, scope)
 
   override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =

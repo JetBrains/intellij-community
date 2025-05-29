@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.WebSymbolsScope
+import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorBuilderImpl
 import org.jetbrains.annotations.TestOnly
 
@@ -20,12 +20,12 @@ interface WebSymbolsQueryExecutorFactory : Disposable {
   fun create(location: PsiElement?, allowResolve: Boolean = true): WebSymbolsQueryExecutor
 
   @TestOnly
-  fun addScope(scope: WebSymbolsScope, contextDirectory: VirtualFile?, disposable: Disposable)
+  fun addScope(scope: PolySymbolsScope, contextDirectory: VirtualFile?, disposable: Disposable)
 
   interface WebSymbolsQueryExecutorBuilder {
-    fun addRootScope(scope: WebSymbolsScope): WebSymbolsQueryExecutorBuilder
+    fun addRootScope(scope: PolySymbolsScope): WebSymbolsQueryExecutorBuilder
 
-    fun addRootScopes(scope: List<WebSymbolsScope>): WebSymbolsQueryExecutorBuilder
+    fun addRootScopes(scope: List<PolySymbolsScope>): WebSymbolsQueryExecutorBuilder
 
     fun addCustomizer(customizer: WebSymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder
 
