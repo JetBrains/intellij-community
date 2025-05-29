@@ -22,7 +22,7 @@
     <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
                                  hostLanguage="WebSymbolsEnabledLanguage"
                                  implementationClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderImpl"
-                                 targetClass="com.intellij.webSymbols.WebSymbol"
+                                 targetClass="com.intellij.webSymbols.PolySymbol"
                                  referenceClass="com.intellij.webSymbols.references.WebSymbolReference"/>
 
     <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedWebSymbolReferenceSearcher"/>
@@ -30,7 +30,7 @@
     <renameHandler implementation="com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRenameHandler"/>
 
     <rename.symbolRenameTargetFactory implementation="com.intellij.webSymbols.refactoring.WebSymbolRenameTargetFactory"/>
-    <lang.symbolSearchTarget forClass="com.intellij.webSymbols.WebSymbol"
+    <lang.symbolSearchTarget forClass="com.intellij.webSymbols.PolySymbol"
                              implementationClass="com.intellij.webSymbols.search.WebSymbolSearchTargetFactory"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"

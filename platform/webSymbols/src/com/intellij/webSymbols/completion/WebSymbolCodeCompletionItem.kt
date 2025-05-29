@@ -7,8 +7,8 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.model.Pointer
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
 import org.jetbrains.annotations.ApiStatus
@@ -31,12 +31,12 @@ interface WebSymbolCodeCompletionItem {
   @get:JvmName("isCompleteAfterInsert")
   val completeAfterInsert: Boolean
   val completeAfterChars: Set<Char>
-  val priority: WebSymbol.Priority?
+  val priority: PolySymbol.Priority?
   val proximity: Int?
 
   val apiStatus: WebSymbolApiStatus
   val aliases: Set<String>
-  val symbol: WebSymbol?
+  val symbol: PolySymbol?
   val insertHandler: WebSymbolCodeCompletionItemInsertHandler?
 
   fun withPrefix(prefix: String): WebSymbolCodeCompletionItem
@@ -44,7 +44,7 @@ interface WebSymbolCodeCompletionItem {
   fun addToResult(
     parameters: CompletionParameters,
     result: CompletionResultSet,
-    baselinePriorityValue: Double = WebSymbol.Priority.NORMAL.value,
+    baselinePriorityValue: Double = PolySymbol.Priority.NORMAL.value,
   )
 
   fun withName(name: String): WebSymbolCodeCompletionItem
@@ -55,9 +55,9 @@ interface WebSymbolCodeCompletionItem {
 
   fun withDisplayName(displayName: String?): WebSymbolCodeCompletionItem
 
-  fun withSymbol(symbol: WebSymbol?): WebSymbolCodeCompletionItem
+  fun withSymbol(symbol: PolySymbol?): WebSymbolCodeCompletionItem
 
-  fun withPriority(priority: WebSymbol.Priority?): WebSymbolCodeCompletionItem
+  fun withPriority(priority: PolySymbol.Priority?): WebSymbolCodeCompletionItem
 
   fun withProximity(proximity: Int): WebSymbolCodeCompletionItem
 
@@ -85,7 +85,7 @@ interface WebSymbolCodeCompletionItem {
 
   fun withInsertHandlerAdded(
     insertHandler: InsertHandler<LookupElement>,
-    priority: WebSymbol.Priority = WebSymbol.Priority.NORMAL,
+    priority: PolySymbol.Priority = PolySymbol.Priority.NORMAL,
   ): WebSymbolCodeCompletionItem
 
   fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): WebSymbolCodeCompletionItem
@@ -96,8 +96,8 @@ interface WebSymbolCodeCompletionItem {
     completeAfterInsert: Boolean = this.completeAfterInsert,
     completeAfterChars: Set<Char> = this.completeAfterChars,
     displayName: String? = this.displayName,
-    symbol: WebSymbol? = this.symbol,
-    priority: WebSymbol.Priority? = this.priority,
+    symbol: PolySymbol? = this.symbol,
+    priority: PolySymbol.Priority? = this.priority,
     proximity: Int? = this.proximity,
     apiStatus: WebSymbolApiStatus = this.apiStatus,
     icon: Icon? = this.icon,
@@ -114,8 +114,8 @@ interface WebSymbolCodeCompletionItem {
       completeAfterInsert: Boolean = false,
       completeAfterChars: Set<Char>? = null,
       displayName: String? = null,
-      symbol: WebSymbol? = null,
-      priority: WebSymbol.Priority? = null,
+      symbol: PolySymbol? = null,
+      priority: PolySymbol.Priority? = null,
       proximity: Int? = null,
       apiStatus: WebSymbolApiStatus? = null,
       aliases: Set<String>? = null,
@@ -142,7 +142,7 @@ interface WebSymbolCodeCompletionItem {
     fun create(
       name: String,
       offset: Int = 0,
-      symbol: WebSymbol? = null,
+      symbol: PolySymbol? = null,
       builder: (WebSymbolCodeCompletionItemBuilder.() -> Unit)? = null,
     ): WebSymbolCodeCompletionItem =
       WebSymbolCodeCompletionItemImpl.BuilderImpl(name, offset, symbol)
@@ -154,7 +154,7 @@ interface WebSymbolCodeCompletionItem {
       lookupElement.psiElement
       ?: (lookupElement.`object` as? Pointer<*>)
         ?.dereference()
-        ?.let { it as? PsiSourcedWebSymbol }
+        ?.let { it as? PsiSourcedPolySymbol }
         ?.source
 
   }

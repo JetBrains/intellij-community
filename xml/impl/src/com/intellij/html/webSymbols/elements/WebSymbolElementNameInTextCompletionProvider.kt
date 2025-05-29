@@ -11,7 +11,7 @@ import com.intellij.psi.xml.XmlDocument
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.WebSymbol.Companion.HTML_ELEMENTS
+import com.intellij.webSymbols.PolySymbol.Companion.HTML_ELEMENTS
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 

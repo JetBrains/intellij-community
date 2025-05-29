@@ -3,7 +3,7 @@ package com.intellij.html.webSymbols.attributes
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolTypeSupport
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 
@@ -14,18 +14,18 @@ interface WebSymbolHtmlAttributeValueTypeSupport : WebSymbolTypeSupport {
    * [ThreeState.UNSURE] if the boolean is assignable to the type and
    * [ThreeState.NO] if boolean is not assignable to the type
    */
-  fun isBoolean(symbol: WebSymbol, type: Any?, context: PsiElement): ThreeState
+  fun isBoolean(symbol: PolySymbol, type: Any?, context: PsiElement): ThreeState
 
-  fun createStringType(symbol: WebSymbol): Any?
+  fun createStringType(symbol: PolySymbol): Any?
 
-  fun createBooleanType(symbol: WebSymbol): Any?
+  fun createBooleanType(symbol: PolySymbol): Any?
 
-  fun createNumberType(symbol: WebSymbol): Any?
+  fun createNumberType(symbol: PolySymbol): Any?
 
-  fun createEnumType(symbol: WebSymbol, values: List<WebSymbolCodeCompletionItem>): Any?
+  fun createEnumType(symbol: PolySymbol, values: List<WebSymbolCodeCompletionItem>): Any?
 
-  fun getEnumValues(symbol: WebSymbol, type: Any?): List<WebSymbolCodeCompletionItem>?
+  fun getEnumValues(symbol: PolySymbol, type: Any?): List<WebSymbolCodeCompletionItem>?
 
-  fun strictEnumValues(symbol: WebSymbol, type: Any?): Boolean
+  fun strictEnumValues(symbol: PolySymbol, type: Any?): Boolean
 
 }

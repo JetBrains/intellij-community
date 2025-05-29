@@ -53,7 +53,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
    * If the results are going to be static for a particular [dataHolder]/[key] combination, add
    * [ModificationTracker.NEVER_CHANGED]. Note that [cacheDependencies] set cannot be empty.
    */
-  protected abstract fun initialize(consumer: (WebSymbol) -> Unit, cacheDependencies: MutableSet<Any>)
+  protected abstract fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>)
 
   /**
    * Allows optimizing queries and to avoid scope initialization.
@@ -115,7 +115,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                  scope: Stack<WebSymbolsScope>): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {
@@ -165,11 +165,11 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
   }
 
   private class WebSymbolsSearchMap(namesProvider: WebSymbolNamesProvider, private val framework: FrameworkId?)
-    : SearchMap<WebSymbol>(namesProvider) {
+    : SearchMap<PolySymbol>(namesProvider) {
 
-    override fun Sequence<WebSymbol>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol> = this
+    override fun Sequence<PolySymbol>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol> = this
 
-    fun add(symbol: WebSymbol) {
+    fun add(symbol: PolySymbol) {
       assert(framework == null || symbol.origin.framework == framework || symbol.origin.framework == null) {
         "WebSymbolsScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
       }

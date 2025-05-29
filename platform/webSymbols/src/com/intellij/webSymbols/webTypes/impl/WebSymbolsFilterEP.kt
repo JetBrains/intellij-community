@@ -4,7 +4,7 @@ package com.intellij.webSymbols.webTypes.impl
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -16,7 +16,7 @@ class WebSymbolsFilterEP() : CustomLoadingExtensionPointBean<WebSymbolsFilter>()
     private val EP_NAME = ExtensionPointName<WebSymbolsFilterEP>("com.intellij.webSymbols.webTypes.filter")
 
     fun get(name: String): WebSymbolsFilter =
-      EP_NAME.getByKey(name, WebSymbol::class.java) { it.name }?.instance
+      EP_NAME.getByKey(name, PolySymbol::class.java) { it.name }?.instance
       ?: NOOP_FILTER
 
     private val NOOP_FILTER = object : WebSymbolsFilter {
@@ -29,11 +29,11 @@ class WebSymbolsFilterEP() : CustomLoadingExtensionPointBean<WebSymbolsFilter>()
         codeCompletions
 
       override fun filterNameMatches(
-        matches: List<WebSymbol>,
+        matches: List<PolySymbol>,
         queryExecutor: WebSymbolsQueryExecutor,
         scope: List<WebSymbolsScope>,
         properties: Map<String, Any>,
-      ): List<WebSymbol> =
+      ): List<PolySymbol> =
         matches
 
     }

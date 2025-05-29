@@ -3,7 +3,7 @@ package com.intellij.webSymbols.customElements.impl
 
 import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.json.*
 
@@ -14,10 +14,10 @@ class CustomElementsMemberSymbol private constructor(
 ) : CustomElementsContributionWithSourceSymbol<CustomElementsMember>(name, member, origin) {
 
   override val namespace: SymbolNamespace
-    get() = WebSymbol.NAMESPACE_JS
+    get() = PolySymbol.NAMESPACE_JS
 
   override val kind: SymbolKind
-    get() = WebSymbol.KIND_JS_PROPERTIES
+    get() = PolySymbol.KIND_JS_PROPERTIES
 
   override val type: Any?
     get() = if (contribution is ClassMethod)

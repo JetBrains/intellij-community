@@ -4,11 +4,11 @@ package com.intellij.webSymbols.search
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.openapi.project.Project
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class WebSymbolSearchTargetFactory : SymbolSearchTargetFactory<WebSymbol> {
-  override fun searchTarget(project: Project, symbol: WebSymbol): SearchTarget? =
+class WebSymbolSearchTargetFactory : SymbolSearchTargetFactory<PolySymbol> {
+  override fun searchTarget(project: Project, symbol: PolySymbol): SearchTarget? =
     if (symbol !is SearchTarget) symbol.searchTarget else null
 }

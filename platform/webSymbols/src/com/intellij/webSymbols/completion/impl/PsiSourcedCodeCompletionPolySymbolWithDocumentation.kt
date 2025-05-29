@@ -4,25 +4,23 @@ package com.intellij.webSymbols.completion.impl
 import com.intellij.model.Pointer
 import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.psi.PsiElement
-import com.intellij.psi.createSmartPointer
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.PsiSourcedWebSymbolDelegate
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbolDelegate
 
 /**
  * We need to render documentation for lookup elements. Regular `WebSymbol` does not implement
  * `DocumentationSymbol` to have a context aware documentation, so the symbol needs to be wrapped
  * for code completion.
  */
-class PsiSourcedCodeCompletionWebSymbolWithDocumentation(delegate: PsiSourcedWebSymbol, private val target: DocumentationTarget)
-  : PsiSourcedWebSymbolDelegate<PsiSourcedWebSymbol>(delegate), DocumentationSymbol {
-  override fun createPointer(): Pointer<PsiSourcedCodeCompletionWebSymbolWithDocumentation> {
+class PsiSourcedCodeCompletionPolySymbolWithDocumentation(delegate: PsiSourcedPolySymbol, private val target: DocumentationTarget)
+  : PsiSourcedPolySymbolDelegate<PsiSourcedPolySymbol>(delegate), DocumentationSymbol {
+  override fun createPointer(): Pointer<PsiSourcedCodeCompletionPolySymbolWithDocumentation> {
     val delegatePtr = delegate.createPointer()
     val targetPtr = target.createPointer()
     return Pointer {
       val target = targetPtr.dereference() ?: return@Pointer null
       val delegate = delegatePtr.dereference() ?: return@Pointer null
-      PsiSourcedCodeCompletionWebSymbolWithDocumentation(delegate, target)
+      PsiSourcedCodeCompletionPolySymbolWithDocumentation(delegate, target)
     }
   }
 

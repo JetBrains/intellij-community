@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.customElements.json
 
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolTypeSupport
@@ -17,7 +17,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 fun Reference.createPattern(origin: CustomElementsJsonOrigin): WebSymbolsPattern? =
   createQueryPathList(origin)?.let { WebSymbolsPatternFactory.createSingleSymbolReferencePattern(it) }
 
-fun Reference.resolve(origin: CustomElementsJsonOrigin, queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol> =
+fun Reference.resolve(origin: CustomElementsJsonOrigin, queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol> =
   createQueryPathList(origin)
     ?.let { queryExecutor.runNameMatchQuery(it) }
   ?: emptyList()

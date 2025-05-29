@@ -10,7 +10,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 
 /**
- * Should be implemented by [WebSymbol] if its declaration is a regular [PsiElement], e.g. a variable or a declared type.
+ * Should be implemented by [PolySymbol] if its declaration is a regular [PsiElement], e.g. a variable or a declared type.
  * Once a symbol implements this interface it can be searched and refactored together with the PSI element declaration.
  * If your symbol is part of a [PsiElement] (e.g. part of a string literal), or spans multiple PSI elements,
  * or does not relate 1-1 with a PSI element, instead of implementing this interface you should contribute
@@ -18,7 +18,7 @@ import com.intellij.psi.PsiElement
  *
  * See also: [Declarations, References, Search, Refactoring](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html#declarations-references-search-refactoring)
  */
-interface PsiSourcedWebSymbol : WebSymbol {
+interface PsiSourcedPolySymbol : PolySymbol {
 
   override val psiContext: PsiElement?
     get() = source
@@ -29,7 +29,7 @@ interface PsiSourcedWebSymbol : WebSymbol {
   val source: PsiElement?
     get() = null
 
-  override fun createPointer(): Pointer<out PsiSourcedWebSymbol>
+  override fun createPointer(): Pointer<out PsiSourcedPolySymbol>
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     source?.let { listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(it)) } ?: emptyList()
@@ -40,7 +40,7 @@ interface PsiSourcedWebSymbol : WebSymbol {
     val target = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
     return when {
       target != null -> target.manager.areElementsEquivalent(source, target)
-      symbol is PsiSourcedWebSymbol -> source == symbol.source
+      symbol is PsiSourcedPolySymbol -> source == symbol.source
       else -> false
     }
   }

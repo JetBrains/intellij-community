@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 
-abstract class PsiSourcedWebSymbolDelegate<T : PsiSourcedWebSymbol>(delegate: T) : WebSymbolDelegate<T>(delegate), PsiSourcedWebSymbol {
+abstract class PsiSourcedPolySymbolDelegate<T : PsiSourcedPolySymbol>(delegate: T) : PolySymbolDelegate<T>(delegate), PsiSourcedPolySymbol {
 
   override val source: PsiElement?
     get() = delegate.source

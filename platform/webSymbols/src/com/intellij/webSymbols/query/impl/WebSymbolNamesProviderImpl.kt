@@ -4,7 +4,7 @@ package com.intellij.webSymbols.query.impl
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.framework.WebSymbolsFramework
@@ -81,7 +81,7 @@ class WebSymbolNamesProviderImpl(
       ?.getNames(qualifiedName, target)
       ?.takeIf { it.isNotEmpty() }
     ?: if (target != CODE_COMPLETION_VARIANTS &&
-           (qualifiedName.namespace == WebSymbol.NAMESPACE_CSS || qualifiedName.namespace == WebSymbol.NAMESPACE_HTML))
+           (qualifiedName.namespace == PolySymbol.NAMESPACE_CSS || qualifiedName.namespace == PolySymbol.NAMESPACE_HTML))
       listOf(qualifiedName.name.lowercase(Locale.US))
     else
       listOf(qualifiedName.name)

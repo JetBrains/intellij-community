@@ -3,8 +3,8 @@ package com.intellij.webSymbols.testFramework.query
 
 import com.intellij.util.applyIf
 import com.intellij.webSymbols.testFramework.DebugOutputPrinter
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -16,12 +16,12 @@ import java.util.Stack
 
 open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
-  private val parents = Stack<WebSymbol>()
+  private val parents = Stack<PolySymbol>()
 
   override fun printValueImpl(builder: StringBuilder, level: Int, value: Any?): StringBuilder =
     when (value) {
       is WebSymbolCodeCompletionItem -> builder.printCodeCompletionItem(level, value)
-      is WebSymbol -> builder.printSymbol(level, value)
+      is PolySymbol -> builder.printSymbol(level, value)
       is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
       is WebSymbolNameSegment -> builder.printSegment(level, value)
       is WebSymbolApiStatus -> builder.printApiStatus(value)
@@ -30,7 +30,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
     }
 
   override fun printRecursiveValue(builder: StringBuilder, level: Int, value: Any): StringBuilder =
-    if (value is WebSymbol)
+    if (value is PolySymbol)
       if (parents.peek() == value) builder.append("<self>") else builder.append("<recursive>")
     else
       super.printRecursiveValue(builder, level, value)
@@ -38,7 +38,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
   private fun StringBuilder.printCodeCompletionItem(topLevel: Int, item: WebSymbolCodeCompletionItem): StringBuilder =
     printObject(topLevel) { level ->
       printProperty(level, "name", item.name)
-      printProperty(level, "priority", item.priority ?: WebSymbol.Priority.NORMAL)
+      printProperty(level, "priority", item.priority ?: PolySymbol.Priority.NORMAL)
       printProperty(level, "proximity", item.proximity?.takeIf { it > 0 })
       printProperty(level, "displayName", item.displayName.takeIf { it != item.name })
       printProperty(level, "offset", item.offset.takeIf { it != 0 })
@@ -52,7 +52,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
     return append(set.toString())
   }
 
-  private fun StringBuilder.printSymbol(topLevel: Int, source: WebSymbol): StringBuilder {
+  private fun StringBuilder.printSymbol(topLevel: Int, source: PolySymbol): StringBuilder {
     if (parents.contains(source)) {
       if (parents.peek() == source) append("<self>") else append("<recursive>")
       return this
@@ -66,7 +66,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
         printProperty(level, "matchedName", source.namespace.lowercase(Locale.US) + "/" + source.kind + "/" + source.name)
       }
       printProperty(level, "origin", "${source.origin.library}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
-      printProperty(level, "source", (source as? PsiSourcedWebSymbol)?.source)
+      printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
       printProperty(level, "type", source.type)
       printProperty(level, "attrValue", source.attributeValue)
       printProperty(level, "complete", source.completeMatch)
@@ -76,7 +76,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "abstract", source.abstract.takeIf { it })
       printProperty(level, "virtual", source.virtual.takeIf { it })
       printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is WebSymbolApiStatus.Stable || it.since != null })
-      printProperty(level, "priority", source.priority ?: WebSymbol.Priority.NORMAL)
+      printProperty(level, "priority", source.priority ?: PolySymbol.Priority.NORMAL)
       printProperty(level, "proximity", source.proximity?.takeIf { it > 0 })
       printProperty(level, "has-pattern", if (source.pattern != null) true else null)
       printProperty(level, "properties", source.properties.takeIf { it.isNotEmpty() })
@@ -95,7 +95,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "name-part", parents.peek().let { if (it.pattern == null) segment.getName(parents.peek()) else "" })
       printProperty(level, "display-name", segment.displayName)
       printProperty(level, "apiStatus", segment.apiStatus)
-      printProperty(level, "priority", segment.priority?.takeIf { it != WebSymbol.Priority.NORMAL })
+      printProperty(level, "priority", segment.priority?.takeIf { it != PolySymbol.Priority.NORMAL })
       printProperty(level, "matchScore", segment.matchScore.takeIf { it != segment.end - segment.start })
       printProperty(level, "problem", segment.problem)
       val symbols = segment.symbols.filter { !it.extension }

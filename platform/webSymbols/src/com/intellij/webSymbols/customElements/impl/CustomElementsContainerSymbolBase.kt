@@ -3,7 +3,7 @@ package com.intellij.webSymbols.customElements.impl
 
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
@@ -25,7 +25,7 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
 
   override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                  scope: Stack<WebSymbolsScope>): List<PolySymbol> =
     rootScope
       .getMatchingSymbols(contribution, this.origin, qualifiedName, params, scope)
       .toList()

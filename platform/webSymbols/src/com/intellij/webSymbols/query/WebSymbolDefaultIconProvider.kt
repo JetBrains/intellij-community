@@ -7,7 +7,7 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import javax.swing.Icon
 
 interface WebSymbolDefaultIconProvider {
@@ -21,13 +21,13 @@ interface WebSymbolDefaultIconProvider {
     fun get(namespace: SymbolNamespace, kind: SymbolKind): Icon? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultIcon(namespace, kind) }
       ?: when (namespace) {
-        WebSymbol.NAMESPACE_HTML -> when (kind) {
-          WebSymbol.KIND_HTML_ELEMENTS -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Tag)
-          WebSymbol.KIND_HTML_ATTRIBUTES -> AllIcons.Nodes.ObjectTypeAttribute
+        PolySymbol.NAMESPACE_HTML -> when (kind) {
+          PolySymbol.KIND_HTML_ELEMENTS -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Tag)
+          PolySymbol.KIND_HTML_ATTRIBUTES -> AllIcons.Nodes.ObjectTypeAttribute
           else -> null
         }
-        WebSymbol.NAMESPACE_JS -> when (kind) {
-          WebSymbol.KIND_JS_PROPERTIES -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property)
+        PolySymbol.NAMESPACE_JS -> when (kind) {
+          PolySymbol.KIND_JS_PROPERTIES -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property)
           else -> null
         }
         else -> null

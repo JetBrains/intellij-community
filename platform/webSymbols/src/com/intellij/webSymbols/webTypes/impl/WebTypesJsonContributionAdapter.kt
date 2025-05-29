@@ -9,8 +9,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
+import com.intellij.webSymbols.PolySymbol
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
@@ -90,7 +90,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
      }.also { exclusiveContributions = it }
     ).contains(qualifiedKind)
 
-  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): WebSymbol =
+  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
     (WebTypesSymbolFactoryEP.get(WebSymbolQualifiedKind(namespace, kind))?.create() ?: WebTypesSymbolBase())
       .also { it.init(this, queryExecutor) }
 

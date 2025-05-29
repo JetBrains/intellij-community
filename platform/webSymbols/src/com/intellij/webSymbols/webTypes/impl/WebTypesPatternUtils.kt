@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.webTypes.impl
 
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
@@ -11,7 +11,7 @@ import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.impl.*
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
@@ -93,7 +93,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     return ComplexPatternOptions(delegate, apiStatus, isRequired, priority, proximity, repeats, unique, symbolsResolver)
   }
 
-  private fun createSymbolsResolver(delegate: WebSymbol?) =
+  private fun createSymbolsResolver(delegate: PolySymbol?) =
     if (pattern.delegate != null) {
       if (delegate != null) {
         PatternDelegateSymbolsResolver(delegate)
@@ -107,8 +107,8 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
           PatternSymbolsResolver(it)
         }
 
-  private class PatternDelegateSymbolsResolver(override val delegate: WebSymbol) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
-    override fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
+  private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
+    override fun getSymbolKinds(context: PolySymbol?): Set<WebSymbolQualifiedKind> =
       setOf(WebSymbolQualifiedKind(delegate.namespace, delegate.kind))
 
     override fun codeCompletion(name: String,
@@ -124,7 +124,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
 
     override fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
                              queryExecutor: WebSymbolsQueryExecutor,
-                             expandPatterns: Boolean): List<WebSymbol> =
+                             expandPatterns: Boolean): List<PolySymbol> =
       delegate.pattern
         ?.list(delegate, scopeStack, this, ListParameters(queryExecutor, expandPatterns))
         ?.flatMap { listResult ->
@@ -133,15 +133,15 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
             listResult.segments[0].symbols
           }
           else {
-            val lastContribution = scopeStack.peek() as WebSymbol
-            listOf(WebSymbolMatch.create(listResult.name, listResult.segments,
-                                         lastContribution.namespace, SPECIAL_MATCHED_CONTRIB,
-                                         lastContribution.origin))
+            val lastContribution = scopeStack.peek() as PolySymbol
+            listOf(PolySymbolMatch.create(listResult.name, listResult.segments,
+                                          lastContribution.namespace, SPECIAL_MATCHED_CONTRIB,
+                                          lastContribution.origin))
           }
         }
       ?: emptyList()
 
-    override fun matchName(name: String, scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol> =
+    override fun matchName(name: String, scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol> =
       delegate.pattern
         ?.match(delegate, scopeStack, null,
                 MatchParameters(name, queryExecutor), 0, name.length)
@@ -154,10 +154,10 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
             matchResult.segments[0].symbols.asSequence()
           }
           else {
-            val lastContribution = scopeStack.peek() as WebSymbol
-            sequenceOf(WebSymbolMatch.create(name, matchResult.segments,
-                                             lastContribution.namespace, SPECIAL_MATCHED_CONTRIB,
-                                             lastContribution.origin))
+            val lastContribution = scopeStack.peek() as PolySymbol
+            sequenceOf(PolySymbolMatch.create(name, matchResult.segments,
+                                              lastContribution.namespace, SPECIAL_MATCHED_CONTRIB,
+                                              lastContribution.origin))
           }
         }
       ?: emptyList()
@@ -165,10 +165,10 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
   }
 
   private class PatternSymbolsResolver(val items: ListReference) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
-    override fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
+    override fun getSymbolKinds(context: PolySymbol?): Set<WebSymbolQualifiedKind> =
       items.asSequence().mapNotNull { it.getSymbolKind(context) }.toSet()
 
-    override val delegate: WebSymbol?
+    override val delegate: PolySymbol?
       get() = null
 
     override fun codeCompletion(name: String,
@@ -179,10 +179,10 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
 
     override fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
                              queryExecutor: WebSymbolsQueryExecutor,
-                             expandPatterns: Boolean): List<WebSymbol> =
+                             expandPatterns: Boolean): List<PolySymbol> =
       items.flatMap { it.list(scopeStack, queryExecutor, expandPatterns) }
 
-    override fun matchName(name: String, scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol> =
+    override fun matchName(name: String, scopeStack: Stack<WebSymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol> =
       items.flatMap { it.resolve(name, scopeStack, queryExecutor) }
 
   }

@@ -10,10 +10,10 @@ import com.fasterxml.jackson.databind.type.TypeFactory
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.Interner
 import com.intellij.util.ui.JBUI
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryParams
@@ -40,7 +40,7 @@ internal fun Icon.scaleToHeight(height: Int): Icon {
 
 internal fun <T> List<T>.selectBest(
   segmentsProvider: (T) -> List<WebSymbolNameSegment>,
-  priorityProvider: (T) -> WebSymbol.Priority?,
+  priorityProvider: (T) -> PolySymbol.Priority?,
   isExtension: (T) -> Boolean,
 ) =
   if (size > 1) {
@@ -54,7 +54,7 @@ internal fun <T> List<T>.selectBest(
           // match length without a problem
           segmentsProvider(item).find { it.problem != null }?.start ?: Int.MAX_VALUE,
           // priority
-          (priorityProvider(item) ?: WebSymbol.Priority.NORMAL).ordinal,
+          (priorityProvider(item) ?: PolySymbol.Priority.NORMAL).ordinal,
           //  match length of static part of RegExp
           segmentsProvider(item).sumOf { it.matchScore }
         )
@@ -81,12 +81,12 @@ internal fun <T> List<T>.selectBest(
   }
   else this
 
-internal fun List<WebSymbol>.sortSymbolsByPriority(extensionsLast: Boolean = true): List<WebSymbol> =
-  sortedWith(Comparator.comparingInt<WebSymbol> { if (it.extension && extensionsLast) 1 else 0 }
-               .thenComparingInt { -(it.priority ?: WebSymbol.Priority.NORMAL).ordinal }
+internal fun List<PolySymbol>.sortSymbolsByPriority(extensionsLast: Boolean = true): List<PolySymbol> =
+  sortedWith(Comparator.comparingInt<PolySymbol> { if (it.extension && extensionsLast) 1 else 0 }
+               .thenComparingInt { -(it.priority ?: PolySymbol.Priority.NORMAL).ordinal }
                .thenComparingInt { -(it.proximity ?: 0) })
 
-internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQueryParams): Sequence<T> =
+internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQueryParams): Sequence<T> =
   this.filter { symbol ->
     symbol.matchContext(params.queryExecutor.context)
     && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true
@@ -110,10 +110,10 @@ internal val WebSymbolNameSegment.highlightingEnd: Int?
 
 internal fun WebSymbolNameSegment.copy(
   apiStatus: WebSymbolApiStatus? = null,
-  priority: WebSymbol.Priority? = null,
+  priority: PolySymbol.Priority? = null,
   proximity: Int? = null,
   problem: WebSymbolNameSegment.MatchProblem? = null,
-  symbols: List<WebSymbol> = emptyList(),
+  symbols: List<PolySymbol> = emptyList(),
   highlightEnd: Int? = null,
 ): WebSymbolNameSegmentImpl =
   (this as WebSymbolNameSegmentImpl).copy(apiStatus, priority, proximity, problem, symbols, highlightEnd)
@@ -122,8 +122,8 @@ internal fun WebSymbolNameSegment.copy(
 fun WebSymbolNameSegment.canUnwrapSymbols(): Boolean =
   (this as WebSymbolNameSegmentImpl).canUnwrapSymbols()
 
-internal fun WebSymbol.removeZeroLengthSegmentsRecursively(): List<WebSymbol> {
-  if (this !is WebSymbolMatch) return listOf(this)
+internal fun PolySymbol.removeZeroLengthSegmentsRecursively(): List<PolySymbol> {
+  if (this !is PolySymbolMatch) return listOf(this)
   val nameLength = matchedName.length
   return nameSegments
            .takeIf { it.size > 1 && it.none { segment -> segment.problem != null } }

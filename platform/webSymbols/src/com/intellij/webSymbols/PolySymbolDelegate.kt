@@ -22,7 +22,7 @@ import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.search.impl.WebSymbolDelegatedSearchTargetImpl
 import javax.swing.Icon
 
-abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
+abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol {
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext
@@ -60,7 +60,7 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
     get() = delegate.required
   override val defaultValue: String?
     get() = delegate.defaultValue
-  override val priority: WebSymbol.Priority?
+  override val priority: PolySymbol.Priority?
     get() = delegate.priority
   override val proximity: Int?
     get() = delegate.proximity
@@ -84,7 +84,7 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
 
   override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                  scope: Stack<WebSymbolsScope>): List<PolySymbol> =
     delegate.getMatchingSymbols(qualifiedName, params, scope)
 
 
@@ -116,9 +116,9 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
   companion object {
 
     @JvmStatic
-    fun WebSymbol.unwrapAllDelegates(): WebSymbol {
+    fun PolySymbol.unwrapAllDelegates(): PolySymbol {
       var result = this
-      while (result is WebSymbolDelegate<*>) {
+      while (result is PolySymbolDelegate<*>) {
         result = result.delegate
       }
       return result

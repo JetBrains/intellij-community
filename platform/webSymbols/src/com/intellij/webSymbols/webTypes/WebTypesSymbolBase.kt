@@ -28,9 +28,9 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   protected lateinit var queryExecutor: WebSymbolsQueryExecutor
 
-  private var _superContributions: List<WebSymbol>? = null
+  private var _superContributions: List<PolySymbol>? = null
 
-  private val superContributions: List<WebSymbol>
+  private val superContributions: List<PolySymbol>
     get() = _superContributions
             ?: base.contribution.extends
               .also { _superContributions = emptyList() }
@@ -76,7 +76,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                  scope: Stack<WebSymbolsScope>): List<PolySymbol> =
     base.rootScope
       .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
       .toList()
@@ -160,7 +160,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override val extension: Boolean
     get() = base.contribution.extension == true
 
-  final override val priority: WebSymbol.Priority?
+  final override val priority: PolySymbol.Priority?
     get() = base.contribution.priority?.wrap()
             ?: superContributions.firstOrNull()?.priority
 

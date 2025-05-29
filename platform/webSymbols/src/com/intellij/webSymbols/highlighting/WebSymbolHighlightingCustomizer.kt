@@ -4,7 +4,7 @@ package com.intellij.webSymbols.highlighting
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 
 interface WebSymbolHighlightingCustomizer {
@@ -13,14 +13,14 @@ interface WebSymbolHighlightingCustomizer {
 
   fun getDefaultHostClassTextAttributes(): Map<Class<out PsiExternalReferenceHost>, TextAttributesKey> = emptyMap()
 
-  fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: WebSymbol, level: Int): TextAttributesKey? = null
+  fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: PolySymbol, level: Int): TextAttributesKey? = null
 
   companion object {
 
     internal val EP_NAME: ExtensionPointName<WebSymbolHighlightingCustomizer> =
       ExtensionPointName<WebSymbolHighlightingCustomizer>("com.intellij.webSymbols.highlightingCustomizer")
 
-    internal fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: WebSymbol, level: Int): TextAttributesKey? =
+    internal fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: PolySymbol, level: Int): TextAttributesKey? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolTextAttributes(host, symbol, level) }
 
     internal fun getTextAttributesFor(kind: WebSymbolQualifiedKind): TextAttributesKey? =

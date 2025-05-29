@@ -18,7 +18,7 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
@@ -34,7 +34,7 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
           CachedValuesManager.getCachedValue(tag) {
             val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
-              queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, tag.name)
+              queryExecutor.runNameMatchQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, tag.name)
                 .getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
@@ -49,8 +49,8 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
             val queryExecutor = WebSymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
               queryExecutor.runNameMatchQuery(listOf(
-                WebSymbolQualifiedName(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, tag.name),
-                WebSymbolQualifiedName(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTES, attr.name))
+                WebSymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, tag.name),
+                WebSymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTES, attr.name))
               ).getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
@@ -70,11 +70,11 @@ class WebSymbolsHtmlTextInjector : MultiHostInjector {
   override fun elementsToInjectIn(): List<Class<out PsiElement>> =
     listOf(XmlTextImpl::class.java, XmlAttributeValue::class.java)
 
-  private fun List<WebSymbol>.getLanguageToInject() =
+  private fun List<PolySymbol>.getLanguageToInject() =
     takeIf { it.isNotEmpty() && !it.hasOnlyStandardHtmlSymbols() }
       ?.asSingleSymbol()
       ?.properties
-      ?.get(WebSymbol.PROP_INJECT_LANGUAGE)
+      ?.get(PolySymbol.PROP_INJECT_LANGUAGE)
       ?.asSafely<String>()
       ?.lowercase(Locale.US)
 

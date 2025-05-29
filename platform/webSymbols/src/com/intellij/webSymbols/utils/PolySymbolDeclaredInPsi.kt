@@ -13,10 +13,10 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 
-interface WebSymbolDeclaredInPsi : WebSymbol, SearchTarget, RenameTarget {
+interface PolySymbolDeclaredInPsi : PolySymbol, SearchTarget, RenameTarget {
 
   val sourceElement: PsiElement?
 
@@ -29,7 +29,7 @@ interface WebSymbolDeclaredInPsi : WebSymbol, SearchTarget, RenameTarget {
     get() =
       buildDeclaration(this)
 
-  override fun createPointer(): Pointer<out WebSymbolDeclaredInPsi>
+  override fun createPointer(): Pointer<out PolySymbolDeclaredInPsi>
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {
     return listOf(PsiNavigatableWebSymbolNavigationTarget(this))
@@ -48,7 +48,7 @@ interface WebSymbolDeclaredInPsi : WebSymbol, SearchTarget, RenameTarget {
     return presentation
   }
 
-  class PsiNavigatableWebSymbolNavigationTarget internal constructor(private val symbol: WebSymbolDeclaredInPsi) : NavigationTarget {
+  class PsiNavigatableWebSymbolNavigationTarget internal constructor(private val symbol: PolySymbolDeclaredInPsi) : NavigationTarget {
 
     override fun createPointer(): Pointer<out NavigationTarget> {
       val symbolPtr = symbol.createPointer()
@@ -72,15 +72,15 @@ interface WebSymbolDeclaredInPsi : WebSymbol, SearchTarget, RenameTarget {
   }
 }
 
-private fun buildDeclaration(symbol: WebSymbolDeclaredInPsi): WebSymbolDeclaration? {
+private fun buildDeclaration(symbol: PolySymbolDeclaredInPsi): WebSymbolDeclaration? {
   return WebSymbolDeclaredInPsiDeclaration(symbol, symbol.sourceElement ?: return null,
                                            symbol.textRangeInSourceElement ?: return null)
 }
 
-private class WebSymbolDeclaredInPsiDeclaration(private val symbol: WebSymbol,
+private class WebSymbolDeclaredInPsiDeclaration(private val symbol: PolySymbol,
                                                 private val element: PsiElement,
                                                 private val range: TextRange) : WebSymbolDeclaration {
   override fun getDeclaringElement(): PsiElement = element
   override fun getRangeInDeclaringElement(): TextRange = range
-  override fun getSymbol(): WebSymbol = symbol
+  override fun getSymbol(): PolySymbol = symbol
 }

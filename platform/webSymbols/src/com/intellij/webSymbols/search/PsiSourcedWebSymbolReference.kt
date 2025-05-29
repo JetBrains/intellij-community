@@ -8,13 +8,13 @@ import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.util.NonCodeUsageInfo
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PsiSourcedWebSymbolReference(
-  private val symbol: WebSymbol,
+  private val symbol: PolySymbol,
   private val sourceElement: PsiElement,
   private val host: PsiExternalReferenceHost,
   private val range: TextRange,

@@ -29,7 +29,7 @@ abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
   protected val location: T,
 ) : WebSymbolsScope {
 
-  protected abstract fun acceptSymbol(symbol: WebSymbol): Boolean
+  protected abstract fun acceptSymbol(symbol: PolySymbol): Boolean
 
   protected abstract val subScopeBuilder: (WebSymbolsQueryExecutor, T) -> List<WebSymbolsScope>
 
@@ -45,11 +45,11 @@ abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName, params: WebSymbolsNameMatchQueryParams, scope: Stack<WebSymbolsScope>): List<WebSymbol> {
+  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName, params: WebSymbolsNameMatchQueryParams, scope: Stack<WebSymbolsScope>): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
-    var result: List<WebSymbol> = emptyList()
+    var result: List<PolySymbol> = emptyList()
     RecursionManager.runInNewContext {
       result = subQuery.runNameMatchQuery(sourceKind.withName(qualifiedName.name), params.virtualSymbols, params.abstractSymbols, params.strictScope, additionalScope)
         .filter { acceptSymbol(it) }
@@ -62,7 +62,7 @@ abstract class WebSymbolsIsolatedMappingScope<T : PsiElement>(
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedKind] ?: return emptyList()
-    var result: List<WebSymbol> = emptyList()
+    var result: List<PolySymbol> = emptyList()
     RecursionManager.runInNewContext {
       result = subQuery.runListSymbolsQuery(sourceKind, params.expandPatterns, params.virtualSymbols, params.abstractSymbols, params.strictScope, additionalScope)
         .filter { acceptSymbol(it) }

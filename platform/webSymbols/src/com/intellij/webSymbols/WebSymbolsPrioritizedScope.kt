@@ -3,6 +3,6 @@ package com.intellij.webSymbols
 
 interface WebSymbolsPrioritizedScope {
 
-  val priority: WebSymbol.Priority?
+  val priority: PolySymbol.Priority?
 
 }

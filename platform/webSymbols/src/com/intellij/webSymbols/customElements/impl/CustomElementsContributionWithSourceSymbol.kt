@@ -4,7 +4,7 @@ package com.intellij.webSymbols.customElements.impl
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.PsiSourcedWebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.json.CustomElementsContributionWithSource
 
@@ -12,7 +12,7 @@ abstract class CustomElementsContributionWithSourceSymbol<T : CustomElementsCont
   name: String,
   contribution: T,
   origin: CustomElementsJsonOrigin,
-) : CustomElementsContributionSymbol<T>(name, contribution, origin), PsiSourcedWebSymbol {
+) : CustomElementsContributionSymbol<T>(name, contribution, origin), PsiSourcedPolySymbol {
 
   private val cacheHolder = UserDataHolderBase()
 

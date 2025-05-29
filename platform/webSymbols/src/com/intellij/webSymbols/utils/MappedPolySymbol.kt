@@ -7,22 +7,22 @@ import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternFactory
 
 /**
- * A utility [WebSymbol], which allows to map
+ * A utility [PolySymbol], which allows to map
  * from one symbol to another symbol.
  *
- * The mapping will be made, if the [MappedWebSymbol.name]
+ * The mapping will be made, if the [MappedPolySymbol.name]
  * matches exactly the queried name. As a result,
  * a reference to the symbol resolved through the
  * `mappingPath` will be created.
  */
-class MappedWebSymbol private constructor(
+class MappedPolySymbol private constructor(
   override val namespace: SymbolNamespace,
   override val kind: SymbolKind,
   override val name: String,
   override val origin: WebSymbolOrigin,
   vararg mappingPath: WebSymbolQualifiedName,
-  override val priority: WebSymbol.Priority? = null,
-) : WebSymbol {
+  override val priority: PolySymbol.Priority? = null,
+) : PolySymbol {
 
   companion object {
     @JvmOverloads
@@ -32,14 +32,14 @@ class MappedWebSymbol private constructor(
       name: String,
       origin: WebSymbolOrigin,
       vararg mappingPath: WebSymbolQualifiedName,
-      priority: WebSymbol.Priority? = null
-    ): MappedWebSymbol =
-      MappedWebSymbol(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *mappingPath, priority = priority)
+      priority: PolySymbol.Priority? = null
+    ): MappedPolySymbol =
+      MappedPolySymbol(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *mappingPath, priority = priority)
   }
 
   override val pattern: WebSymbolsPattern =
     WebSymbolsPatternFactory.createSingleSymbolReferencePattern(mappingPath.toList())
 
-  override fun createPointer(): Pointer<out WebSymbol> =
+  override fun createPointer(): Pointer<out PolySymbol> =
     Pointer.hardPointer(this)
 }

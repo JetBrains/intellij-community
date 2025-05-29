@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.takeWhileInclusive
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.query.WebSymbolsCompoundScope
@@ -112,18 +112,18 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     }
 
     interface ScopeModifier {
-      fun addSymbol(symbol: WebSymbol)
-      fun addSymbols(symbol: List<WebSymbol>)
+      fun addSymbol(symbol: PolySymbol)
+      fun addSymbols(symbol: List<PolySymbol>)
     }
 
     private inner class ScopeModifierImpl(private val scope: WebSymbolsPsiScopeImpl) : ScopeModifier {
-      override fun addSymbol(symbol: WebSymbol) {
+      override fun addSymbol(symbol: PolySymbol) {
         if (symbol.qualifiedKind !in providedSymbolKinds)
           throw IllegalStateException("WebSymbol of kind ${symbol.qualifiedKind} should not be provided by ${this::class.java.name}")
         scope.add(symbol)
       }
 
-      override fun addSymbols(symbol: List<WebSymbol>) {
+      override fun addSymbols(symbol: List<PolySymbol>) {
         symbol.forEach { addSymbol(it) }
       }
     }
@@ -134,8 +134,8 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     val parent: WebSymbolsPsiScope?
     val properties: Map<String, Any>
     val children: List<WebSymbolsPsiScope>
-    val localSymbols: List<WebSymbol>
-    fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<WebSymbol>
+    val localSymbols: List<PolySymbol>
+    fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<PolySymbol>
   }
 
   private class WebSymbolsPsiScopeWithPointer(
@@ -164,7 +164,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
   ) : WebSymbolsPsiScope {
 
     override val children = ArrayList<WebSymbolsPsiScopeImpl>()
-    override val localSymbols = SmartList<WebSymbol>()
+    override val localSymbols = SmartList<PolySymbol>()
 
     private val textRange: TextRange get() = source.textRange
     private val scopesInHierarchy get() = generateSequence(this) { it.parent }
@@ -203,7 +203,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     ): List<WebSymbolsScope> =
       getAllSymbols(qualifiedKind)
 
-    override fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<WebSymbol> =
+    override fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<PolySymbol> =
       if (qualifiedKind in providedSymbolKinds)
       // TODO - consider optimizing in case there are many symbols in the scope
         scopesInHierarchy
@@ -215,7 +215,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       else
         emptyList()
 
-    fun add(symbol: WebSymbol) {
+    fun add(symbol: PolySymbol) {
       localSymbols.add(symbol)
     }
 

@@ -4,8 +4,8 @@ package com.intellij.html.webSymbols.attributes
 import com.intellij.html.webSymbols.attributes.impl.HtmlAttributeEnumConstValueSymbol
 import com.intellij.html.webSymbols.attributes.impl.WebSymbolHtmlAttributeInfoImpl
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -19,7 +19,7 @@ interface WebSymbolHtmlAttributeInfo {
 
   val name: String
 
-  val symbol: WebSymbol
+  val symbol: PolySymbol
 
   @get:JvmName("acceptsNoValue")
   val acceptsNoValue: Boolean
@@ -41,11 +41,11 @@ interface WebSymbolHtmlAttributeInfo {
 
   val defaultValue: String?
 
-  val priority: WebSymbol.Priority
+  val priority: PolySymbol.Priority
 
   fun withName(name: String): WebSymbolHtmlAttributeInfo
 
-  fun withSymbol(symbol: WebSymbol): WebSymbolHtmlAttributeInfo
+  fun withSymbol(symbol: PolySymbol): WebSymbolHtmlAttributeInfo
 
   fun withAcceptsNoValue(acceptsNoValue: Boolean): WebSymbolHtmlAttributeInfo
 
@@ -63,10 +63,10 @@ interface WebSymbolHtmlAttributeInfo {
 
   fun withDefaultValue(defaultValue: String?): WebSymbolHtmlAttributeInfo
 
-  fun withPriority(priority: WebSymbol.Priority): WebSymbolHtmlAttributeInfo
+  fun withPriority(priority: PolySymbol.Priority): WebSymbolHtmlAttributeInfo
 
   fun with(name: String = this.name,
-           symbol: WebSymbol = this.symbol,
+           symbol: PolySymbol = this.symbol,
            acceptsNoValue: Boolean = this.acceptsNoValue,
            acceptsValue: Boolean = this.acceptsValue,
            enumValues: List<WebSymbolCodeCompletionItem>? = this.enumValues,
@@ -75,27 +75,27 @@ interface WebSymbolHtmlAttributeInfo {
            icon: Icon? = this.icon,
            required: Boolean = this.required,
            defaultValue: String? = this.defaultValue,
-           priority: WebSymbol.Priority = this.priority): WebSymbolHtmlAttributeInfo
+           priority: PolySymbol.Priority = this.priority): WebSymbolHtmlAttributeInfo
 
   companion object {
 
     @JvmStatic
     fun createEnumConstValueSymbol(origin: WebSymbolOrigin,
                                    matchedName: String,
-                                   source: PsiElement?): PsiSourcedWebSymbol =
+                                   source: PsiElement?): PsiSourcedPolySymbol =
       HtmlAttributeEnumConstValueSymbol(origin, matchedName, source)
 
     @JvmStatic
     fun create(name: String,
                queryExecutor: WebSymbolsQueryExecutor,
-               symbol: WebSymbol,
+               symbol: PolySymbol,
                context: PsiElement): WebSymbolHtmlAttributeInfo =
       WebSymbolHtmlAttributeInfoImpl.create(name, queryExecutor, symbol, context)
 
     @JvmStatic
     fun create(
       name: String,
-      symbol: WebSymbol,
+      symbol: PolySymbol,
       acceptsNoValue: Boolean = false,
       acceptsValue: Boolean = true,
       enumValues: List<WebSymbolCodeCompletionItem>? = null,
@@ -104,7 +104,7 @@ interface WebSymbolHtmlAttributeInfo {
       icon: Icon? = null,
       required: Boolean = false,
       defaultValue: String? = null,
-      priority: WebSymbol.Priority = WebSymbol.Priority.NORMAL
+      priority: PolySymbol.Priority = PolySymbol.Priority.NORMAL
     ): WebSymbolHtmlAttributeInfo = WebSymbolHtmlAttributeInfoImpl(
       name, symbol, acceptsNoValue, acceptsValue, enumValues,
       strictEnumValues, type, icon, required, defaultValue, priority

@@ -34,21 +34,21 @@ interface WebSymbolsScope : ModificationTracker {
 
   /**
    * Returns symbols within the scope, which matches provided namespace, kind and name.
-   * Use [WebSymbol.match] to match Web Symbols in the scope against provided name.
+   * Use [PolySymbol.match] to match Web Symbols in the scope against provided name.
    *
    * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
    *
    */
   fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                          params: WebSymbolsNameMatchQueryParams,
-                         scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                         scope: Stack<WebSymbolsScope>): List<PolySymbol> =
     getSymbols(qualifiedName.qualifiedKind,
                WebSymbolsListSymbolsQueryParams.create(
                  params.queryExecutor, expandPatterns = false, virtualSymbols = params.virtualSymbols,
                  abstractSymbols = params.abstractSymbols, strictScope = params.strictScope
                ),
                scope)
-      .filterIsInstance<WebSymbol>()
+      .filterIsInstance<PolySymbol>()
       .flatMap { it.match(qualifiedName.name, params, scope) }
 
   /**
@@ -65,11 +65,11 @@ interface WebSymbolsScope : ModificationTracker {
   /**
    * Returns code completions for symbols within the scope.
    *
-   * Use [WebSymbol.toCodeCompletionItems] to create code completions from `WebSymbol`s in the scope.
+   * Use [PolySymbol.toCodeCompletionItems] to create code completions from `WebSymbol`s in the scope.
    *
    * If the scope contains many symbols, or results should be cached consider extending [WebSymbolsScopeWithCache].
    *
-   * Default implementation calls `getSymbols` and runs [WebSymbol.toCodeCompletionItems] on each symbol.
+   * Default implementation calls `getSymbols` and runs [PolySymbol.toCodeCompletionItems] on each symbol.
    */
   fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                          params: WebSymbolsCodeCompletionQueryParams,

@@ -4,7 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.WebSymbolsScope
@@ -12,7 +12,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.coalesceWith
 import com.intellij.webSymbols.utils.nameSegments
@@ -33,7 +33,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       .flatMap { it.getStaticPrefixes() }
   }
 
-  override fun match(owner: WebSymbol?,
+  override fun match(owner: PolySymbol?,
                      scopeStack: Stack<WebSymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
@@ -57,7 +57,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
     }
 
-  override fun list(owner: WebSymbol?,
+  override fun list(owner: PolySymbol?,
                     scopeStack: Stack<WebSymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
@@ -75,7 +75,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       }
     }
 
-  override fun complete(owner: WebSymbol?,
+  override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
@@ -226,10 +226,10 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
           WebSymbolCodeCompletionItem.create(
             name,
             offset = lastMatched.start,
-            symbol = WebSymbolMatch.create(
+            symbol = PolySymbolMatch.create(
               name,
               lastMatched.segments.filter { it.start < it.end }.withOffset(-lastMatched.start),
-              WebSymbol.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB,
+              PolySymbol.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB,
               WebSymbolOrigin.empty()
             ))
         }
@@ -385,19 +385,19 @@ internal class SequencePattern(private val patternsProvider: () -> List<WebSymbo
       )
   }
 
-  private fun concatSymbols(name: String, firstNameLength: Int, first: WebSymbol?, second: WebSymbol?): WebSymbol? {
+  private fun concatSymbols(name: String, firstNameLength: Int, first: PolySymbol?, second: PolySymbol?): PolySymbol? {
 
-    fun WebSymbol?.toNameSegments(nameStart: Int, nameEnd: Int): List<WebSymbolNameSegment> =
+    fun PolySymbol?.toNameSegments(nameStart: Int, nameEnd: Int): List<WebSymbolNameSegment> =
       if (this == null)
         listOf(WebSymbolNameSegment.create(nameStart, nameEnd))
-      else if (this is WebSymbolMatch && StringUtil.equals(matchedName, CharSequenceSubSequence(name, nameStart, nameEnd)))
+      else if (this is PolySymbolMatch && StringUtil.equals(matchedName, CharSequenceSubSequence(name, nameStart, nameEnd)))
         this.nameSegments.withOffset(nameStart)
       else
         listOf(WebSymbolNameSegment.create(nameStart, nameEnd, this))
 
     val mainSymbol = second ?: first ?: return null
 
-    return WebSymbolMatch.create(name, mainSymbol.qualifiedKind, mainSymbol.origin) {
+    return PolySymbolMatch.create(name, mainSymbol.qualifiedKind, mainSymbol.origin) {
       addNameSegments(first.toNameSegments(0, firstNameLength))
       addNameSegments(second.toNameSegments(firstNameLength, name.length))
     }

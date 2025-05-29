@@ -12,7 +12,7 @@ import com.intellij.util.applyIf
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
@@ -83,7 +83,7 @@ class WebSymbolsQueryExecutorImpl(
     abstractSymbols: Boolean,
     strictScope: Boolean,
     additionalScope: List<WebSymbolsScope>,
-  ): List<WebSymbol> =
+  ): List<PolySymbol> =
     runNameMatchQuery(path, WebSymbolsNameMatchQueryParams.create(this, virtualSymbols, abstractSymbols, strictScope), additionalScope)
 
   override fun runListSymbolsQuery(
@@ -94,7 +94,7 @@ class WebSymbolsQueryExecutorImpl(
     abstractSymbols: Boolean,
     strictScope: Boolean,
     additionalScope: List<WebSymbolsScope>,
-  ): List<WebSymbol> =
+  ): List<PolySymbol> =
     runListSymbolsQuery(path + qualifiedKind.withName(""),
                         WebSymbolsListSymbolsQueryParams.create(this, expandPatterns = expandPatterns, virtualSymbols = virtualSymbols,
                                                                 abstractSymbols = abstractSymbols, strictScope = strictScope), additionalScope)
@@ -141,7 +141,7 @@ class WebSymbolsQueryExecutorImpl(
     additionalScope.flatMapTo(finalScope) {
       when (it) {
         is WebSymbolsCompoundScope -> it.getScopes(this)
-        is WebSymbol -> it.queryScope
+        is PolySymbol -> it.queryScope
         else -> listOf(it)
       }
     }
@@ -152,7 +152,7 @@ class WebSymbolsQueryExecutorImpl(
     path: List<WebSymbolQualifiedName>,
     queryParams: WebSymbolsNameMatchQueryParams,
     additionalScope: List<WebSymbolsScope>,
-  ): List<WebSymbol> =
+  ): List<PolySymbol> =
     runQuery(path, queryParams, additionalScope) {
       finalContext: Collection<WebSymbolsScope>,
       qualifiedName: WebSymbolQualifiedName,
@@ -173,19 +173,19 @@ class WebSymbolsQueryExecutorImpl(
         }
         .filter {
           keepUnresolvedTopLevelReferences
-          || it !is WebSymbolMatch || it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null)
+          || it !is PolySymbolMatch || it.nameSegments.size > 1 || (it.nameSegments.isNotEmpty() && it.nameSegments[0].problem == null)
         }
         .distinct()
         .toList()
         .customizeMatches(params.strictScope, qualifiedName)
-        .selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension)
+        .selectBest(PolySymbol::nameSegments, PolySymbol::priority, PolySymbol::extension)
       result
     }
 
   private fun runListSymbolsQuery(
     path: List<WebSymbolQualifiedName>, queryParams: WebSymbolsListSymbolsQueryParams,
     additionalScope: List<WebSymbolsScope>,
-  ): List<WebSymbol> =
+  ): List<PolySymbol> =
     runQuery(path, queryParams, additionalScope) {
       finalContext: Collection<WebSymbolsScope>,
       qualifiedName: WebSymbolQualifiedName,
@@ -198,7 +198,7 @@ class WebSymbolsQueryExecutorImpl(
           ProgressManager.checkCanceled()
           scope.getSymbols(qualifiedName.qualifiedKind, params, Stack(finalContext))
         }
-        .filterIsInstance<WebSymbol>()
+        .filterIsInstance<PolySymbol>()
         .distinct()
         .filterByQueryParams(params)
         .applyIf(params.expandPatterns) {
@@ -218,7 +218,7 @@ class WebSymbolsQueryExecutorImpl(
           ProgressManager.checkCanceled()
           list
             .customizeMatches(params.strictScope, qualifiedName.copy(name = name))
-            .selectBest(WebSymbol::nameSegments, WebSymbol::priority, WebSymbol::extension)
+            .selectBest(PolySymbol::nameSegments, PolySymbol::priority, PolySymbol::extension)
             .applyIf(params.expandPatterns) {
               asSingleSymbol()
                 ?.let { symbol ->
@@ -250,8 +250,8 @@ class WebSymbolsQueryExecutorImpl(
         .takeLastUntilExclusiveScopeFor(pathSection.qualifiedKind)
         .asSequence()
         .flatMap { scope ->
-          if (scope !is WebSymbol || !scope.extension || scope.name != previousName) {
-            previousName = (scope as? WebSymbol)?.name
+          if (scope !is PolySymbol || !scope.extension || scope.name != previousName) {
+            previousName = (scope as? PolySymbol)?.name
             proximityBase = nextProximityBase
           }
           ProgressManager.checkCanceled()
@@ -333,10 +333,10 @@ class WebSymbolsQueryExecutorImpl(
     } ?: run {
       thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
                         "Root scope: " + rootScope.map {
-        it.asSafely<WebSymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
+        it.asSafely<PolySymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
       } + "\n" +
                         "Additional scope: " + additionalScope.map {
-        it.asSafely<WebSymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
+        it.asSafely<PolySymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
       })
       emptyList()
     }
@@ -356,7 +356,7 @@ class WebSymbolsQueryExecutorImpl(
         }
         else {
           items
-            .sortedWith(Comparator.comparing { it: WebSymbolCodeCompletionItem -> -(it.priority ?: WebSymbol.Priority.NORMAL).ordinal }
+            .sortedWith(Comparator.comparing { it: WebSymbolCodeCompletionItem -> -(it.priority ?: PolySymbol.Priority.NORMAL).ordinal }
                           .thenComparingInt { -(it.proximity ?: 0) })
             .firstOrNull()
         }
@@ -366,22 +366,22 @@ class WebSymbolsQueryExecutorImpl(
     map { item ->
       item.symbol
         ?.priority
-        ?.takeIf { it > (item.priority ?: WebSymbol.Priority.LOWEST) }
+        ?.takeIf { it > (item.priority ?: PolySymbol.Priority.LOWEST) }
         ?.let { item.withPriority(it) }
       ?: item
     }
 
-  private fun WebSymbol.expandPattern(
+  private fun PolySymbol.expandPattern(
     context: Stack<WebSymbolsScope>,
     params: WebSymbolsListSymbolsQueryParams,
-  ): List<WebSymbol> =
+  ): List<PolySymbol> =
     pattern?.let { pattern ->
       context.push(this)
       try {
         return pattern
           .list(this, context, params)
           .map {
-            WebSymbolMatch.create(it.name, it.segments, namespace, kind, origin)
+            PolySymbolMatch.create(it.name, it.segments, namespace, kind, origin)
           }
       }
       finally {
@@ -389,7 +389,7 @@ class WebSymbolsQueryExecutorImpl(
       }
     } ?: listOf(this)
 
-  private fun List<WebSymbol>.customizeMatches(strict: Boolean, qualifiedName: WebSymbolQualifiedName): List<WebSymbol> =
+  private fun List<PolySymbol>.customizeMatches(strict: Boolean, qualifiedName: WebSymbolQualifiedName): List<PolySymbol> =
     if (isEmpty())
       this
     else {

@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.patterns
 
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -11,10 +11,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface WebSymbolsPatternSymbolsResolver {
-  fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
+  fun getSymbolKinds(context: PolySymbol?): Set<WebSymbolQualifiedKind> =
     emptySet()
 
-  val delegate: WebSymbol?
+  val delegate: PolySymbol?
 
   fun codeCompletion(name: String,
                      position: Int,
@@ -23,10 +23,10 @@ interface WebSymbolsPatternSymbolsResolver {
 
   fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
                   queryExecutor: WebSymbolsQueryExecutor,
-                  expandPatterns: Boolean): List<WebSymbol>
+                  expandPatterns: Boolean): List<PolySymbol>
 
   fun matchName(name: String,
                 scopeStack: Stack<WebSymbolsScope>,
-                queryExecutor: WebSymbolsQueryExecutor): List<WebSymbol>
+                queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol>
 
 }

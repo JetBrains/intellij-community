@@ -5,25 +5,25 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.applyIf
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_CLASSES
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_FUNCTIONS
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PARTS
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PROPERTIES
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PSEUDO_CLASSES
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PSEUDO_ELEMENTS
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_EVENTS
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_PROPERTIES
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_JS_SYMBOLS
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_CSS
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_JS
-import com.intellij.webSymbols.WebSymbol.Companion.PROP_ARGUMENTS
-import com.intellij.webSymbols.WebSymbol.Companion.PROP_DOC_HIDE_PATTERN
-import com.intellij.webSymbols.WebSymbol.Companion.PROP_HIDE_FROM_COMPLETION
-import com.intellij.webSymbols.WebSymbol.Companion.PROP_KIND
-import com.intellij.webSymbols.WebSymbol.Companion.PROP_READ_ONLY
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_CSS_CLASSES
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_CSS_FUNCTIONS
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_CSS_PARTS
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_CSS_PROPERTIES
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_CSS_PSEUDO_CLASSES
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_CSS_PSEUDO_ELEMENTS
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ELEMENTS
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_JS_EVENTS
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_JS_PROPERTIES
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_JS_SYMBOLS
+import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_CSS
+import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
+import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_JS
+import com.intellij.webSymbols.PolySymbol.Companion.PROP_ARGUMENTS
+import com.intellij.webSymbols.PolySymbol.Companion.PROP_DOC_HIDE_PATTERN
+import com.intellij.webSymbols.PolySymbol.Companion.PROP_HIDE_FROM_COMPLETION
+import com.intellij.webSymbols.PolySymbol.Companion.PROP_KIND
+import com.intellij.webSymbols.PolySymbol.Companion.PROP_READ_ONLY
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_RUBY_GEMS
@@ -33,12 +33,12 @@ import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.js.WebSymbolJsKind
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.NameCaseUtils
-import com.intellij.webSymbols.utils.lastWebSymbol
+import com.intellij.webSymbols.utils.lastPolySymbol
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.WebTypesSymbol
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
@@ -173,7 +173,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
       )
       .toMap()
 
-internal fun Reference.getSymbolKind(context: WebSymbol?): WebSymbolQualifiedKind? =
+internal fun Reference.getSymbolKind(context: PolySymbol?): WebSymbolQualifiedKind? =
   when (val reference = this.value) {
     is String -> reference
     is ReferenceWithProps -> reference.path
@@ -189,7 +189,7 @@ internal fun Reference.resolve(name: String,
                                scope: List<WebSymbolsScope>,
                                queryExecutor: WebSymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
-                               abstractSymbols: Boolean = false): List<WebSymbol> =
+                               abstractSymbols: Boolean = false): List<PolySymbol> =
   processWebSymbols(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
   }
@@ -197,7 +197,7 @@ internal fun Reference.resolve(name: String,
 internal fun Reference.resolve(scope: List<WebSymbolsScope>,
                                queryExecutor: WebSymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
-                               abstractSymbols: Boolean = false): List<WebSymbol> =
+                               abstractSymbols: Boolean = false): List<PolySymbol> =
   processWebSymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processWebSymbols emptyList()
     val lastSegment = path.last()
@@ -212,7 +212,7 @@ internal fun Reference.list(scope: List<WebSymbolsScope>,
                             queryExecutor: WebSymbolsQueryExecutor,
                             expandPatterns: Boolean,
                             virtualSymbols: Boolean = true,
-                            abstractSymbols: Boolean = false): List<WebSymbol> =
+                            abstractSymbols: Boolean = false): List<PolySymbol> =
   processWebSymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processWebSymbols emptyList()
     val lastSegment = path.last()
@@ -226,16 +226,16 @@ private fun Reference.processWebSymbols(
   queryExecutor: WebSymbolsQueryExecutor,
   virtualSymbols: Boolean,
   abstractSymbols: Boolean,
-  queryRunner: WebSymbolsQueryExecutor.(List<WebSymbolQualifiedName>, Boolean, Boolean) -> List<WebSymbol>
-): List<WebSymbol> {
+  queryRunner: WebSymbolsQueryExecutor.(List<WebSymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>
+): List<PolySymbol> {
   ProgressManager.checkCanceled()
   return when (val reference = this.value) {
     is String -> queryExecutor.queryRunner(
-      parseWebTypesPath(reference, scope.lastWebSymbol).applyIf(name != null) { withLastSegmentName(name ?: "") },
+      parseWebTypesPath(reference, scope.lastPolySymbol).applyIf(name != null) { withLastSegmentName(name ?: "") },
       virtualSymbols, abstractSymbols)
     is ReferenceWithProps -> {
-      val nameConversionRules = reference.createNameConversionRules(scope.lastWebSymbol)
-      val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastWebSymbol)
+      val nameConversionRules = reference.createNameConversionRules(scope.lastPolySymbol)
+      val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastPolySymbol)
         .applyIf(name != null) { withLastSegmentName(name ?: "") }
       val matches = queryExecutor.withNameConversionRules(nameConversionRules).queryRunner(
         path, reference.includeVirtual ?: virtualSymbols, reference.includeAbstract ?: abstractSymbols)
@@ -246,7 +246,7 @@ private fun Reference.processWebSymbols(
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
   }.flatMap { symbol ->
-    if (symbol is WebSymbolMatch
+    if (symbol is PolySymbolMatch
         && symbol.nameSegments.size == 1
         && symbol.nameSegments[0].let { segment ->
         segment.canUnwrapSymbols()
@@ -264,12 +264,12 @@ internal fun Reference.codeCompletion(name: String,
                                       virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> {
   return when (val reference = this.value) {
     is String -> queryExecutor.runCodeCompletionQuery(
-      parseWebTypesPath("$reference", scope.lastWebSymbol).withLastSegmentName(name), position,
+      parseWebTypesPath("$reference", scope.lastPolySymbol).withLastSegmentName(name), position,
       virtualSymbols, scope
     )
     is ReferenceWithProps -> {
-      val nameConversionRules = reference.createNameConversionRules(scope.lastWebSymbol)
-      val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastWebSymbol).withLastSegmentName(name)
+      val nameConversionRules = reference.createNameConversionRules(scope.lastPolySymbol)
+      val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastPolySymbol).withLastSegmentName(name)
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
         .runCodeCompletionQuery(path, position, reference.includeVirtual ?: virtualSymbols, scope)
       if (reference.filter == null) return codeCompletions
@@ -300,7 +300,7 @@ internal fun DisablementRules.wrap(): WebSymbolsContextKindRules.DisablementRule
   }
 
 internal fun BaseContribution.Priority.wrap() =
-  WebSymbol.Priority.values()[ordinal]
+  PolySymbol.Priority.values()[ordinal]
 
 internal val BaseContribution.attributeValue: HtmlAttributeValue?
   get() =
@@ -431,7 +431,7 @@ private fun Any.toGenericHtmlPropertyValue(): GenericHtmlContributions =
     list.add(GenericHtmlContributionOrProperty().also { it.value = this })
   }
 
-private fun ReferenceWithProps.createNameConversionRules(context: WebSymbol?): List<WebSymbolNameConversionRules> {
+private fun ReferenceWithProps.createNameConversionRules(context: PolySymbol?): List<WebSymbolNameConversionRules> {
   val rules = nameConversion ?: return emptyList()
   val lastPath = parseWebTypesPath(path, context).lastOrNull()
   if (lastPath == null)
@@ -517,7 +517,7 @@ internal fun RequiredContextBase?.evaluate(context: WebSymbolsContext): Boolean 
     else -> throw IllegalStateException(this.javaClass.simpleName)
   }
 
-fun parseWebTypesPath(path: String?, context: WebSymbol?): List<WebSymbolQualifiedName> =
+fun parseWebTypesPath(path: String?, context: PolySymbol?): List<WebSymbolQualifiedName> =
   if (path != null)
     parseWebTypesPath(StringUtil.split(path, "/", true, true), context)
   else
@@ -532,7 +532,7 @@ internal fun List<WebSymbolQualifiedName>.withLastSegmentName(name: String) =
 internal fun String.asWebTypesSymbolNamespace(): SymbolNamespace? =
   takeIf { it == NAMESPACE_JS || it == NAMESPACE_HTML || it == NAMESPACE_CSS }
 
-private fun parseWebTypesPath(path: List<String>, context: WebSymbol?): List<WebSymbolQualifiedName> {
+private fun parseWebTypesPath(path: List<String>, context: PolySymbol?): List<WebSymbolQualifiedName> {
   var i = 0
   var prevNamespace: SymbolNamespace = context?.namespace ?: NAMESPACE_HTML
   val result = mutableListOf<WebSymbolQualifiedName>()

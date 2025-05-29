@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -237,7 +237,7 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
         override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> {
-          return if (qualifiedName.kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
+          return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
             listOf(WebSymbolCodeCompletionItem.create("bar"))
           }
           else emptyList()

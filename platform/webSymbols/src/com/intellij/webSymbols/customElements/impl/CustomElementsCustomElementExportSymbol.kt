@@ -20,16 +20,16 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val apiStatus: WebSymbolApiStatus,
 ) : CustomElementsSymbol, StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter {
   override val namespace: SymbolNamespace
-    get() = WebSymbol.NAMESPACE_HTML
+    get() = PolySymbol.NAMESPACE_HTML
   override val kind: SymbolKind
-    get() = WebSymbol.KIND_HTML_ELEMENTS
+    get() = PolySymbol.KIND_HTML_ELEMENTS
   override val framework: FrameworkId?
     get() = null
 
-  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): WebSymbol =
+  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
     this
 
-  override fun createPointer(): Pointer<out WebSymbol> =
+  override fun createPointer(): Pointer<out PolySymbol> =
     Pointer.hardPointer(this)
 
   override fun matchContext(context: WebSymbolsContext): Boolean =

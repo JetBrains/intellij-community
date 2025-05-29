@@ -34,7 +34,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
 
   final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                        scope: Stack<WebSymbolsScope>): List<PolySymbol> =
     getMaps(params).flatMap {
       it.getMatchingSymbols(qualifiedName, params, Stack(scope))
     }.toList()
@@ -57,7 +57,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
                                   origin: Origin,
                                   qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scopeStack: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                  scopeStack: Stack<WebSymbolsScope>): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
       .getMatchingSymbols(qualifiedName, params, scopeStack)
       .toList()
@@ -164,7 +164,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
     val name: String
     val pattern: WebSymbolsPattern?
     val framework: FrameworkId?
-    fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): WebSymbol
+    fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol
     fun matchContext(context: WebSymbolsContext): Boolean =
       framework == null || context.framework == null || context.framework == framework
   }
@@ -176,7 +176,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
       add(WebSymbolQualifiedName(item.namespace, item.kind, item.name), item.pattern, item)
     }
 
-    override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol> {
+    override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol> {
       val cache = getQueryExecutorContributionsCache(params.queryExecutor)
       return filter { it.matchContext(params.queryExecutor.context) }
         .map { cache.getOrCreateSymbol(it) }
@@ -208,10 +208,10 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
   }
 
   private inner class QueryExecutorContributionsCache(private val queryExecutor: WebSymbolsQueryExecutor) {
-    private val symbolsCache: MutableMap<StaticSymbolContributionAdapter, WebSymbol> = ConcurrentHashMap()
+    private val symbolsCache: MutableMap<StaticSymbolContributionAdapter, PolySymbol> = ConcurrentHashMap()
     private var queryExecutorModificationCount: Long = -1
 
-    fun getOrCreateSymbol(item: StaticSymbolContributionAdapter): WebSymbol =
+    fun getOrCreateSymbol(item: StaticSymbolContributionAdapter): PolySymbol =
       symbolsCache.getOrPut(item) { item.withQueryExecutorContext(queryExecutor) }
 
     fun checkForModifications() {

@@ -391,21 +391,21 @@ class WebSymbolsNameQueryTest : WebSymbolsMockQueryExecutorTestBase() {
       object : WebSymbolsScope {
         override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<WebSymbol> {
-          return if (qualifiedName.kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
-            listOf(object : WebSymbol {
+                                        scope: Stack<WebSymbolsScope>): List<PolySymbol> {
+          return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
+            listOf(object : PolySymbol {
               override val origin: WebSymbolOrigin
                 get() = object : WebSymbolOrigin {
                   override val framework: FrameworkId get() = "vue"
                 }
               override val namespace: SymbolNamespace
-                get() = WebSymbol.NAMESPACE_HTML
+                get() = PolySymbol.NAMESPACE_HTML
               override val kind: SymbolKind
-                get() = WebSymbol.KIND_HTML_ATTRIBUTES
+                get() = PolySymbol.KIND_HTML_ATTRIBUTES
               override val name: String
                 get() = "bar"
 
-              override fun createPointer(): Pointer<out WebSymbol> = Pointer.hardPointer(this)
+              override fun createPointer(): Pointer<out PolySymbol> = Pointer.hardPointer(this)
 
             })
           }

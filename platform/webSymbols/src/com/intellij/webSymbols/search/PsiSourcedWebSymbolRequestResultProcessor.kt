@@ -10,15 +10,15 @@ import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.ReferenceRange
 import com.intellij.psi.search.RequestResultProcessor
 import com.intellij.util.Processor
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.utils.asSingleSymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiElement,
-                                                private val targetSymbols: List<WebSymbol>,
+                                                private val targetSymbols: List<PolySymbol>,
                                                 private val includeRegularReferences: Boolean) : RequestResultProcessor() {
   private val mySymbolReferenceService = PsiSymbolReferenceService.getService()
   private val myPsiReferenceService = PsiReferenceService.getService()
@@ -37,7 +37,7 @@ class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiEl
         .filter { it.rangeInElement.containsOffset(offsetInElement) }
         .forEach { ref ->
           ProgressManager.checkCanceled()
-          val psiSourcedWebSymbols = ref.resolveReference().filterIsInstance<PsiSourcedWebSymbol>()
+          val psiSourcedWebSymbols = ref.resolveReference().filterIsInstance<PsiSourcedPolySymbol>()
           if (psiSourcedWebSymbols.isEmpty()) return@forEach
           val equivalentSymbol = if (targetSymbols.isEmpty()) {
             psiSourcedWebSymbols.find { it.isEquivalentTo(myTargetSymbol) }

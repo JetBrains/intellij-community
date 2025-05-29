@@ -3,7 +3,7 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
@@ -19,7 +19,7 @@ internal fun WebSymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop:
 internal val WebSymbolCodeCompletionItem.stopSequencePatternEvaluation
   get() = (this as WebSymbolCodeCompletionItemImpl).stopSequencePatternEvaluation
 
-internal fun <T : MatchResult> T.addOwner(owner: WebSymbol): T {
+internal fun <T : MatchResult> T.addOwner(owner: PolySymbol): T {
   val newSegments = mutableListOf<WebSymbolNameSegment>()
   var foundNonEmpty = false
   var applied = false
@@ -57,7 +57,7 @@ internal fun <T : MatchResult> T.copy(segments: List<WebSymbolNameSegment>): T =
     else -> MatchResult(segments)
   } as T
 
-internal fun List<WebSymbolCodeCompletionItem>.applyIcons(symbol: WebSymbol) =
+internal fun List<WebSymbolCodeCompletionItem>.applyIcons(symbol: PolySymbol) =
   if (symbol.icon != null) {
     map { item -> if (item.icon == null) item.withIcon(symbol.icon) else item }
   }
@@ -111,9 +111,9 @@ internal fun <T> withPrevMatchScope(
   }
 
 internal fun <T : MatchResult> T.applyToSegments(
-  vararg contributions: WebSymbol,
+  vararg contributions: PolySymbol,
   apiStatus: WebSymbolApiStatus? = null,
-  priority: WebSymbol.Priority? = null,
+  priority: PolySymbol.Priority? = null,
   proximity: Int? = null,
 ): T =
   if (apiStatus != null || priority != null || proximity != null || contributions.isNotEmpty())

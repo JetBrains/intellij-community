@@ -2,10 +2,10 @@
 package com.intellij.webSymbols.declarations
 
 import com.intellij.model.psi.PsiSymbolDeclaration
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 
 interface WebSymbolDeclaration : PsiSymbolDeclaration {
 
-  override fun getSymbol(): WebSymbol
+  override fun getSymbol(): PolySymbol
 
 }

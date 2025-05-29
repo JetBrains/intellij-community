@@ -21,7 +21,7 @@ internal abstract class SearchMap<T> internal constructor(
   private val patterns: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
   private val statics: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
 
-  internal abstract fun Sequence<T>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol>
+  internal abstract fun Sequence<T>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol>
 
   internal fun add(qualifiedName: WebSymbolQualifiedName,
                    pattern: WebSymbolsPattern?,
@@ -48,7 +48,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
-                                  scope: Stack<WebSymbolsScope>): Sequence<WebSymbol> =
+                                  scope: Stack<WebSymbolsScope>): Sequence<PolySymbol> =
     namesProvider.getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY)
       .asSequence()
       .mapNotNull { statics[SearchMapEntry(qualifiedName.qualifiedKind, it)] }
@@ -96,7 +96,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectPatternContributions(qualifiedName: WebSymbolQualifiedName,
                                           params: WebSymbolsNameMatchQueryParams,
-                                          scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                          scope: Stack<WebSymbolsScope>): List<PolySymbol> =
     collectPatternsToProcess(qualifiedName)
       .let {
         if (it.size > 2)
@@ -124,12 +124,12 @@ internal abstract class SearchMap<T> internal constructor(
     return toProcess
   }
 
-  private fun Sequence<T>.innerMapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol> =
+  private fun Sequence<T>.innerMapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol> =
     mapAndFilter(params)
       .filterByQueryParams(params)
 
 
-  private fun Sequence<Collection<T>>.flatMapWithQueryParameters(params: WebSymbolsQueryParams): Sequence<WebSymbol> =
+  private fun Sequence<Collection<T>>.flatMapWithQueryParameters(params: WebSymbolsQueryParams): Sequence<PolySymbol> =
     this.flatMap { it.asSequence().innerMapAndFilter(params) }
 
   private data class SearchMapEntry(val namespace: SymbolNamespace,

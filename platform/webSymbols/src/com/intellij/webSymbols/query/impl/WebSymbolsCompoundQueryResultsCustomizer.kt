@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -10,8 +10,8 @@ import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 
 internal class WebSymbolsCompoundQueryResultsCustomizer(private val customizers: List<WebSymbolsQueryResultsCustomizer>) : WebSymbolsQueryResultsCustomizer {
 
-  override fun apply(matches: List<WebSymbol>, strict: Boolean,
-                     qualifiedName: WebSymbolQualifiedName): List<WebSymbol> =
+  override fun apply(matches: List<PolySymbol>, strict: Boolean,
+                     qualifiedName: WebSymbolQualifiedName): List<PolySymbol> =
     customizers.foldRight(matches) { scope, list ->
       scope.apply(list, strict, qualifiedName)
     }

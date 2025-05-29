@@ -10,11 +10,11 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbol.Priority
+import com.intellij.webSymbols.PolySymbol.Priority
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolMatchBuilder
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
@@ -22,7 +22,7 @@ import com.intellij.webSymbols.utils.coalesceApiStatus
 import com.intellij.webSymbols.utils.merge
 import javax.swing.Icon
 
-internal open class WebSymbolMatchImpl private constructor(
+internal open class PolySymbolMatchImpl private constructor(
   override val matchedName: String,
   override val nameSegments: List<WebSymbolNameSegment>,
   override val namespace: SymbolNamespace,
@@ -31,7 +31,7 @@ internal open class WebSymbolMatchImpl private constructor(
   private val explicitPriority: Priority?,
   private val explicitProximity: Int?,
   private val additionalProperties: Map<String, Any>,
-) : WebSymbolMatch {
+) : PolySymbolMatch {
 
   init {
     require(nameSegments.isNotEmpty()) { "nameSegments must not be empty" }
@@ -39,7 +39,7 @@ internal open class WebSymbolMatchImpl private constructor(
 
   protected fun reversedSegments() = Sequence { ReverseListIterator(nameSegments) }
 
-  override fun withCustomProperties(properties: Map<String, Any>): WebSymbolMatch =
+  override fun withCustomProperties(properties: Map<String, Any>): PolySymbolMatch =
     create(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity, additionalProperties + properties)
 
   override val psiContext: PsiElement?
@@ -107,13 +107,13 @@ internal open class WebSymbolMatchImpl private constructor(
   override val properties: Map<String, Any>
     get() = nameSegments.asSequence().flatMap { it.symbols }
       .flatMap { it.properties.entries }
-      .filter { it.key != WebSymbol.PROP_HIDE_FROM_COMPLETION }
+      .filter { it.key != PolySymbol.PROP_HIDE_FROM_COMPLETION }
       .plus(additionalProperties.entries)
       .map { Pair(it.key, it.value) }
       .toMap()
 
-  override fun createPointer(): Pointer<out WebSymbolMatchImpl> =
-    WebSymbolMatchPointer<WebSymbolMatchImpl>(this, ::WebSymbolMatchImpl)
+  override fun createPointer(): Pointer<out PolySymbolMatchImpl> =
+    WebSymbolMatchPointer<PolySymbolMatchImpl>(this, ::PolySymbolMatchImpl)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     if (nameSegments.size == 1)
@@ -127,15 +127,15 @@ internal open class WebSymbolMatchImpl private constructor(
     reversedSegments()
       .flatMap { it.symbols.asSequence() }
       .map {
-        if (it === this) super<WebSymbolMatch>.getDocumentationTarget(location)
+        if (it === this) super<PolySymbolMatch>.getDocumentationTarget(location)
         else it.getDocumentationTarget(location)
       }
       .filter { it !is WebSymbolDocumentationTarget || it.symbol.createDocumentation(location)?.isNotEmpty() == true }
       .firstOrNull()
-    ?: super<WebSymbolMatch>.getDocumentationTarget(location)
+    ?: super<PolySymbolMatch>.getDocumentationTarget(location)
 
   override fun isEquivalentTo(symbol: Symbol): Boolean =
-    super<WebSymbolMatch>.isEquivalentTo(symbol)
+    super<PolySymbolMatch>.isEquivalentTo(symbol)
     || nameSegments.filter { it.start != it.end }
       .let { nonEmptySegments ->
         nonEmptySegments.size == 1
@@ -161,7 +161,7 @@ internal open class WebSymbolMatchImpl private constructor(
       ?.renameTarget
 
   override fun equals(other: Any?): Boolean =
-    other is WebSymbolMatch
+    other is PolySymbolMatch
     && other.name == name
     && other.origin == origin
     && other.namespace == namespace
@@ -170,7 +170,7 @@ internal open class WebSymbolMatchImpl private constructor(
 
   override fun hashCode(): Int = name.hashCode()
 
-  internal fun withSegments(segments: List<WebSymbolNameSegment>): WebSymbolMatch =
+  internal fun withSegments(segments: List<WebSymbolNameSegment>): PolySymbolMatch =
     create(matchedName, segments, namespace, kind, origin, explicitPriority, explicitProximity, additionalProperties)
 
   class ReverseListIterator<T>(list: List<T>) : Iterator<T> {
@@ -198,12 +198,12 @@ internal open class WebSymbolMatchImpl private constructor(
       explicitPriority: Priority?,
       explicitProximity: Int?,
       additionalProperties: Map<String, Any>,
-    ): WebSymbolMatch =
-      if (nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedWebSymbol }) })
-        PsiSourcedWebSymbolMatch(matchedName, nameSegments, namespace, kind, origin,
-                                 explicitPriority, explicitProximity, additionalProperties)
-      else WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin,
-                              explicitPriority, explicitProximity, additionalProperties)
+    ): PolySymbolMatch =
+      if (nameSegments.all { it.start == it.end || (it.symbols.isNotEmpty() && it.symbols.any { symbol -> symbol is PsiSourcedPolySymbol }) })
+        PsiSourcedPolySymbolMatch(matchedName, nameSegments, namespace, kind, origin,
+                                  explicitPriority, explicitProximity, additionalProperties)
+      else PolySymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin,
+                               explicitPriority, explicitProximity, additionalProperties)
 
     private fun List<WebSymbolNameSegment>.equalsIgnoreOffset(other: List<WebSymbolNameSegment>): Boolean {
       if (size != other.size) return false
@@ -230,7 +230,7 @@ internal open class WebSymbolMatchImpl private constructor(
 
   }
 
-  private class PsiSourcedWebSymbolMatch(
+  private class PsiSourcedPolySymbolMatch(
     matchedName: String,
     nameSegments: List<WebSymbolNameSegment>,
     namespace: SymbolNamespace,
@@ -239,8 +239,8 @@ internal open class WebSymbolMatchImpl private constructor(
     explicitPriority: Priority?,
     explicitProximity: Int?,
     additionalProperties: Map<String, Any>,
-  ) : WebSymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity, additionalProperties),
-      PsiSourcedWebSymbol {
+  ) : PolySymbolMatchImpl(matchedName, nameSegments, namespace, kind, origin, explicitPriority, explicitProximity, additionalProperties),
+      PsiSourcedPolySymbol {
 
     override val psiContext: PsiElement?
       get() = reversedSegments().flatMap { it.symbols.asSequence() }
@@ -248,16 +248,16 @@ internal open class WebSymbolMatchImpl private constructor(
 
     override val source: PsiElement?
       get() = reversedSegments().flatMap { it.symbols }
-        .mapNotNull { (it as? PsiSourcedWebSymbol)?.source }.singleOrNull()
+        .mapNotNull { (it as? PsiSourcedPolySymbol)?.source }.singleOrNull()
 
-    override fun createPointer(): Pointer<PsiSourcedWebSymbolMatch> =
-      WebSymbolMatchPointer<PsiSourcedWebSymbolMatch>(this, ::PsiSourcedWebSymbolMatch)
+    override fun createPointer(): Pointer<PsiSourcedPolySymbolMatch> =
+      WebSymbolMatchPointer<PsiSourcedPolySymbolMatch>(this, ::PsiSourcedPolySymbolMatch)
 
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
-      super<WebSymbolMatchImpl>.getNavigationTargets(project)
+      super<PolySymbolMatchImpl>.getNavigationTargets(project)
 
     override fun isEquivalentTo(symbol: Symbol): Boolean =
-      super<WebSymbolMatchImpl>.isEquivalentTo(symbol)
+      super<PolySymbolMatchImpl>.isEquivalentTo(symbol)
 
   }
 
@@ -272,7 +272,7 @@ internal open class WebSymbolMatchImpl private constructor(
     private var explicitPriority: Priority? = null
     private var explicitProximity: Int? = null
 
-    fun build(): WebSymbolMatch =
+    fun build(): PolySymbolMatch =
       create(matchedName, nameSegments, qualifiedKind.namespace, qualifiedKind.kind,
              origin, explicitPriority, explicitProximity, properties)
 
@@ -301,8 +301,8 @@ internal open class WebSymbolMatchImpl private constructor(
     }
   }
 
-  private class WebSymbolMatchPointer<T : WebSymbolMatch>(
-    webSymbolMatch: WebSymbolMatchImpl,
+  private class WebSymbolMatchPointer<T : PolySymbolMatch>(
+    webSymbolMatch: PolySymbolMatchImpl,
     private val newInstanceProvider: (
       matchedName: String,
       nameSegments: List<WebSymbolNameSegment>,

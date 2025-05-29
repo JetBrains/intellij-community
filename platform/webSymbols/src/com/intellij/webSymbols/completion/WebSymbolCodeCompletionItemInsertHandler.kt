@@ -4,22 +4,22 @@ package com.intellij.webSymbols.completion
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 
 interface WebSymbolCodeCompletionItemInsertHandler {
 
-  val priority: WebSymbol.Priority
-    get() = WebSymbol.Priority.NORMAL
+  val priority: PolySymbol.Priority
+    get() = PolySymbol.Priority.NORMAL
 
   fun prepare(context: InsertionContext, item: LookupElement, completeAfterInsert: Boolean): Runnable?
 
   companion object {
 
     internal fun adapt(insertHandler: InsertHandler<LookupElement>,
-                       priority: WebSymbol.Priority): WebSymbolCodeCompletionItemInsertHandler =
+                       priority: PolySymbol.Priority): WebSymbolCodeCompletionItemInsertHandler =
       object : WebSymbolCodeCompletionItemInsertHandler {
 
-        override val priority: WebSymbol.Priority
+        override val priority: PolySymbol.Priority
           get() = priority
 
         override fun prepare(context: InsertionContext, item: LookupElement, completeAfterInsert: Boolean) =

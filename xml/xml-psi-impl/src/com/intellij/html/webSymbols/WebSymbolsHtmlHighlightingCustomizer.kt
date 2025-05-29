@@ -7,16 +7,16 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlTag
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer
 
 class WebSymbolsHtmlHighlightingCustomizer: WebSymbolHighlightingCustomizer {
   override fun getSymbolKindTextAttributes(qualifiedKind: WebSymbolQualifiedKind): TextAttributesKey? =
     when(qualifiedKind) {
-      WebSymbol.HTML_ATTRIBUTES -> XmlHighlighterColors.HTML_ATTRIBUTE_NAME
-      WebSymbol.HTML_ELEMENTS -> XmlHighlighterColors.HTML_TAG_NAME
-      WebSymbol.HTML_ATTRIBUTE_VALUES -> XmlHighlighterColors.HTML_ATTRIBUTE_VALUE
+      PolySymbol.HTML_ATTRIBUTES -> XmlHighlighterColors.HTML_ATTRIBUTE_NAME
+      PolySymbol.HTML_ELEMENTS -> XmlHighlighterColors.HTML_TAG_NAME
+      PolySymbol.HTML_ATTRIBUTE_VALUES -> XmlHighlighterColors.HTML_ATTRIBUTE_VALUE
       else -> null
     }
 

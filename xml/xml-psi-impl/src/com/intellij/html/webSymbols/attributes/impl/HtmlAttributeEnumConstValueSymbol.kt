@@ -8,9 +8,9 @@ import com.intellij.webSymbols.*
 
 internal class HtmlAttributeEnumConstValueSymbol(override val origin: WebSymbolOrigin,
                                                  override val name: String,
-                                                 override val source: PsiElement?) : PsiSourcedWebSymbol {
+                                                 override val source: PsiElement?) : PsiSourcedPolySymbol {
   override val kind: SymbolKind
-    get() = WebSymbol.KIND_HTML_ATTRIBUTE_VALUES
+    get() = PolySymbol.KIND_HTML_ATTRIBUTE_VALUES
 
   override fun createPointer(): Pointer<HtmlAttributeEnumConstValueSymbol> {
     val origin = this.origin
@@ -24,6 +24,6 @@ internal class HtmlAttributeEnumConstValueSymbol(override val origin: WebSymbolO
   }
 
   override val namespace: SymbolNamespace
-    get() = WebSymbol.NAMESPACE_HTML
+    get() = PolySymbol.NAMESPACE_HTML
 
 }

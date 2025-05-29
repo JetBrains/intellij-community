@@ -26,7 +26,7 @@ import com.intellij.webSymbols.impl.withOffset
 import com.intellij.webSymbols.impl.withRange
 import com.intellij.webSymbols.patterns.impl.applyIcons
 import com.intellij.webSymbols.query.*
-import com.intellij.webSymbols.query.impl.WebSymbolMatchImpl
+import com.intellij.webSymbols.query.impl.PolySymbolMatchImpl
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -45,10 +45,10 @@ inline fun <T : Any, P : Any> T.applyIfNotNull(param: P?, block: T.(P) -> T): T 
   else this
 }
 
-fun List<WebSymbol>.hasOnlyExtensions(): Boolean =
+fun List<PolySymbol>.hasOnlyExtensions(): Boolean =
   all { it.extension }
 
-fun List<WebSymbol>.asSingleSymbol(force: Boolean = false): WebSymbol? =
+fun List<PolySymbol>.asSingleSymbol(force: Boolean = false): PolySymbol? =
   if (isEmpty())
     null
   else if (size == 1)
@@ -58,37 +58,37 @@ fun List<WebSymbol>.asSingleSymbol(force: Boolean = false): WebSymbol? =
     if (!force && any { it.namespace != first.namespace || it.kind != first.kind })
       null
     else
-      WebSymbolMatch.create(first.name, first.qualifiedKind, first.origin,
-                            WebSymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority()))
+      PolySymbolMatch.create(first.name, first.qualifiedKind, first.origin,
+                             WebSymbolNameSegment.create(0, first.name.length, sortSymbolsByPriority()))
   }
 
-fun WebSymbol.withMatchedName(matchedName: String): WebSymbol =
+fun PolySymbol.withMatchedName(matchedName: String): PolySymbol =
   if (matchedName != name) {
-    val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
+    val nameSegment = if (this is PolySymbolMatch && nameSegments.size == 1)
       nameSegments[0].withRange(0, matchedName.length)
     else
       WebSymbolNameSegment.create(0, matchedName.length, this)
-    WebSymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
+    PolySymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
   }
   else this
 
-fun WebSymbol.withMatchedKind(qualifiedKind: WebSymbolQualifiedKind): WebSymbol =
+fun PolySymbol.withMatchedKind(qualifiedKind: WebSymbolQualifiedKind): PolySymbol =
   if (qualifiedKind != this.qualifiedKind) {
-    val matchedName = this.asSafely<WebSymbolMatch>()?.matchedName ?: name
-    val nameSegment = if (this is WebSymbolMatch && nameSegments.size == 1)
+    val matchedName = this.asSafely<PolySymbolMatch>()?.matchedName ?: name
+    val nameSegment = if (this is PolySymbolMatch && nameSegments.size == 1)
       nameSegments[0].withRange(0, matchedName.length)
     else
       WebSymbolNameSegment.create(0, matchedName.length, this)
-    WebSymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
+    PolySymbolMatch.create(matchedName, qualifiedKind, origin, nameSegment)
   }
   else this
 
-fun WebSymbol.withNavigationTarget(target: PsiElement): WebSymbol =
-  object : WebSymbolDelegate<WebSymbol>(this@withNavigationTarget) {
+fun PolySymbol.withNavigationTarget(target: PsiElement): PolySymbol =
+  object : PolySymbolDelegate<PolySymbol>(this@withNavigationTarget) {
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
       listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(target))
 
-    override fun createPointer(): Pointer<out WebSymbol> {
+    override fun createPointer(): Pointer<out PolySymbol> {
       val symbolPtr = delegate.createPointer()
       val targetPtr = target.createSmartPointer()
       return Pointer {
@@ -97,12 +97,12 @@ fun WebSymbol.withNavigationTarget(target: PsiElement): WebSymbol =
     }
   }
 
-fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
-  if (this is WebSymbolMatch)
+fun PolySymbol.unwrapMatchedSymbols(): Sequence<PolySymbol> =
+  if (this is PolySymbolMatch)
     Sequence {
-      object : Iterator<WebSymbol> {
-        private var next: WebSymbol? = null
-        val fifo = LinkedList<WebSymbol>()
+      object : Iterator<PolySymbol> {
+        private var next: PolySymbol? = null
+        val fifo = LinkedList<PolySymbol>()
 
         init {
           fifo.addLast(this@unwrapMatchedSymbols)
@@ -112,7 +112,7 @@ fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
         private fun advance() {
           while (fifo.isNotEmpty()) {
             val symbol = fifo.removeFirst()
-            if (symbol is WebSymbolMatch) {
+            if (symbol is PolySymbolMatch) {
               symbol.nameSegments.forEach {
                 fifo.addAll(it.symbols)
               }
@@ -128,24 +128,24 @@ fun WebSymbol.unwrapMatchedSymbols(): Sequence<WebSymbol> =
         override fun hasNext(): Boolean =
           next != null
 
-        override fun next(): WebSymbol =
+        override fun next(): PolySymbol =
           next!!.also { advance() }
       }
     }
   else
     sequenceOf(this)
 
-fun WebSymbolNameSegment.withSymbols(symbols: List<WebSymbol>): WebSymbolNameSegment =
+fun WebSymbolNameSegment.withSymbols(symbols: List<PolySymbol>): WebSymbolNameSegment =
   (this as WebSymbolNameSegmentImpl).withSymbols(symbols)
 
-fun WebSymbolMatch.withSegments(segments: List<WebSymbolNameSegment>): WebSymbolMatch =
-  (this as WebSymbolMatchImpl).withSegments(segments)
+fun PolySymbolMatch.withSegments(segments: List<WebSymbolNameSegment>): PolySymbolMatch =
+  (this as PolySymbolMatchImpl).withSegments(segments)
 
-fun WebSymbol.match(
+fun PolySymbol.match(
   nameToMatch: String,
   params: WebSymbolsNameMatchQueryParams,
   context: Stack<WebSymbolsScope>,
-): List<WebSymbol> {
+): List<PolySymbol> {
   pattern?.let { pattern ->
     context.push(this)
     try {
@@ -156,8 +156,8 @@ fun WebSymbol.match(
             null
           }
           else {
-            WebSymbolMatch.create(nameToMatch, matchResult.segments,
-                                  namespace, kind, origin)
+            PolySymbolMatch.create(nameToMatch, matchResult.segments,
+                                   namespace, kind, origin)
           }
         }
     }
@@ -174,7 +174,7 @@ fun WebSymbol.match(
   }
 }
 
-fun WebSymbol.toCodeCompletionItems(
+fun PolySymbol.toCodeCompletionItems(
   name: String,
   params: WebSymbolsCodeCompletionQueryParams,
   context: Stack<WebSymbolsScope>,
@@ -193,7 +193,7 @@ fun WebSymbol.toCodeCompletionItems(
     .getNames(WebSymbolQualifiedName(namespace, kind, this.name), WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { WebSymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
-fun WebSymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
+fun PolySymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
   val queryNames = queryExecutor.namesProvider.getNames(
     WebSymbolQualifiedName(this.namespace, this.kind, name), WebSymbolNamesProvider.Target.NAMES_QUERY)
   val symbolNames = queryExecutor.namesProvider.getNames(
@@ -201,10 +201,10 @@ fun WebSymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor):
   return queryNames.any { symbolNames.contains(it) }
 }
 
-val WebSymbol.qualifiedName: WebSymbolQualifiedName
+val PolySymbol.qualifiedName: WebSymbolQualifiedName
   get() = WebSymbolQualifiedName(namespace, kind, name)
 
-val WebSymbol.qualifiedKind: WebSymbolQualifiedKind
+val PolySymbol.qualifiedKind: WebSymbolQualifiedKind
   get() = WebSymbolQualifiedKind(namespace, kind)
 
 fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
@@ -219,31 +219,31 @@ fun WebSymbolNameSegment.getProblemKind(): ProblemKind? =
     null -> null
   }
 
-val WebSymbol.completeMatch: Boolean
-  get() = this !is WebSymbolMatch
+val PolySymbol.completeMatch: Boolean
+  get() = this !is PolySymbolMatch
           || (nameSegments.all { segment -> segment.problem == null && segment.symbols.all { it.completeMatch } }
               && (nameSegments.lastOrNull()?.end ?: 0) == matchedNameOrName.length)
 
-val WebSymbol.nameSegments: List<WebSymbolNameSegment>
-  get() = (this as? CompositeWebSymbol)?.nameSegments
+val PolySymbol.nameSegments: List<WebSymbolNameSegment>
+  get() = (this as? CompositePolySymbol)?.nameSegments
           ?: pattern?.let { listOf(WebSymbolNameSegment.create(0, 0, this)) }
           ?: listOf(WebSymbolNameSegment.create(this))
 
-val WebSymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment>
+val PolySymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment>
   get() =
     Sequence {
       object : Iterator<WebSymbolNameSegment> {
         private var next: WebSymbolNameSegment? = null
         val fifo = LinkedList<WebSymbolNameSegment>()
-        val visitedSymbols = mutableSetOf<WebSymbol>()
+        val visitedSymbols = mutableSetOf<PolySymbol>()
 
         init {
           addNameSegmentsToQueue(this@nameSegmentsWithProblems)
           advance()
         }
 
-        private fun addNameSegmentsToQueue(symbol: WebSymbol) {
-          if (symbol is CompositeWebSymbol && visitedSymbols.add(symbol)) {
+        private fun addNameSegmentsToQueue(symbol: PolySymbol) {
+          if (symbol is CompositePolySymbol && visitedSymbols.add(symbol)) {
             fifo.addAll(symbol.nameSegments)
           }
         }
@@ -270,12 +270,12 @@ val WebSymbol.nameSegmentsWithProblems: Sequence<WebSymbolNameSegment>
       }
     }
 
-internal val WebSymbol.matchedNameOrName: String
-  get() = (this as? WebSymbolMatch)?.matchedName ?: name
+internal val PolySymbol.matchedNameOrName: String
+  get() = (this as? PolySymbolMatch)?.matchedName ?: name
 
-val WebSymbol.hideFromCompletion: Boolean
+val PolySymbol.hideFromCompletion: Boolean
   get() =
-    properties[WebSymbol.PROP_HIDE_FROM_COMPLETION] == true
+    properties[PolySymbol.PROP_HIDE_FROM_COMPLETION] == true
 
 val (WebSymbolNameSegment.MatchProblem?).isCritical: Boolean
   get() = this == WebSymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == WebSymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL
@@ -398,10 +398,10 @@ fun WebSymbolsScope.getDefaultCodeCompletions(
                expandPatterns = false,
                virtualSymbols = params.virtualSymbols
              ), scope)
-    .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(qualifiedName.name, params, scope) ?: emptyList() }
+    .flatMap { (it as? PolySymbol)?.toCodeCompletionItems(qualifiedName.name, params, scope) ?: emptyList() }
 
-internal val List<WebSymbolsScope>.lastWebSymbol: WebSymbol?
-  get() = this.lastOrNull { it is WebSymbol } as? WebSymbol
+internal val List<WebSymbolsScope>.lastPolySymbol: PolySymbol?
+  get() = this.lastOrNull { it is PolySymbol } as? PolySymbol
 
 @ApiStatus.Internal
 fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTracker>>): ModificationTracker =

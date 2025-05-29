@@ -6,7 +6,7 @@ import com.intellij.psi.util.startOffset
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue.Type
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
@@ -18,7 +18,7 @@ class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvid
   override fun getReferencedSymbolNameOffset(psiElement: XmlAttributeValue): Int =
     psiElement.valueTextRange.startOffset - psiElement.startOffset
 
-  override fun getReferencedSymbol(psiElement: XmlAttributeValue): WebSymbol? {
+  override fun getReferencedSymbol(psiElement: XmlAttributeValue): PolySymbol? {
     val attribute = psiElement.parentOfType<XmlAttribute>()
     val attributeDescriptor = attribute?.descriptor?.asSafely<WebSymbolAttributeDescriptor>() ?: return null
     val type = attributeDescriptor.symbol.attributeValue
@@ -29,13 +29,13 @@ class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvid
     val queryExecutor = WebSymbolsQueryExecutorFactory.create(psiElement)
 
     return if (type == Type.ENUM)
-      if (queryExecutor.runCodeCompletionQuery(WebSymbol.HTML_ATTRIBUTE_VALUES, "", 0)
+      if (queryExecutor.runCodeCompletionQuery(PolySymbol.HTML_ATTRIBUTE_VALUES, "", 0)
           .filter { !it.completeAfterInsert }
           .none { it.name == name })
         null
       else
         queryExecutor
-          .runNameMatchQuery(WebSymbol.HTML_ATTRIBUTE_VALUES.withName(name))
+          .runNameMatchQuery(PolySymbol.HTML_ATTRIBUTE_VALUES.withName(name))
           .takeIf {
             it.isNotEmpty()
             && !it.hasOnlyExtensions()
@@ -44,12 +44,12 @@ class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvid
     else
       queryExecutor
         .also { it.keepUnresolvedTopLevelReferences = true }
-        .runNameMatchQuery(WebSymbol.HTML_ATTRIBUTE_VALUES.withName(name))
+        .runNameMatchQuery(PolySymbol.HTML_ATTRIBUTE_VALUES.withName(name))
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()
         }
         ?.asSingleSymbol()
-      ?: PsiWebSymbolReferenceProvider.unresolvedSymbol(WebSymbol.HTML_ATTRIBUTE_VALUES, name)
+      ?: PsiWebSymbolReferenceProvider.unresolvedSymbol(PolySymbol.HTML_ATTRIBUTE_VALUES, name)
   }
 }

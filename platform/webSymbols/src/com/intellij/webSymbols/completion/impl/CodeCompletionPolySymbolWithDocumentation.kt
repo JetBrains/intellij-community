@@ -4,24 +4,24 @@ package com.intellij.webSymbols.completion.impl
 import com.intellij.model.Pointer
 import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolDelegate
+import com.intellij.webSymbols.PolySymbol
+import com.intellij.webSymbols.PolySymbolDelegate
 
 /**
  * We need to render documentation for lookup elements. Regular `WebSymbol` does not implement
  * `DocumentationSymbol` to have a context aware documentation, so the symbol needs to be wrapped
  * for code completion.
  */
-class CodeCompletionWebSymbolWithDocumentation(delegate: WebSymbol, private val target: DocumentationTarget)
-  : WebSymbolDelegate<WebSymbol>(delegate), DocumentationSymbol {
+class CodeCompletionPolySymbolWithDocumentation(delegate: PolySymbol, private val target: DocumentationTarget)
+  : PolySymbolDelegate<PolySymbol>(delegate), DocumentationSymbol {
 
-  override fun createPointer(): Pointer<CodeCompletionWebSymbolWithDocumentation> {
+  override fun createPointer(): Pointer<CodeCompletionPolySymbolWithDocumentation> {
     val delegatePtr = delegate.createPointer()
     val targetPtr = target.createPointer()
     return Pointer {
       val target = targetPtr.dereference() ?: return@Pointer null
       val delegate = delegatePtr.dereference() ?: return@Pointer null
-      CodeCompletionWebSymbolWithDocumentation(delegate, target)
+      CodeCompletionPolySymbolWithDocumentation(delegate, target)
     }
   }
 

@@ -14,7 +14,7 @@ import com.intellij.psi.impl.source.xml.XmlDescriptorUtil.wrapInDelegating
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NonNls
 
 open class WebSymbolElementDescriptor private constructor(private val tag: XmlTag,
                                                           private val name: String,
-                                                          val symbol: WebSymbol)
+                                                          val symbol: PolySymbol)
   : XmlElementDescriptorEx, XmlElementDescriptorAwareAboutChildren, XmlCustomElementDescriptor {
 
   constructor(info: WebSymbolHtmlElementInfo, tag: XmlTag) : this(tag, info.name, info.symbol)
@@ -39,7 +39,7 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
   fun runNameMatchQuery(qualifiedName: WebSymbolQualifiedName,
                         virtualSymbols: Boolean = true,
                         abstractSymbols: Boolean = false,
-                        strictScope: Boolean = false): List<WebSymbol> =
+                        strictScope: Boolean = false): List<PolySymbol> =
     WebSymbolsQueryExecutorFactory.create(tag)
       .runNameMatchQuery(listOf(qualifiedName), virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
@@ -47,7 +47,7 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
                           expandPatterns: Boolean,
                           virtualSymbols: Boolean = true,
                           abstractSymbols: Boolean = false,
-                          strictScope: Boolean = false): List<WebSymbol> =
+                          strictScope: Boolean = false): List<PolySymbol> =
     WebSymbolsQueryExecutorFactory.create(tag)
       .runListSymbolsQuery(qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 

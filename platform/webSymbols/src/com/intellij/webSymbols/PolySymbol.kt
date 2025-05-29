@@ -24,7 +24,7 @@ import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetIm
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
@@ -38,7 +38,7 @@ import javax.swing.Icon
  * The core element of the Web Symbols framework - it represents an entity in the Web Symbols model.
  * It is identified through `namespace`, `kind` and `name` properties.
  *
- * The symbol lifecycle is a single read action. If you need it to survive between read actions, use [WebSymbol.createPointer] to create a symbol pointer.
+ * The symbol lifecycle is a single read action. If you need it to survive between read actions, use [PolySymbol.createPointer] to create a symbol pointer.
  * If the symbol is still valid, dereferencing the pointer will return a new instance of the symbol.
  * During write action, the symbol might not survive PSI tree commit, so you should create a pointer
  * before the commit and dereference it afterward.
@@ -50,7 +50,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrioritizedScope {
+interface PolySymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrioritizedScope {
 
   /**
    * Specifies where this symbol comes from. Besides descriptive information like
@@ -149,7 +149,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrio
     get() = null
 
   /**
-   * The pattern to match names against. As a result of pattern matching a [WebSymbolMatch] will be created.
+   * The pattern to match names against. As a result of pattern matching a [PolySymbolMatch] will be created.
    * A pattern may specify that a reference to other Web Symbols is expected in some part of it.
    * For such places, appropriate segments with referenced Web Symbols will be created and navigation,
    * validation and refactoring support is available out-of-the-box.
@@ -213,7 +213,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrio
   /**
    * A [PsiElement], which is a file or an element, which can be used to roughly
    * locate the source of the symbol within a project to provide a context for loading additional information,
-   * like types. If the symbol is [PsiSourcedWebSymbol], then `psiContext` is equal to source.
+   * like types. If the symbol is [PsiSourcedPolySymbol], then `psiContext` is equal to source.
    */
   val psiContext: PsiElement?
     get() = null
@@ -221,7 +221,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrio
   /**
    * Various symbol properties. There should be no assumption on the type of properties.
    * Properties can be used by plugins to provide additional information on the symbol.
-   * All properties supported by IDEs are defined through `PROP_*` constants  of [WebSymbol] interface.
+   * All properties supported by IDEs are defined through `PROP_*` constants  of [PolySymbol] interface.
    * Check properties documentation for further reference.
    */
   val properties: Map<String, Any>
@@ -316,7 +316,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrio
    * Returns the pointer to the symbol, which can survive between read actions.
    * The dereferenced symbol should be valid, i.e. any PSI based properties should return valid PsiElements.
    */
-  override fun createPointer(): Pointer<out WebSymbol>
+  override fun createPointer(): Pointer<out PolySymbol>
 
   /**
    * Return `true` if the symbol should be present in the query results

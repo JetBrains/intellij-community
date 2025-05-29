@@ -21,8 +21,8 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.startOffset
 import com.intellij.psi.util.walkUp
 import com.intellij.util.Query
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
@@ -34,7 +34,7 @@ internal class WebSymbolsUsageSearcher : UsageSearcher {
 
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> =
     parameters.target
-      .let { it as? WebSymbol ?: (it as? WebSymbolSearchTarget)?.symbol }
+      .let { it as? PolySymbol ?: (it as? WebSymbolSearchTarget)?.symbol }
       ?.let { WebSymbolUsageQueries.buildWebSymbolUsagesQueries(it, parameters.project, parameters.searchScope) }
     ?: emptyList()
 
@@ -42,7 +42,7 @@ internal class WebSymbolsUsageSearcher : UsageSearcher {
 
 object WebSymbolUsageQueries {
 
-  fun buildWebSymbolUsagesQueries(symbol: WebSymbol, project: Project, searchScope: SearchScope): List<Query<out PsiUsage>> =
+  fun buildWebSymbolUsagesQueries(symbol: PolySymbol, project: Project, searchScope: SearchScope): List<Query<out PsiUsage>> =
     (symbol.psiContext
        ?.let { WebSymbolsQueryExecutorFactory.create(it, true) }
        ?.namesProvider
@@ -61,10 +61,10 @@ object WebSymbolUsageQueries {
       }
       .toList()
 
-  private fun findReferencesToSymbol(symbol: WebSymbol, leafOccurrence: LeafOccurrence): Collection<PsiUsage> =
+  private fun findReferencesToSymbol(symbol: PolySymbol, leafOccurrence: LeafOccurrence): Collection<PsiUsage> =
     service<PsiSymbolReferenceService>().run {
       for ((element, offsetInElement) in walkUp(leafOccurrence.start, leafOccurrence.offsetInStart, leafOccurrence.scope)) {
-        val psiSource = (symbol as? PsiSourcedWebSymbol)?.source
+        val psiSource = (symbol as? PsiSourcedPolySymbol)?.source
 
         if (psiSource == element) {
           val nameIdentifier = (element as? PsiNameIdentifierOwner)?.nameIdentifier

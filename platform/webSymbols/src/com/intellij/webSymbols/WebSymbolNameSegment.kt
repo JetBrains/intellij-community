@@ -13,7 +13,7 @@ interface WebSymbolNameSegment {
 
   val end: Int
 
-  val symbols: List<WebSymbol>
+  val symbols: List<PolySymbol>
 
   val problem: MatchProblem?
 
@@ -23,38 +23,38 @@ interface WebSymbolNameSegment {
 
   val apiStatus: WebSymbolApiStatus?
 
-  val priority: WebSymbol.Priority?
+  val priority: PolySymbol.Priority?
 
   val proximity: Int?
 
   val symbolKinds: Set<WebSymbolQualifiedKind>
 
-  fun getName(symbol: WebSymbol): @NlsSafe String =
+  fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
 
   fun createPointer(): Pointer<WebSymbolNameSegment>
 
   companion object {
 
-    fun create(symbol: WebSymbol): WebSymbolNameSegment =
+    fun create(symbol: PolySymbol): WebSymbolNameSegment =
       create(0, symbol.name.length, listOf(symbol))
 
-    fun create(start: Int, end: Int, symbol: WebSymbol): WebSymbolNameSegment =
+    fun create(start: Int, end: Int, symbol: PolySymbol): WebSymbolNameSegment =
       create(start, end, listOf(symbol))
 
-    fun create(start: Int, end: Int, vararg symbols: WebSymbol): WebSymbolNameSegment =
+    fun create(start: Int, end: Int, vararg symbols: PolySymbol): WebSymbolNameSegment =
       create(start, end, symbols.toList())
 
     fun create(
       start: Int,
       end: Int,
-      symbols: List<WebSymbol> = emptyList(),
+      symbols: List<PolySymbol> = emptyList(),
       problem: MatchProblem? = null,
       displayName: @NlsSafe String? = null,
       matchScore: Int = end - start,
       symbolKinds: Set<WebSymbolQualifiedKind>? = null,
       explicitApiStatus: WebSymbolApiStatus? = null,
-      explicitPriority: WebSymbol.Priority? = null,
+      explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,
     ): WebSymbolNameSegment =
       WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName, matchScore,

@@ -13,8 +13,8 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ArrayUtil
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
@@ -24,7 +24,7 @@ import javax.swing.Icon
 
 open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
                                                             private val name: String,
-                                                            val symbol: WebSymbol,
+                                                            val symbol: PolySymbol,
                                                             private val acceptsNoValue: Boolean,
                                                             private val acceptsValue: Boolean,
                                                             private val enumValues: List<WebSymbolCodeCompletionItem>?,
@@ -83,7 +83,7 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
         if (strictEnumValues) null
         else super.getEnumeratedValueDeclaration(xmlElement, value)
       }
-      else matches.firstNotNullOfOrNull { (it.symbol as? PsiSourcedWebSymbol)?.source } ?: xmlElement
+      else matches.firstNotNullOfOrNull { (it.symbol as? PsiSourcedPolySymbol)?.source } ?: xmlElement
     }
     else if (value.isNullOrEmpty())
       null
@@ -92,7 +92,7 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
 
   override fun getDefaultValueDeclaration(): PsiElement? =
     if (defaultValue != null && supportsEnums) {
-      matchEnum(defaultValue).firstNotNullOfOrNull { (it.symbol as? PsiSourcedWebSymbol)?.source }
+      matchEnum(defaultValue).firstNotNullOfOrNull { (it.symbol as? PsiSourcedPolySymbol)?.source }
     }
     else super.getDefaultValueDeclaration()
 

@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
@@ -20,7 +20,7 @@ class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName
   override fun getStaticPrefixes(): Sequence<String> =
     emptySequence()
 
-  override fun match(owner: WebSymbol?,
+  override fun match(owner: PolySymbol?,
                      scopeStack: Stack<WebSymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
@@ -34,7 +34,7 @@ class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName
     else
       emptyList()
 
-  override fun list(owner: WebSymbol?,
+  override fun list(owner: PolySymbol?,
                     scopeStack: Stack<WebSymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
@@ -46,7 +46,7 @@ class SingleSymbolReferencePattern(private val path: List<WebSymbolQualifiedName
     }
     else emptyList()
 
-  override fun complete(owner: WebSymbol?,
+  override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,

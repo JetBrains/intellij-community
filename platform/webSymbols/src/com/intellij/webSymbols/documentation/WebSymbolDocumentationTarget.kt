@@ -5,12 +5,12 @@ import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 
 interface WebSymbolDocumentationTarget : DocumentationTarget {
 
-  val symbol: WebSymbol
+  val symbol: PolySymbol
 
   val location: PsiElement?
 

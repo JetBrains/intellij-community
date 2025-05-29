@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue.Type
@@ -33,7 +33,7 @@ class WebSymbolHtmlAttributeValueCompletionProvider : WebSymbolsCompletionProvid
 
     val providedNames = mutableSetOf(attribute.name)
     if (type == Type.ENUM) {
-      processCompletionQueryResults(queryExecutor, patchedResultSet, WebSymbol.HTML_ATTRIBUTE_VALUES, name,
+      processCompletionQueryResults(queryExecutor, patchedResultSet, PolySymbol.HTML_ATTRIBUTE_VALUES, name,
                                     position, context, providedNames = providedNames) {
         if (!it.completeAfterInsert) {
           it.addToResult(parameters, patchedResultSet)
@@ -41,7 +41,7 @@ class WebSymbolHtmlAttributeValueCompletionProvider : WebSymbolsCompletionProvid
       }
     }
     else {
-      processCompletionQueryResults(queryExecutor, patchedResultSet, WebSymbol.HTML_ATTRIBUTE_VALUES, name,
+      processCompletionQueryResults(queryExecutor, patchedResultSet, PolySymbol.HTML_ATTRIBUTE_VALUES, name,
                                     position, context, providedNames = providedNames) {
         it.addToResult(parameters, patchedResultSet)
       }

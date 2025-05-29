@@ -4,7 +4,7 @@ package com.intellij.webSymbols.documentation
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationImpl
 import org.jetbrains.annotations.ApiStatus
@@ -134,7 +134,7 @@ interface WebSymbolDocumentation {
 
   companion object {
 
-    fun create(symbol: WebSymbol,
+    fun create(symbol: PolySymbol,
                location: PsiElement?,
                name: String = symbol.name,
                definition: String = Strings.escapeXmlEntities(symbol.name),

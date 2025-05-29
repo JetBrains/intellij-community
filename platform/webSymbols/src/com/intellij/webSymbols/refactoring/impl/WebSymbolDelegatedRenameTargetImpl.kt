@@ -8,15 +8,15 @@ import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.api.RenameValidator
 import com.intellij.refactoring.rename.api.ReplaceTextTarget
 import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolDelegate
+import com.intellij.webSymbols.PolySymbol
+import com.intellij.webSymbols.PolySymbolDelegate
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 
 /**
- * Used when creating a [WebSymbolRenameTarget] in [WebSymbolDelegate]. Allows to wrap a [RenameTarget] symbol
+ * Used when creating a [WebSymbolRenameTarget] in [PolySymbolDelegate]. Allows to wrap a [RenameTarget] symbol
  * as a [WebSymbolRenameTarget], while exposing original behavior to the platform.
  */
-internal class WebSymbolDelegatedRenameTargetImpl(override val symbol: WebSymbol) : WebSymbolRenameTarget {
+internal class WebSymbolDelegatedRenameTargetImpl(override val symbol: PolySymbol) : WebSymbolRenameTarget {
 
   init {
     assert(symbol is RenameTarget)

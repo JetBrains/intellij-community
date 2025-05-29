@@ -3,15 +3,15 @@ package com.intellij.webSymbols.query
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.query.impl.WebSymbolMatchImpl
+import com.intellij.webSymbols.query.impl.PolySymbolMatchImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
-interface WebSymbolMatch : CompositeWebSymbol {
+interface PolySymbolMatch : CompositePolySymbol {
 
   val matchedName: @NlsSafe String
 
-  fun withCustomProperties(properties: Map<String, Any>): WebSymbolMatch
+  fun withCustomProperties(properties: Map<String, Any>): PolySymbolMatch
 
   companion object {
 
@@ -24,10 +24,10 @@ interface WebSymbolMatch : CompositeWebSymbol {
       namespace: SymbolNamespace,
       kind: SymbolKind,
       origin: WebSymbolOrigin,
-      explicitPriority: WebSymbol.Priority? = null,
+      explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,
-    ): WebSymbolMatch =
-      WebSymbolMatchImpl.BuilderImpl(matchedName, WebSymbolQualifiedKind(namespace, kind), origin)
+    ): PolySymbolMatch =
+      PolySymbolMatchImpl.BuilderImpl(matchedName, WebSymbolQualifiedKind(namespace, kind), origin)
         .also { builder ->
           builder.addNameSegments(nameSegments)
           explicitProximity?.let { builder.explicitProximity(it) }
@@ -41,8 +41,8 @@ interface WebSymbolMatch : CompositeWebSymbol {
       qualifiedKind: WebSymbolQualifiedKind,
       origin: WebSymbolOrigin,
       builder: (WebSymbolMatchBuilder.() -> Unit),
-    ): WebSymbolMatch =
-      WebSymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
+    ): PolySymbolMatch =
+      PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { builder.invoke(it) }
         .build()
 
@@ -52,8 +52,8 @@ interface WebSymbolMatch : CompositeWebSymbol {
       qualifiedKind: WebSymbolQualifiedKind,
       origin: WebSymbolOrigin,
       vararg nameSegments: WebSymbolNameSegment,
-    ): WebSymbolMatch =
-      WebSymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
+    ): PolySymbolMatch =
+      PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { it.addNameSegments(*nameSegments) }
         .build()
 

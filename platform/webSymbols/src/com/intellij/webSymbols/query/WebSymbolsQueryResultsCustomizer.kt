@@ -10,9 +10,9 @@ interface WebSymbolsQueryResultsCustomizer : ModificationTracker {
 
   fun createPointer(): Pointer<out WebSymbolsQueryResultsCustomizer>
 
-  fun apply(matches: List<WebSymbol>,
+  fun apply(matches: List<PolySymbol>,
             strict: Boolean,
-            qualifiedName: WebSymbolQualifiedName): List<WebSymbol>
+            qualifiedName: WebSymbolQualifiedName): List<PolySymbol>
 
   fun apply(item: WebSymbolCodeCompletionItem,
             qualifiedKind: WebSymbolQualifiedKind): WebSymbolCodeCompletionItem?

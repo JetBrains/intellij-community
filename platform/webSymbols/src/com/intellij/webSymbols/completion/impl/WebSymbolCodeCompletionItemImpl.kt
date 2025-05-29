@@ -8,8 +8,8 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -26,8 +26,8 @@ internal data class WebSymbolCodeCompletionItemImpl(
   override val completeAfterInsert: Boolean = false,
   override val completeAfterChars: Set<Char> = emptySet(),
   override val displayName: String? = null,
-  override val symbol: WebSymbol? = null,
-  override val priority: WebSymbol.Priority? = null,
+  override val symbol: PolySymbol? = null,
+  override val priority: PolySymbol.Priority? = null,
   override val proximity: Int? = null,
   override val apiStatus: WebSymbolApiStatus = WebSymbolApiStatus.Stable,
   override val aliases: Set<String> = emptySet(),
@@ -52,7 +52,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
     if (completionPrefix.length < offset ||
         completionPrefix.substring(offset) == name)
       return
-    val priorityOffset = baselinePriorityValue - WebSymbol.Priority.NORMAL.value
+    val priorityOffset = baselinePriorityValue - PolySymbol.Priority.NORMAL.value
     val deprecatedOrObsolete = apiStatus.isDeprecatedOrObsolete()
     LookupElementBuilder
       .create(wrapSymbolForDocumentation(symbol, parameters.position)?.createPointer() ?: name, name)
@@ -70,7 +70,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
         else it
       }
       .withTailText(tailText, true)
-      .withBoldness(!deprecatedOrObsolete && priority == WebSymbol.Priority.HIGHEST)
+      .withBoldness(!deprecatedOrObsolete && priority == PolySymbol.Priority.HIGHEST)
       .withStrikeoutness(deprecatedOrObsolete)
       .let {
         if (displayName != null)
@@ -91,8 +91,8 @@ internal data class WebSymbolCodeCompletionItemImpl(
           it.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE)
         else it
       }.let {
-        val priorityValue = if (deprecatedOrObsolete) WebSymbol.Priority.LOWEST.value
-        else (priority ?: WebSymbol.Priority.NORMAL).value + priorityOffset
+        val priorityValue = if (deprecatedOrObsolete) PolySymbol.Priority.LOWEST.value
+        else (priority ?: PolySymbol.Priority.NORMAL).value + priorityOffset
         PrioritizedLookupElement.withPriority(it, priorityValue)
       }.let {
         PrioritizedLookupElement.withExplicitProximity(it, proximity ?: 0)
@@ -102,13 +102,13 @@ internal data class WebSymbolCodeCompletionItemImpl(
       }
   }
 
-  private fun wrapSymbolForDocumentation(symbol: WebSymbol?, location: PsiElement) =
+  private fun wrapSymbolForDocumentation(symbol: PolySymbol?, location: PsiElement) =
     when (symbol) {
-      is PsiSourcedWebSymbol -> symbol.getDocumentationTarget(location)?.let {
-        PsiSourcedCodeCompletionWebSymbolWithDocumentation(symbol, it)
+      is PsiSourcedPolySymbol -> symbol.getDocumentationTarget(location)?.let {
+        PsiSourcedCodeCompletionPolySymbolWithDocumentation(symbol, it)
       }
-      is WebSymbol -> symbol.getDocumentationTarget(location)?.let {
-        CodeCompletionWebSymbolWithDocumentation(symbol, it)
+      is PolySymbol -> symbol.getDocumentationTarget(location)?.let {
+        CodeCompletionPolySymbolWithDocumentation(symbol, it)
       }
       else -> null
     }
@@ -136,10 +136,10 @@ internal data class WebSymbolCodeCompletionItemImpl(
   override fun withDisplayName(displayName: String?): WebSymbolCodeCompletionItem =
     copy(displayName = displayName)
 
-  override fun withSymbol(symbol: WebSymbol?): WebSymbolCodeCompletionItem =
+  override fun withSymbol(symbol: PolySymbol?): WebSymbolCodeCompletionItem =
     copy(symbol = symbol)
 
-  override fun withPriority(priority: WebSymbol.Priority?): WebSymbolCodeCompletionItem =
+  override fun withPriority(priority: PolySymbol.Priority?): WebSymbolCodeCompletionItem =
     copy(priority = priority)
 
   override fun withProximity(proximity: Int): WebSymbolCodeCompletionItem =
@@ -180,7 +180,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
 
   override fun withInsertHandlerAdded(
     insertHandler: InsertHandler<LookupElement>,
-    priority: WebSymbol.Priority,
+    priority: PolySymbol.Priority,
   ): WebSymbolCodeCompletionItem =
     withInsertHandlerAdded(WebSymbolCodeCompletionItemInsertHandler.adapt(insertHandler, priority))
 
@@ -193,8 +193,8 @@ internal data class WebSymbolCodeCompletionItemImpl(
     completeAfterInsert: Boolean,
     completeAfterChars: Set<Char>,
     displayName: String?,
-    symbol: WebSymbol?,
-    priority: WebSymbol.Priority?,
+    symbol: PolySymbol?,
+    priority: PolySymbol.Priority?,
     proximity: Int?,
     apiStatus: WebSymbolApiStatus,
     icon: Icon?,
@@ -210,13 +210,13 @@ internal data class WebSymbolCodeCompletionItemImpl(
   class BuilderImpl(
     private var name: String,
     private var offset: Int = 0,
-    private var symbol: WebSymbol? = null,
+    private var symbol: PolySymbol? = null,
   ) : WebSymbolCodeCompletionItemBuilder {
 
     private var completeAfterInsert: Boolean = false
     private var completeAfterChars: Set<Char> = emptySet()
     private var displayName: String? = null
-    private var priority: WebSymbol.Priority? = symbol?.priority
+    private var priority: PolySymbol.Priority? = symbol?.priority
     private var proximity: Int? = symbol?.proximity
     private var apiStatus: WebSymbolApiStatus = symbol?.apiStatus ?: WebSymbolApiStatus.Stable
     private var aliases: Set<String> = emptySet()
@@ -275,7 +275,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
       return this
     }
 
-    override fun priority(value: WebSymbol.Priority?): WebSymbolCodeCompletionItemBuilder {
+    override fun priority(value: PolySymbol.Priority?): WebSymbolCodeCompletionItemBuilder {
       priority = value
       return this
     }
@@ -295,7 +295,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
       return this
     }
 
-    override fun symbol(value: WebSymbol?): WebSymbolCodeCompletionItemBuilder {
+    override fun symbol(value: PolySymbol?): WebSymbolCodeCompletionItemBuilder {
       symbol = value
       return this
     }

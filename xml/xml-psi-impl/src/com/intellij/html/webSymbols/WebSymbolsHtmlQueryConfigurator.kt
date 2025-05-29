@@ -18,7 +18,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
-import com.intellij.webSymbols.WebSymbol.Companion.HTML_ATTRIBUTE_VALUES
+import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTE_VALUES
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.context.WebSymbolsContext
@@ -53,8 +53,8 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       assert(location !is XmlTag) { "Cannot create HtmlContextualWebSymbolsScope on a tag." }
     }
 
-    override val priority: WebSymbol.Priority
-      get() = WebSymbol.Priority.HIGHEST
+    override val priority: PolySymbol.Priority
+      get() = PolySymbol.Priority.HIGHEST
 
     override fun requiresResolve(): Boolean = false
 
@@ -63,14 +63,14 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope = element.takeIf { queryExecutor.allowResolve }
                            ?.descriptor?.asSafely<WebSymbolElementDescriptor>()?.symbol?.let { listOf(it) }
-                         ?: queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ELEMENTS, element.name)
+                         ?: queryExecutor.runNameMatchQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, element.name)
 
       elementScope.forEach(consumer)
 
       val attribute = context as? XmlAttribute ?: return
       attribute.takeIf { queryExecutor.allowResolve }
         ?.descriptor?.asSafely<WebSymbolAttributeDescriptor>()?.symbol?.let(consumer)
-      ?: queryExecutor.runNameMatchQuery(WebSymbol.NAMESPACE_HTML, WebSymbol.KIND_HTML_ATTRIBUTES,
+      ?: queryExecutor.runNameMatchQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTES,
                                          attribute.name, additionalScope = elementScope)
         .forEach(consumer)
     }
@@ -96,8 +96,8 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                            qualifiedKind: WebSymbolQualifiedKind,
                            location: PsiElement): WebSymbolCodeCompletionItem =
       when (qualifiedKind) {
-        WebSymbol.HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
-        WebSymbol.HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided
+        PolySymbol.HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
+        PolySymbol.HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided
         else -> item
       }
   }
@@ -126,17 +126,17 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       if (params.queryExecutor.allowResolve) {
         when (qualifiedKind) {
-          WebSymbol.HTML_ELEMENTS ->
+          PolySymbol.HTML_ELEMENTS ->
             (HtmlDescriptorUtils.getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
              ?: HtmlDescriptorUtils.getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
              ?: emptyArray())
               .map { HtmlElementDescriptorBasedSymbol(it, tag) }
               .toList()
-          WebSymbol.HTML_ATTRIBUTES ->
+          PolySymbol.HTML_ATTRIBUTES ->
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors(tag)
               .map { HtmlAttributeDescriptorBasedSymbol(it, tag) }
               .toList()
-          WebSymbol.JS_EVENTS ->
+          PolySymbol.JS_EVENTS ->
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors(tag)
               .filter { it.name.startsWith("on") }
               .map { HtmlEventDescriptorBasedSymbol(it) }
@@ -148,20 +148,20 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
-                                    scope: Stack<WebSymbolsScope>): List<WebSymbol> {
+                                    scope: Stack<WebSymbolsScope>): List<PolySymbol> {
       if (params.queryExecutor.allowResolve) {
         when (qualifiedName.qualifiedKind) {
-          WebSymbol.HTML_ELEMENTS ->
+          PolySymbol.HTML_ELEMENTS ->
             HtmlDescriptorUtils.getStandardHtmlElementDescriptor(tag, qualifiedName.name)
               ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
               ?.match(qualifiedName.name, params, scope)
               ?.let { return it }
-          WebSymbol.HTML_ATTRIBUTES ->
+          PolySymbol.HTML_ATTRIBUTES ->
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptor(tag, qualifiedName.name)
               ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
               ?.match(qualifiedName.name, params, scope)
               ?.let { return it }
-          WebSymbol.JS_EVENTS -> {
+          PolySymbol.JS_EVENTS -> {
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptor(tag, "on${qualifiedName.name}")
               ?.let { HtmlEventDescriptorBasedSymbol(it) }
               ?.match(qualifiedName.name, params, scope)
@@ -173,29 +173,29 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     }
   }
 
-  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedWebSymbol
+  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol
 
   class HtmlElementDescriptorBasedSymbol(val descriptor: XmlElementDescriptor,
                                          private val tag: XmlTag?)
-    : WebSymbol, StandardHtmlSymbol() {
+    : PolySymbol, StandardHtmlSymbol() {
 
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
       getHtmlMdnTagDocumentation(getHtmlApiNamespace(descriptor.nsDescriptor?.name, tag, name),
                                  name)
 
     override val kind: SymbolKind
-      get() = WebSymbol.KIND_HTML_ELEMENTS
+      get() = PolySymbol.KIND_HTML_ELEMENTS
 
     override val name: String = descriptor.name
 
     override val origin: WebSymbolOrigin
       get() = WebSymbolOrigin.empty()
 
-    override val priority: WebSymbol.Priority
-      get() = WebSymbol.Priority.LOW
+    override val priority: PolySymbol.Priority
+      get() = PolySymbol.Priority.LOW
 
     override val namespace: SymbolNamespace
-      get() = WebSymbol.NAMESPACE_HTML
+      get() = PolySymbol.NAMESPACE_HTML
 
     override val defaultValue: String?
       get() = descriptor.defaultValue
@@ -225,7 +225,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
   class HtmlAttributeDescriptorBasedSymbol private constructor(val descriptor: XmlAttributeDescriptor,
                                                                private val tag: XmlTag?,
-                                                               private val tagName: String) : WebSymbol, StandardHtmlSymbol() {
+                                                               private val tagName: String) : PolySymbol, StandardHtmlSymbol() {
 
     constructor(descriptor: XmlAttributeDescriptor, tag: XmlTag) : this(descriptor, tag, tag.name)
 
@@ -236,18 +236,18 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                                        tagName, name)
 
     override val kind: SymbolKind
-      get() = WebSymbol.KIND_HTML_ATTRIBUTES
+      get() = PolySymbol.KIND_HTML_ATTRIBUTES
 
     override val name: String = descriptor.name
 
     override val origin: WebSymbolOrigin
       get() = WebSymbolOrigin.empty()
 
-    override val priority: WebSymbol.Priority
-      get() = WebSymbol.Priority.LOW
+    override val priority: PolySymbol.Priority
+      get() = PolySymbol.Priority.LOW
 
     override val namespace: SymbolNamespace
-      get() = WebSymbol.NAMESPACE_HTML
+      get() = PolySymbol.NAMESPACE_HTML
 
     override val required: Boolean
       get() = descriptor.isRequired
@@ -306,39 +306,39 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
   }
 
-  private class HtmlEventDescriptorBasedSymbol(descriptor: XmlAttributeDescriptor) : WebSymbol, StandardHtmlSymbol() {
+  private class HtmlEventDescriptorBasedSymbol(descriptor: XmlAttributeDescriptor) : PolySymbol, StandardHtmlSymbol() {
 
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
       getDomEventDocumentation(name)
 
     override val kind: SymbolKind
-      get() = WebSymbol.KIND_JS_EVENTS
+      get() = PolySymbol.KIND_JS_EVENTS
 
     override val name: String = descriptor.name.substring(2)
 
     override val origin: WebSymbolOrigin
       get() = WebSymbolOrigin.empty()
 
-    override val priority: WebSymbol.Priority
-      get() = WebSymbol.Priority.LOW
+    override val priority: PolySymbol.Priority
+      get() = PolySymbol.Priority.LOW
 
     override val namespace: SymbolNamespace
-      get() = WebSymbol.NAMESPACE_JS
+      get() = PolySymbol.NAMESPACE_JS
 
     override fun createPointer(): Pointer<HtmlEventDescriptorBasedSymbol> =
       Pointer.hardPointer(this)
 
   }
 
-  private class HtmlAttributeValueSymbol(override val name: @NlsSafe String) : WebSymbol {
+  private class HtmlAttributeValueSymbol(override val name: @NlsSafe String) : PolySymbol {
     override val origin: WebSymbolOrigin
       get() = WebSymbolOrigin.empty()
 
     override val namespace: @NlsSafe SymbolNamespace
-      get() = WebSymbol.NAMESPACE_HTML
+      get() = PolySymbol.NAMESPACE_HTML
 
     override val kind: @NlsSafe SymbolKind
-      get() = WebSymbol.KIND_HTML_ATTRIBUTE_VALUES
+      get() = PolySymbol.KIND_HTML_ATTRIBUTE_VALUES
 
     override fun createPointer(): Pointer<HtmlAttributeValueSymbol> =
       Pointer.hardPointer(this)

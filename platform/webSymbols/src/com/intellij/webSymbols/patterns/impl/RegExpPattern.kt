@@ -3,7 +3,7 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -23,7 +23,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun isStaticAndRequired(): Boolean = false
 
-  override fun match(owner: WebSymbol?,
+  override fun match(owner: PolySymbol?,
                      scopeStack: Stack<WebSymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
@@ -39,13 +39,13 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     else emptyList()
   }
 
-  override fun list(owner: WebSymbol?,
+  override fun list(owner: PolySymbol?,
                     scopeStack: Stack<WebSymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     emptyList()
 
-  override fun complete(owner: WebSymbol?,
+  override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,

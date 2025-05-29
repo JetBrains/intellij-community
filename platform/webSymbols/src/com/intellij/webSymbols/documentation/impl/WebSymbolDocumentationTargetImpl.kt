@@ -12,7 +12,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.WebSymbolsBundle
@@ -24,7 +24,7 @@ import java.awt.image.BufferedImage
 import javax.swing.Icon
 
 internal class WebSymbolDocumentationTargetImpl(
-  override val symbol: WebSymbol,
+  override val symbol: PolySymbol,
   override val location: PsiElement?,
 )
   : WebSymbolDocumentationTarget {

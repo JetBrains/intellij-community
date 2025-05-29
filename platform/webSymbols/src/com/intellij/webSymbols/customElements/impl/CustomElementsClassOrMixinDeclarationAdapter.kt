@@ -41,7 +41,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val framework: FrameworkId?
     get() = null
 
-  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): WebSymbol =
+  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
     CustomElementClassOrMixinDeclarationSymbol(this, queryExecutor)
 
   private fun createPointer(): Pointer<CustomElementsClassOrMixinDeclarationAdapter> {
@@ -59,11 +59,11 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   private class CustomElementClassOrMixinDeclarationSymbol(
     private val base: CustomElementsClassOrMixinDeclarationAdapter,
     private val queryExecutor: WebSymbolsQueryExecutor,
-  ) : CustomElementsSymbol, PsiSourcedWebSymbol {
+  ) : CustomElementsSymbol, PsiSourcedPolySymbol {
 
-    private var _superContributions: List<WebSymbol>? = null
+    private var _superContributions: List<PolySymbol>? = null
 
-    private val superContributions: List<WebSymbol>
+    private val superContributions: List<PolySymbol>
       get() = _superContributions
               ?: (base.declaration.mixins + listOfNotNull(base.declaration.superclass))
                 .also { _superContributions = emptyList() }
@@ -111,7 +111,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                     params: WebSymbolsNameMatchQueryParams,
-                                    scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                    scope: Stack<WebSymbolsScope>): List<PolySymbol> =
       base.rootScope
         .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()

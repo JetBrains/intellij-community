@@ -3,8 +3,8 @@ package com.intellij.webSymbols.customElements.impl
 
 import com.intellij.webSymbols.SymbolKind
 import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_CSS_PROPERTIES
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_CSS
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_CSS_PROPERTIES
+import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_CSS
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.json.CssCustomProperty
 

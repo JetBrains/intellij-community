@@ -18,7 +18,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
@@ -32,7 +32,6 @@ import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
-import com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.getProblemKind
 import com.intellij.webSymbols.utils.hasOnlyExtensions
@@ -50,11 +49,11 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> =
     emptyList()
 
-  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, WebSymbol>, List<WebSymbolReference>> =
+  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, PolySymbol>, List<WebSymbolReference>> =
     CachedValuesManager.getCachedValue(element, CachedValuesManager.getManager(element.project).getKeyForClass(this.javaClass)) {
       val beans = PsiWebSymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
       val result = SmartList<WebSymbolReference>()
-      val offsets = MultiMap.createSet<Int, WebSymbol>()
+      val offsets = MultiMap.createSet<Int, PolySymbol>()
       for (bean in beans) {
         @Suppress("UNCHECKED_CAST")
         val provider = bean.instance as PsiWebSymbolReferenceProvider<PsiExternalReferenceHost>
@@ -70,7 +69,7 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
 }
 
-internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: WebSymbol, showProblems: Boolean): List<WebSymbolReference> {
+internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: PolySymbol, showProblems: Boolean): List<WebSymbolReference> {
   val problemOnlyRanges = mutableMapOf<TextRange, Boolean>()
   val result = MultiMap<TextRange, WebSymbolNameSegment>()
 
@@ -92,7 +91,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: W
         problemOnlyRanges.putIfAbsent(range, true)
       }
       val unwrappedSymbols = symbols
-        .flatMap(WebSymbol::removeZeroLengthSegmentsRecursively)
+        .flatMap(PolySymbol::removeZeroLengthSegmentsRecursively)
         .takeWhile { it.nameSegments.size == 1 }
 
       if (unwrappedSymbols.isNotEmpty()) {
@@ -146,7 +145,7 @@ private open class NameSegmentReference(
   override fun getRangeInElement(): TextRange =
     rangeInElement
 
-  override fun resolveReference(): Collection<WebSymbol> =
+  override fun resolveReference(): Collection<PolySymbol> =
     nameSegments
       .flatMap { it.symbols }
       .filter { !it.extension }
@@ -162,7 +161,7 @@ private open class NameSegmentReference(
 
 private class NameSegmentReferenceWithProblem(
   element: PsiElement,
-  private val symbol: WebSymbol,
+  private val symbol: PolySymbol,
   rangeInElement: TextRange,
   nameSegments: Collection<WebSymbolNameSegment>,
   private val segmentsOffset: Int,
@@ -170,7 +169,7 @@ private class NameSegmentReferenceWithProblem(
   private val problemOnly: Boolean,
 ) : NameSegmentReference(element, rangeInElement, nameSegments) {
 
-  override fun resolveReference(): Collection<WebSymbol> =
+  override fun resolveReference(): Collection<PolySymbol> =
     if (problemOnly) emptyList() else super.resolveReference()
 
   override fun getProblems(): Collection<WebSymbolReferenceProblem> {

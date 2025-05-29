@@ -13,7 +13,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.startOffsetInAncestor
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.ScheduledForRemoval
@@ -29,11 +29,11 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> = emptyList()
 
-  protected open fun getSymbol(psiElement: T): WebSymbol? = null
+  protected open fun getSymbol(psiElement: T): PolySymbol? = null
 
   protected open fun getSymbolNameOffset(psiElement: T): Int = 0
 
-  protected open fun getOffsetsToSymbols(psiElement: T): Map<Int, WebSymbol> =
+  protected open fun getOffsetsToSymbols(psiElement: T): Map<Int, PolySymbol> =
     getSymbol(psiElement)
       ?.let { mapOf(getSymbolNameOffset(psiElement) to it) }
     ?: emptyMap()

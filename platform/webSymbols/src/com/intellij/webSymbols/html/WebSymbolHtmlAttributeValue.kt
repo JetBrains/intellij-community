@@ -3,7 +3,7 @@ package com.intellij.webSymbols.html
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.webSymbols.html.impl.WebSymbolHtmlAttributeValueImpl
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 
 /**
  * An interface holding information about Web Symbol HTML attribute value.
@@ -17,7 +17,7 @@ import com.intellij.webSymbols.query.WebSymbolMatch
  * the value of `langType` property will be used and if OF_MATCH,
  * the type of the symbol will be used.
  *
- * When merging information from several segments in the [WebSymbolMatch],
+ * When merging information from several segments in the [PolySymbolMatch],
  * first non-null property values take precedence.
  * By default - when all properties are `null` - attribute value is of plain type and is required.
  */

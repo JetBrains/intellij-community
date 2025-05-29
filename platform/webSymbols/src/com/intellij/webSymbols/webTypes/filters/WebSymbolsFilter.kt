@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes.filters
 
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -14,10 +14,10 @@ interface WebSymbolsFilter {
                             scope: List<WebSymbolsScope>,
                             properties: Map<String, Any>): List<WebSymbolCodeCompletionItem>
 
-  fun filterNameMatches(matches: List<WebSymbol>,
+  fun filterNameMatches(matches: List<PolySymbol>,
                         queryExecutor: WebSymbolsQueryExecutor,
                         scope: List<WebSymbolsScope>,
-                        properties: Map<String, Any>): List<WebSymbol>
+                        properties: Map<String, Any>): List<PolySymbol>
 
 
   companion object {

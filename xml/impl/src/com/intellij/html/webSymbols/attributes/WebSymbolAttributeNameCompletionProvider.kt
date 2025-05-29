@@ -11,9 +11,9 @@ import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
-import com.intellij.webSymbols.WebSymbol.Companion.HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
+import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTES
+import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
+import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor

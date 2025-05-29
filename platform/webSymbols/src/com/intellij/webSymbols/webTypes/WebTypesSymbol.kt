@@ -2,10 +2,10 @@
 package com.intellij.webSymbols.webTypes
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 
-interface WebTypesSymbol : PsiSourcedWebSymbol {
+interface WebTypesSymbol : PsiSourcedPolySymbol {
 
   val location: Location?
 
@@ -71,7 +71,7 @@ interface WebTypesSymbol : PsiSourcedWebSymbol {
 
   companion object {
     internal val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
-      WebSymbol.KIND_JS_PROPERTIES, WebSymbol.KIND_JS_STRING_LITERALS
+      PolySymbol.KIND_JS_PROPERTIES, PolySymbol.KIND_JS_STRING_LITERALS
     )
   }
 

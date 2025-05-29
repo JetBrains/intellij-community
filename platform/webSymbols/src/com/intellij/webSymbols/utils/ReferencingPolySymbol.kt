@@ -10,18 +10,18 @@ import com.intellij.webSymbols.patterns.WebSymbolsPatternReferenceResolver
 import java.util.Objects
 
 /**
- * A utility [WebSymbol], which allows to reference
+ * A utility [PolySymbol], which allows to reference
  * symbols from other namespace or kind.
  */
-class ReferencingWebSymbol private constructor(
+class ReferencingPolySymbol private constructor(
   override val namespace: SymbolNamespace,
   override val kind: SymbolKind,
   override val name: String,
   override val origin: WebSymbolOrigin,
   vararg references: WebSymbolQualifiedKind,
-  override val priority: WebSymbol.Priority?,
+  override val priority: PolySymbol.Priority?,
   private val location: List<WebSymbolQualifiedName> = emptyList(),
-) : WebSymbol {
+) : PolySymbol {
 
   companion object {
     @JvmStatic
@@ -31,10 +31,10 @@ class ReferencingWebSymbol private constructor(
       name: String,
       origin: WebSymbolOrigin,
       vararg qualifiedKinds: WebSymbolQualifiedKind,
-      priority: WebSymbol.Priority? = null,
+      priority: PolySymbol.Priority? = null,
       location: List<WebSymbolQualifiedName> = emptyList(),
-    ): ReferencingWebSymbol =
-      ReferencingWebSymbol(
+    ): ReferencingPolySymbol =
+      ReferencingPolySymbol(
         qualifiedKind.namespace, qualifiedKind.kind, name,
         origin, *qualifiedKinds, priority = priority, location = location
       )
@@ -58,7 +58,7 @@ class ReferencingWebSymbol private constructor(
 
   override fun equals(other: Any?): Boolean =
     other === this ||
-    other is ReferencingWebSymbol
+    other is ReferencingPolySymbol
     && other.namespace == namespace
     && other.kind == kind
     && other.name == name
@@ -70,7 +70,7 @@ class ReferencingWebSymbol private constructor(
   override fun hashCode(): Int =
     Objects.hash(namespace, kind, name, origin, priority, location, references)
 
-  override fun createPointer(): Pointer<out WebSymbol> =
+  override fun createPointer(): Pointer<out PolySymbol> =
     Pointer.hardPointer(this)
 
 }

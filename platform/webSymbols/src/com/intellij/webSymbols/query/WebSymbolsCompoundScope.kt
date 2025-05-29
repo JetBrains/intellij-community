@@ -3,7 +3,7 @@ package com.intellij.webSymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
@@ -27,7 +27,7 @@ abstract class WebSymbolsCompoundScope : WebSymbolsScope {
     build(queryExecutor) {
       if (it is WebSymbolsCompoundScope)
         throw IllegalArgumentException("WebSymbolsCompoundScope cannot be nested: $it")
-      if (it is WebSymbol)
+      if (it is PolySymbol)
         list.addAll(it.queryScope)
       else
         list.add(it)
@@ -39,7 +39,7 @@ abstract class WebSymbolsCompoundScope : WebSymbolsScope {
 
   final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsNameMatchQueryParams,
-                                        scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+                                        scope: Stack<WebSymbolsScope>): List<PolySymbol> =
     throw UnsupportedOperationException("WebSymbolsCompoundScope must be queried through WebSymbolQueryExecutor.")
 
   final override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,

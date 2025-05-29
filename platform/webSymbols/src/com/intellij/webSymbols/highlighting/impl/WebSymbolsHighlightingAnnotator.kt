@@ -29,7 +29,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
 import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.WebSymbolQualifiedKind
@@ -91,14 +91,14 @@ class WebSymbolsHighlightingAnnotator : Annotator {
     val additionalChildSegments: List<Pair<Int, WebSymbolNameSegment>>,
   )
 
-  private fun highlightSymbols(offsetInFile: Int, topLevelSymbols: Collection<WebSymbol>, host: PsiExternalReferenceHost, holder: AnnotationHolder) {
+  private fun highlightSymbols(offsetInFile: Int, topLevelSymbols: Collection<PolySymbol>, host: PsiExternalReferenceHost, holder: AnnotationHolder) {
     val result = MultiMap<TextRange, Pair<Int, TextAttributesKey>>()
 
     val queue = LinkedList(topLevelSymbols.map {
       SegmentHighlightingInfo(WebSymbolNameSegment.create(it), offsetInFile, 0, null,
                               WebSymbolHighlightingCustomizer.getDefaultHostTextAttributes(host), emptyList())
     })
-    val processedSymbols = mutableSetOf<WebSymbol>()
+    val processedSymbols = mutableSetOf<PolySymbol>()
     while (queue.isNotEmpty()) {
       val (nameSegment, offset, depth, parentKind, parentTextAttributesKey, additionalChildSegments) = queue.removeFirst()
       val symbols = nameSegment.symbols
@@ -126,7 +126,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
             WebSymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
               ?.let { return@mapNotNull it }
 
-            symbol.properties[WebSymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]?.asSafely<String>()
+            symbol.properties[PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]?.asSafely<String>()
               ?.let { TextAttributesKey.find(it) }
               ?.let { return@mapNotNull it }
 

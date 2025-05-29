@@ -13,7 +13,6 @@ import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
 import com.intellij.injected.editor.DocumentWindow
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
@@ -54,12 +53,12 @@ import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PsiSourcedPolySymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
 import com.intellij.webSymbols.impl.canUnwrapSymbols
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
@@ -333,7 +332,7 @@ fun PsiFile.findOffsetBySignature(signature: String): Int {
   return pos + caretOffset
 }
 
-fun CodeInsightTestFixture.webSymbolAtCaret(): WebSymbol? =
+fun CodeInsightTestFixture.webSymbolAtCaret(): PolySymbol? =
   injectionThenHost(file, caretOffset) { file, offset ->
     file.webSymbolDeclarationsAt(offset).takeIf { it.isNotEmpty() }
     ?: if (offset > 0) file.webSymbolDeclarationsAt(offset - 1).takeIf { it.isNotEmpty() } else null
@@ -357,9 +356,9 @@ fun CodeInsightTestFixture.webSymbolAtCaret(): WebSymbol? =
 
 
 fun CodeInsightTestFixture.webSymbolSourceAtCaret(): PsiElement? =
-  webSymbolAtCaret()?.let { it as? PsiSourcedWebSymbol }?.source
+  webSymbolAtCaret()?.let { it as? PsiSourcedPolySymbol }?.source
 
-fun CodeInsightTestFixture.resolveWebSymbolReference(signature: String): WebSymbol {
+fun CodeInsightTestFixture.resolveWebSymbolReference(signature: String): PolySymbol {
   val symbols = multiResolveWebSymbolReference(signature)
   if (symbols.isEmpty()) {
     throw AssertionError("Reference resolves to null at '$signature'")
@@ -371,7 +370,7 @@ fun CodeInsightTestFixture.resolveWebSymbolReference(signature: String): WebSymb
   return symbols[0]
 }
 
-fun CodeInsightTestFixture.multiResolveWebSymbolReference(signature: String): List<WebSymbol> {
+fun CodeInsightTestFixture.multiResolveWebSymbolReference(signature: String): List<PolySymbol> {
   val signatureOffset = file.findOffsetBySignature(signature)
   return injectionThenHost(file, signatureOffset) { file, offset ->
     file.referencesAt(offset)
@@ -389,12 +388,12 @@ fun CodeInsightTestFixture.multiResolveWebSymbolReference(signature: String): Li
   } ?: emptyList()
 }
 
-private fun Collection<PsiSymbolReference>.resolveToWebSymbols(): List<WebSymbol> =
+private fun Collection<PsiSymbolReference>.resolveToWebSymbols(): List<PolySymbol> =
   asSequence()
     .flatMap { it.resolveReference() }
-    .filterIsInstance<WebSymbol>()
+    .filterIsInstance<PolySymbol>()
     .flatMap {
-      if (it is WebSymbolMatch
+      if (it is PolySymbolMatch
           && it.nameSegments.size == 1
           && it.nameSegments[0].canUnwrapSymbols()) {
         it.nameSegments[0].symbols
@@ -428,7 +427,7 @@ private fun <T> injectionThenHost(file: PsiFile, offset: Int, computation: (PsiF
 
 fun CodeInsightTestFixture.resolveToWebSymbolSource(signature: String): PsiElement {
   val webSymbol = resolveWebSymbolReference(signature)
-  val result = assertInstanceOf<PsiSourcedWebSymbol>(webSymbol).source
+  val result = assertInstanceOf<PsiSourcedPolySymbol>(webSymbol).source
   assertNotNull("WebSymbol $webSymbol source is null", result)
   return result!!
 }
@@ -588,7 +587,7 @@ fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile
 
 fun CodeInsightTestFixture.canRenameWebSymbolAtCaret() =
   webSymbolAtCaret().let {
-    it is RenameTarget || it?.renameTarget != null || (it is PsiSourcedWebSymbol && it.source != null)
+    it is RenameTarget || it?.renameTarget != null || (it is PsiSourcedPolySymbol && it.source != null)
   }
 
 fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
@@ -602,7 +601,7 @@ fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
   if (target == null) {
     target = when (symbol) {
       is RenameTarget -> symbol
-      is PsiSourcedWebSymbol -> {
+      is PsiSourcedPolySymbol -> {
         val psiTarget = symbol.source
                         ?: throw AssertionError("Symbol $symbol provides null source")
         renameElement(psiTarget, newName)

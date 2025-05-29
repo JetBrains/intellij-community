@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -14,7 +14,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
 
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
-  override fun match(owner: WebSymbol?,
+  override fun match(owner: PolySymbol?,
                      scopeStack: Stack<WebSymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
@@ -22,13 +22,13 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : WebSymbolsPat
                      end: Int): List<MatchResult> =
     listOf(MatchResult(WebSymbolNameSegment.create(start, start)))
 
-  override fun list(owner: WebSymbol?,
+  override fun list(owner: PolySymbol?,
                     scopeStack: Stack<WebSymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     emptyList()
 
-  override fun complete(owner: WebSymbol?,
+  override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,

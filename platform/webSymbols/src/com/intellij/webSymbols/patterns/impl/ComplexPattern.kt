@@ -5,7 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolNameSegment
@@ -37,7 +37,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   override fun isStaticAndRequired(): Boolean =
     configProvider.isStaticAndRequired
 
-  override fun match(owner: WebSymbol?,
+  override fun match(owner: PolySymbol?,
                      scopeStack: Stack<WebSymbolsScope>,
                      symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
@@ -66,7 +66,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         }
     }
 
-  override fun list(owner: WebSymbol?,
+  override fun list(owner: PolySymbol?,
                     scopeStack: Stack<WebSymbolsScope>,
                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
@@ -92,7 +92,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
     }
 
-  override fun complete(owner: WebSymbol?,
+  override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<WebSymbolsScope>,
                         symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
@@ -116,7 +116,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       }
 
       val patternsItems = runs.flatMap { (localStart, localEnd, prevNames, prevMatchScope) ->
-        val defaultSource = symbolsResolver?.delegate ?: scopeStack.peek() as? WebSymbol
+        val defaultSource = symbolsResolver?.delegate ?: scopeStack.peek() as? PolySymbol
         withPrevMatchScope(scopeStack, prevMatchScope) {
           patterns.flatMap { pattern ->
             pattern.complete(null, scopeStack, newSymbolsResolver, params, localStart, localEnd)
@@ -154,7 +154,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                    patternApiStatus: WebSymbolApiStatus?,
                                    patternRequired: Boolean,
-                                   patternPriority: WebSymbol.Priority?,
+                                   patternPriority: PolySymbol.Priority?,
                                    patternProximity: Int?,
                                    patternRepeat: Boolean,
                                    patternUnique: Boolean) -> T): T {
@@ -176,9 +176,9 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   }
 
   private fun <T : MatchResult> List<T>.postProcess(
-    owner: WebSymbol?,
+    owner: PolySymbol?,
     apiStatus: WebSymbolApiStatus?,
-    priority: WebSymbol.Priority?,
+    priority: PolySymbol.Priority?,
     proximity: Int?
   ): List<T> =
     // We need to filter and select match results separately for each length of the match
@@ -198,7 +198,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
             else matchResult
           }
           .selectBest(MatchResult::segments, { item ->
-            item.segments.asSequence().mapNotNull { it.priority }.maxOrNull() ?: WebSymbol.Priority.NORMAL
+            item.segments.asSequence().mapNotNull { it.priority }.maxOrNull() ?: PolySymbol.Priority.NORMAL
           }, { false })
       }
       .let { matchResults ->

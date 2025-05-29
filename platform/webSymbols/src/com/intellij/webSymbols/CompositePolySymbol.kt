@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 
 /**
  * A symbol, which name consists of other Web Symbols.
  *
- * @see [WebSymbolMatch]
+ * @see [PolySymbolMatch]
  */
-interface CompositeWebSymbol : WebSymbol {
+interface CompositePolySymbol : PolySymbol {
 
   /**
    * List of [WebSymbolNameSegment]. Each segment describes a range in the symbol name.

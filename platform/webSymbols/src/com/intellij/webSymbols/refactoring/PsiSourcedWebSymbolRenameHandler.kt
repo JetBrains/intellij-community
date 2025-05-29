@@ -14,17 +14,16 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SyntheticElement
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
-import com.intellij.webSymbols.PsiSourcedWebSymbol
-import com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi
+import com.intellij.webSymbols.PsiSourcedPolySymbol
 
 private class PsiSourcedWebSymbolRenameHandler : RenameHandler, TitledHandler {
 
-  private var symbol: PsiSourcedWebSymbol? = null
+  private var symbol: PsiSourcedPolySymbol? = null
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext?) {
     if (editor == null || file == null || dataContext == null) return
     val target = dataContext.getData(CommonDataKeys.SYMBOLS)
-                   ?.filterIsInstance<PsiSourcedWebSymbol>()
+                   ?.filterIsInstance<PsiSourcedPolySymbol>()
                    ?.map { it.source }
                    ?.singleOrNull() ?: return
 
@@ -38,7 +37,7 @@ private class PsiSourcedWebSymbolRenameHandler : RenameHandler, TitledHandler {
     dataContext.getData(CommonDataKeys.SYMBOLS)
       ?.singleOrNull { acceptSymbolForPsiSourcedWebSymbolRenameHandler(it) }
       ?.also {
-        symbol = it as PsiSourcedWebSymbol
+        symbol = it as PsiSourcedPolySymbol
       } != null
 
   override fun getActionTitle(): @NlsActions.ActionText String? =
@@ -47,6 +46,6 @@ private class PsiSourcedWebSymbolRenameHandler : RenameHandler, TitledHandler {
 }
 
 internal fun acceptSymbolForPsiSourcedWebSymbolRenameHandler(symbol: Symbol): Boolean =
-  symbol is PsiSourcedWebSymbol
+  symbol is PsiSourcedPolySymbol
   && symbol.source is PsiNamedElement
   && symbol.source !is SyntheticElement

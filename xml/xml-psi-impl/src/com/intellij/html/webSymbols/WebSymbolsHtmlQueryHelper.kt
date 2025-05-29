@@ -7,7 +7,7 @@ import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.WebSymbolsScopeWithCache
@@ -31,7 +31,7 @@ object WebSymbolsHtmlQueryHelper {
 
   private class StandardHtmlElementSymbolsScope(project: Project) : WebSymbolsScopeWithCache<Project, Unit>(null, project, project, Unit) {
 
-    override fun initialize(consumer: (WebSymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
+    override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       HtmlDescriptorUtils.getHtmlNSDescriptor(project)
         ?.getAllElementsDescriptors(null)
         ?.map { HtmlElementDescriptorBasedSymbol(it, null) }
@@ -41,7 +41,7 @@ object WebSymbolsHtmlQueryHelper {
     }
 
     override fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean =
-      qualifiedKind == WebSymbol.HTML_ELEMENTS
+      qualifiedKind == PolySymbol.HTML_ELEMENTS
 
     override fun createPointer(): Pointer<StandardHtmlElementSymbolsScope> =
       hardPointer(this)
@@ -50,7 +50,7 @@ object WebSymbolsHtmlQueryHelper {
 
   private class StandardHtmlAttributeSymbolsScope(project: Project, tagName: String) : WebSymbolsScopeWithCache<Project, String>(null, project, project, tagName) {
 
-    override fun initialize(consumer: (WebSymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
+    override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       (HtmlDescriptorUtils.getStandardHtmlElementDescriptor(project, key)
        ?: HtmlDescriptorUtils.getStandardHtmlElementDescriptor(project, "div"))
         ?.getDefaultAttributeDescriptors(null)
@@ -63,7 +63,7 @@ object WebSymbolsHtmlQueryHelper {
     }
 
     override fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean =
-      qualifiedKind == WebSymbol.HTML_ATTRIBUTES
+      qualifiedKind == PolySymbol.HTML_ATTRIBUTES
 
     override fun createPointer(): Pointer<StandardHtmlAttributeSymbolsScope> =
       hardPointer(this)

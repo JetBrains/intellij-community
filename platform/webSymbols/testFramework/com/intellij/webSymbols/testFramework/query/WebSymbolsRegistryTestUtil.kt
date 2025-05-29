@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.testFramework.query
 
 import com.intellij.webSymbols.testFramework.DebugOutputPrinter
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
@@ -30,16 +30,16 @@ fun printCodeCompletionItems(items: List<WebSymbolCodeCompletionItem>,
                              printer: DebugOutputPrinter = WebSymbolsDebugOutputPrinter()): String =
   printer.printValue(
     items.sortedWith(Comparator
-                       .comparing<WebSymbolCodeCompletionItem, WebSymbol.Priority> {
-                         it.priority ?: WebSymbol.Priority.NORMAL
+                       .comparing<WebSymbolCodeCompletionItem, PolySymbol.Priority> {
+                         it.priority ?: PolySymbol.Priority.NORMAL
                        }
                        .thenComparing(Function { it.name })
                        .thenComparing(Function { it.offset })))
 
-fun printMatches(matches: List<WebSymbol>, printer: DebugOutputPrinter = WebSymbolsDebugOutputPrinter()): String =
+fun printMatches(matches: List<PolySymbol>, printer: DebugOutputPrinter = WebSymbolsDebugOutputPrinter()): String =
   printer.printValue(
     matches
       .sortedWith(Comparator
-                    .comparing<WebSymbol, WebSymbol.Priority?> { it.priority ?: WebSymbol.Priority.NORMAL }
+                    .comparing<PolySymbol, PolySymbol.Priority?> { it.priority ?: PolySymbol.Priority.NORMAL }
                     .thenComparing(Function { it.name })
                     .thenComparing(Function { it.origin.library ?: "" })))

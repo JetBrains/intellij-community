@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.patterns
 
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.impl.*
@@ -18,37 +18,37 @@ abstract class WebSymbolsPattern internal constructor() {
 
   internal open fun isStaticAndRequired(): Boolean = true
 
-  internal fun match(owner: WebSymbol?,
+  internal fun match(owner: PolySymbol?,
                      scope: Stack<WebSymbolsScope>,
                      name: String,
                      params: WebSymbolsNameMatchQueryParams): List<MatchResult> =
     match(owner, scope, null, MatchParameters(name, params), 0, name.length)
       .map { it.removeEmptySegments() }
 
-  internal fun list(owner: WebSymbol?,
+  internal fun list(owner: PolySymbol?,
                     scope: Stack<WebSymbolsScope>,
                     params: WebSymbolsListSymbolsQueryParams): List<ListResult> =
     list(owner, scope, null, ListParameters(params))
       .map { it.removeEmptySegments() }
 
-  internal fun complete(owner: WebSymbol?,
+  internal fun complete(owner: PolySymbol?,
                         scope: Stack<WebSymbolsScope>,
                         name: String,
                         params: WebSymbolsCodeCompletionQueryParams): List<WebSymbolCodeCompletionItem> =
     complete(owner, Stack(scope), null,
              CompletionParameters(name, params), 0, name.length).items
 
-  internal abstract fun match(owner: WebSymbol?,
+  internal abstract fun match(owner: PolySymbol?,
                               scopeStack: Stack<WebSymbolsScope>,
                               symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                               params: MatchParameters, start: Int, end: Int): List<MatchResult>
 
-  internal abstract fun list(owner: WebSymbol?,
+  internal abstract fun list(owner: PolySymbol?,
                              scopeStack: Stack<WebSymbolsScope>,
                              symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                              params: ListParameters): List<ListResult>
 
-  internal abstract fun complete(owner: WebSymbol?,
+  internal abstract fun complete(owner: PolySymbol?,
                                  scopeStack: Stack<WebSymbolsScope>,
                                  symbolsResolver: WebSymbolsPatternSymbolsResolver?,
                                  params: CompletionParameters, start: Int, end: Int): CompletionResults

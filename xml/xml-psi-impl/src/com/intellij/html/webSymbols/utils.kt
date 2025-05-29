@@ -3,13 +3,13 @@
 
 package com.intellij.html.webSymbols
 
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.utils.unwrapMatchedSymbols
 
-fun List<WebSymbol>.hasOnlyStandardHtmlSymbols(): Boolean =
+fun List<PolySymbol>.hasOnlyStandardHtmlSymbols(): Boolean =
   flatMap { it.unwrapMatchedSymbols() }
     .all { it is WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol }
 
-fun WebSymbol.hasOnlyStandardHtmlSymbolsOrExtensions(): Boolean =
+fun PolySymbol.hasOnlyStandardHtmlSymbolsOrExtensions(): Boolean =
   unwrapMatchedSymbols()
     .all { it is WebSymbolsHtmlQueryConfigurator.StandardHtmlSymbol || it.extension }

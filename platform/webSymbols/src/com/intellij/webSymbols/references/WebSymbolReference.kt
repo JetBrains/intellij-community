@@ -3,11 +3,11 @@ package com.intellij.webSymbols.references
 
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolReference
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 
 interface WebSymbolReference : PsiSymbolReference {
 
-  override fun resolveReference(): Collection<WebSymbol>
+  override fun resolveReference(): Collection<PolySymbol>
 
   override fun resolvesTo(target: Symbol): Boolean =
     resolveReference().any { it.isEquivalentTo(target) }

@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.WebSymbolUsageQueries
@@ -15,7 +15,7 @@ internal class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
 
   override fun collectSearchRequests(parameters: RenameUsageSearchParameters): Collection<@JvmWildcard Query<out RenameUsage>> =
     parameters.target
-      .let { it as? WebSymbol ?: (it as? WebSymbolRenameTarget)?.symbol }
+      .let { it as? PolySymbol ?: (it as? WebSymbolRenameTarget)?.symbol }
       ?.let { symbol ->
         WebSymbolUsageQueries.buildWebSymbolUsagesQueries(symbol, parameters.project, parameters.searchScope)
           .map { query ->
@@ -31,7 +31,7 @@ internal class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
 
   private class WebSymbolPsiModifiableRenameUsage(
     private val queryExecutor: WebSymbolsQueryExecutor,
-    private val symbol: WebSymbol,
+    private val symbol: PolySymbol,
     private val psiRenameUsage: PsiRenameUsage,
   )
     : PsiRenameUsage by psiRenameUsage, PsiModifiableRenameUsage {

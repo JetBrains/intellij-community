@@ -7,15 +7,15 @@ import com.intellij.model.Pointer
 import com.intellij.model.search.SearchRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.search.SearchScope
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolDelegate
+import com.intellij.webSymbols.PolySymbol
+import com.intellij.webSymbols.PolySymbolDelegate
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 
 /**
- * Used when creating a [WebSymbolSearchTarget] in [WebSymbolDelegate]. Allows to wrap a [SearchTarget] symbol
+ * Used when creating a [WebSymbolSearchTarget] in [PolySymbolDelegate]. Allows to wrap a [SearchTarget] symbol
  * as a [WebSymbolSearchTarget], while exposing original behavior to the platform.
  */
-internal class WebSymbolDelegatedSearchTargetImpl(override val symbol: WebSymbol) : WebSymbolSearchTarget {
+internal class WebSymbolDelegatedSearchTargetImpl(override val symbol: PolySymbol) : WebSymbolSearchTarget {
 
   init {
     assert(symbol is SearchTarget)

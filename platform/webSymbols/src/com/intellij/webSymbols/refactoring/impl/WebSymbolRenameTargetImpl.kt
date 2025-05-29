@@ -3,10 +3,10 @@ package com.intellij.webSymbols.refactoring.impl
 
 import com.intellij.model.Pointer
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 
-internal class WebSymbolRenameTargetImpl(override val symbol: WebSymbol) : WebSymbolRenameTarget {
+internal class WebSymbolRenameTargetImpl(override val symbol: PolySymbol) : WebSymbolRenameTarget {
 
   override fun createPointer(): Pointer<out WebSymbolRenameTarget> {
     val symbolPtr = symbol.createPointer()

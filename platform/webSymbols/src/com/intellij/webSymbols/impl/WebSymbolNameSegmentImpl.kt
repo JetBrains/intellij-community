@@ -3,7 +3,7 @@ package com.intellij.webSymbols.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolQualifiedKind
@@ -12,13 +12,13 @@ import com.intellij.webSymbols.utils.matchedNameOrName
 class WebSymbolNameSegmentImpl internal constructor(
   override val start: Int,
   override val end: Int,
-  override val symbols: List<WebSymbol>,
+  override val symbols: List<PolySymbol>,
   override val problem: WebSymbolNameSegment.MatchProblem?,
   override val displayName: @NlsSafe String?,
   override val matchScore: Int,
   symbolKinds: Set<WebSymbolQualifiedKind>?,
   private val explicitApiStatus: WebSymbolApiStatus?,
-  private val explicitPriority: WebSymbol.Priority?,
+  private val explicitPriority: PolySymbol.Priority?,
   private val explicitProximity: Int?,
   internal val highlightingEnd: Int?,
 ) : WebSymbolNameSegment {
@@ -32,7 +32,7 @@ class WebSymbolNameSegmentImpl internal constructor(
   override val apiStatus: WebSymbolApiStatus?
     get() = explicitApiStatus
 
-  override val priority: WebSymbol.Priority?
+  override val priority: PolySymbol.Priority?
     get() = explicitPriority ?: symbols.asSequence().mapNotNull { it.priority }.maxOrNull()
 
   override val proximity: Int?
@@ -43,7 +43,7 @@ class WebSymbolNameSegmentImpl internal constructor(
       forcedSymbolKinds
       ?: symbols.asSequence().map { WebSymbolQualifiedKind(it.namespace, it.kind) }.toSet()
 
-  override fun getName(symbol: WebSymbol): @NlsSafe String =
+  override fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
 
   internal fun withOffset(offset: Int): WebSymbolNameSegmentImpl =
@@ -61,17 +61,17 @@ class WebSymbolNameSegmentImpl internal constructor(
                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
                              null)
 
-  internal fun withSymbols(symbols: List<WebSymbol>) =
+  internal fun withSymbols(symbols: List<PolySymbol>) =
     WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName,
                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
                              highlightingEnd)
 
   internal fun copy(
     apiStatus: WebSymbolApiStatus?,
-    priority: WebSymbol.Priority?,
+    priority: PolySymbol.Priority?,
     proximity: Int?,
     problem: WebSymbolNameSegment.MatchProblem?,
-    symbols: List<WebSymbol>,
+    symbols: List<PolySymbol>,
     highlightEnd: Int? = null,
   ): WebSymbolNameSegmentImpl =
     WebSymbolNameSegmentImpl(start, end, this.symbols + symbols, problem ?: this.problem,
@@ -116,7 +116,7 @@ class WebSymbolNameSegmentImpl internal constructor(
         .takeIf { it.all { symbol -> symbol != null } }
         ?.let {
           @Suppress("UNCHECKED_CAST")
-          (WebSymbolNameSegmentImpl(start, end, it as List<WebSymbol>, problem, displayName, matchScore,
+          (WebSymbolNameSegmentImpl(start, end, it as List<PolySymbol>, problem, displayName, matchScore,
                                     types, explicitApiStatus, explicitPriority, explicitProximity, highlightingEnd))
         }
 

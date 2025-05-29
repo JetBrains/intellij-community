@@ -2,11 +2,11 @@
 package com.intellij.documentation.mdn
 
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 
-abstract class MdnDocumentedSymbol : WebSymbol {
+abstract class MdnDocumentedSymbol : PolySymbol {
 
   private val mdnDoc by lazy(LazyThreadSafetyMode.PUBLICATION) {
     getMdnDocumentation()

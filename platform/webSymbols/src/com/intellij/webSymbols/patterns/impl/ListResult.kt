@@ -4,7 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.impl.withOffset
-import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.PolySymbolMatch
 
 internal class ListResult(
   val name: String,
@@ -24,7 +24,7 @@ internal class ListResult(
 
 private fun WebSymbolNameSegment.unpackIfPossible(name: String): WebSymbolNameSegment {
   if (!canUnwrapSymbols() || symbols.size != 1) return this
-  val symbol = symbols[0] as? WebSymbolMatch ?: return this
+  val symbol = symbols[0] as? PolySymbolMatch ?: return this
   return if (symbol.name == name && symbol.nameSegments.size == 1)
     symbol.nameSegments[0]
   else

@@ -6,7 +6,7 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.DocumentationTargetProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.PolySymbol
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
@@ -15,7 +15,7 @@ class WebSymbolDocumentationTargetProvider : DocumentationTargetProvider {
   override fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
     val location = getContextElement(file, offset)
     return targetSymbols(file, offset).mapNotNull {
-      (it as? WebSymbol)?.getDocumentationTarget(location)
+      (it as? PolySymbol)?.getDocumentationTarget(location)
     }
   }
 
