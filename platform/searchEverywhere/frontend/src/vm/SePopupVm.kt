@@ -25,7 +25,7 @@ class SePopupVm(
   private val project: Project?,
   private val sessionRef: DurableRef<SeSessionEntity>,
   tabs: List<SeTab>,
-  loadingTabs: List<SuspendLazyProperty<SeTab?>>,
+  deferredTabs: List<SuspendLazyProperty<SeTab?>>,
   initialSearchPattern: String?,
   initialTabIndex: String,
   private val historyList: SearchHistoryList,
@@ -81,7 +81,7 @@ class SePopupVm(
       }
     }
 
-    loadingTabs.forEach {
+    deferredTabs.forEach {
       coroutineScope.launch {
         it.getValue()?.let { tab ->
           _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern))
