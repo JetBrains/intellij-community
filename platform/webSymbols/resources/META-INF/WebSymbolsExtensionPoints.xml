@@ -11,7 +11,7 @@
       <with attribute="implementation" implements="com.intellij.webSymbols.context.WebSymbolsContextProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.enableInLanguage"
-                    beanClass="com.intellij.webSymbols.WebSymbolsEnabledLanguage$WebSymbolsSupportInLanguageEP"
+                    beanClass="com.intellij.webSymbols.PolySymbolsEnabledLanguage$WebSymbolsSupportInLanguageEP"
                     dynamic="true">
     </extensionPoint>
     <!--suppress PluginXmlValidity -->

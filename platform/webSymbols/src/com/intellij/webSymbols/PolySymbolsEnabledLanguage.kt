@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class WebSymbolsEnabledLanguage private constructor() : MetaLanguage("WebSymbolsEnabledLanguage") {
+class PolySymbolsEnabledLanguage private constructor() : MetaLanguage("PolySymbolsEnabledLanguage") {
 
   var totalTime: Long = 0
   var count: Long = 0

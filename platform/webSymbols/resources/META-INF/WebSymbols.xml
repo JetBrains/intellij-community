@@ -3,8 +3,8 @@
     <projectService serviceInterface="com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory"
                     serviceImplementation="com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl"/>
 
-    <metaLanguage implementation="com.intellij.webSymbols.WebSymbolsEnabledLanguage"/>
-    <annotator language="WebSymbolsEnabledLanguage"
+    <metaLanguage implementation="com.intellij.webSymbols.PolySymbolsEnabledLanguage"/>
+    <annotator language="PolySymbolsEnabledLanguage"
                implementationClass="com.intellij.webSymbols.highlighting.impl.WebSymbolsHighlightingAnnotator"/>
 
     <webSymbols.webTypes.filter
@@ -20,7 +20,7 @@
 
     <!--suppress PluginXmlRegistrationCheck -->
     <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
-                                 hostLanguage="WebSymbolsEnabledLanguage"
+                                 hostLanguage="PolySymbolsEnabledLanguage"
                                  implementationClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderImpl"
                                  targetClass="com.intellij.webSymbols.PolySymbol"
                                  referenceClass="com.intellij.webSymbols.references.WebSymbolReference"/>
