@@ -536,24 +536,24 @@
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="WebSymbolsHtmlText"/>
 
-    <webSymbols.enableInLanguage language="HtmlCompatible"/>
+    <polySymbols.enableInLanguage language="HtmlCompatible"/>
 
-    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="UnknownSymbol"
+    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="UnknownSymbol"
                                       toolShortName="HtmlUnknownAttribute"/>
-    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="UnknownSymbol"
+    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="UnknownSymbol"
                                       toolShortName="HtmlUnknownTag"/>
 
-    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="DeprecatedSymbol"
+    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="DeprecatedSymbol"
                                       toolShortName="HtmlDeprecatedAttribute"/>
-    <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
+    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
                                       toolShortName="HtmlDeprecatedTag"/>
 
-    <webSymbols.highlightingCustomizer
+    <polySymbols.highlightingCustomizer
       id="html"
       implementation="com.intellij.html.webSymbols.PolySymbolsHtmlHighlightingCustomizer"/>
-    <webSymbols.queryConfigurator
+    <polySymbols.queryConfigurator
       implementation="com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator"/>
-    <webSymbols.codeCompletionItemCustomizer
+    <polySymbols.codeCompletionItemCustomizer
       id="html"
       implementation="com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
@@ -563,13 +563,13 @@
     <completion.contributor language="HtmlCompatible"
                             implementationClass="com.intellij.html.webSymbols.WebSymbolsHtmlCompletionContributor"/>
 
-    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                   hostLanguage="HtmlCompatible"
                                   implementationClass="com.intellij.html.webSymbols.elements.PolySymbolInTagNameRefProvider"/>
-    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
                                   hostLanguage="HtmlCompatible"
                                   implementationClass="com.intellij.html.webSymbols.attributes.PolySymbolInAttributeNameRefProvider"/>
-    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
                                   hostLanguage="HtmlCompatible"
                                   implementationClass="com.intellij.html.webSymbols.attributeValues.PolySymbolHtmlAttributeValueReferenceProvider"/>
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>

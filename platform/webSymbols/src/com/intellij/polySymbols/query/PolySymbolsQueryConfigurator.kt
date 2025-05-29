@@ -31,7 +31,7 @@ interface PolySymbolsQueryConfigurator {
 
     @TestOnly
     @Internal
-    val EP_NAME: ExtensionPointName<PolySymbolsQueryConfigurator> = ExtensionPointName<PolySymbolsQueryConfigurator>("com.intellij.webSymbols.queryConfigurator")
+    val EP_NAME: ExtensionPointName<PolySymbolsQueryConfigurator> = ExtensionPointName<PolySymbolsQueryConfigurator>("com.intellij.polySymbols.queryConfigurator")
 
   }
 

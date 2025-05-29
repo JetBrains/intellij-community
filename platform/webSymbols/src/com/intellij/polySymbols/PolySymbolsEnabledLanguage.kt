@@ -27,7 +27,7 @@ class PolySymbolsEnabledLanguage private constructor() : MetaLanguage("PolySymbo
       }
 
   private object Companion {
-    val EP_NAME = ExtensionPointName<PolySymbolsSupportInLanguageEP>("com.intellij.webSymbols.enableInLanguage")
+    val EP_NAME = ExtensionPointName<PolySymbolsSupportInLanguageEP>("com.intellij.polySymbols.enableInLanguage")
   }
 
   @ApiStatus.Experimental

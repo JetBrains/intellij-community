@@ -155,10 +155,10 @@ private fun findContextInDirOrFileCached(kind: PolyContextKind, locationInfo: Lo
     .findByFileName(kind, file?.name)
     ?.let { return if (it == PolyContext.VALUE_NONE) null else it }
 
-  val webSymbolsContextKindDisableRules = rulesConfigInDir.rules[kind]?.disable
+  val polySymbolsContextKindDisableRules = rulesConfigInDir.rules[kind]?.disable
   file
     ?.let { rulesConfigInDir.findByFileName(kind, it) }
-    ?.takeIf { !isForbiddenFromProviders(kind, it, file, project, webSymbolsContextKindDisableRules?.get(it)) }
+    ?.takeIf { !isForbiddenFromProviders(kind, it, file, project, polySymbolsContextKindDisableRules?.get(it)) }
     ?.let { return it }
 
   val proximityPerContextFromRulesConfig = rulesConfigInDir.getProximityPerContext(kind)
@@ -179,7 +179,7 @@ private fun findContextInDirOrFileCached(kind: PolyContextKind, locationInfo: Lo
       Pair(it, if (a != null && b != null) a.coerceAtMost(b) else a ?: b)
     }
     .filter {
-      file == null || !isForbiddenFromProviders(kind, it.first, file, project, webSymbolsContextKindDisableRules?.get(it.first))
+      file == null || !isForbiddenFromProviders(kind, it.first, file, project, polySymbolsContextKindDisableRules?.get(it.first))
     }
     .minByOrNull { it.second!! }
     ?.first

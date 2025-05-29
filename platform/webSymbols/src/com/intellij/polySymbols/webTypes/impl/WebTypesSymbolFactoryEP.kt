@@ -10,7 +10,7 @@ import com.intellij.polySymbols.webTypes.WebTypesSymbolFactory
 class WebTypesSymbolFactoryEP internal constructor() : CustomLoadingExtensionPointBean<WebTypesSymbolFactory>() {
 
   companion object {
-    private val EP_NAME = ExtensionPointName<WebTypesSymbolFactoryEP>("com.intellij.webSymbols.webTypes.symbolFactory")
+    private val EP_NAME = ExtensionPointName<WebTypesSymbolFactoryEP>("com.intellij.polySymbols.webTypes.symbolFactory")
 
     fun get(qualifiedKind: PolySymbolQualifiedKind): WebTypesSymbolFactory? =
       EP_NAME.getByKey(qualifiedKind, WebTypesSymbolFactory::class.java) { PolySymbolQualifiedKind(it.namespace ?: "", it.kind ?: "") }

@@ -39,7 +39,7 @@ interface PolyContextSourceProximityProvider {
       a?.coerceAtMost(b) ?: b
 
     private val EP_NAME = ExtensionPointName<PolyContextSourceProximityProvider>(
-      "com.intellij.webSymbols.contextSourceProximityProvider")
+      "com.intellij.polySymbols.contextSourceProximityProvider")
 
     internal fun calculateProximity(project: Project,
                                     dir: VirtualFile,

@@ -3,5 +3,5 @@ package com.intellij.polySymbols
 
 import com.intellij.testFramework.PlatformTestUtil
 
-internal val webSymbolsTestsDataPath: String
-  get() = "${PlatformTestUtil.getCommunityPath()}/platform/webSymbols/testData/"
+internal val polySymbolsTestsDataPath: String
+  get() = "${PlatformTestUtil.getCommunityPath()}/platform/polySymbols/testData/"

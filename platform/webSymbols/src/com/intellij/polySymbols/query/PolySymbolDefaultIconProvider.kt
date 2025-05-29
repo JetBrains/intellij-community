@@ -16,7 +16,7 @@ interface PolySymbolDefaultIconProvider {
 
   companion object {
 
-    private val EP_NAME = ExtensionPointName<PolySymbolDefaultIconProvider>("com.intellij.webSymbols.defaultIconProvider")
+    private val EP_NAME = ExtensionPointName<PolySymbolDefaultIconProvider>("com.intellij.polySymbols.defaultIconProvider")
 
     fun get(namespace: SymbolNamespace, kind: SymbolKind): Icon? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultIcon(namespace, kind) }

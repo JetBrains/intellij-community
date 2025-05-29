@@ -5,12 +5,12 @@ import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.completeMatch
-import com.intellij.polySymbols.webSymbolsTestsDataPath
+import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
 
 class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
-  override val testPath: String = "$webSymbolsTestsDataPath/query/list"
+  override val testPath: String = "$polySymbolsTestsDataPath/query/list"
 
   fun testBasicElement() {
     doTest("html/elements", null, "basic")

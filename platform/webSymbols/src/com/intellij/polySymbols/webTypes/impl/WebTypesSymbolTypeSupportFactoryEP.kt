@@ -14,7 +14,7 @@ internal class WebTypesSymbolTypeSupportFactoryEP : CustomLoadingExtensionPointB
 
   companion object {
     val EP_NAME = KeyedExtensionCollector<WebTypesSymbolTypeSupportFactory, String>(
-      "com.intellij.webSymbols.webTypes.symbolTypeSupportFactory")
+      "com.intellij.polySymbols.webTypes.symbolTypeSupportFactory")
   }
 
   @Attribute("syntax")

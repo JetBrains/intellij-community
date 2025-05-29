@@ -10,7 +10,7 @@ import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
 
 class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
-  override val testPath: String = "$webSymbolsTestsDataPath/query/name"
+  override val testPath: String = "$polySymbolsTestsDataPath/query/name"
 
   fun testBasicElement() {
     doTest("html/elements/foo", null, "basic")

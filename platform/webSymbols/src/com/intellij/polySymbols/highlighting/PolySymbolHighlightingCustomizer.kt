@@ -18,7 +18,7 @@ interface PolySymbolHighlightingCustomizer {
   companion object {
 
     internal val EP_NAME: ExtensionPointName<PolySymbolHighlightingCustomizer> =
-      ExtensionPointName<PolySymbolHighlightingCustomizer>("com.intellij.webSymbols.highlightingCustomizer")
+      ExtensionPointName<PolySymbolHighlightingCustomizer>("com.intellij.polySymbols.highlightingCustomizer")
 
     internal fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: PolySymbol, level: Int): TextAttributesKey? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolTextAttributes(host, symbol, level) }

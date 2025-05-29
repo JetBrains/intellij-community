@@ -18,7 +18,7 @@ interface PolySymbolDeclarationProvider {
       .filter { it.symbol.isEquivalentTo(target) }
 
   companion object {
-    private val EP_NAME = ExtensionPointName<PolySymbolDeclarationProvider>("com.intellij.webSymbols.declarationProvider")
+    private val EP_NAME = ExtensionPointName<PolySymbolDeclarationProvider>("com.intellij.polySymbols.declarationProvider")
 
     @JvmStatic
     fun getAllEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<PolySymbolDeclaration> {

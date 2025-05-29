@@ -7,10 +7,10 @@
     <annotator language="PolySymbolsEnabledLanguage"
                implementationClass="com.intellij.polySymbols.highlighting.impl.PolySymbolsHighlightingAnnotator"/>
 
-    <webSymbols.webTypes.filter
+    <polySymbols.webTypes.filter
       name="match-prefix"
       implementation="com.intellij.polySymbols.webTypes.filters.PolySymbolsMatchPrefixFilter"/>
-    <webSymbols.documentationCustomizer
+    <polySymbols.documentationCustomizer
       id="web-types"
       implementation="com.intellij.polySymbols.webTypes.WebTypesDocumentationCustomizer"/>
 

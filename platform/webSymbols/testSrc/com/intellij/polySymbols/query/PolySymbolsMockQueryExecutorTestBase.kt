@@ -30,30 +30,30 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
     application.registerService(PolySymbolsQueryExecutorFactory::class.java, PolySymbolsMockQueryExecutorFactory())
     application.registerService(ClientDocumentationSettings::class.java, LocalDocumentationSettings())
     application.extensionArea.registerExtensionPoint(
-      "com.intellij.webSymbols.webTypes.filter",
-      "com.intellij.webSymbols.webTypes.impl.PolySymbolsFilterEP",
+      "com.intellij.polySymbols.webTypes.filter",
+      "com.intellij.polySymbols.webTypes.impl.PolySymbolsFilterEP",
       ExtensionPoint.Kind.BEAN_CLASS, true)
     application.extensionArea.registerExtensionPoint(
-      "com.intellij.webSymbols.webTypes.symbolFactory",
-      "com.intellij.webSymbols.webTypes.impl.PolyTypesSymbolFactoryEP",
+      "com.intellij.polySymbols.webTypes.symbolFactory",
+      "com.intellij.polySymbols.webTypes.impl.PolyTypesSymbolFactoryEP",
       ExtensionPoint.Kind.BEAN_CLASS, true)
     application.extensionArea.registerExtensionPoint(
-      "com.intellij.webSymbols.defaultIconProvider",
-      "com.intellij.webSymbols.query.PolySymbolDefaultIconProvider",
+      "com.intellij.polySymbols.defaultIconProvider",
+      "com.intellij.polySymbols.query.PolySymbolDefaultIconProvider",
       ExtensionPoint.Kind.INTERFACE, true)
     application.extensionArea.registerExtensionPoint(
-      "com.intellij.webSymbols.context",
+      "com.intellij.polySymbols.context",
       PolyContextProviderExtensionPoint::class.java.name,
       ExtensionPoint.Kind.BEAN_CLASS,
       true
     )
     val mockPluginDescriptor = DefaultPluginDescriptor(PluginId.getId("mock"),
                                                        PolySymbolsMatchPrefixFilter::class.java.classLoader)
-    application.extensionArea.getExtensionPoint<PolySymbolsFilterEP>("com.intellij.webSymbols.webTypes.filter")
+    application.extensionArea.getExtensionPoint<PolySymbolsFilterEP>("com.intellij.polySymbols.webTypes.filter")
       .registerExtension(
         PolySymbolsFilterEP().also {
           it.name = "match-prefix"
-          it.implementation = "com.intellij.webSymbols.webTypes.filters.PolySymbolsMatchPrefixFilter"
+          it.implementation = "com.intellij.polySymbols.webTypes.filters.PolySymbolsMatchPrefixFilter"
           it.pluginDescriptor = mockPluginDescriptor
         },
         mockPluginDescriptor, testRootDisposable)

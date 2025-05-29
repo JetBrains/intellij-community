@@ -11,6 +11,6 @@ interface PolySymbolDocumentationCustomizer {
 
   companion object {
     val EP_NAME: ExtensionPointName<PolySymbolDocumentationCustomizer> = ExtensionPointName.create<PolySymbolDocumentationCustomizer>(
-      "com.intellij.webSymbols.documentationCustomizer")
+      "com.intellij.polySymbols.documentationCustomizer")
   }
 }

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object PsiPolySymbolReferenceProviders {
-  private val EP_NAME = ExtensionPointName<PsiPolySymbolReferenceProviderBean>("com.intellij.webSymbols.psiReferenceProvider")
+  private val EP_NAME = ExtensionPointName<PsiPolySymbolReferenceProviderBean>("com.intellij.polySymbols.psiReferenceProvider")
 
   /**
    * Given language of a host element returns list of providers that could provide references from this language.

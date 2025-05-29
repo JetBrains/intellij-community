@@ -32,7 +32,7 @@ abstract class PolySymbolsFramework {
 
   companion object {
 
-    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<PolySymbolsFramework, String>("com.intellij.webSymbols.framework") {
+    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<PolySymbolsFramework, String>("com.intellij.polySymbols.framework") {
       val all get() = extensions.asSequence().map { it.instance }
     }
 

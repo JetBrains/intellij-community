@@ -4,7 +4,7 @@
                     http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>intellij.webSymbols</groupId>
+    <groupId>intellij.polySymbols</groupId>
     <version>1.0.0</version>
     <artifactId>web-types-gen-root</artifactId>
   </parent>
@@ -23,7 +23,7 @@
             <configuration>
               <filesets>
                 <fileset>
-                  <directory>${basedir}/../../gen/com/intellij/webSymbols/webTypes/json/</directory>
+                  <directory>${basedir}/../../gen/com/intellij/polySymbols/webTypes/json/</directory>
                   <includes>
                     <include>**/*</include>
                   </includes>
@@ -55,7 +55,7 @@
         </configuration>
         <dependencies>
           <dependency>
-            <groupId>intellij.webSymbols</groupId>
+            <groupId>intellij.polySymbols</groupId>
             <artifactId>web-types-ext</artifactId>
             <version>1.0.0</version>
           </dependency>

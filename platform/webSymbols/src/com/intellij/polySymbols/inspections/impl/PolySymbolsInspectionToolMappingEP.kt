@@ -79,7 +79,7 @@ private data class ExtensionKey(
   var problemKind: PolySymbolReferenceProblem.ProblemKind,
 )
 
-private val EP_NAME = ExtensionPointName<PolySymbolsInspectionToolMappingEP>("com.intellij.webSymbols.inspectionToolMapping")
+private val EP_NAME = ExtensionPointName<PolySymbolsInspectionToolMappingEP>("com.intellij.polySymbols.inspectionToolMapping")
 
 private val map: ClearableLazyValue<Map<ExtensionKey, PolySymbolsInspectionToolMappingEP>> = ExtensionPointUtil.dropLazyValueOnChange(
   ClearableLazyValue.create {

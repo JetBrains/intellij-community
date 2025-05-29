@@ -13,7 +13,7 @@ interface PsiSourcedPolySymbolProvider {
   fun getSymbols(element: PsiElement): List<PsiSourcedPolySymbol>
 
   companion object {
-    val EP_NAME: ExtensionPointName<PsiSourcedPolySymbolProvider> = ExtensionPointName.create<PsiSourcedPolySymbolProvider>("com.intellij.webSymbols.psiSourcedSymbolProvider")
+    val EP_NAME: ExtensionPointName<PsiSourcedPolySymbolProvider> = ExtensionPointName.create<PsiSourcedPolySymbolProvider>("com.intellij.polySymbols.psiSourcedSymbolProvider")
 
     fun getAllSymbols(element: PsiElement): Collection<PsiSourcedPolySymbol> =
       EP_NAME.extensionList.flatMap { it.getSymbols(element) }

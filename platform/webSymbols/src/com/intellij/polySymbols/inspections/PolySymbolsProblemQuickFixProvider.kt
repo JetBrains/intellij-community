@@ -19,7 +19,7 @@ interface PolySymbolsProblemQuickFixProvider {
 
   companion object {
     val EP_NAME: ExtensionPointName<PolySymbolsProblemQuickFixProvider> =
-      ExtensionPointName<PolySymbolsProblemQuickFixProvider>("com.intellij.webSymbols.problemQuickFixProvider")
+      ExtensionPointName<PolySymbolsProblemQuickFixProvider>("com.intellij.polySymbols.problemQuickFixProvider")
 
     fun getQuickFixes(element: PsiElement, symbol: PolySymbol, segment: PolySymbolNameSegment, problemKind: PolySymbolReferenceProblem.ProblemKind): List<LocalQuickFix> =
       EP_NAME.extensionList.flatMap { it.getQuickFixes(element, symbol, segment, problemKind) }

@@ -14,7 +14,7 @@ interface PolySymbolsQueryResultsCustomizerFactory {
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<PolySymbolsQueryResultsCustomizerFactory>(
-      "com.intellij.webSymbols.queryResultsCustomizerFactory")
+      "com.intellij.polySymbols.queryResultsCustomizerFactory")
 
     @JvmStatic
     fun getQueryResultsCustomizer(location: PsiElement?,

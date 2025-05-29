@@ -355,7 +355,7 @@ fun CodeInsightTestFixture.polySymbolAtCaret(): PolySymbol? =
     ?.getOrNull(0)
 
 
-fun CodeInsightTestFixture.webSymbolSourceAtCaret(): PsiElement? =
+fun CodeInsightTestFixture.polySymbolSourceAtCaret(): PsiElement? =
   polySymbolAtCaret()?.let { it as? PsiSourcedPolySymbol }?.source
 
 fun CodeInsightTestFixture.resolvePolySymbolReference(signature: String): PolySymbol {

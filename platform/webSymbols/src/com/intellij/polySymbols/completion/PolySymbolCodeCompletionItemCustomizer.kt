@@ -15,7 +15,7 @@ interface PolySymbolCodeCompletionItemCustomizer {
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<PolySymbolCodeCompletionItemCustomizer>(
-      "com.intellij.webSymbols.codeCompletionItemCustomizer")
+      "com.intellij.polySymbols.codeCompletionItemCustomizer")
 
     internal fun Sequence<PolySymbolCodeCompletionItem>.customizeItems(
       framework: FrameworkId?,

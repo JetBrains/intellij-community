@@ -11,12 +11,12 @@ import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printCodeCompletionItems
-import com.intellij.polySymbols.webSymbolsTestsDataPath
+import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
 
 class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
-  override val testPath: String = "$webSymbolsTestsDataPath/query/completion"
+  override val testPath: String = "$polySymbolsTestsDataPath/query/completion"
 
   fun testBasicElement() {
     doTest("html/elements/", 0, null, "basic")
