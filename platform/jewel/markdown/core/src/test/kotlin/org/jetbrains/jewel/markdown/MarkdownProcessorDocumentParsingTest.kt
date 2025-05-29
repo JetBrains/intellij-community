@@ -88,7 +88,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar")), isTight = false))
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar"), level = 0), isTight = false))
     }
 
     @Test
@@ -105,7 +105,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), indentedCodeBlock("  bar")), isTight = false))
+        parsed.assertEquals(
+            unorderedList(listItem(paragraph("foo"), indentedCodeBlock("  bar"), level = 0), isTight = false)
+        )
     }
 
     @Test
@@ -135,7 +137,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(indentedCodeBlock("  foo"))))
+        parsed.assertEquals(unorderedList(listItem(indentedCodeBlock("  foo"), level = 0)))
     }
 
     @Test
@@ -173,7 +175,8 @@ public class MarkdownProcessorDocumentParsingTest {
             unorderedList(
                 listItem(
                     paragraph("foo"),
-                    unorderedList(listItem(paragraph("bar"), unorderedList(listItem(paragraph("baz"))))),
+                    unorderedList(listItem(paragraph("bar"), unorderedList(listItem(paragraph("baz"))), level = 0)),
+                    level = 0,
                 )
             )
         )
@@ -643,7 +646,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>foo</li>
          * </ul>
          */
-        parsed.assertEquals(paragraph("* foo"), unorderedList(listItem(paragraph("foo")), marker = "*"))
+        parsed.assertEquals(paragraph("* foo"), unorderedList(listItem(paragraph("foo"), level = 0), marker = "*"))
     }
 
     @Test
@@ -699,7 +702,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>two`</li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("`one")), listItem(paragraph("two`"))))
+        parsed.assertEquals(
+            unorderedList(listItem(paragraph("`one"), level = 0), listItem(paragraph("two`"), level = 0))
+        )
     }
 
     @Test
@@ -930,9 +935,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("foo"))),
+            unorderedList(listItem(paragraph("foo"), level = 0)),
             thematicBreak(),
-            unorderedList(listItem(paragraph("bar"))),
+            unorderedList(listItem(paragraph("bar"), level = 0)),
         )
     }
 
@@ -1000,9 +1005,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("Foo")), marker = "*"),
+            unorderedList(listItem(paragraph("Foo"), level = 0), marker = "*"),
             thematicBreak(),
-            unorderedList(listItem(paragraph("Bar")), marker = "*"),
+            unorderedList(listItem(paragraph("Bar"), level = 0), marker = "*"),
         )
     }
 
@@ -1026,7 +1031,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("Foo")), listItem(thematicBreak())))
+        parsed.assertEquals(unorderedList(listItem(paragraph("Foo"), level = 0), listItem(thematicBreak(), level = 0)))
     }
 
     @Test
@@ -1782,7 +1787,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <hr />
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo"))), thematicBreak())
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), level = 0)), thematicBreak())
     }
 
     @Test
@@ -1981,7 +1986,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar")), isTight = false))
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar"), level = 0), isTight = false))
     }
 
     @Test
@@ -2008,7 +2013,10 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(listItem(paragraph("foo"), unorderedList(listItem(paragraph("bar")))), isTight = false)
+            orderedList(
+                listItem(paragraph("foo"), unorderedList(listItem(paragraph("bar"), level = 1)), level = 0),
+                isTight = false,
+            )
         )
     }
 
@@ -3607,7 +3615,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>foo</li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(htmlBlock("<div>")), listItem(paragraph("foo"))))
+        parsed.assertEquals(
+            unorderedList(listItem(htmlBlock("<div>"), level = 0), listItem(paragraph("foo"), level = 0))
+        )
     }
 
     @Test
@@ -5030,8 +5040,8 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            blockQuote(unorderedList(listItem(paragraph("foo")))),
-            unorderedList(listItem(paragraph("bar"))),
+            blockQuote(unorderedList(listItem(paragraph("foo"), level = 0))),
+            unorderedList(listItem(paragraph("bar"), level = 0)),
         )
     }
 
@@ -5481,6 +5491,7 @@ public class MarkdownProcessorDocumentParsingTest {
                     Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
+                    level = 0,
                 ),
                 isTight = false,
             )
@@ -5506,7 +5517,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <p>two</p>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("one"))), paragraph("two"))
+        parsed.assertEquals(unorderedList(listItem(paragraph("one"), level = 0)), paragraph("two"))
     }
 
     @Test
@@ -5530,7 +5541,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("one"), paragraph("two")), isTight = false))
+        parsed.assertEquals(unorderedList(listItem(paragraph("one"), paragraph("two"), level = 0), isTight = false))
     }
 
     @Test
@@ -5553,7 +5564,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <pre><code> two
          * </code></pre>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("one"))), indentedCodeBlock(" two"))
+        parsed.assertEquals(unorderedList(listItem(paragraph("one"), level = 0)), indentedCodeBlock(" two"))
     }
 
     @Test
@@ -5577,7 +5588,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("one"), paragraph("two")), isTight = false))
+        parsed.assertEquals(unorderedList(listItem(paragraph("one"), paragraph("two"), level = 0), isTight = false))
     }
 
     @Test
@@ -5606,7 +5617,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          */
         parsed.assertEquals(
-            blockQuote(blockQuote(orderedList(listItem(paragraph("one"), paragraph("two")), isTight = false)))
+            blockQuote(
+                blockQuote(orderedList(listItem(paragraph("one"), paragraph("two"), level = 0), isTight = false))
+            )
         )
     }
 
@@ -5633,7 +5646,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * </blockquote>
          * </blockquote>
          */
-        parsed.assertEquals(blockQuote(blockQuote(unorderedList(listItem(paragraph("one"))), paragraph("two"))))
+        parsed.assertEquals(
+            blockQuote(blockQuote(unorderedList(listItem(paragraph("one"), level = 0)), paragraph("two")))
+        )
     }
 
     @Test
@@ -5678,7 +5693,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar")), isTight = false))
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar"), level = 0), isTight = false))
     }
 
     @Test
@@ -5715,7 +5730,13 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(paragraph("foo"), fencedCodeBlock("bar"), paragraph("baz"), blockQuote(paragraph("bam"))),
+                listItem(
+                    paragraph("foo"),
+                    fencedCodeBlock("bar"),
+                    paragraph("baz"),
+                    blockQuote(paragraph("bam")),
+                    level = 0,
+                ),
                 isTight = false,
             )
         )
@@ -5750,7 +5771,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("Foo"), indentedCodeBlock("bar\n\n\nbaz")), isTight = false)
+            unorderedList(listItem(paragraph("Foo"), indentedCodeBlock("bar\n\n\nbaz"), level = 0), isTight = false)
         )
     }
 
@@ -5764,7 +5785,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>ok</li>
          * </ol>
          */
-        parsed.assertEquals(orderedList(listItem(paragraph("ok")), startFrom = 123456789))
+        parsed.assertEquals(orderedList(listItem(paragraph("ok"), level = 0), startFrom = 123456789))
     }
 
     @Test
@@ -5788,7 +5809,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>ok</li>
          * </ol>
          */
-        parsed.assertEquals(orderedList(listItem(paragraph("ok")), startFrom = 0))
+        parsed.assertEquals(orderedList(listItem(paragraph("ok"), level = 0), startFrom = 0))
     }
 
     @Test
@@ -5801,7 +5822,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>ok</li>
          * </ol>
          */
-        parsed.assertEquals(orderedList(listItem(paragraph("ok")), startFrom = 3))
+        parsed.assertEquals(orderedList(listItem(paragraph("ok"), level = 0), startFrom = 3))
     }
 
     @Test
@@ -5863,7 +5884,11 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(listItem(paragraph("foo"), indentedCodeBlock("bar")), startFrom = 10, isTight = false)
+            orderedList(
+                listItem(paragraph("foo"), indentedCodeBlock("bar"), level = 0),
+                startFrom = 10,
+                isTight = false,
+            )
         )
     }
 
@@ -5920,7 +5945,12 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(indentedCodeBlock("indented code"), paragraph("paragraph"), indentedCodeBlock("more code")),
+                listItem(
+                    indentedCodeBlock("indented code"),
+                    paragraph("paragraph"),
+                    indentedCodeBlock("more code"),
+                    level = 0,
+                ),
                 isTight = false,
             )
         )
@@ -5954,7 +5984,12 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(indentedCodeBlock(" indented code"), paragraph("paragraph"), indentedCodeBlock("more code")),
+                listItem(
+                    indentedCodeBlock(" indented code"),
+                    paragraph("paragraph"),
+                    indentedCodeBlock("more code"),
+                    level = 0,
+                ),
                 isTight = false,
             )
         )
@@ -5999,7 +6034,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <p>bar</p>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo"))), paragraph("bar"))
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), level = 0)), paragraph("bar"))
     }
 
     @Test
@@ -6023,7 +6058,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar")), isTight = false))
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), paragraph("bar"), level = 0), isTight = false))
     }
 
     @Test
@@ -6059,9 +6094,9 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("foo")),
-                listItem(fencedCodeBlock("bar")),
-                listItem(indentedCodeBlock("baz")),
+                listItem(paragraph("foo"), level = 0),
+                listItem(fencedCodeBlock("bar"), level = 0),
+                listItem(indentedCodeBlock("baz"), level = 0),
             )
         )
     }
@@ -6083,7 +6118,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>foo</li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo"))))
+        parsed.assertEquals(unorderedList(listItem(paragraph("foo"), level = 0)))
     }
 
     @Test
@@ -6105,7 +6140,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          * <p>foo</p>
          */
-        parsed.assertEquals(unorderedList(listItem()), paragraph("foo"))
+        parsed.assertEquals(unorderedList(listItem(level = 0)), paragraph("foo"))
     }
 
     @Test
@@ -6128,7 +6163,13 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>bar</li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo")), listItem(), listItem(paragraph("bar"))))
+        parsed.assertEquals(
+            unorderedList(
+                listItem(paragraph("foo"), level = 0),
+                listItem(level = 0),
+                listItem(paragraph("bar"), level = 0),
+            )
+        )
     }
 
     @Test
@@ -6151,7 +6192,13 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>bar</li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("foo")), listItem(), listItem(paragraph("bar"))))
+        parsed.assertEquals(
+            unorderedList(
+                listItem(paragraph("foo"), level = 0),
+                listItem(level = 0),
+                listItem(paragraph("bar"), level = 0),
+            )
+        )
     }
 
     @Test
@@ -6174,7 +6221,13 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>bar</li>
          * </ol>
          */
-        parsed.assertEquals(orderedList(listItem(paragraph("foo")), listItem(), listItem(paragraph("bar"))))
+        parsed.assertEquals(
+            orderedList(
+                listItem(paragraph("foo"), level = 0),
+                listItem(level = 0),
+                listItem(paragraph("bar"), level = 0),
+            )
+        )
     }
 
     @Test
@@ -6187,7 +6240,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li></li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(), marker = "*"))
+        parsed.assertEquals(unorderedList(listItem(level = 0), marker = "*"))
     }
 
     @Test
@@ -6252,6 +6305,7 @@ public class MarkdownProcessorDocumentParsingTest {
                     Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
+                    level = 0,
                 ),
                 isTight = false,
             )
@@ -6293,6 +6347,7 @@ public class MarkdownProcessorDocumentParsingTest {
                     Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
+                    level = 0,
                 ),
                 isTight = false,
             )
@@ -6334,6 +6389,7 @@ public class MarkdownProcessorDocumentParsingTest {
                     Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
+                    level = 0,
                 ),
                 isTight = false,
             )
@@ -6415,6 +6471,7 @@ public class MarkdownProcessorDocumentParsingTest {
                     Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")),
                     indentedCodeBlock("indented code"),
                     blockQuote(paragraph("A block quote.")),
+                    level = 0,
                 ),
                 isTight = false,
             )
@@ -6440,7 +6497,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(listItem(Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines."))))
+            orderedList(listItem(Paragraph(Text("A paragraph"), SoftLineBreak, Text("with two lines.")), level = 0))
         )
     }
 
@@ -6470,7 +6527,12 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                orderedList(listItem(blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here.")))))
+                orderedList(
+                    listItem(
+                        blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here."))),
+                        level = 0,
+                    )
+                )
             )
         )
     }
@@ -6501,7 +6563,12 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             blockQuote(
-                orderedList(listItem(blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here.")))))
+                orderedList(
+                    listItem(
+                        blockQuote(Paragraph(Text("Blockquote"), SoftLineBreak, Text("continued here."))),
+                        level = 0,
+                    )
+                )
             )
         )
     }
@@ -6547,6 +6614,7 @@ public class MarkdownProcessorDocumentParsingTest {
                             unorderedList(listItem(paragraph("baz"), unorderedList(listItem(paragraph("boo"))))),
                         )
                     ),
+                    level = 0,
                 )
             )
         )
@@ -6576,10 +6644,10 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("foo")),
-                listItem(paragraph("bar")),
-                listItem(paragraph("baz")),
-                listItem(paragraph("boo")),
+                listItem(paragraph("foo"), level = 0),
+                listItem(paragraph("bar"), level = 1),
+                listItem(paragraph("baz"), level = 2),
+                listItem(paragraph("boo"), level = 3),
             )
         )
     }
@@ -6607,7 +6675,7 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             orderedList(
-                listItem(paragraph("foo"), unorderedList(listItem(paragraph("bar")))),
+                listItem(paragraph("foo"), unorderedList(listItem(paragraph("bar"), level = 1)), level = 0),
                 startFrom = 10,
                 delimiter = ")",
             )
@@ -6635,8 +6703,8 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            orderedList(listItem(paragraph("foo")), startFrom = 10, delimiter = ")"),
-            unorderedList(listItem(paragraph("bar"))),
+            orderedList(listItem(paragraph("foo"), level = 0), startFrom = 10, delimiter = ")"),
+            unorderedList(listItem(paragraph("bar"), level = 1)),
         )
     }
 
@@ -6654,7 +6722,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(unorderedList(listItem(paragraph("foo"))))))
+        parsed.assertEquals(unorderedList(listItem(unorderedList(listItem(paragraph("foo"), level = 0)), level = 0)))
     }
 
     @Test
@@ -6676,7 +6744,14 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(listItem(unorderedList(listItem(orderedList(listItem(paragraph("foo")), startFrom = 2)))))
+            orderedList(
+                listItem(
+                    unorderedList(
+                        listItem(orderedList(listItem(paragraph("foo"), level = 0), startFrom = 2), level = 0)
+                    ),
+                    level = 0,
+                )
+            )
         )
     }
 
@@ -6706,8 +6781,8 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(heading(level = 1, Text("Foo"))),
-                listItem(heading(level = 2, Text("Bar")), paragraph("baz")),
+                listItem(heading(level = 1, Text("Foo")), level = 0),
+                listItem(heading(level = 2, Text("Bar")), paragraph("baz"), level = 0),
             )
         )
     }
@@ -6735,8 +6810,8 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("foo")), listItem(paragraph("bar"))),
-            unorderedList(listItem(paragraph("baz")), marker = "+"),
+            unorderedList(listItem(paragraph("foo"), level = 0), listItem(paragraph("bar"), level = 0)),
+            unorderedList(listItem(paragraph("baz"), level = 0), marker = "+"),
         )
     }
 
@@ -6763,8 +6838,8 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(listItem(paragraph("foo")), listItem(paragraph("bar"))),
-            orderedList(listItem(paragraph("baz")), startFrom = 3, delimiter = ")"),
+            orderedList(listItem(paragraph("foo"), level = 0), listItem(paragraph("bar"), level = 0)),
+            orderedList(listItem(paragraph("baz"), level = 0), startFrom = 3, delimiter = ")"),
         )
     }
 
@@ -6788,7 +6863,10 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>baz</li>
          * </ul>
          */
-        parsed.assertEquals(paragraph("Foo"), unorderedList(listItem(paragraph("bar")), listItem(paragraph("baz"))))
+        parsed.assertEquals(
+            paragraph("Foo"),
+            unorderedList(listItem(paragraph("bar"), level = 0), listItem(paragraph("baz"), level = 0)),
+        )
     }
 
     @Test
@@ -6836,7 +6914,7 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             paragraph("The number of windows in my house is"),
-            orderedList(listItem(paragraph("The number of doors is 6."))),
+            orderedList(listItem(paragraph("The number of doors is 6."), level = 0)),
         )
     }
 
@@ -6871,9 +6949,9 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("foo")),
-                listItem(paragraph("bar")),
-                listItem(paragraph("baz")),
+                listItem(paragraph("foo"), level = 0),
+                listItem(paragraph("bar"), level = 0),
+                listItem(paragraph("baz"), level = 0),
                 isTight = false,
             )
         )
@@ -6918,9 +6996,11 @@ public class MarkdownProcessorDocumentParsingTest {
                     unorderedList(
                         listItem(
                             paragraph("bar"),
-                            unorderedList(listItem(paragraph("baz"), paragraph("bim")), isTight = false),
+                            unorderedList(listItem(paragraph("baz"), paragraph("bim"), level = 2), isTight = false),
+                            level = 1,
                         )
                     ),
+                    level = 0,
                 )
             )
         )
@@ -6955,9 +7035,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("foo")), listItem(paragraph("bar"))),
+            unorderedList(listItem(paragraph("foo"), level = 0), listItem(paragraph("bar"), level = 0)),
             htmlBlock("<!-- -->"),
-            unorderedList(listItem(paragraph("baz")), listItem(paragraph("bim"))),
+            unorderedList(listItem(paragraph("baz"), level = 0), listItem(paragraph("bim"), level = 0)),
         )
     }
 
@@ -6996,8 +7076,8 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("foo"), paragraph("notcode")),
-                listItem(paragraph("foo")),
+                listItem(paragraph("foo"), paragraph("notcode"), level = 0),
+                listItem(paragraph("foo"), level = 0),
                 isTight = false,
             ),
             htmlBlock("<!-- -->"),
@@ -7035,13 +7115,13 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("a")),
-                listItem(paragraph("b")),
-                listItem(paragraph("c")),
-                listItem(paragraph("d")),
-                listItem(paragraph("e")),
-                listItem(paragraph("f")),
-                listItem(paragraph("g")),
+                listItem(paragraph("a"), level = 0),
+                listItem(paragraph("b"), level = 1),
+                listItem(paragraph("c"), level = 2),
+                listItem(paragraph("d"), level = 3),
+                listItem(paragraph("e"), level = 2),
+                listItem(paragraph("f"), level = 1),
+                listItem(paragraph("g"), level = 0),
             )
         )
     }
@@ -7075,7 +7155,12 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ol>
          */
         parsed.assertEquals(
-            orderedList(listItem(paragraph("a")), listItem(paragraph("b")), listItem(paragraph("c")), isTight = false)
+            orderedList(
+                listItem(paragraph("a"), level = 0),
+                listItem(paragraph("b"), level = 1),
+                listItem(paragraph("c"), level = 2),
+                isTight = false,
+            )
         )
     }
 
@@ -7105,10 +7190,10 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("a")),
-                listItem(paragraph("b")),
-                listItem(paragraph("c")),
-                listItem(Paragraph(Text("d"), SoftLineBreak, Text("- e"))),
+                listItem(paragraph("a"), level = 0),
+                listItem(paragraph("b"), level = 1),
+                listItem(paragraph("c"), level = 2),
+                listItem(Paragraph(Text("d"), SoftLineBreak, Text("- e")), level = 3),
             )
         )
     }
@@ -7141,7 +7226,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </code></pre>
          */
         parsed.assertEquals(
-            orderedList(listItem(paragraph("a")), listItem(paragraph("b")), isTight = false),
+            orderedList(listItem(paragraph("a"), level = 0), listItem(paragraph("b"), level = 0), isTight = false),
             indentedCodeBlock("3. c"),
         )
     }
@@ -7174,7 +7259,12 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("a")), listItem(paragraph("b")), listItem(paragraph("c")), isTight = false)
+            unorderedList(
+                listItem(paragraph("a"), level = 0),
+                listItem(paragraph("b"), level = 0),
+                listItem(paragraph("c"), level = 0),
+                isTight = false,
+            )
         )
     }
 
@@ -7204,7 +7294,13 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("a")), listItem(), listItem(paragraph("c")), isTight = false, marker = "*")
+            unorderedList(
+                listItem(paragraph("a"), level = 0),
+                listItem(),
+                listItem(paragraph("c"), level = 0),
+                isTight = false,
+                marker = "*",
+            )
         )
     }
 
@@ -7239,9 +7335,9 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("a")),
-                listItem(paragraph("b"), paragraph("c")),
-                listItem(paragraph("d")),
+                listItem(paragraph("a"), level = 0),
+                listItem(paragraph("b"), paragraph("c"), level = 0),
+                listItem(paragraph("d"), level = 0),
                 isTight = false,
             )
         )
@@ -7276,7 +7372,12 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("a")), listItem(paragraph("b")), listItem(paragraph("d")), isTight = false)
+            unorderedList(
+                listItem(paragraph("a"), level = 0),
+                listItem(paragraph("b"), level = 0),
+                listItem(paragraph("d"), level = 0),
+                isTight = false,
+            )
         )
     }
 
@@ -7310,7 +7411,11 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("a")), listItem(fencedCodeBlock("b\n\n")), listItem(paragraph("c")))
+            unorderedList(
+                listItem(paragraph("a"), level = 0),
+                listItem(fencedCodeBlock("b\n\n"), level = 0),
+                listItem(paragraph("c"), level = 0),
+            )
         )
     }
 
@@ -7344,8 +7449,12 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("a"), unorderedList(listItem(paragraph("b"), paragraph("c")), isTight = false)),
-                listItem(paragraph("d")),
+                listItem(
+                    paragraph("a"),
+                    unorderedList(listItem(paragraph("b"), paragraph("c"), level = 1), isTight = false),
+                    level = 0,
+                ),
+                listItem(paragraph("d"), level = 0),
             )
         )
     }
@@ -7375,7 +7484,11 @@ public class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("a"), blockQuote(paragraph("b"))), listItem(paragraph("c")), marker = "*")
+            unorderedList(
+                listItem(paragraph("a"), blockQuote(paragraph("b")), level = 0),
+                listItem(paragraph("c"), level = 0),
+                marker = "*",
+            )
         )
     }
 
@@ -7409,8 +7522,8 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("a"), blockQuote(paragraph("b")), fencedCodeBlock("c")),
-                listItem(paragraph("d")),
+                listItem(paragraph("a"), blockQuote(paragraph("b")), fencedCodeBlock("c"), level = 0),
+                listItem(paragraph("d"), level = 0),
             )
         )
     }
@@ -7425,7 +7538,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * <li>a</li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("a"))))
+        parsed.assertEquals(unorderedList(listItem(paragraph("a"), level = 0)))
     }
 
     @Test
@@ -7449,7 +7562,9 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ul>
          */
-        parsed.assertEquals(unorderedList(listItem(paragraph("a"), unorderedList(listItem(paragraph("b"))))))
+        parsed.assertEquals(
+            unorderedList(listItem(paragraph("a"), unorderedList(listItem(paragraph("b"), level = 1)), level = 0))
+        )
     }
 
     @Test
@@ -7476,7 +7591,7 @@ public class MarkdownProcessorDocumentParsingTest {
          * </li>
          * </ol>
          */
-        parsed.assertEquals(orderedList(listItem(fencedCodeBlock("foo"), paragraph("bar")), isTight = false))
+        parsed.assertEquals(orderedList(listItem(fencedCodeBlock("foo"), paragraph("bar"), level = 0), isTight = false))
     }
 
     @Test
@@ -7506,7 +7621,12 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("foo"), unorderedList(listItem(paragraph("bar")), marker = "*"), paragraph("baz")),
+                listItem(
+                    paragraph("foo"),
+                    unorderedList(listItem(paragraph("bar"), level = 1), marker = "*"),
+                    paragraph("baz"),
+                    level = 0,
+                ),
                 marker = "*",
                 isTight = false,
             )
@@ -7550,8 +7670,16 @@ public class MarkdownProcessorDocumentParsingTest {
          */
         parsed.assertEquals(
             unorderedList(
-                listItem(paragraph("a"), unorderedList(listItem(paragraph("b")), listItem(paragraph("c")))),
-                listItem(paragraph("d"), unorderedList(listItem(paragraph("e")), listItem(paragraph("f")))),
+                listItem(
+                    paragraph("a"),
+                    unorderedList(listItem(paragraph("b"), level = 1), listItem(paragraph("c"), level = 1)),
+                    level = 0,
+                ),
+                listItem(
+                    paragraph("d"),
+                    unorderedList(listItem(paragraph("e"), level = 1), listItem(paragraph("f"), level = 1)),
+                    level = 0,
+                ),
                 isTight = false,
             )
         )

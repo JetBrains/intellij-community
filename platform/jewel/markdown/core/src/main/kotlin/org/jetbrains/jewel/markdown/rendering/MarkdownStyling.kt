@@ -443,7 +443,90 @@ public class MarkdownStyling(
             public val itemVerticalSpacing: Dp,
             public val itemVerticalSpacingTight: Dp,
             public val padding: PaddingValues,
+            public val numberFormatStyles: NumberFormatStyles,
         ) {
+            @GenerateDataFunctions
+            public class NumberFormatStyles(
+                public val firstLevel: NumberFormatStyle,
+                public val secondLevel: NumberFormatStyle = firstLevel,
+                public val thirdLevel: NumberFormatStyle = secondLevel,
+            ) {
+                public sealed interface NumberFormatStyle {
+                    public fun formatNumber(number: Int): String
+
+                    public object Decimal : NumberFormatStyle {
+                        override fun formatNumber(number: Int): String {
+                            require(number > 0) { "Input must be a positive integer" }
+
+                            return number.toString()
+                        }
+                    }
+
+                    public object Roman : NumberFormatStyle {
+                        override fun formatNumber(number: Int): String {
+                            require(number > 0) { "Input must be a positive integer" }
+
+                            val values = intArrayOf(1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1)
+                            val symbols = arrayOf("m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i")
+                            var remaining = number
+
+                            return buildString {
+                                for (i in values.indices) {
+                                    while (remaining >= values[i]) {
+                                        append(symbols[i])
+                                        remaining -= values[i]
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    public object Alphabetical : NumberFormatStyle {
+                        override fun formatNumber(number: Int): String {
+                            require(number > 0) { "Input must be a positive integer" }
+
+                            var num = number
+                            return buildString {
+                                    while (num > 0) {
+                                        num--
+                                        val remainder = num % 26
+                                        append('a' + remainder)
+                                        num /= 26
+                                    }
+                                }
+                                .reversed()
+                        }
+                    }
+                }
+
+                override fun equals(other: Any?): Boolean {
+                    if (this === other) return true
+                    if (javaClass != other?.javaClass) return false
+
+                    other as NumberFormatStyles
+
+                    if (firstLevel != other.firstLevel) return false
+                    if (secondLevel != other.secondLevel) return false
+                    if (thirdLevel != other.thirdLevel) return false
+
+                    return true
+                }
+
+                override fun hashCode(): Int {
+                    var result = firstLevel.hashCode()
+                    result = 31 * result + secondLevel.hashCode()
+                    result = 31 * result + thirdLevel.hashCode()
+                    return result
+                }
+
+                override fun toString(): String =
+                    "NumberFormatStyles(" +
+                        "firstLevel=$firstLevel, " +
+                        "secondLevel=$secondLevel, " +
+                        "thirdLevel=$thirdLevel" +
+                        ")"
+            }
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -457,6 +540,7 @@ public class MarkdownStyling(
                 if (itemVerticalSpacing != other.itemVerticalSpacing) return false
                 if (itemVerticalSpacingTight != other.itemVerticalSpacingTight) return false
                 if (padding != other.padding) return false
+                if (numberFormatStyles != other.numberFormatStyles) return false
 
                 return true
             }
@@ -469,6 +553,7 @@ public class MarkdownStyling(
                 result = 31 * result + itemVerticalSpacing.hashCode()
                 result = 31 * result + itemVerticalSpacingTight.hashCode()
                 result = 31 * result + padding.hashCode()
+                result = 31 * result + numberFormatStyles.hashCode()
                 return result
             }
 
@@ -480,7 +565,8 @@ public class MarkdownStyling(
                     "numberTextAlign=$numberTextAlign, " +
                     "itemVerticalSpacing=$itemVerticalSpacing, " +
                     "itemVerticalSpacingTight=$itemVerticalSpacingTight, " +
-                    "padding=$padding" +
+                    "padding=$padding, " +
+                    "numberFormatStyles=$numberFormatStyles" +
                     ")"
             }
 
@@ -496,7 +582,43 @@ public class MarkdownStyling(
             public val itemVerticalSpacing: Dp,
             public val itemVerticalSpacingTight: Dp,
             public val padding: PaddingValues,
+            public val markerMinWidth: Dp,
+            public val bulletCharStyles: BulletCharStyles?,
         ) {
+            @GenerateDataFunctions
+            public class BulletCharStyles(
+                public val firstLevel: Char = '•',
+                public val secondLevel: Char = firstLevel,
+                public val thirdLevel: Char = secondLevel,
+            ) {
+                override fun equals(other: Any?): Boolean {
+                    if (this === other) return true
+                    if (javaClass != other?.javaClass) return false
+
+                    other as BulletCharStyles
+
+                    if (firstLevel != other.firstLevel) return false
+                    if (secondLevel != other.secondLevel) return false
+                    if (thirdLevel != other.thirdLevel) return false
+
+                    return true
+                }
+
+                override fun hashCode(): Int {
+                    var result = firstLevel.hashCode()
+                    result = 31 * result + secondLevel.hashCode()
+                    result = 31 * result + thirdLevel.hashCode()
+                    return result
+                }
+
+                override fun toString(): String =
+                    "BulletCharStyles(" +
+                        "firstLevel=$firstLevel, " +
+                        "secondLevel=$secondLevel, " +
+                        "thirdLevel=$thirdLevel" +
+                        ")"
+            }
+
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
                 if (javaClass != other?.javaClass) return false
@@ -509,6 +631,8 @@ public class MarkdownStyling(
                 if (itemVerticalSpacing != other.itemVerticalSpacing) return false
                 if (itemVerticalSpacingTight != other.itemVerticalSpacingTight) return false
                 if (padding != other.padding) return false
+                if (markerMinWidth != other.markerMinWidth) return false
+                if (bulletCharStyles != other.bulletCharStyles) return false
 
                 return true
             }
@@ -520,6 +644,8 @@ public class MarkdownStyling(
                 result = 31 * result + itemVerticalSpacing.hashCode()
                 result = 31 * result + itemVerticalSpacingTight.hashCode()
                 result = 31 * result + padding.hashCode()
+                result = 31 * result + markerMinWidth.hashCode()
+                result = 31 * result + bulletCharStyles.hashCode()
                 return result
             }
 
@@ -530,7 +656,9 @@ public class MarkdownStyling(
                     "bulletContentGap=$bulletContentGap, " +
                     "itemVerticalSpacing=$itemVerticalSpacing, " +
                     "itemVerticalSpacingTight=$itemVerticalSpacingTight, " +
-                    "padding=$padding" +
+                    "padding=$padding, " +
+                    "markerMinWidth=$markerMinWidth, " +
+                    "bulletCharByLevel=$bulletCharStyles" +
                     ")"
             }
 
