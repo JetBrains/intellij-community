@@ -3,8 +3,8 @@
 
 package com.intellij.html.webSymbols
 
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.utils.unwrapMatchedSymbols
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 
 fun List<PolySymbol>.hasOnlyStandardHtmlSymbols(): Boolean =
   flatMap { it.unwrapMatchedSymbols() }

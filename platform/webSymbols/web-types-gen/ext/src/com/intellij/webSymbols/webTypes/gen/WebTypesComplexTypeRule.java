@@ -1,4 +1,4 @@
-package com.intellij.webSymbols.webTypes.gen;
+package com.intellij.polySymbols.webTypes.gen;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.webSymbols.webTypes.gen.WebTypesObjectRule.addInterfaces;
+import static com.intellij.polySymbols.webTypes.gen.WebTypesObjectRule.addInterfaces;
 import static org.apache.commons.lang3.StringUtils.contains;
 import static org.apache.commons.lang3.StringUtils.split;
 

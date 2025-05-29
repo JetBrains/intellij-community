@@ -1,4 +1,4 @@
-package com.intellij.webSymbols.webTypes.gen;
+package com.intellij.polySymbols.webTypes.gen;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sun.codemodel.JClass;

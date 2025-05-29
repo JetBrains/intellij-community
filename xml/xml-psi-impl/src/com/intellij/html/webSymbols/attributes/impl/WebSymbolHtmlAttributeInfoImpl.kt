@@ -5,10 +5,10 @@ import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.attributes.PolySymbolHtmlAttributeValueTypeSupport
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import javax.swing.Icon
 
 internal data class WebSymbolHtmlAttributeInfoImpl(

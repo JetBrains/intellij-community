@@ -3,8 +3,8 @@ package com.intellij.html.webSymbols.attributes
 
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 
 class PolySymbolInAttributeNameRefProvider : PsiPolySymbolReferenceProvider<XmlAttribute> {

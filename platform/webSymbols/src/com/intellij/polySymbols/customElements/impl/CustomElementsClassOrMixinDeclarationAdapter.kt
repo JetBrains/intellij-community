@@ -1,0 +1,146 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.polySymbols.customElements.impl
+
+import com.intellij.model.Pointer
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.psi.PsiElement
+import com.intellij.util.containers.Stack
+import com.intellij.polySymbols.*
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
+import com.intellij.polySymbols.customElements.CustomElementsManifestScopeBase
+import com.intellij.polySymbols.customElements.CustomElementsSymbol
+import com.intellij.polySymbols.customElements.json.CustomElementClassOrMixinDeclaration
+import com.intellij.polySymbols.customElements.json.resolve
+import com.intellij.polySymbols.customElements.json.toApiStatus
+import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
+import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.polySymbols.query.WebSymbolsListSymbolsQueryParams
+import com.intellij.polySymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+
+class CustomElementsClassOrMixinDeclarationAdapter private constructor(
+  override val name: String,
+  private val declaration: CustomElementClassOrMixinDeclaration,
+  private val origin: CustomElementsJsonOrigin,
+  private val rootScope: CustomElementsManifestScopeBase
+) : StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
+
+  private val cacheHolder = UserDataHolderBase()
+
+  override val namespace: SymbolNamespace
+    get() = CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST
+
+  override val kind: String
+    get() = CustomElementsSymbol.KIND_CEM_DECLARATIONS
+
+  override val pattern: PolySymbolsPattern?
+    get() = null
+
+  override val framework: FrameworkId?
+    get() = null
+
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
+    CustomElementClassOrMixinDeclarationSymbol(this, queryExecutor)
+
+  private fun createPointer(): Pointer<CustomElementsClassOrMixinDeclarationAdapter> {
+    val name = name
+    val declaration = declaration
+    val origin = origin
+    val rootScopePtr = rootScope.createPointer()
+    return Pointer {
+      rootScopePtr.dereference()?.let {
+        CustomElementsClassOrMixinDeclarationAdapter(name, declaration, origin, it)
+      }
+    }
+  }
+
+  private class CustomElementClassOrMixinDeclarationSymbol(
+    private val base: CustomElementsClassOrMixinDeclarationAdapter,
+    private val queryExecutor: PolySymbolsQueryExecutor,
+  ) : CustomElementsSymbol, PsiSourcedPolySymbol {
+
+    private var _superContributions: List<PolySymbol>? = null
+
+    private val superContributions: List<PolySymbol>
+      get() = _superContributions
+              ?: (base.declaration.mixins + listOfNotNull(base.declaration.superclass))
+                .also { _superContributions = emptyList() }
+                .flatMap { it.resolve(origin, queryExecutor) }
+                .toList()
+                .also { contributions -> _superContributions = contributions }
+
+    override val origin: CustomElementsJsonOrigin
+      get() = base.origin
+
+    override val namespace: SymbolNamespace
+      get() = base.namespace
+
+    override val kind: SymbolKind
+      get() = base.kind
+
+    override val name: String
+      get() = base.name
+    override val description: String?
+      get() = (base.declaration.description?.takeIf { it.isNotBlank() } ?: base.declaration.summary)
+                ?.let { origin.renderDescription(it) }
+              ?: superContributions.asSequence().mapNotNull { it.description }.firstOrNull()
+
+    override val apiStatus: PolySymbolApiStatus
+      get() = base.declaration.deprecated.toApiStatus(origin) ?: PolySymbolApiStatus.Stable
+
+    override val queryScope: List<PolySymbolsScope>
+      get() = superContributions.asSequence()
+        .flatMap { it.queryScope }
+        .plus(this)
+        .toList()
+
+    override val source: PsiElement?
+      get() = base.declaration.source?.let { origin.resolveSourceSymbol(it, base.cacheHolder) }
+
+    override fun createPointer(): Pointer<CustomElementClassOrMixinDeclarationSymbol> {
+      val queryExecutorPtr = queryExecutor.createPointer()
+      val basePtr = base.createPointer()
+      return Pointer<CustomElementClassOrMixinDeclarationSymbol> {
+        val queryExecutor = queryExecutorPtr.dereference() ?: return@Pointer null
+        val base = basePtr.dereference() ?: return@Pointer null
+        base.withQueryExecutorContext(queryExecutor) as CustomElementClassOrMixinDeclarationSymbol
+      }
+    }
+
+    override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
+                                    params: WebSymbolsNameMatchQueryParams,
+                                    scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+      base.rootScope
+        .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
+        .toList()
+
+    override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
+                            params: WebSymbolsListSymbolsQueryParams,
+                            scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+      base.rootScope
+        .getSymbols(base.declaration, this.origin, qualifiedKind, params)
+        .toList()
+
+    override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
+                                    params: WebSymbolsCodeCompletionQueryParams,
+                                    scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+      base.rootScope
+        .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, scope)
+        .toList()
+  }
+
+  companion object {
+    fun create(declaration: CustomElementClassOrMixinDeclaration,
+               origin: CustomElementsJsonOrigin,
+               rootScope: CustomElementsManifestScopeBase): CustomElementsClassOrMixinDeclarationAdapter? {
+      val name = declaration.name
+      if (name == null) {
+        return null
+      }
+      return CustomElementsClassOrMixinDeclarationAdapter(name, declaration, origin, rootScope)
+    }
+  }
+
+}

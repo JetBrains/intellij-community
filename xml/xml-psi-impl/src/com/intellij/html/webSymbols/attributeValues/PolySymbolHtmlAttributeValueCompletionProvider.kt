@@ -9,11 +9,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
-import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue.Type
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
+import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
 class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttributeValue>() {
   override fun getContext(position: PsiElement): XmlAttributeValue? =

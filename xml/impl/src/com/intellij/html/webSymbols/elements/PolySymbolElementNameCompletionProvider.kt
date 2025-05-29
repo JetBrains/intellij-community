@@ -10,10 +10,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.impl.source.xml.TagNameReference
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.webSymbols.PolySymbol.Companion.HTML_ELEMENTS
-import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.PolySymbol.Companion.HTML_ELEMENTS
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
 class PolySymbolElementNameCompletionProvider : PolySymbolsCompletionProviderBase<HtmlTag>() {
 

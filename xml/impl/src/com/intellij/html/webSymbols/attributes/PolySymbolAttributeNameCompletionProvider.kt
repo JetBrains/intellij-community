@@ -11,14 +11,14 @@ import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
-import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTES
-import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
-import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
+import com.intellij.polySymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
+import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_HTML
+import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
+import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.utils.asSingleSymbol
 
 class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
 

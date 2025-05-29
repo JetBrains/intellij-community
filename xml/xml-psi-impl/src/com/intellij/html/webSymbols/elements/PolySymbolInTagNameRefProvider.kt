@@ -4,8 +4,8 @@ package com.intellij.html.webSymbols.elements
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.xml.util.XmlTagUtil
 
 class PolySymbolInTagNameRefProvider : PsiPolySymbolReferenceProvider<XmlTag> {

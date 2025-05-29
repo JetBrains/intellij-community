@@ -6,13 +6,13 @@ import com.intellij.psi.util.startOffset
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue.Type
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
-import com.intellij.webSymbols.utils.asSingleSymbol
-import com.intellij.webSymbols.utils.hasOnlyExtensions
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
+import com.intellij.polySymbols.utils.asSingleSymbol
+import com.intellij.polySymbols.utils.hasOnlyExtensions
 
 class PolySymbolHtmlAttributeValueReferenceProvider : PsiPolySymbolReferenceProvider<XmlAttributeValue> {
   override fun getReferencedSymbolNameOffset(psiElement: XmlAttributeValue): Int =

@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.webSymbols.PolySymbolApiStatus;
+import com.intellij.polySymbols.PolySymbolApiStatus;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlDeprecationOwnerDescriptor;
 import com.intellij.xml.XmlElementDescriptor;

@@ -4,7 +4,7 @@ package com.intellij.html.webSymbols.attributes.impl
 import com.intellij.model.Pointer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
-import com.intellij.webSymbols.*
+import com.intellij.polySymbols.*
 
 internal class HtmlAttributeEnumConstValueSymbol(override val origin: PolySymbolOrigin,
                                                  override val name: String,

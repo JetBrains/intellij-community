@@ -2,9 +2,9 @@
 package com.intellij.documentation.mdn
 
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.documentation.PolySymbolDocumentation
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 
 abstract class MdnDocumentedSymbol : PolySymbol {
 

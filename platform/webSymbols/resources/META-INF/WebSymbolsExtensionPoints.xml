@@ -1,79 +1,79 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.framework"
-                    beanClass="com.intellij.webSymbols.framework.impl.PolySymbolsFrameworkRegistrationExtensionPoint"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.framework"
+                    beanClass="com.intellij.polySymbols.framework.impl.PolySymbolsFrameworkRegistrationExtensionPoint"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.framework.PolySymbolsFramework"/>
+      <with attribute="implementation" implements="com.intellij.polySymbols.framework.PolySymbolsFramework"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.context"
-                    beanClass="com.intellij.webSymbols.context.impl.PolyContextProviderExtensionPoint"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.context"
+                    beanClass="com.intellij.polySymbols.context.impl.PolyContextProviderExtensionPoint"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.context.PolyContextProvider"/>
+      <with attribute="implementation" implements="com.intellij.polySymbols.context.PolyContextProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.enableInLanguage"
-                    beanClass="com.intellij.webSymbols.PolySymbolsEnabledLanguage$WebSymbolsSupportInLanguageEP"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.enableInLanguage"
+                    beanClass="com.intellij.polySymbols.PolySymbolsEnabledLanguage$WebSymbolsSupportInLanguageEP"
                     dynamic="true">
     </extensionPoint>
     <!--suppress PluginXmlValidity -->
-    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes"
-                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesDefinitionsEP"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes"
+                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesDefinitionsEP"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.symbolTypeSupportFactory"
-                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.symbolTypeSupportFactory"
+                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupportFactory"/>
+      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.WebTypesSymbolTypeSupportFactory"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.queryConfigurator"
-                    interface="com.intellij.webSymbols.query.PolySymbolsQueryConfigurator"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.queryConfigurator"
+                    interface="com.intellij.polySymbols.query.PolySymbolsQueryConfigurator"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.filter"
-                    beanClass="com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.filter"
+                    beanClass="com.intellij.polySymbols.webTypes.impl.WebSymbolsFilterEP"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter"/>
+      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.filters.WebSymbolsFilter"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.webTypes.symbolFactory"
-                    beanClass="com.intellij.webSymbols.webTypes.impl.WebTypesSymbolFactoryEP"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.symbolFactory"
+                    beanClass="com.intellij.polySymbols.webTypes.impl.WebTypesSymbolFactoryEP"
                     dynamic="true">
-      <with attribute="implementation" implements="com.intellij.webSymbols.webTypes.WebTypesSymbolFactory"/>
+      <with attribute="implementation" implements="com.intellij.polySymbols.webTypes.WebTypesSymbolFactory"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.documentationCustomizer"
-                    interface="com.intellij.webSymbols.documentation.PolySymbolDocumentationCustomizer"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.documentationCustomizer"
+                    interface="com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.codeCompletionItemCustomizer"
-                    interface="com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.codeCompletionItemCustomizer"
+                    interface="com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.defaultIconProvider"
-                    interface="com.intellij.webSymbols.query.PolySymbolDefaultIconProvider"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.defaultIconProvider"
+                    interface="com.intellij.polySymbols.query.PolySymbolDefaultIconProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.queryResultsCustomizerFactory"
-                    interface="com.intellij.webSymbols.query.PolySymbolsQueryResultsCustomizerFactory"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.queryResultsCustomizerFactory"
+                    interface="com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizerFactory"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.declarationProvider"
-                    interface="com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.declarationProvider"
+                    interface="com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.psiReferenceProvider"
-                    beanClass="com.intellij.webSymbols.references.impl.PsiPolySymbolReferenceProviderBean"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.psiReferenceProvider"
+                    beanClass="com.intellij.polySymbols.references.impl.PsiPolySymbolReferenceProviderBean"
                     dynamic="true">
       <with attribute="hostElementClass" implements="com.intellij.model.psi.PsiExternalReferenceHost"/>
-      <with attribute="implementationClass" implements="com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbolProvider"
-                    interface="com.intellij.webSymbols.PsiSourcedPolySymbolProvider"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.psiSourcedSymbolProvider"
+                    interface="com.intellij.polySymbols.PsiSourcedPolySymbolProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbol"
-                    beanClass="com.intellij.webSymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.psiSourcedSymbol"
+                    beanClass="com.intellij.polySymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.inspectionToolMapping"
-                    beanClass="com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.inspectionToolMapping"
+                    beanClass="com.intellij.polySymbols.inspections.impl.PolySymbolsInspectionToolMappingEP"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.problemQuickFixProvider"
-                    interface="com.intellij.webSymbols.inspections.PolySymbolsProblemQuickFixProvider"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.problemQuickFixProvider"
+                    interface="com.intellij.polySymbols.inspections.PolySymbolsProblemQuickFixProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.contextSourceProximityProvider"
-                    interface="com.intellij.webSymbols.context.PolyContextSourceProximityProvider"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.contextSourceProximityProvider"
+                    interface="com.intellij.polySymbols.context.PolyContextSourceProximityProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.highlightingCustomizer"
-                    interface="com.intellij.webSymbols.highlighting.PolySymbolHighlightingCustomizer"
+    <extensionPoint qualifiedName="com.intellij.polySymbols.highlightingCustomizer"
+                    interface="com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

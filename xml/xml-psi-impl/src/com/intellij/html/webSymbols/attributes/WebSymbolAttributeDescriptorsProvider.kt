@@ -10,14 +10,14 @@ import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTES
-import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.webSymbols.utils.asSingleSymbol
-import com.intellij.webSymbols.utils.hasOnlyExtensions
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
+import com.intellij.polySymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
+import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_HTML
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.utils.asSingleSymbol
+import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlAttributeDescriptorsProvider
 

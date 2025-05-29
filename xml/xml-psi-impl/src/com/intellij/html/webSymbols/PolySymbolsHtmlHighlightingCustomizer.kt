@@ -7,9 +7,9 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlTag
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.PolySymbolQualifiedKind
-import com.intellij.webSymbols.highlighting.PolySymbolHighlightingCustomizer
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer
 
 class PolySymbolsHtmlHighlightingCustomizer: PolySymbolHighlightingCustomizer {
   override fun getSymbolKindTextAttributes(qualifiedKind: PolySymbolQualifiedKind): TextAttributesKey? =

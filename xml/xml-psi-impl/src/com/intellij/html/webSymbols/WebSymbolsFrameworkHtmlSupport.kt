@@ -6,8 +6,8 @@ import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolHtmlElementInfo
 import com.intellij.psi.xml.XmlTag
-import com.intellij.webSymbols.FrameworkId
-import com.intellij.webSymbols.framework.PolySymbolsFramework
+import com.intellij.polySymbols.FrameworkId
+import com.intellij.polySymbols.framework.PolySymbolsFramework
 import java.util.function.Predicate
 
 interface WebSymbolsFrameworkHtmlSupport {

@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.xml.XmlAttribute
-import com.intellij.webSymbols.utils.unwrapMatchedSymbols
+import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 
 class HtmlWebSymbolRenameHandlerVeto : Condition<PsiElement> {
 

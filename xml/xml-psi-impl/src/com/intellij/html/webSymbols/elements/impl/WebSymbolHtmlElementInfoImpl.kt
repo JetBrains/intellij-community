@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols.elements.impl
 
 import com.intellij.html.webSymbols.elements.WebSymbolHtmlElementInfo
-import com.intellij.webSymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol
 
 data class WebSymbolHtmlElementInfoImpl(override val name: String,
                                         override val symbol: PolySymbol) : WebSymbolHtmlElementInfo

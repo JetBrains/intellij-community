@@ -4,11 +4,11 @@ package com.intellij.html.webSymbols.attributes
 import com.intellij.html.webSymbols.attributes.impl.HtmlAttributeEnumConstValueSymbol
 import com.intellij.html.webSymbols.attributes.impl.WebSymbolHtmlAttributeInfoImpl
 import com.intellij.psi.PsiElement
-import com.intellij.webSymbols.PsiSourcedPolySymbol
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.PolySymbolOrigin
-import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolOrigin
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 

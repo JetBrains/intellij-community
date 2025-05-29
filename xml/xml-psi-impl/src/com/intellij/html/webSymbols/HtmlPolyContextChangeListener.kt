@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols
 
 import com.intellij.javaee.ExternalResourceManager
-import com.intellij.webSymbols.context.PolyContextChangeListener
+import com.intellij.polySymbols.context.PolyContextChangeListener
 
 class HtmlPolyContextChangeListener: PolyContextChangeListener {
   override fun contextMayHaveChanged() {

@@ -2,8 +2,8 @@
 package com.intellij.html.webSymbols.elements
 
 import com.intellij.html.webSymbols.elements.impl.WebSymbolHtmlElementInfoImpl
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.utils.asSingleSymbol
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.utils.asSingleSymbol
 
 interface WebSymbolHtmlElementInfo {
   val name: String

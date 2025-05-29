@@ -86,11 +86,11 @@
           <includeHashcodeAndEquals>false</includeHashcodeAndEquals>
           <includeToString>false</includeToString>
           <targetVersion>1.8</targetVersion>
-          <targetPackage>com.intellij.webSymbols.customElements.json</targetPackage>
+          <targetPackage>com.intellij.polySymbols.customElements.json</targetPackage>
           <sourceDirectory>${basedir}/../resources/custom-elements-manifest.json</sourceDirectory>
           <sourceType>JSONSCHEMA</sourceType>
           <outputDirectory>${basedir}/../../gen/</outputDirectory>
-          <customRuleFactory>com.intellij.webSymbols.webTypes.gen.WebTypesRuleFactory</customRuleFactory>
+          <customRuleFactory>com.intellij.polySymbols.webTypes.gen.WebTypesRuleFactory</customRuleFactory>
         </configuration>
         <dependencies>
           <dependency>

@@ -11,9 +11,9 @@ import com.intellij.psi.xml.XmlDocument
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.PolySymbol.Companion.HTML_ELEMENTS
-import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.PolySymbol.Companion.HTML_ELEMENTS
+import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
 internal class PolySymbolElementNameInTextCompletionProvider : PolySymbolsCompletionProviderBase<XmlElement>() {
 

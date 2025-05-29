@@ -1,0 +1,93 @@
+package com.intellij.polySymbols.inspections.impl
+
+import com.intellij.AbstractBundle
+import com.intellij.DynamicBundle
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.openapi.extensions.*
+import com.intellij.openapi.util.ClearableLazyValue
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.polySymbols.SymbolNamespace
+import com.intellij.polySymbols.PolySymbolsBundle
+import com.intellij.polySymbols.references.PolySymbolReferenceProblem
+import org.jetbrains.annotations.Nls
+
+internal class PolySymbolsInspectionToolMappingEP : PluginAware {
+
+  companion object {
+
+    fun get(symbolNamespace: SymbolNamespace,
+            symbolKind: String,
+            problemKind: PolySymbolReferenceProblem.ProblemKind): PolySymbolsInspectionToolMappingEP? =
+      map.value[ExtensionKey(symbolNamespace, symbolKind, problemKind)]
+
+  }
+
+  @Attribute("symbolNamespace")
+  @RequiredElement
+  @JvmField
+  var symbolNamespace: SymbolNamespace? = null
+
+  @Attribute("symbolKind")
+  @RequiredElement
+  @JvmField
+  var symbolKind: String? = null
+
+  @Attribute("problemKind")
+  @RequiredElement
+  @JvmField
+  var problemKind: PolySymbolReferenceProblem.ProblemKind? = null
+
+  @Attribute("toolShortName")
+  @JvmField
+  var toolShortName: String? = null
+
+  @Attribute("bundleName")
+  @JvmField
+  var bundleName: String? = null
+
+  @Attribute("messageKey")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @JvmField
+  var messageKey: String? = null
+
+  private lateinit var pluginDescriptor: PluginDescriptor
+
+  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor
+  }
+
+  @InspectionMessage
+  fun getProblemMessage(symbolKindName: String?): String? {
+    return getLocalizedString(messageKey ?: return null,
+                              symbolKindName ?: PolySymbolsBundle.message("web.inspection.message.segment.default-subject"))
+  }
+
+  @Nls
+  private fun getLocalizedString(key: String, vararg params: Any): String? {
+    val baseName = bundleName
+                   ?: pluginDescriptor.resourceBundleBaseName
+                   ?: return null
+    val resourceBundle = DynamicBundle.getResourceBundle(pluginDescriptor.classLoader, baseName)
+    return AbstractBundle.message(resourceBundle, key, *params)
+  }
+
+}
+
+private data class ExtensionKey(
+  var symbolNamespace: SymbolNamespace,
+  var symbolKind: String,
+  var problemKind: PolySymbolReferenceProblem.ProblemKind,
+)
+
+private val EP_NAME = ExtensionPointName<PolySymbolsInspectionToolMappingEP>("com.intellij.webSymbols.inspectionToolMapping")
+
+private val map: ClearableLazyValue<Map<ExtensionKey, PolySymbolsInspectionToolMappingEP>> = ExtensionPointUtil.dropLazyValueOnChange(
+  ClearableLazyValue.create {
+    EP_NAME.extensionList.associateBy { ext ->
+      ExtensionKey(
+        ext.symbolNamespace!!,
+        ext.symbolKind!!,
+        ext.problemKind!!)
+    }
+  }, EP_NAME, null
+)

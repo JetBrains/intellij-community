@@ -7,8 +7,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.xml.SchemaPrefix
 import com.intellij.psi.xml.XmlTag
-import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.utils.nameSegments
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.xml.HtmlXmlExtension
 
 open class WebSymbolsXmlExtension : HtmlXmlExtension() {
