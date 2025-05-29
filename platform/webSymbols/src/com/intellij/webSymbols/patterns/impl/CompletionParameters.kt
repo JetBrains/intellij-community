@@ -2,10 +2,10 @@
 package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
 internal class CompletionParameters(name: String,
-                                    queryExecutor: WebSymbolsQueryExecutor,
+                                    queryExecutor: PolySymbolsQueryExecutor,
                                     val position: Int) : MatchParameters(name, queryExecutor) {
   constructor(name: String, params: WebSymbolsCodeCompletionQueryParams)
     : this(name, params.queryExecutor, params.position)

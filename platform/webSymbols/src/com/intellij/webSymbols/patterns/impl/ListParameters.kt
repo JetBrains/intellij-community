@@ -2,10 +2,10 @@
 package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
 internal open class ListParameters(
-  val queryExecutor: WebSymbolsQueryExecutor,
+  val queryExecutor: PolySymbolsQueryExecutor,
   val expandPatterns: Boolean,
 ) {
 

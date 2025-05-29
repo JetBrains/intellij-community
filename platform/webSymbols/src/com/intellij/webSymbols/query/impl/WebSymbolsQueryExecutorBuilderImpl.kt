@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.webSymbols.context.impl.PolyContextImpl
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory.WebSymbolsQueryExecutorBuilder
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizer
 
@@ -50,8 +50,8 @@ class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
     this.allowResolve = allowResolve
   }
 
-  override fun create(): WebSymbolsQueryExecutor =
-    WebSymbolsQueryExecutorImpl(
+  override fun create(): PolySymbolsQueryExecutor =
+    PolySymbolsQueryExecutorImpl(
       null,
       rootScopes,
       WebSymbolNamesProviderImpl(context[KIND_FRAMEWORK], nameConversionRules, ModificationTracker.NEVER_CHANGED),

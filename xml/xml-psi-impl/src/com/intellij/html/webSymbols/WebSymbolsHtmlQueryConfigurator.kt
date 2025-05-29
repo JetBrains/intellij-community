@@ -58,7 +58,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
     override fun requiresResolve(): Boolean = false
 
-    override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
+    override fun build(queryExecutor: PolySymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
       val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope = element.takeIf { queryExecutor.allowResolve }

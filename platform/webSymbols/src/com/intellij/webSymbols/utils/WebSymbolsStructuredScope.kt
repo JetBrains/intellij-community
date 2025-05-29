@@ -15,7 +15,7 @@ import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.query.PolySymbolsCompoundScope
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
 abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : PolySymbolsCompoundScope() {
 
@@ -25,7 +25,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
 
   protected abstract val providedSymbolKinds: Set<PolySymbolQualifiedKind>
 
-  override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
+  override fun build(queryExecutor: PolySymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
     getCurrentScope()
       ?.let { consumer(it) }
   }

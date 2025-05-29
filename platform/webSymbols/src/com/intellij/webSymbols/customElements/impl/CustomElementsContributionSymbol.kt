@@ -13,7 +13,7 @@ import com.intellij.webSymbols.customElements.json.mapToReferenceList
 import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
 abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> protected constructor(
   final override val name: String,
@@ -37,7 +37,7 @@ abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> 
   override val type: Any?
     get() = contribution.type?.let { origin.typeSupport?.resolve(it.mapToReferenceList()) }
 
-  final override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
+  final override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
     this
 
   override fun matchContext(context: PolyContext): Boolean =

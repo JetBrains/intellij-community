@@ -8,7 +8,7 @@ import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.query.WebSymbolsQueryResultsCustomizerFactory
 import com.intellij.webSymbols.utils.createModificationTracker
@@ -19,9 +19,9 @@ class WebSymbolsMockQueryExecutorFactory : WebSymbolsQueryExecutorFactory {
 
   val context: MutableMap<ContextKind, ContextName> = mutableMapOf()
 
-  override fun create(location: PsiElement?, allowResolve: Boolean): WebSymbolsQueryExecutor =
-    WebSymbolsQueryExecutorImpl(location, scopeList,
-                                WebSymbolNamesProviderImpl(
+  override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolsQueryExecutor =
+    PolySymbolsQueryExecutorImpl(location, scopeList,
+                                 WebSymbolNamesProviderImpl(
                                   context[KIND_FRAMEWORK],
                                   context[KIND_FRAMEWORK]?.let { framework ->
                                     scopeList.filterIsInstance<WebTypesMockScopeImpl>().map {
@@ -30,9 +30,9 @@ class WebSymbolsMockQueryExecutorFactory : WebSymbolsQueryExecutorFactory {
                                   } ?: emptyList(),
                                   createModificationTracker(
                                     scopeList.filterIsInstance<WebTypesMockScopeImpl>().map { it.createPointer() })),
-                                WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, PolyContext.create(context)),
-                                PolyContext.create(context),
-                                allowResolve)
+                                 WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, PolyContext.create(context)),
+                                 PolyContext.create(context),
+                                 allowResolve)
 
   override fun addScope(
     scope: PolySymbolsScope,

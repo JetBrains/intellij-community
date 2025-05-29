@@ -14,7 +14,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.hasOnlyExtensions
@@ -61,7 +61,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
         ?.getAttributeDescriptor(attributeName, context, queryExecutor)
     }
 
-  private fun PolySymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: WebSymbolsQueryExecutor) =
+  private fun PolySymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: PolySymbolsQueryExecutor) =
     this
       .asSafely<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor

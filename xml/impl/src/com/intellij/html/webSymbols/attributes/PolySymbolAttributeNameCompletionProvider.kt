@@ -16,7 +16,7 @@ import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 
@@ -30,7 +30,7 @@ class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderB
     result: CompletionResultSet,
     position: Int,
     name: String,
-    queryExecutor: WebSymbolsQueryExecutor,
+    queryExecutor: PolySymbolsQueryExecutor,
     context: XmlAttribute,
   ) {
     val tag = context.parent ?: return

@@ -193,7 +193,7 @@ fun PolySymbol.toCodeCompletionItems(
     .getNames(PolySymbolQualifiedName(namespace, kind, this.name), WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
-fun PolySymbol.nameMatches(name: String, queryExecutor: WebSymbolsQueryExecutor): Boolean {
+fun PolySymbol.nameMatches(name: String, queryExecutor: PolySymbolsQueryExecutor): Boolean {
   val queryNames = queryExecutor.namesProvider.getNames(
     PolySymbolQualifiedName(this.namespace, this.kind, name), WebSymbolNamesProvider.Target.NAMES_QUERY)
   val symbolNames = queryExecutor.namesProvider.getNames(

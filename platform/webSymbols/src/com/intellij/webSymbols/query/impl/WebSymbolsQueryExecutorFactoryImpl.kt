@@ -30,7 +30,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
   private val customScope = MultiMap<VirtualFile?, PolySymbolsScope>()
   private var modificationCount = 0L
 
-  override fun create(location: PsiElement?, allowResolve: Boolean): WebSymbolsQueryExecutor {
+  override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolsQueryExecutor {
     val application = ApplicationManager.getApplication()
     application.assertReadAccessAllowed()
 
@@ -63,12 +63,12 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
 
     scopeList.sortBy { (it.asSafely<PolySymbolsPrioritizedScope>()?.priority ?: PolySymbol.Priority.NORMAL).value }
 
-    return WebSymbolsQueryExecutorImpl(location,
-                                       scopeList,
-                                       createNamesProvider(project, originalLocation, context),
-                                       WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
-                                       context,
-                                       allowResolve)
+    return PolySymbolsQueryExecutorImpl(location,
+                                        scopeList,
+                                        createNamesProvider(project, originalLocation, context),
+                                        WebSymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
+                                        context,
+                                        allowResolve)
   }
 
   override fun addScope(scope: PolySymbolsScope,

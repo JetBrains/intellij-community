@@ -36,7 +36,7 @@ import com.intellij.webSymbols.js.PolySymbolJsKind
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.utils.NameCaseUtils
 import com.intellij.webSymbols.utils.lastPolySymbol
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
@@ -187,7 +187,7 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedK
 
 internal fun Reference.resolve(name: String,
                                scope: List<PolySymbolsScope>,
-                               queryExecutor: WebSymbolsQueryExecutor,
+                               queryExecutor: PolySymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
                                abstractSymbols: Boolean = false): List<PolySymbol> =
   processWebSymbols(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
@@ -195,7 +195,7 @@ internal fun Reference.resolve(name: String,
   }
 
 internal fun Reference.resolve(scope: List<PolySymbolsScope>,
-                               queryExecutor: WebSymbolsQueryExecutor,
+                               queryExecutor: PolySymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
                                abstractSymbols: Boolean = false): List<PolySymbol> =
   processWebSymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
@@ -209,7 +209,7 @@ internal fun Reference.resolve(scope: List<PolySymbolsScope>,
   }
 
 internal fun Reference.list(scope: List<PolySymbolsScope>,
-                            queryExecutor: WebSymbolsQueryExecutor,
+                            queryExecutor: PolySymbolsQueryExecutor,
                             expandPatterns: Boolean,
                             virtualSymbols: Boolean = true,
                             abstractSymbols: Boolean = false): List<PolySymbol> =
@@ -223,10 +223,10 @@ internal fun Reference.list(scope: List<PolySymbolsScope>,
 private fun Reference.processWebSymbols(
   name: String?,
   scope: List<PolySymbolsScope>,
-  queryExecutor: WebSymbolsQueryExecutor,
+  queryExecutor: PolySymbolsQueryExecutor,
   virtualSymbols: Boolean,
   abstractSymbols: Boolean,
-  queryRunner: WebSymbolsQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>
+  queryRunner: PolySymbolsQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>
 ): List<PolySymbol> {
   ProgressManager.checkCanceled()
   return when (val reference = this.value) {
@@ -259,7 +259,7 @@ private fun Reference.processWebSymbols(
 
 internal fun Reference.codeCompletion(name: String,
                                       scope: List<PolySymbolsScope>,
-                                      queryExecutor: WebSymbolsQueryExecutor,
+                                      queryExecutor: PolySymbolsQueryExecutor,
                                       position: Int = 0,
                                       virtualSymbols: Boolean = true): List<PolySymbolCodeCompletionItem> {
   return when (val reference = this.value) {

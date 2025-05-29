@@ -2,10 +2,10 @@
 package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
 internal open class MatchParameters(val name: String,
-                                    val queryExecutor: WebSymbolsQueryExecutor) {
+                                    val queryExecutor: PolySymbolsQueryExecutor) {
 
   constructor(name: String, params: WebSymbolsNameMatchQueryParams)
     : this(name, params.queryExecutor)

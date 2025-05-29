@@ -13,7 +13,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue.Type
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
 class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttributeValue>() {
   override fun getContext(position: PsiElement): XmlAttributeValue? =
@@ -21,7 +21,7 @@ class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProv
 
   override fun addCompletions(
     parameters: CompletionParameters, result: CompletionResultSet, position: Int,
-    name: String, queryExecutor: WebSymbolsQueryExecutor, context: XmlAttributeValue
+    name: String, queryExecutor: PolySymbolsQueryExecutor, context: XmlAttributeValue
   ) {
     val patchedResultSet = result.withPrefixMatcher(result.prefixMatcher.cloneWithPrefix(name))
 

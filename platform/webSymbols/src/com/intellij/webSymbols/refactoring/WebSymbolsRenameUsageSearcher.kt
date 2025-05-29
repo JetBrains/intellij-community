@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.WebSymbolUsageQueries
 
@@ -30,7 +30,7 @@ internal class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
     ?: emptyList()
 
   private class WebSymbolPsiModifiableRenameUsage(
-    private val queryExecutor: WebSymbolsQueryExecutor,
+    private val queryExecutor: PolySymbolsQueryExecutor,
     private val symbol: PolySymbol,
     private val psiRenameUsage: PsiRenameUsage,
   )

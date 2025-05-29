@@ -6,13 +6,13 @@ sealed interface WebSymbolsQueryParams {
   val framework: String?
     get() = queryExecutor.framework
 
-  val queryExecutor: WebSymbolsQueryExecutor
+  val queryExecutor: PolySymbolsQueryExecutor
 
   val virtualSymbols: Boolean
 }
 
 sealed interface WebSymbolsListSymbolsQueryParams : WebSymbolsQueryParams {
-  override val queryExecutor: WebSymbolsQueryExecutor
+  override val queryExecutor: PolySymbolsQueryExecutor
   val expandPatterns: Boolean
   override val virtualSymbols: Boolean
   val abstractSymbols: Boolean
@@ -23,7 +23,7 @@ sealed interface WebSymbolsListSymbolsQueryParams : WebSymbolsQueryParams {
     @JvmStatic
     @JvmOverloads
     fun create(
-      queryExecutor: WebSymbolsQueryExecutor,
+      queryExecutor: PolySymbolsQueryExecutor,
       expandPatterns: Boolean,
       virtualSymbols: Boolean = true
     ): WebSymbolsListSymbolsQueryParams =
@@ -31,7 +31,7 @@ sealed interface WebSymbolsListSymbolsQueryParams : WebSymbolsQueryParams {
 
     @JvmStatic
     fun create(
-      queryExecutor: WebSymbolsQueryExecutor,
+      queryExecutor: PolySymbolsQueryExecutor,
       expandPatterns: Boolean,
       virtualSymbols: Boolean = true,
       abstractSymbols: Boolean = false,
@@ -44,7 +44,7 @@ sealed interface WebSymbolsListSymbolsQueryParams : WebSymbolsQueryParams {
 
 
 sealed interface WebSymbolsNameMatchQueryParams : WebSymbolsQueryParams {
-  override val queryExecutor: WebSymbolsQueryExecutor
+  override val queryExecutor: PolySymbolsQueryExecutor
   override val virtualSymbols: Boolean
   val abstractSymbols: Boolean
   val strictScope: Boolean
@@ -54,14 +54,14 @@ sealed interface WebSymbolsNameMatchQueryParams : WebSymbolsQueryParams {
     @JvmStatic
     @JvmOverloads
     fun create(
-      queryExecutor: WebSymbolsQueryExecutor,
+      queryExecutor: PolySymbolsQueryExecutor,
       virtualSymbols: Boolean = true
     ): WebSymbolsNameMatchQueryParams =
       create(queryExecutor, virtualSymbols, false, false)
 
     @JvmStatic
     fun create(
-      queryExecutor: WebSymbolsQueryExecutor,
+      queryExecutor: PolySymbolsQueryExecutor,
       virtualSymbols: Boolean = true,
       abstractSymbols: Boolean = false,
       strictScope: Boolean = false
@@ -72,7 +72,7 @@ sealed interface WebSymbolsNameMatchQueryParams : WebSymbolsQueryParams {
 }
 
 sealed interface WebSymbolsCodeCompletionQueryParams : WebSymbolsQueryParams {
-  override val queryExecutor: WebSymbolsQueryExecutor
+  override val queryExecutor: PolySymbolsQueryExecutor
 
   /** Position to complete at in the last segment of the path **/
   val position: Int
@@ -84,7 +84,7 @@ sealed interface WebSymbolsCodeCompletionQueryParams : WebSymbolsQueryParams {
     @JvmStatic
     @JvmOverloads
     fun create(
-      queryExecutor: WebSymbolsQueryExecutor,
+      queryExecutor: PolySymbolsQueryExecutor,
       position: Int,
       virtualSymbols: Boolean = true
     ): WebSymbolsCodeCompletionQueryParams =
@@ -94,13 +94,13 @@ sealed interface WebSymbolsCodeCompletionQueryParams : WebSymbolsQueryParams {
 }
 
 private data class WebSymbolsCodeCompletionQueryParamsData(
-  override val queryExecutor: WebSymbolsQueryExecutor,
+  override val queryExecutor: PolySymbolsQueryExecutor,
   override val position: Int,
   override val virtualSymbols: Boolean,
 ) : WebSymbolsCodeCompletionQueryParams
 
 private data class WebSymbolsListSymbolsQueryParamsData(
-  override val queryExecutor: WebSymbolsQueryExecutor,
+  override val queryExecutor: PolySymbolsQueryExecutor,
   override val expandPatterns: Boolean,
   override val virtualSymbols: Boolean,
   override val abstractSymbols: Boolean,
@@ -108,7 +108,7 @@ private data class WebSymbolsListSymbolsQueryParamsData(
 ) : WebSymbolsListSymbolsQueryParams
 
 private data class WebSymbolsNameMatchQueryParamsData(
-  override val queryExecutor: WebSymbolsQueryExecutor,
+  override val queryExecutor: PolySymbolsQueryExecutor,
   override val virtualSymbols: Boolean,
   override val abstractSymbols: Boolean,
   override val strictScope: Boolean,

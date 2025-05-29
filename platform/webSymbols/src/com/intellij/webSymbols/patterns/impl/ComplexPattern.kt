@@ -14,7 +14,7 @@ import com.intellij.webSymbols.impl.copy
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.utils.coalesceWith
 import com.intellij.webSymbols.utils.isCritical
 import kotlin.math.max
@@ -149,7 +149,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
 
   private fun <T> process(scopeStack: Stack<PolySymbolsScope>,
-                          queryExecutor: WebSymbolsQueryExecutor,
+                          queryExecutor: PolySymbolsQueryExecutor,
                           action: (patterns: List<PolySymbolsPattern>,
                                    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                                    patternApiStatus: PolySymbolApiStatus?,

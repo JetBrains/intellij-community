@@ -28,14 +28,14 @@ import kotlin.math.max
 import kotlin.math.min
 
 @ApiStatus.Internal
-class WebSymbolsQueryExecutorImpl(
+class PolySymbolsQueryExecutorImpl(
   override val location: PsiElement?,
   rootScope: List<PolySymbolsScope>,
   override val namesProvider: WebSymbolNamesProvider,
   override val resultsCustomizer: WebSymbolsQueryResultsCustomizer,
   override val context: PolyContext,
   override val allowResolve: Boolean,
-) : WebSymbolsQueryExecutor {
+) : PolySymbolsQueryExecutor {
 
   private val rootScope: List<PolySymbolsScope> = initializeCompoundScopes(rootScope)
   private var nestingLevel: Int = 0
@@ -47,21 +47,21 @@ class WebSymbolsQueryExecutorImpl(
 
   override fun equals(other: Any?): Boolean =
     other === this ||
-    other is WebSymbolsQueryExecutorImpl
+    other is PolySymbolsQueryExecutorImpl
     && other.location == location
     && other.context == context
     && other.rootScope == rootScope
     && other.namesProvider == namesProvider
     && other.resultsCustomizer == resultsCustomizer
 
-  override fun createPointer(): Pointer<WebSymbolsQueryExecutor> {
+  override fun createPointer(): Pointer<PolySymbolsQueryExecutor> {
     val locationPtr = this.location?.createSmartPointer()
     val namesProviderPtr = this.namesProvider.createPointer()
     val context = this.context
     val allowResolve = this.allowResolve
     val scopePtr = this.resultsCustomizer.createPointer()
     val rootScopePointers = this.rootScope.map { it.createPointer() }
-    return Pointer<WebSymbolsQueryExecutor> {
+    return Pointer<PolySymbolsQueryExecutor> {
       @Suppress("UNCHECKED_CAST")
       val rootScope = rootScopePointers.map { it.dereference() }
                         .takeIf { it.all { c -> c != null } } as? List<PolySymbolsScope>
@@ -73,7 +73,7 @@ class WebSymbolsQueryExecutorImpl(
       val scope = scopePtr.dereference()
                   ?: return@Pointer null
       val location = locationPtr?.let { it.dereference() ?: return@Pointer null }
-      WebSymbolsQueryExecutorImpl(location, rootScope, namesProvider, scope, context, allowResolve)
+      PolySymbolsQueryExecutorImpl(location, rootScope, namesProvider, scope, context, allowResolve)
     }
   }
 
@@ -107,11 +107,11 @@ class WebSymbolsQueryExecutorImpl(
   ): List<PolySymbolCodeCompletionItem> =
     runCodeCompletionQuery(path, WebSymbolsCodeCompletionQueryParams.create(this, position, virtualSymbols), additionalScope)
 
-  override fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor =
+  override fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): PolySymbolsQueryExecutor =
     if (rules.isEmpty())
       this
     else
-      WebSymbolsQueryExecutorImpl(location, rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
+      PolySymbolsQueryExecutorImpl(location, rootScope, namesProvider.withRules(rules), resultsCustomizer, context, allowResolve)
 
   override fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolsScope>): Boolean {
     return buildQueryScope(scope).any { it.isExclusiveFor(qualifiedKind) }
@@ -119,7 +119,7 @@ class WebSymbolsQueryExecutorImpl(
 
   private fun initializeCompoundScopes(rootScope: List<PolySymbolsScope>): List<PolySymbolsScope> {
     if (rootScope.any { it is PolySymbolsCompoundScope }) {
-      val compoundScopeQueryExecutor = WebSymbolsQueryExecutorImpl(
+      val compoundScopeQueryExecutor = PolySymbolsQueryExecutorImpl(
         location,
         rootScope.filter { it !is PolySymbolsCompoundScope },
         namesProvider, resultsCustomizer, context, allowResolve

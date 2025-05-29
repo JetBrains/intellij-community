@@ -143,7 +143,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
     else emptyList()
 
-  private fun getMap(queryExecutor: WebSymbolsQueryExecutor): WebSymbolsSearchMap =
+  private fun getMap(queryExecutor: PolySymbolsQueryExecutor): WebSymbolsSearchMap =
     getNamesProviderToMapCache().getOrCreateMap(queryExecutor.namesProvider, this::createCachedSearchMap)
 
   private class NamesProviderToMapCache {

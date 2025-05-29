@@ -31,7 +31,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
 
   protected abstract fun acceptSymbol(symbol: PolySymbol): Boolean
 
-  protected abstract val subScopeBuilder: (WebSymbolsQueryExecutor, T) -> List<PolySymbolsScope>
+  protected abstract val subScopeBuilder: (PolySymbolsQueryExecutor, T) -> List<PolySymbolsScope>
 
   override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: WebSymbolsCodeCompletionQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
@@ -92,11 +92,11 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     getCachedSubQueryExecutorAndScope().second
   }
 
-  private fun getCachedSubQueryExecutorAndScope(): Pair<WebSymbolsQueryExecutor, List<PolySymbolsScope>> {
+  private fun getCachedSubQueryExecutorAndScope(): Pair<PolySymbolsQueryExecutor, List<PolySymbolsScope>> {
     val location = this@PolySymbolsIsolatedMappingScope.location
     val builder = subScopeBuilder
     val manager = CachedValuesManager.getManager(location.project)
-    val cachedValueKey = manager.getKeyForClass<Pair<WebSymbolsQueryExecutor, List<PolySymbolsScope>>>(builder.javaClass)
+    val cachedValueKey = manager.getKeyForClass<Pair<PolySymbolsQueryExecutor, List<PolySymbolsScope>>>(builder.javaClass)
     return manager.getCachedValue(location, cachedValueKey, {
       val executor = WebSymbolsQueryExecutorFactory.create(location)
       val scope = builder(executor, location)

@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -87,7 +87,7 @@ interface WebSymbolHtmlAttributeInfo {
 
     @JvmStatic
     fun create(name: String,
-               queryExecutor: WebSymbolsQueryExecutor,
+               queryExecutor: PolySymbolsQueryExecutor,
                symbol: PolySymbol,
                context: PsiElement): WebSymbolHtmlAttributeInfo =
       WebSymbolHtmlAttributeInfoImpl.create(name, queryExecutor, symbol, context)

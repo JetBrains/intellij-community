@@ -13,7 +13,7 @@ import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.utils.merge
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.webSymbols.webTypes.impl.wrap
@@ -26,7 +26,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   private lateinit var base: WebTypesJsonContributionAdapter
 
-  protected lateinit var queryExecutor: WebSymbolsQueryExecutor
+  protected lateinit var queryExecutor: PolySymbolsQueryExecutor
 
   private var _superContributions: List<PolySymbol>? = null
 
@@ -69,7 +69,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     }
   }
 
-  internal fun init(webTypesJsonContributionAdapter: WebTypesJsonContributionAdapter, queryExecutor: WebSymbolsQueryExecutor) {
+  internal fun init(webTypesJsonContributionAdapter: WebTypesJsonContributionAdapter, queryExecutor: PolySymbolsQueryExecutor) {
     this.base = webTypesJsonContributionAdapter
     this.queryExecutor = queryExecutor
   }

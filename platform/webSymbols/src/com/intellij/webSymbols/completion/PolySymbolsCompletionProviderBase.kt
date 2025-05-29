@@ -17,7 +17,7 @@ import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 
 abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionProvider<CompletionParameters>() {
@@ -53,7 +53,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
 
   protected abstract fun addCompletions(
     parameters: CompletionParameters, result: CompletionResultSet,
-    position: Int, name: String, queryExecutor: WebSymbolsQueryExecutor, context: T,
+    position: Int, name: String, queryExecutor: PolySymbolsQueryExecutor, context: T,
   )
 
   companion object {
@@ -73,7 +73,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
 
     @JvmStatic
     fun processCompletionQueryResults(
-      queryExecutor: WebSymbolsQueryExecutor,
+      queryExecutor: PolySymbolsQueryExecutor,
       result: CompletionResultSet,
       qualifiedKind: PolySymbolQualifiedKind,
       name: String,

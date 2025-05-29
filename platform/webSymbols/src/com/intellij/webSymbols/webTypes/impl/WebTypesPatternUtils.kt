@@ -13,7 +13,7 @@ import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.impl.*
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.json.*
 
@@ -75,7 +75,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
   override val isStaticAndRequired: Boolean
     get() = pattern.delegate == null && pattern.items == null && pattern.required != false
 
-  override fun getOptions(queryExecutor: WebSymbolsQueryExecutor,
+  override fun getOptions(queryExecutor: PolySymbolsQueryExecutor,
                           scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions {
     val queryParams = WebSymbolsNameMatchQueryParams.create(queryExecutor, true, false)
     val delegate = pattern.delegate?.resolve(scopeStack, queryParams.queryExecutor)?.firstOrNull()
@@ -114,7 +114,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     override fun codeCompletion(name: String,
                                 position: Int,
                                 scopeStack: Stack<PolySymbolsScope>,
-                                queryExecutor: WebSymbolsQueryExecutor): List<PolySymbolCodeCompletionItem> =
+                                queryExecutor: PolySymbolsQueryExecutor): List<PolySymbolCodeCompletionItem> =
       delegate.pattern
         ?.complete(delegate, scopeStack,
                    this, CompletionParameters(name, queryExecutor, position), 0, name.length)
@@ -123,7 +123,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
       ?: emptyList()
 
     override fun listSymbols(scopeStack: Stack<PolySymbolsScope>,
-                             queryExecutor: WebSymbolsQueryExecutor,
+                             queryExecutor: PolySymbolsQueryExecutor,
                              expandPatterns: Boolean): List<PolySymbol> =
       delegate.pattern
         ?.list(delegate, scopeStack, this, ListParameters(queryExecutor, expandPatterns))
@@ -141,7 +141,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
         }
       ?: emptyList()
 
-    override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol> =
+    override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: PolySymbolsQueryExecutor): List<PolySymbol> =
       delegate.pattern
         ?.match(delegate, scopeStack, null,
                 MatchParameters(name, queryExecutor), 0, name.length)
@@ -174,15 +174,15 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     override fun codeCompletion(name: String,
                                 position: Int,
                                 scopeStack: Stack<PolySymbolsScope>,
-                                queryExecutor: WebSymbolsQueryExecutor): List<PolySymbolCodeCompletionItem> =
+                                queryExecutor: PolySymbolsQueryExecutor): List<PolySymbolCodeCompletionItem> =
       items.flatMap { it.codeCompletion(name, scopeStack, queryExecutor, position) }
 
     override fun listSymbols(scopeStack: Stack<PolySymbolsScope>,
-                             queryExecutor: WebSymbolsQueryExecutor,
+                             queryExecutor: PolySymbolsQueryExecutor,
                              expandPatterns: Boolean): List<PolySymbol> =
       items.flatMap { it.list(scopeStack, queryExecutor, expandPatterns) }
 
-    override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: WebSymbolsQueryExecutor): List<PolySymbol> =
+    override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: PolySymbolsQueryExecutor): List<PolySymbol> =
       items.flatMap { it.resolve(name, scopeStack, queryExecutor) }
 
   }

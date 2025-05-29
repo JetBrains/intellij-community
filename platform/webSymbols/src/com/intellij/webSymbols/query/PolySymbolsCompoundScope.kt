@@ -10,7 +10,7 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 
 /**
- * A special purpose scope, which provides other scopes, possibly calling a [WebSymbolsQueryExecutor] to retrieve them.
+ * A special purpose scope, which provides other scopes, possibly calling a [PolySymbolsQueryExecutor] to retrieve them.
  * This scope is useful if your [WebSymbolsQueryConfigurator] needs to provide scopes based on the location and these
  * in turn require to query the model. It can also be added as an additional scope to any WebSymbol query, or be used
  * just to encompass logic related to building a list of scopes. [PolySymbolsCompoundScope] cannot be nested within each
@@ -18,10 +18,10 @@ import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
  */
 abstract class PolySymbolsCompoundScope : PolySymbolsScope {
 
-  protected abstract fun build(queryExecutor: WebSymbolsQueryExecutor,
+  protected abstract fun build(queryExecutor: PolySymbolsQueryExecutor,
                                consumer: (PolySymbolsScope) -> Unit)
 
-  fun getScopes(queryExecutor: WebSymbolsQueryExecutor): List<PolySymbolsScope> {
+  fun getScopes(queryExecutor: PolySymbolsQueryExecutor): List<PolySymbolsScope> {
     if (requiresResolve() && !queryExecutor.allowResolve) return emptyList()
     val list = mutableListOf<PolySymbolsScope>()
     build(queryExecutor) {

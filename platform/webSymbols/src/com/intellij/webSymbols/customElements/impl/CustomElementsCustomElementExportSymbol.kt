@@ -11,7 +11,7 @@ import com.intellij.webSymbols.customElements.json.createPattern
 import com.intellij.webSymbols.customElements.json.toApiStatus
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
 class CustomElementsCustomElementExportSymbol private constructor(
   override val name: String,
@@ -26,7 +26,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val framework: FrameworkId?
     get() = null
 
-  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
     this
 
   override fun createPointer(): Pointer<out PolySymbol> =

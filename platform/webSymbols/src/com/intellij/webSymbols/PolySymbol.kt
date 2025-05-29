@@ -25,7 +25,7 @@ import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.PolySymbolJsKind
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.PolySymbolMatch
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.matchedNameOrName
@@ -335,7 +335,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
    * Web Symbols can have various naming conventions.
    * This method is used by the framework to determine a new name for a symbol based on its occurrence
    */
-  fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
+  fun adjustNameForRefactoring(queryExecutor: PolySymbolsQueryExecutor, newName: String, occurence: String): String =
     queryExecutor.namesProvider.adjustRename(qualifiedName, newName, occurence)
 
 

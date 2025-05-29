@@ -13,11 +13,11 @@ import com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorBuilderImpl
 import org.jetbrains.annotations.TestOnly
 
 /**
- * Use the factory to create [WebSymbolsQueryExecutor] for a particular location in the source code.
+ * Use the factory to create [PolySymbolsQueryExecutor] for a particular location in the source code.
  */
 interface WebSymbolsQueryExecutorFactory : Disposable {
 
-  fun create(location: PsiElement?, allowResolve: Boolean = true): WebSymbolsQueryExecutor
+  fun create(location: PsiElement?, allowResolve: Boolean = true): PolySymbolsQueryExecutor
 
   @TestOnly
   fun addScope(scope: PolySymbolsScope, contextDirectory: VirtualFile?, disposable: Disposable)
@@ -37,7 +37,7 @@ interface WebSymbolsQueryExecutorFactory : Disposable {
 
     fun allowResolve(allowResolve: Boolean): WebSymbolsQueryExecutorBuilder
 
-    fun create(): WebSymbolsQueryExecutor
+    fun create(): PolySymbolsQueryExecutor
   }
 
   companion object {
@@ -45,13 +45,13 @@ interface WebSymbolsQueryExecutorFactory : Disposable {
     @JvmStatic
     fun getInstance(project: Project): WebSymbolsQueryExecutorFactory = project.service()
 
-    fun create(location: PsiElement, allowResolve: Boolean = true): WebSymbolsQueryExecutor =
+    fun create(location: PsiElement, allowResolve: Boolean = true): PolySymbolsQueryExecutor =
       getInstance(location.project).create(location, allowResolve)
 
     fun createCustom(): WebSymbolsQueryExecutorBuilder =
       WebSymbolsQueryExecutorBuilderImpl()
 
-    fun createCustom(setup: WebSymbolsQueryExecutorBuilder.() -> Unit): WebSymbolsQueryExecutor =
+    fun createCustom(setup: WebSymbolsQueryExecutorBuilder.() -> Unit): PolySymbolsQueryExecutor =
       WebSymbolsQueryExecutorBuilderImpl()
         .let { setup(it); it.create() }
 

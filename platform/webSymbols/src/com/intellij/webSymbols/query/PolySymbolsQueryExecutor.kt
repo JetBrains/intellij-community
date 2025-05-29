@@ -19,7 +19,7 @@ import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface WebSymbolsQueryExecutor : ModificationTracker {
+interface PolySymbolsQueryExecutor : ModificationTracker {
 
   val location: PsiElement?
 
@@ -36,7 +36,7 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
 
   var keepUnresolvedTopLevelReferences: Boolean
 
-  fun createPointer(): Pointer<WebSymbolsQueryExecutor>
+  fun createPointer(): Pointer<PolySymbolsQueryExecutor>
 
   fun runNameMatchQuery(namespace: SymbolNamespace,
                         kind: SymbolKind,
@@ -99,7 +99,7 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                              virtualSymbols: Boolean = true,
                              additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbolCodeCompletionItem>
 
-  fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor
+  fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): PolySymbolsQueryExecutor
 
   fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolsScope> = emptyList()): Boolean
 

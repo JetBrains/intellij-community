@@ -18,7 +18,7 @@ import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
 class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val name: String,
@@ -41,7 +41,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val framework: FrameworkId?
     get() = null
 
-  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
     CustomElementClassOrMixinDeclarationSymbol(this, queryExecutor)
 
   private fun createPointer(): Pointer<CustomElementsClassOrMixinDeclarationAdapter> {
@@ -58,7 +58,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
   private class CustomElementClassOrMixinDeclarationSymbol(
     private val base: CustomElementsClassOrMixinDeclarationAdapter,
-    private val queryExecutor: WebSymbolsQueryExecutor,
+    private val queryExecutor: PolySymbolsQueryExecutor,
   ) : CustomElementsSymbol, PsiSourcedPolySymbol {
 
     private var _superContributions: List<PolySymbol>? = null

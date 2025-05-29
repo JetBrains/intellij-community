@@ -19,7 +19,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   private val namesProviderCache: MutableMap<WebSymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0
 
-  private val queryExecutorCache: MutableMap<WebSymbolsQueryExecutor, QueryExecutorContributionsCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+  private val queryExecutorCache: MutableMap<PolySymbolsQueryExecutor, QueryExecutorContributionsCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var queryExecutorCacheMisses = 0
 
   private val roots = mutableMapOf<Root, Origin>()
@@ -102,7 +102,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
                                                    framework: FrameworkId?,
                                                    origin: Origin): Sequence<StaticSymbolContributionAdapter>
 
-  private fun getMap(queryExecutor: WebSymbolsQueryExecutor,
+  private fun getMap(queryExecutor: PolySymbolsQueryExecutor,
                      contribution: Contribution,
                      origin: Origin): ContributionSearchMap =
     getOrCreateMap(queryExecutor, contribution) { consumer ->
@@ -110,14 +110,14 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     }
 
 
-  private fun getMapForRoot(queryExecutor: WebSymbolsQueryExecutor,
+  private fun getMapForRoot(queryExecutor: PolySymbolsQueryExecutor,
                             root: Root,
                             origin: Origin): ContributionSearchMap =
     getOrCreateMap(queryExecutor, root) { consumer ->
       adaptAllRootContributions(root, origin.framework, origin).forEach(consumer)
     }
 
-  private fun getOrCreateMap(queryExecutor: WebSymbolsQueryExecutor,
+  private fun getOrCreateMap(queryExecutor: PolySymbolsQueryExecutor,
                              key: Any,
                              mapInitializer: (consumer: (StaticSymbolContributionAdapter) -> Unit) -> Unit): ContributionSearchMap =
     getNameProvidersCache(queryExecutor.namesProvider).getOrCreateMap(key, mapInitializer)
@@ -134,7 +134,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
       .also { it.checkForModifications() }
   }
 
-  private fun getQueryExecutorContributionsCache(queryExecutor: WebSymbolsQueryExecutor): QueryExecutorContributionsCache {
+  private fun getQueryExecutorContributionsCache(queryExecutor: PolySymbolsQueryExecutor): QueryExecutorContributionsCache {
     if (queryExecutorCacheMisses > 100) {
       // Get rid of old soft keys
       queryExecutorCacheMisses = 0
@@ -164,7 +164,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     val name: String
     val pattern: PolySymbolsPattern?
     val framework: FrameworkId?
-    fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol
+    fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol
     fun matchContext(context: PolyContext): Boolean =
       framework == null || context.framework == null || context.framework == framework
   }
@@ -207,7 +207,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     }
   }
 
-  private inner class QueryExecutorContributionsCache(private val queryExecutor: WebSymbolsQueryExecutor) {
+  private inner class QueryExecutorContributionsCache(private val queryExecutor: PolySymbolsQueryExecutor) {
     private val symbolsCache: MutableMap<StaticSymbolContributionAdapter, PolySymbol> = ConcurrentHashMap()
     private var queryExecutorModificationCount: Long = -1
 

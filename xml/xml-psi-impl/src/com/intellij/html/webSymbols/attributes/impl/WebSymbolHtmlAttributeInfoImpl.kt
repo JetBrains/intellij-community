@@ -8,7 +8,7 @@ import com.intellij.util.ThreeState
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import javax.swing.Icon
 
 internal data class WebSymbolHtmlAttributeInfoImpl(
@@ -84,7 +84,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
   companion object {
     fun create(
       name: String,
-      queryExecutor: WebSymbolsQueryExecutor,
+      queryExecutor: PolySymbolsQueryExecutor,
       symbol: PolySymbol,
       context: PsiElement,
     ): WebSymbolHtmlAttributeInfo {

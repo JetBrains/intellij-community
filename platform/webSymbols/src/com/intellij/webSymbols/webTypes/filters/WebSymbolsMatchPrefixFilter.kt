@@ -4,14 +4,14 @@ package com.intellij.webSymbols.webTypes.filters
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class WebSymbolsMatchPrefixFilter : WebSymbolsFilter {
 
   override fun filterCodeCompletions(codeCompletions: List<PolySymbolCodeCompletionItem>,
-                                     queryExecutor: WebSymbolsQueryExecutor,
+                                     queryExecutor: PolySymbolsQueryExecutor,
                                      scope: List<PolySymbolsScope>,
                                      properties: Map<String, Any>): List<PolySymbolCodeCompletionItem> {
     val prefix = properties["prefix"] as? String ?: return codeCompletions
@@ -19,7 +19,7 @@ class WebSymbolsMatchPrefixFilter : WebSymbolsFilter {
   }
 
   override fun filterNameMatches(matches: List<PolySymbol>,
-                                 queryExecutor: WebSymbolsQueryExecutor,
+                                 queryExecutor: PolySymbolsQueryExecutor,
                                  scope: List<PolySymbolsScope>,
                                  properties: Map<String, Any>): List<PolySymbol> {
     val prefix = properties["prefix"] as? String ?: return matches

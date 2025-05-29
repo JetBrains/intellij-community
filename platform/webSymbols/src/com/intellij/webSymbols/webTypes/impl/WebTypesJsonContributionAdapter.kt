@@ -15,7 +15,7 @@ import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.WebTypesScopeBase
 import com.intellij.webSymbols.webTypes.WebTypesSymbolBase
@@ -90,7 +90,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
      }.also { exclusiveContributions = it }
     ).contains(qualifiedKind)
 
-  override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): PolySymbol =
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
     (WebTypesSymbolFactoryEP.get(PolySymbolQualifiedKind(namespace, kind))?.create() ?: WebTypesSymbolBase())
       .also { it.init(this, queryExecutor) }
 
