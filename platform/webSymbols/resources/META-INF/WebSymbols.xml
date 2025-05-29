@@ -5,7 +5,7 @@
 
     <metaLanguage implementation="com.intellij.webSymbols.PolySymbolsEnabledLanguage"/>
     <annotator language="PolySymbolsEnabledLanguage"
-               implementationClass="com.intellij.webSymbols.highlighting.impl.WebSymbolsHighlightingAnnotator"/>
+               implementationClass="com.intellij.webSymbols.highlighting.impl.PolySymbolsHighlightingAnnotator"/>
 
     <webSymbols.webTypes.filter
       name="match-prefix"

@@ -55,7 +55,7 @@ import java.util.*
 
 private val INSPECTION_TOOL_INFO_CACHE = Key.create<MutableMap<String, InspectionToolInfo>>("webSymbols.inspectionTools")
 
-class WebSymbolsHighlightingAnnotator : Annotator {
+class PolySymbolsHighlightingAnnotator : Annotator {
 
   private val symbolReferencesProvider = PsiWebSymbolReferenceProviderImpl()
 
