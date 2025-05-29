@@ -12,15 +12,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
 import git4idea.http.GitAskPassApp
 import git4idea.http.GitAskPassAppHandler
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.util.*
 
 /**
  * Provides the authentication mechanism for Git HTTP connections.
  */
-abstract class GitHttpAuthService : ExternalProcessHandlerService<GitAskPassAppHandler>(
+abstract class GitHttpAuthService(coroutineScope: CoroutineScope) : ExternalProcessHandlerService<GitAskPassAppHandler>(
   "intellij-git-askpass",
-  GitAskPassApp::class.java
+  GitAskPassApp::class.java,
+  GitAskPassApp(),
+  listOf(GitAskPassAppHandler.IJ_ASK_PASS_HANDLER_ENV, GitAskPassAppHandler.IJ_ASK_PASS_PORT_ENV),
+  coroutineScope
 ) {
   /**
    * Creates new [GitHttpAuthenticator] that will be requested to handle username and password requests from Git.

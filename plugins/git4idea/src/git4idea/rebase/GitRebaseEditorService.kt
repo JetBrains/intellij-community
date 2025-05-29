@@ -9,13 +9,19 @@ import com.intellij.openapi.components.service
 import git4idea.config.GitExecutable
 import git4idea.editor.GitRebaseEditorApp
 import git4idea.editor.GitRebaseEditorAppHandler
+import kotlinx.coroutines.CoroutineScope
 import java.util.*
 import kotlin.io.path.Path
 
 @Service(Service.Level.APP)
-internal class GitRebaseEditorService : ExternalProcessHandlerService<GitRebaseEditorAppHandler>(
+internal class GitRebaseEditorService(
+  coroutineScope: CoroutineScope
+) : ExternalProcessHandlerService<GitRebaseEditorAppHandler>(
   "intellij-git-editor",
-  GitRebaseEditorApp::class.java
+  GitRebaseEditorApp::class.java,
+  GitRebaseEditorApp(),
+  listOf(GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV, GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV),
+  coroutineScope
 ) {
   companion object {
     @JvmStatic

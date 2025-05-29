@@ -32,7 +32,7 @@ a:com.intellij.externalProcessAuthHelper.ExternalProcessRest
 f:com.intellij.externalProcessAuthHelper.NativeSshAuthService
 - com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService
 - sf:Companion:com.intellij.externalProcessAuthHelper.NativeSshAuthService$Companion
-- <init>():V
+- <init>(kotlinx.coroutines.CoroutineScope):V
 - sf:getInstance():com.intellij.externalProcessAuthHelper.NativeSshAuthService
 f:com.intellij.externalProcessAuthHelper.NativeSshAuthService$Companion
 - f:getInstance():com.intellij.externalProcessAuthHelper.NativeSshAuthService
