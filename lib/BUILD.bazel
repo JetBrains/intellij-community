@@ -2070,6 +2070,34 @@ jvm_import(
 )
 
 jvm_import(
+  name = "io-github-oshai-kotlin-logging-jvm",
+  jar = "@kotlin-logging-jvm-7_0_3_http//file",
+  source_jar = "@kotlin-logging-jvm-7_0_3-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "io-github-smiley4-schema-kenerator-core",
+  jar = "@schema-kenerator-core-2_1_2_http//file",
+  source_jar = "@schema-kenerator-core-2_1_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "io-github-smiley4-schema-kenerator-jsonschema",
+  jar = "@schema-kenerator-jsonschema-2_1_2_http//file",
+  source_jar = "@schema-kenerator-jsonschema-2_1_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "io-github-smiley4-schema-kenerator-serialization",
+  jar = "@schema-kenerator-serialization-2_1_2_http//file",
+  source_jar = "@schema-kenerator-serialization-2_1_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "io-github-z4kn4fein-semver-jvm",
   jar = "@semver-jvm-2_0_0_http//file",
   source_jar = "@semver-jvm-2_0_0-sources_http//file",
@@ -2165,6 +2193,13 @@ jvm_import(
   name = "mockk-core-jvm-1_13_12_http_import",
   jar = "@mockk-core-jvm-1_13_12_http//file",
   source_jar = "@mockk-core-jvm-1_13_12-sources_http//file"
+)
+
+jvm_import(
+  name = "io-modelcontextprotocol-kotlin-sdk",
+  jar = "@kotlin-sdk-jvm-0_5_0_http//file",
+  source_jar = "@kotlin-sdk-jvm-0_5_0-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -4251,6 +4286,13 @@ jvm_import(
   name = "config-1_4_3_http_import",
   jar = "@config-1_4_3_http//file",
   source_jar = "@config-1_4_3-sources_http//file"
+)
+
+jvm_import(
+  name = "ktor-server-sse-jvm",
+  jar = "@ktor-server-sse-jvm-3_0_3_http//file",
+  source_jar = "@ktor-server-sse-jvm-3_0_3-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 jvm_import(

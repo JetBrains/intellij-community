@@ -15,6 +15,9 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
+    "@lib//:ktor-server-sse-jvm",
+    "@lib//:io-modelcontextprotocol-kotlin-sdk",
+    "@lib//:io-github-oshai-kotlin-logging-jvm",
   ],
   exports = [
     "@lib//:kotlin-stdlib",
@@ -23,6 +26,9 @@ jvm_library(
     "@lib//:kotlinx-io-core",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
+    "@lib//:ktor-server-sse-jvm",
+    "@lib//:io-modelcontextprotocol-kotlin-sdk",
+    "@lib//:io-github-oshai-kotlin-logging-jvm",
   ]
 )
 ### auto-generated section `build intellij.mcpserver.stdio` end

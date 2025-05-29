@@ -787,6 +787,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/Kotlin/kotlinx-io/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense(name = "Kotlin Logging", libraryName = "io.github.oshai.kotlin.logging.jvm", url = "https://github.com/oshai/kotlin-logging/")
+      .apache("https://github.com/oshai/kotlin-logging/blob/master/LICENSE")
+      .suppliedByPersons("Ohad Shai"),
+
     LibraryLicense("Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-core", url = "https://github.com/Kotlin/kotlinx.serialization")
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -1127,6 +1131,12 @@ object CommunityLibraryLicenses {
 
     LibraryLicense(libraryName = "Saxon-9HE", version = "9.9", url = "https://saxon.sourceforge.net/")
       .mpl2("https://www.mozilla.org/en-US/MPL/2.0/"),
+
+    LibraryLicense(name = "Schema Kenerator", libraryName = "io.github.smiley4.schema.kenerator.core", url = "https://github.com/SMILEY4/schema-kenerator",
+                   additionalLibraryNames = listOf(
+                     "io.github.smiley4.schema.kenerator.jsonschema",
+                     "io.github.smiley4.schema.kenerator.serialization",))
+      .apache("https://github.com/SMILEY4/schema-kenerator/blob/develop/LICENSE"),
 
     LibraryLicense("setuptools", version = "44.1.1", attachedTo = "intellij.python", url = "https://setuptools.pypa.io/")
       .mit("https://github.com/pypa/setuptools/blob/main/LICENSE"),

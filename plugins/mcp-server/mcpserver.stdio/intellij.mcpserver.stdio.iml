@@ -37,5 +37,8 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" exported="" name="slf4j-api" level="project" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
+    <orderEntry type="library" exported="" name="ktor-server-sse-jvm" level="project" />
+    <orderEntry type="library" exported="" name="io.modelcontextprotocol.kotlin.sdk" level="project" />
+    <orderEntry type="library" exported="" name="io.github.oshai.kotlin.logging.jvm" level="project" />
   </component>
 </module>
