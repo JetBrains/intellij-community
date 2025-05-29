@@ -13,7 +13,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemBuilder
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemBuilder
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemInsertHandler
 import com.intellij.webSymbols.impl.scaleToHeight
 import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
@@ -211,7 +211,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
     private var name: String,
     private var offset: Int = 0,
     private var symbol: PolySymbol? = null,
-  ) : WebSymbolCodeCompletionItemBuilder {
+  ) : PolySymbolCodeCompletionItemBuilder {
 
     private var completeAfterInsert: Boolean = false
     private var completeAfterChars: Set<Char> = emptySet()
@@ -235,72 +235,72 @@ internal data class PolySymbolCodeCompletionItemImpl(
       name, offset, completeAfterInsert, completeAfterChars, displayName, symbol, priority, proximity,
       apiStatus, aliases, icon, typeTextStatic, typeTextProvider, tailText, insertHandler, stopSequencePatternEvaluation)
 
-    override fun displayName(value: String?): WebSymbolCodeCompletionItemBuilder {
+    override fun displayName(value: String?): PolySymbolCodeCompletionItemBuilder {
       displayName = value
       return this
     }
 
-    override fun offset(value: Int): WebSymbolCodeCompletionItemBuilder {
+    override fun offset(value: Int): PolySymbolCodeCompletionItemBuilder {
       offset = value
       return this
     }
 
-    override fun icon(value: Icon?): WebSymbolCodeCompletionItemBuilder {
+    override fun icon(value: Icon?): PolySymbolCodeCompletionItemBuilder {
       icon = value
       return this
     }
 
-    override fun typeText(value: String?): WebSymbolCodeCompletionItemBuilder {
+    override fun typeText(value: String?): PolySymbolCodeCompletionItemBuilder {
       typeTextStatic = value
       return this
     }
 
-    override fun typeText(provider: () -> String?): WebSymbolCodeCompletionItemBuilder {
+    override fun typeText(provider: () -> String?): PolySymbolCodeCompletionItemBuilder {
       typeTextProvider = provider
       return this
     }
 
-    override fun tailText(value: String?): WebSymbolCodeCompletionItemBuilder {
+    override fun tailText(value: String?): PolySymbolCodeCompletionItemBuilder {
       tailText = value
       return this
     }
 
-    override fun completeAfterInsert(value: Boolean): WebSymbolCodeCompletionItemBuilder {
+    override fun completeAfterInsert(value: Boolean): PolySymbolCodeCompletionItemBuilder {
       completeAfterInsert = value
       return this
     }
 
-    override fun completeAfterChars(value: Set<Char>): WebSymbolCodeCompletionItemBuilder {
+    override fun completeAfterChars(value: Set<Char>): PolySymbolCodeCompletionItemBuilder {
       completeAfterChars = value
       return this
     }
 
-    override fun priority(value: PolySymbol.Priority?): WebSymbolCodeCompletionItemBuilder {
+    override fun priority(value: PolySymbol.Priority?): PolySymbolCodeCompletionItemBuilder {
       priority = value
       return this
     }
 
-    override fun proximity(value: Int?): WebSymbolCodeCompletionItemBuilder {
+    override fun proximity(value: Int?): PolySymbolCodeCompletionItemBuilder {
       proximity = value
       return this
     }
 
-    override fun apiStatus(value: PolySymbolApiStatus): WebSymbolCodeCompletionItemBuilder {
+    override fun apiStatus(value: PolySymbolApiStatus): PolySymbolCodeCompletionItemBuilder {
       apiStatus = value
       return this
     }
 
-    override fun aliases(value: Set<String>): WebSymbolCodeCompletionItemBuilder {
+    override fun aliases(value: Set<String>): PolySymbolCodeCompletionItemBuilder {
       aliases = value
       return this
     }
 
-    override fun symbol(value: PolySymbol?): WebSymbolCodeCompletionItemBuilder {
+    override fun symbol(value: PolySymbol?): PolySymbolCodeCompletionItemBuilder {
       symbol = value
       return this
     }
 
-    override fun insertHandler(value: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItemBuilder {
+    override fun insertHandler(value: WebSymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemBuilder {
       insertHandler = value
       return this
     }

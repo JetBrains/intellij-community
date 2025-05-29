@@ -143,7 +143,7 @@ interface PolySymbolCodeCompletionItem {
       name: String,
       offset: Int = 0,
       symbol: PolySymbol? = null,
-      builder: (WebSymbolCodeCompletionItemBuilder.() -> Unit)? = null,
+      builder: (PolySymbolCodeCompletionItemBuilder.() -> Unit)? = null,
     ): PolySymbolCodeCompletionItem =
       PolySymbolCodeCompletionItemImpl.BuilderImpl(name, offset, symbol)
         .also { builder?.invoke(it) }
