@@ -23,6 +23,7 @@ private val LOG = fileLogger()
 internal class JavaTestRunnerForMaven: TestRunner {
   override fun isApplicable(params: TestRunnerParams): Boolean {
     return params.language == Language.JAVA
+           || params.language == Language.KOTLIN // TODO temporary solution for docker testing
   }
 
   override fun runTests(request: TestRunRequest): TestRunResult {
