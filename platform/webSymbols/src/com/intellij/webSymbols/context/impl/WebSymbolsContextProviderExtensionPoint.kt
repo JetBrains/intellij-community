@@ -6,10 +6,10 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.webSymbols.context.WebSymbolsContextProvider
+import com.intellij.webSymbols.context.PolyContextProvider
 import org.jetbrains.annotations.TestOnly
 
-class WebSymbolsContextProviderExtensionPoint : BaseKeyedLazyInstance<WebSymbolsContextProvider>, KeyedLazyInstance<WebSymbolsContextProvider> {
+class WebSymbolsContextProviderExtensionPoint : BaseKeyedLazyInstance<PolyContextProvider>, KeyedLazyInstance<PolyContextProvider> {
   // these must be public for scrambling compatibility
   @Attribute("kind")
   var kind: String? = null
@@ -25,7 +25,7 @@ class WebSymbolsContextProviderExtensionPoint : BaseKeyedLazyInstance<WebSymbols
   constructor() : super()
 
   @TestOnly
-  constructor(kind: String?, name: String, instance: WebSymbolsContextProvider) : super(instance) {
+  constructor(kind: String?, name: String, instance: PolyContextProvider) : super(instance) {
     this.name = name
     this.kind = kind
     implementation = instance::class.java.name

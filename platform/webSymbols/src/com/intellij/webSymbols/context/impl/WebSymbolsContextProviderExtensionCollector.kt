@@ -4,11 +4,11 @@ package com.intellij.webSymbols.context.impl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.KeyedExtensionCollector
-import com.intellij.webSymbols.context.WebSymbolsContextProvider
+import com.intellij.webSymbols.context.PolyContextProvider
 import java.util.concurrent.ConcurrentHashMap
 
 class WebSymbolsContextProviderExtensionCollector(private val epName: ExtensionPointName<WebSymbolsContextProviderExtensionPoint>)
-  : KeyedExtensionCollector<WebSymbolsContextProvider, String>(epName) {
+  : KeyedExtensionCollector<PolyContextProvider, String>(epName) {
 
   private val allKinds = ClearableLazyValue.create {
     epName.extensions.asSequence()
@@ -16,7 +16,7 @@ class WebSymbolsContextProviderExtensionCollector(private val epName: ExtensionP
       .toSet()
   }
 
-  private val allOfCache = ConcurrentHashMap<String, Map<String, List<WebSymbolsContextProvider>>>()
+  private val allOfCache = ConcurrentHashMap<String, Map<String, List<PolyContextProvider>>>()
 
   init {
     epName.addChangeListener(Runnable {
@@ -28,7 +28,7 @@ class WebSymbolsContextProviderExtensionCollector(private val epName: ExtensionP
   fun allKinds(): Set<String> =
     allKinds.value
 
-  fun allOf(kind: String): Map<String /* name */, List<WebSymbolsContextProvider>> =
+  fun allOf(kind: String): Map<String /* name */, List<PolyContextProvider>> =
     allOfCache.computeIfAbsent(kind) {
       epName.extensionList.asSequence()
         .filter { it.kind == kind && it.name != null }
@@ -36,9 +36,9 @@ class WebSymbolsContextProviderExtensionCollector(private val epName: ExtensionP
         .mapValues { (_, list) -> list.map { it.instance } }
     }
 
-  fun forAny(kind: String): List<WebSymbolsContextProvider> = forKey("$kind:any")
+  fun forAny(kind: String): List<PolyContextProvider> = forKey("$kind:any")
 
-  fun allFor(kind: String, name: String): List<WebSymbolsContextProvider> = forKey("$kind:$name")
+  fun allFor(kind: String, name: String): List<PolyContextProvider> = forKey("$kind:$name")
 
   override fun keyToString(key: String): String = key
 

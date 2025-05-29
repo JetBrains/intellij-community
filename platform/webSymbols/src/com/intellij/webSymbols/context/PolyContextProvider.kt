@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 
-interface WebSymbolsContextProvider {
+interface PolyContextProvider {
   /**
    * Determines whether a particular, parsed file should have a particular web symbols context (like web framework) enabled.
    * Such files will for example have dedicated JS expressions injected. This API serves for a purpose of enabling the

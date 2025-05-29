@@ -26,7 +26,7 @@ interface PolyContext {
 
     @TestOnly
     @JvmField
-    val WEB_SYMBOLS_CONTEXT_EP: KeyedExtensionCollector<WebSymbolsContextProvider, String> =
+    val WEB_SYMBOLS_CONTEXT_EP: KeyedExtensionCollector<PolyContextProvider, String> =
       WebSymbolsContextProviderExtensionCollector(ExtensionPointName("com.intellij.webSymbols.context"))
 
     @JvmField
