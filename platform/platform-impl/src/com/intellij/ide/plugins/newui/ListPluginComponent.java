@@ -113,7 +113,7 @@ public final class ListPluginComponent extends JPanel {
     boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
     myIsAvailable = (compatible || isInstalledAndEnabled()) && pluginUiModel.getCanBeEnabled();
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
-    myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(pluginUiModel.getPluginId());
+    myIsNotFreeInFreeMode = UiPluginManager.getInstance().isPluginRequiresUltimateButItIsDisabled(pluginUiModel.getPluginId());
     pluginModelFacade.addComponent(this);
 
     setOpaque(true);
@@ -501,7 +501,7 @@ public final class ListPluginComponent extends JPanel {
     myChooseUpdateButton.getAccessibleContext()
       .setAccessibleName(IdeBundle.message("plugins.configurable.choose.update.checkbox.accessible.name"));
 
-    IdeaPluginDescriptor installedPluginDescriptor = PluginManagerCore.getPlugin(myPlugin.getPluginId());
+    PluginUiModel installedPluginDescriptor = UiPluginManager.getInstance().getPlugin(myPlugin.getPluginId());
     if (installedPluginDescriptor != null) {
       if (myDownloads != null) {
         myMetricsPanel.remove(myDownloads);
@@ -751,8 +751,8 @@ public final class ListPluginComponent extends JPanel {
         if (myInstallButton != null) {
           myInstallButton.setEnabled(false, IdeBundle.message("plugin.status.installed"));
           if (myInstallButton.isVisible()) {
-            IdeaPluginDescriptor foundPlugin = PluginManagerCore.findPlugin(myPlugin.getPluginId());
-            myInstalledDescriptorForMarketplace = foundPlugin != null ? new PluginUiModelAdapter(foundPlugin) : null;
+            PluginUiModel foundPlugin = UiPluginManager.getInstance().findPlugin(myPlugin.getPluginId());
+            myInstalledDescriptorForMarketplace = foundPlugin ;
             if (myInstalledDescriptorForMarketplace != null) {
               if (myMarketplace) {
                 myInstallButton.setVisible(false);
@@ -1582,7 +1582,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private boolean isInstalledAndEnabled() {
-    return PluginManagerCore.getPlugin(myPlugin.getPluginId()) != null && !myModelFacade.getState(myPlugin).isDisabled();
+    return UiPluginManager.getInstance().getPluginInstallationState(myPlugin.getPluginId()).getFullyInstalled() && !myModelFacade.getState(myPlugin).isDisabled();
   }
 
   @Override
