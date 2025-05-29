@@ -7,7 +7,7 @@ import com.intellij.webSymbols.PolySymbol
 
 interface WebSymbolDocumentationCustomizer {
 
-  fun customize(symbol: PolySymbol, location: PsiElement?, documentation: WebSymbolDocumentation): WebSymbolDocumentation
+  fun customize(symbol: PolySymbol, location: PsiElement?, documentation: PolySymbolDocumentation): PolySymbolDocumentation
 
   companion object {
     val EP_NAME: ExtensionPointName<WebSymbolDocumentationCustomizer> = ExtensionPointName.create<WebSymbolDocumentationCustomizer>(

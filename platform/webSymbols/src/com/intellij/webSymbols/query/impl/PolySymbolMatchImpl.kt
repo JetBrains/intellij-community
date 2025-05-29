@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.PolySymbol.Priority
-import com.intellij.webSymbols.documentation.WebSymbolDocumentation
+import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.PolySymbolMatch
@@ -46,7 +46,7 @@ internal open class PolySymbolMatchImpl private constructor(
     get() = reversedSegments().flatMap { it.symbols.asSequence() }
       .mapNotNull { it.psiContext }.firstOrNull()
 
-  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+  override fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
     reversedSegments().flatMap { it.symbols.asSequence() }
       .firstNotNullOfOrNull { it.createDocumentation(location) }
 

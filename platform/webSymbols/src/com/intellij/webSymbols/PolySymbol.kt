@@ -18,7 +18,7 @@ import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.documentation.WebSymbolDocumentation
+import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
@@ -292,16 +292,16 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
       null
 
   /**
-   * Returns [WebSymbolDocumentation] - an interface holding information required to render documentation for the symbol.
+   * Returns [PolySymbolDocumentation] - an interface holding information required to render documentation for the symbol.
    * By default, it's contents are build from the available Web Symbol information.
    *
    * To customize symbols documentation, one can override the method, or implement [WebSymbolDocumentationCustomizer].
    *
-   * [WebSymbolDocumentation] interface provides builder methods for customizing the documentation.
+   * [PolySymbolDocumentation] interface provides builder methods for customizing the documentation.
    * `with*` methods return a copy of the documentation with customized fields.
    */
-  fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
-    WebSymbolDocumentation.create(this, location)
+  fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
+    PolySymbolDocumentation.create(this, location)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     emptyList()

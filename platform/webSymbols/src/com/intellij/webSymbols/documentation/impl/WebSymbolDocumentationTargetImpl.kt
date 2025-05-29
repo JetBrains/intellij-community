@@ -16,7 +16,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.PolySymbolsBundle
-import com.intellij.webSymbols.documentation.WebSymbolDocumentation
+import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.impl.scaleToHeight
 import java.awt.Image
@@ -39,7 +39,7 @@ internal class WebSymbolDocumentationTargetImpl(
 
   companion object {
 
-    fun buildDocumentation(origin: PolySymbolOrigin, doc: WebSymbolDocumentation): DocumentationResult {
+    fun buildDocumentation(origin: PolySymbolOrigin, doc: PolySymbolDocumentation): DocumentationResult {
       val url2ImageMap = mutableMapOf<String, Image>()
 
       @Suppress("HardCodedStringLiteral")
@@ -55,7 +55,7 @@ internal class WebSymbolDocumentationTargetImpl(
         .definitionDetails(doc.definitionDetails)
     }
 
-    private fun StringBuilder.appendDefinition(doc: WebSymbolDocumentation, url2ImageMap: MutableMap<String, Image>): StringBuilder =
+    private fun StringBuilder.appendDefinition(doc: PolySymbolDocumentation, url2ImageMap: MutableMap<String, Image>): StringBuilder =
       append(DocumentationMarkup.DEFINITION_START)
         .also {
           doc.icon?.let { appendIcon(it, url2ImageMap).append("&nbsp;&nbsp;") }
@@ -64,7 +64,7 @@ internal class WebSymbolDocumentationTargetImpl(
         .append(DocumentationMarkup.DEFINITION_END)
         .append('\n')
 
-    private fun StringBuilder.appendDescription(doc: WebSymbolDocumentation): StringBuilder =
+    private fun StringBuilder.appendDescription(doc: PolySymbolDocumentation): StringBuilder =
       doc.description?.let {
         append(DocumentationMarkup.CONTENT_START).append('\n')
           .append(it).append('\n')
@@ -72,7 +72,7 @@ internal class WebSymbolDocumentationTargetImpl(
       }
       ?: this
 
-    private fun StringBuilder.appendSections(doc: WebSymbolDocumentation): StringBuilder =
+    private fun StringBuilder.appendSections(doc: PolySymbolDocumentation): StringBuilder =
       buildSections(doc).let { sections ->
         if (sections.isNotEmpty()) {
           append(DocumentationMarkup.SECTIONS_START)
@@ -95,7 +95,7 @@ internal class WebSymbolDocumentationTargetImpl(
         this
       }
 
-    private fun StringBuilder.appendFootnote(doc: WebSymbolDocumentation): StringBuilder =
+    private fun StringBuilder.appendFootnote(doc: PolySymbolDocumentation): StringBuilder =
       doc.footnote?.let {
         append(DocumentationMarkup.CONTENT_START)
           .append(it)
@@ -103,14 +103,14 @@ internal class WebSymbolDocumentationTargetImpl(
           .append('\n')
       } ?: this
 
-    private fun StringBuilder.appendHeader(doc: WebSymbolDocumentation): StringBuilder =
+    private fun StringBuilder.appendHeader(doc: PolySymbolDocumentation): StringBuilder =
       doc.header?.let {
         append("<div class='" + DocumentationMarkup.CLASS_TOP + "'>")
           .append(it)
           .append("</div>\n")
       } ?: this
 
-    private fun buildSections(doc: WebSymbolDocumentation): Map<String, String> =
+    private fun buildSections(doc: PolySymbolDocumentation): Map<String, String> =
       LinkedHashMap(doc.descriptionSections).also { sections ->
         if (doc.required) sections[PolySymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
         doc.apiStatus?.let { status ->

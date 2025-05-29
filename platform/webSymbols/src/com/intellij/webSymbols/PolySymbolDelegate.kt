@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.documentation.WebSymbolDocumentation
+import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
@@ -73,7 +73,7 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
   override val properties: Map<String, Any>
     get() = delegate.properties
 
-  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+  override fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
     delegate.createDocumentation(location)
 
   override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =

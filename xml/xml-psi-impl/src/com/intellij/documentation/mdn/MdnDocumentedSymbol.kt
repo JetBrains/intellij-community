@@ -4,7 +4,7 @@ package com.intellij.documentation.mdn
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.documentation.WebSymbolDocumentation
+import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 
 abstract class MdnDocumentedSymbol : PolySymbol {
 
@@ -26,7 +26,7 @@ abstract class MdnDocumentedSymbol : PolySymbol {
   override val descriptionSections: Map<String, String>
     get() = mdnDoc?.sections ?: emptyMap()
 
-  override fun createDocumentation(location: PsiElement?): WebSymbolDocumentation? =
+  override fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
     this.mdnDoc?.let { mdnDoc ->
       val documentation = super.createDocumentation(location)
       return documentation?.with(

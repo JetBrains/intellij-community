@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
-import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationImpl
+import com.intellij.webSymbols.documentation.impl.PolySymbolDocumentationImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -16,7 +16,7 @@ import javax.swing.Icon
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
 @ApiStatus.NonExtendable
-interface WebSymbolDocumentation {
+interface PolySymbolDocumentation {
 
   /**
    * Symbol name
@@ -87,31 +87,31 @@ interface WebSymbolDocumentation {
 
   fun isNotEmpty(): Boolean
 
-  fun withName(name: @NlsSafe String): WebSymbolDocumentation
+  fun withName(name: @NlsSafe String): PolySymbolDocumentation
 
-  fun withDefinition(definition: @NlsSafe String): WebSymbolDocumentation
+  fun withDefinition(definition: @NlsSafe String): PolySymbolDocumentation
 
-  fun withDefinitionDetails(definitionDetails: @NlsSafe String?): WebSymbolDocumentation
+  fun withDefinitionDetails(definitionDetails: @NlsSafe String?): PolySymbolDocumentation
 
-  fun withDescription(description: @Nls String?): WebSymbolDocumentation
+  fun withDescription(description: @Nls String?): PolySymbolDocumentation
 
-  fun withDocUrl(docUrl: @NlsSafe String?): WebSymbolDocumentation
+  fun withDocUrl(docUrl: @NlsSafe String?): PolySymbolDocumentation
 
-  fun withApiStatus(apiStatus: PolySymbolApiStatus?): WebSymbolDocumentation
+  fun withApiStatus(apiStatus: PolySymbolApiStatus?): PolySymbolDocumentation
 
-  fun withRequired(required: Boolean): WebSymbolDocumentation
+  fun withRequired(required: Boolean): PolySymbolDocumentation
 
-  fun withDefault(defaultValue: @NlsSafe String?): WebSymbolDocumentation
+  fun withDefault(defaultValue: @NlsSafe String?): PolySymbolDocumentation
 
-  fun withLibrary(library: @NlsSafe String?): WebSymbolDocumentation
+  fun withLibrary(library: @NlsSafe String?): PolySymbolDocumentation
 
-  fun withIcon(icon: Icon?): WebSymbolDocumentation
+  fun withIcon(icon: Icon?): PolySymbolDocumentation
 
-  fun withDescriptionSection(name: @Nls String, contents: @Nls String): WebSymbolDocumentation
+  fun withDescriptionSection(name: @Nls String, contents: @Nls String): PolySymbolDocumentation
 
-  fun withFootnote(footnote: @Nls String?): WebSymbolDocumentation
+  fun withFootnote(footnote: @Nls String?): PolySymbolDocumentation
 
-  fun withHeader(header: @Nls String?): WebSymbolDocumentation
+  fun withHeader(header: @Nls String?): PolySymbolDocumentation
 
   fun with(name: @NlsSafe String = this.name,
            definition: @NlsSafe String = this.definition,
@@ -124,9 +124,9 @@ interface WebSymbolDocumentation {
            library: @NlsSafe String? = this.library,
            icon: Icon? = this.icon,
            additionalSections: Map<@Nls String, @Nls String> = emptyMap(),
-           footnote: @Nls String? = this.footnote): WebSymbolDocumentation
+           footnote: @Nls String? = this.footnote): PolySymbolDocumentation
 
-  fun appendFootnote(footnote: @Nls String?): WebSymbolDocumentation =
+  fun appendFootnote(footnote: @Nls String?): PolySymbolDocumentation =
     if (footnote != null)
       withFootnote((this.footnote ?: "") + footnote)
     else
@@ -151,10 +151,10 @@ interface WebSymbolDocumentation {
                  },
                icon: Icon? = symbol.icon,
                descriptionSections: Map<@Nls String, @Nls String> = symbol.descriptionSections,
-               footnote: @Nls String? = null): WebSymbolDocumentation =
-      WebSymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, required, defaultValue, library, icon,
-                                 descriptionSections, footnote, null)
-        .let { doc: WebSymbolDocumentation ->
+               footnote: @Nls String? = null): PolySymbolDocumentation =
+      PolySymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, required, defaultValue, library, icon,
+                                  descriptionSections, footnote, null)
+        .let { doc: PolySymbolDocumentation ->
           WebSymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
             customizer.customize(symbol, location, documentation)
           }
