@@ -532,7 +532,7 @@
     <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>
 
 
-    <multiHostInjector implementation="com.intellij.html.webSymbols.WebSymbolsHtmlTextInjector"
+    <multiHostInjector implementation="com.intellij.html.webSymbols.PolySymbolsHtmlTextInjector"
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="WebSymbolsHtmlText"/>
 
@@ -559,7 +559,7 @@
     <xml.attributeDescriptorsProvider
       implementation="com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptorsProvider"/>
     <xml.elementDescriptorProvider
-      implementation="com.intellij.html.webSymbols.elements.WebSymbolElementDescriptorsProvider"/>
+      implementation="com.intellij.html.webSymbols.elements.PolySymbolElementDescriptorsProvider"/>
     <completion.contributor language="HtmlCompatible"
                             implementationClass="com.intellij.html.webSymbols.WebSymbolsHtmlCompletionContributor"/>
 
@@ -572,7 +572,7 @@
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
                                   hostLanguage="HtmlCompatible"
                                   implementationClass="com.intellij.html.webSymbols.attributeValues.PolySymbolHtmlAttributeValueReferenceProvider"/>
-    <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
+    <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlPolySymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.html.webSymbols.PolySymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>
 

@@ -10,7 +10,7 @@ import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 
-class HtmlWebSymbolRenameHandlerVeto : Condition<PsiElement> {
+class HtmlPolySymbolRenameHandlerVeto : Condition<PsiElement> {
 
   override fun value(t: PsiElement): Boolean {
     if (t.containingFile is HtmlCompatibleFile) {

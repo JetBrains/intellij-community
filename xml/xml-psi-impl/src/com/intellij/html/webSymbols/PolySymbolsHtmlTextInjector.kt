@@ -24,7 +24,7 @@ import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
 import java.util.*
 
-class WebSymbolsHtmlTextInjector : MultiHostInjector {
+class PolySymbolsHtmlTextInjector : MultiHostInjector {
 
   override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
     val languageToInject =

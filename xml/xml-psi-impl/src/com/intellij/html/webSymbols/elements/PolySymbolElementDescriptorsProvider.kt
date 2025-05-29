@@ -13,7 +13,7 @@ import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlElementDescriptor
 
-class WebSymbolElementDescriptorsProvider : XmlElementDescriptorProvider {
+class PolySymbolElementDescriptorsProvider : XmlElementDescriptorProvider {
 
   override fun getDescriptor(tag: XmlTag?): XmlElementDescriptor? =
     if (tag == null || DumbService.isDumb(tag.project) || tag.containingFile !is HtmlCompatibleFile)
@@ -28,7 +28,7 @@ class WebSymbolElementDescriptorsProvider : XmlElementDescriptorProvider {
           && !it.hasOnlyStandardHtmlSymbols()
         }
         ?.let { list ->
-          WebSymbolHtmlElementInfo.create(tag.name, list)
+          PolySymbolHtmlElementInfo.create(tag.name, list)
             ?.toElementDescriptor(tag)
         }
     }

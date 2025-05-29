@@ -14,7 +14,7 @@ import com.intellij.polySymbols.PolySymbolsScopeWithCache
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-object WebSymbolsHtmlQueryHelper {
+object PolySymbolsHtmlQueryHelper {
 
   @JvmStatic
   fun getStandardHtmlElementSymbolsScope(

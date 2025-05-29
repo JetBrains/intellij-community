@@ -30,7 +30,7 @@ open class PolySymbolElementDescriptor private constructor(private val tag: XmlT
                                                            val symbol: PolySymbol)
   : XmlElementDescriptorEx, XmlElementDescriptorAwareAboutChildren, XmlCustomElementDescriptor {
 
-  constructor(info: WebSymbolHtmlElementInfo, tag: XmlTag) : this(tag, info.name, info.symbol)
+  constructor(info: PolySymbolHtmlElementInfo, tag: XmlTag) : this(tag, info.name, info.symbol)
 
   override fun validateTagName(tag: XmlTag, holder: ProblemsHolder, isOnTheFly: Boolean) {
 
@@ -152,7 +152,7 @@ open class PolySymbolElementDescriptor private constructor(private val tag: XmlT
 
   companion object {
 
-    fun WebSymbolHtmlElementInfo.toElementDescriptor(tag: XmlTag) =
+    fun PolySymbolHtmlElementInfo.toElementDescriptor(tag: XmlTag) =
       PolySymbolsFrameworkHtmlSupport.get(this.symbol.origin.framework)
         .createHtmlElementDescriptor(this, tag)
 

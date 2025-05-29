@@ -4,7 +4,7 @@ package com.intellij.html.webSymbols
 import com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptor
 import com.intellij.html.webSymbols.attributes.PolySymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.elements.PolySymbolElementDescriptor
-import com.intellij.html.webSymbols.elements.WebSymbolHtmlElementInfo
+import com.intellij.html.webSymbols.elements.PolySymbolHtmlElementInfo
 import com.intellij.psi.xml.XmlTag
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.framework.PolySymbolsFramework
@@ -15,7 +15,7 @@ interface PolySymbolsFrameworkHtmlSupport {
   fun createHtmlAttributeDescriptor(info: PolySymbolHtmlAttributeInfo, tag: XmlTag?): PolySymbolAttributeDescriptor =
     PolySymbolAttributeDescriptor(info, tag)
 
-  fun createHtmlElementDescriptor(info: WebSymbolHtmlElementInfo, tag: XmlTag): PolySymbolElementDescriptor =
+  fun createHtmlElementDescriptor(info: PolySymbolHtmlElementInfo, tag: XmlTag): PolySymbolElementDescriptor =
     PolySymbolElementDescriptor(info, tag)
 
   fun getAttributeNameCodeCompletionFilter(tag: XmlTag): Predicate<String> = Predicate { true }
