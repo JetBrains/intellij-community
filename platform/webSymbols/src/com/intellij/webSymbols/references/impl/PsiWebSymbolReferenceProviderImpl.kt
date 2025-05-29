@@ -26,7 +26,7 @@ import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.webSymbols.impl.removeZeroLengthSegmentsRecursively
-import com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider
+import com.intellij.webSymbols.inspections.PolySymbolsProblemQuickFixProvider
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.references.WebSymbolReference
@@ -189,7 +189,7 @@ private class NameSegmentReferenceWithProblem(
             toolMapping?.getProblemMessage(segment.displayName)
             ?: getDefaultProblemMessage(problemKind, segment.displayName),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
-            *WebSymbolsProblemQuickFixProvider.getQuickFixes(element, symbol, segment, problemKind).toTypedArray()
+            *PolySymbolsProblemQuickFixProvider.getQuickFixes(element, symbol, segment, problemKind).toTypedArray()
           )
         )
       }.firstOrNull()

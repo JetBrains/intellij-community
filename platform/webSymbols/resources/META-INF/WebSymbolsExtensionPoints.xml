@@ -67,7 +67,7 @@
                     beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.problemQuickFixProvider"
-                    interface="com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider"
+                    interface="com.intellij.webSymbols.inspections.PolySymbolsProblemQuickFixProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.contextSourceProximityProvider"
                     interface="com.intellij.webSymbols.context.PolyContextSourceProximityProvider"

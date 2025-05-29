@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 
-interface WebSymbolsProblemQuickFixProvider {
+interface PolySymbolsProblemQuickFixProvider {
 
   fun getQuickFixes(
     element: PsiElement,
@@ -18,8 +18,8 @@ interface WebSymbolsProblemQuickFixProvider {
   ): List<LocalQuickFix>
 
   companion object {
-    val EP_NAME: ExtensionPointName<WebSymbolsProblemQuickFixProvider> =
-      ExtensionPointName<WebSymbolsProblemQuickFixProvider>("com.intellij.webSymbols.problemQuickFixProvider")
+    val EP_NAME: ExtensionPointName<PolySymbolsProblemQuickFixProvider> =
+      ExtensionPointName<PolySymbolsProblemQuickFixProvider>("com.intellij.webSymbols.problemQuickFixProvider")
 
     fun getQuickFixes(element: PsiElement, symbol: PolySymbol, segment: PolySymbolNameSegment, problemKind: WebSymbolReferenceProblem.ProblemKind): List<LocalQuickFix> =
       EP_NAME.extensionList.flatMap { it.getQuickFixes(element, symbol, segment, problemKind) }
