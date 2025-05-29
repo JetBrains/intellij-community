@@ -13,7 +13,7 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.impl.copy
 import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
+import com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.utils.coalesceWith
 import com.intellij.webSymbols.utils.isCritical
@@ -39,7 +39,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   override fun match(owner: PolySymbol?,
                      scopeStack: Stack<PolySymbolsScope>,
-                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
@@ -68,7 +68,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   override fun list(owner: PolySymbol?,
                     scopeStack: Stack<PolySymbolsScope>,
-                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     process(scopeStack, params.queryExecutor) { patterns, newSymbolsResolver, apiStatus,
                                                 isRequired, priority, proximity, repeats, _ ->
@@ -94,7 +94,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<PolySymbolsScope>,
-                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,
                         end: Int): CompletionResults =
@@ -151,7 +151,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   private fun <T> process(scopeStack: Stack<PolySymbolsScope>,
                           queryExecutor: WebSymbolsQueryExecutor,
                           action: (patterns: List<PolySymbolsPattern>,
-                                   symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                                   symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                                    patternApiStatus: PolySymbolApiStatus?,
                                    patternRequired: Boolean,
                                    patternPriority: PolySymbol.Priority?,
@@ -214,7 +214,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                   repeats: Boolean,
                                   unique: Boolean,
                                   contextStack: Stack<PolySymbolsScope>,
-                                  newSymbolsResolver: WebSymbolsPatternSymbolsResolver?): List<MatchResult> {
+                                  newSymbolsResolver: PolySymbolsPatternSymbolsResolver?): List<MatchResult> {
     // shortcut
     if (start == end) {
       // This won't work for nested patterns, but at least allow for one level of empty
@@ -244,7 +244,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                                     staticPrefixes: Set<String>,
                                     scopeStack: Stack<PolySymbolsScope>,
                                     patterns: List<PolySymbolsPattern>,
-                                    newSymbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                                    newSymbolsResolver: PolySymbolsPatternSymbolsResolver?,
                                     unique: Boolean): SmartList<Pair<Int, List<MatchResult>>> {
     val complete = SmartList<Pair<Int, List<MatchResult>>>()
     val toProcess = Stack<Pair<List<MatchResult>, List<CharSequence>>?>(null)

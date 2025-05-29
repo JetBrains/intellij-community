@@ -11,7 +11,7 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.impl.CompoundInsertHandler
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
+import com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.coalesceWith
@@ -35,7 +35,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun match(owner: PolySymbol?,
                      scopeStack: Stack<PolySymbolsScope>,
-                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
@@ -59,7 +59,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun list(owner: PolySymbol?,
                     scopeStack: Stack<PolySymbolsScope>,
-                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     process(emptyList()) { matches, pattern, _ ->
       if (matches.isEmpty()) {
@@ -77,7 +77,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<PolySymbolsScope>,
-                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,
                         end: Int): CompletionResults {
@@ -144,7 +144,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
                                         matchStart: Int,
                                         matchEnd: Int,
                                         prevResult: MatchResult?,
-                                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                                        symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                                         params: CompletionParameters): List<SequenceCompletionResult>? =
     matchResult
       ?.takeIf {
@@ -290,7 +290,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   private fun getCompletionResultsOnPattern(pattern: PolySymbolsPattern,
                                             scopeStack: Stack<PolySymbolsScope>,
-                                            symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                                            symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                                             matchResult: MatchResult?,
                                             params: CompletionParameters,
                                             matchStart: Int,

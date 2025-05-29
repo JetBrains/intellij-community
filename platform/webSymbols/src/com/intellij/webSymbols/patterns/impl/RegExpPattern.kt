@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
+import com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver
 import java.util.regex.Pattern
 
 internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : PolySymbolsPattern() {
@@ -25,7 +25,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun match(owner: PolySymbol?,
                      scopeStack: Stack<PolySymbolsScope>,
-                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> {
@@ -41,13 +41,13 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun list(owner: PolySymbol?,
                     scopeStack: Stack<PolySymbolsScope>,
-                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     emptyList()
 
   override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<PolySymbolsScope>,
-                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,
                         end: Int): CompletionResults =

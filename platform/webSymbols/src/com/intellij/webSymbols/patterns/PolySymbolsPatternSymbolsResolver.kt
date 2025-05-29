@@ -10,7 +10,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface WebSymbolsPatternSymbolsResolver {
+interface PolySymbolsPatternSymbolsResolver {
   fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
     emptySet()
 

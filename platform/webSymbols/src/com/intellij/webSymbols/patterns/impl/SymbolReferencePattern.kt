@@ -11,7 +11,7 @@ import com.intellij.webSymbols.impl.selectBest
 import com.intellij.webSymbols.impl.withDisplayName
 import com.intellij.webSymbols.impl.withOffset
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
+import com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.utils.lastPolySymbol
 import com.intellij.webSymbols.utils.nameSegments
@@ -24,7 +24,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun match(owner: PolySymbol?,
                      scopeStack: Stack<PolySymbolsScope>,
-                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> {
@@ -69,7 +69,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun list(owner: PolySymbol?,
                     scopeStack: Stack<PolySymbolsScope>,
-                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     symbolsResolver
       ?.listSymbols(scopeStack, params.queryExecutor, params.expandPatterns)
@@ -94,7 +94,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<PolySymbolsScope>,
-                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,
                         end: Int): CompletionResults =

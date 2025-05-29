@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
-import com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver
+import com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.nameMatches
@@ -22,7 +22,7 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
 
   override fun match(owner: PolySymbol?,
                      scopeStack: Stack<PolySymbolsScope>,
-                     symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                      params: MatchParameters,
                      start: Int,
                      end: Int): List<MatchResult> =
@@ -36,7 +36,7 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
 
   override fun list(owner: PolySymbol?,
                     scopeStack: Stack<PolySymbolsScope>,
-                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     if (owner != null) {
       params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
@@ -48,7 +48,7 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
 
   override fun complete(owner: PolySymbol?,
                         scopeStack: Stack<PolySymbolsScope>,
-                        symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                        symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                         params: CompletionParameters,
                         start: Int,
                         end: Int): CompletionResults =

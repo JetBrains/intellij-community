@@ -107,7 +107,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
           PatternSymbolsResolver(it)
         }
 
-  private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
+  private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) : com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver {
     override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
       setOf(PolySymbolQualifiedKind(delegate.namespace, delegate.kind))
 
@@ -164,7 +164,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
 
   }
 
-  private class PatternSymbolsResolver(val items: ListReference) : com.intellij.webSymbols.patterns.WebSymbolsPatternSymbolsResolver {
+  private class PatternSymbolsResolver(val items: ListReference) : com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver {
     override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
       items.asSequence().mapNotNull { it.getSymbolKind(context) }.toSet()
 

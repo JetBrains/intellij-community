@@ -40,17 +40,17 @@ abstract class PolySymbolsPattern internal constructor() {
 
   internal abstract fun match(owner: PolySymbol?,
                               scopeStack: Stack<PolySymbolsScope>,
-                              symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                              symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                               params: MatchParameters, start: Int, end: Int): List<MatchResult>
 
   internal abstract fun list(owner: PolySymbol?,
                              scopeStack: Stack<PolySymbolsScope>,
-                             symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                             symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                              params: ListParameters): List<ListResult>
 
   internal abstract fun complete(owner: PolySymbol?,
                                  scopeStack: Stack<PolySymbolsScope>,
-                                 symbolsResolver: WebSymbolsPatternSymbolsResolver?,
+                                 symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                                  params: CompletionParameters, start: Int, end: Int): CompletionResults
 
 }

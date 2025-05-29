@@ -14,5 +14,5 @@ data class ComplexPatternOptions(
   val proximity: Int? = null,
   val repeats: Boolean = false,
   val unique: Boolean = false,
-  val symbolsResolver: WebSymbolsPatternSymbolsResolver? = null,
+  val symbolsResolver: PolySymbolsPatternSymbolsResolver? = null,
 )
