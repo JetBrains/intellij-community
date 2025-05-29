@@ -55,7 +55,7 @@
         </configuration>
         <dependencies>
           <dependency>
-            <groupId>intellij.webSymbols</groupId>
+            <groupId>intellij.polySymbols</groupId>
             <artifactId>web-types-ext</artifactId>
             <version>1.0.0</version>
           </dependency>

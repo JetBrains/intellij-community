@@ -68,7 +68,7 @@ class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderB
       consumer = { item ->
         item.withInsertHandlerAdded(
           { insertionContext, lookupItem ->
-            // At this instant the file is already modified by LookupElement, so every PsiElement inside WebSymbolsRegistry is invalid
+            // At this instant the file is already modified by LookupElement, so every PsiElement inside PolySymbolsRegistry is invalid
             // We need freshly constructed registry to avoid PsiInvalidElementAccessException when calling runNameMatchQuery
             val freshRegistry = PolySymbolsQueryExecutorFactory.create(context,
                                                                        queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here

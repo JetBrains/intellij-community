@@ -50,7 +50,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     : PolySymbolsCompoundScope(), PolySymbolsPrioritizedScope {
 
     init {
-      assert(location !is XmlTag) { "Cannot create HtmlContextualWebSymbolsScope on a tag." }
+      assert(location !is XmlTag) { "Cannot create HtmlContextualPolySymbolsScope on a tag." }
     }
 
     override val priority: PolySymbol.Priority

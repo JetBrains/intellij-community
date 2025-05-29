@@ -15,7 +15,7 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlTokenType
 
-class WebSymbolsHtmlCompletionContributor : CompletionContributor() {
+class PolySymbolsHtmlCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
            psiElement(XmlTokenType.XML_NAME).withParent(psiElement(XmlAttribute::class.java)

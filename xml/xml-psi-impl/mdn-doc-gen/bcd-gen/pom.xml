@@ -10,7 +10,7 @@
 
   <modules>
     <module>gen</module>
-    <module>../../../../platform/webSymbols/web-types-gen/ext</module>
+    <module>../../../../platform/polySymbols/web-types-gen/ext</module>
   </modules>
   <!-- To generate POJOs for bcd run :compile target -->
   <!-- bcd.json is located in resources folder -->

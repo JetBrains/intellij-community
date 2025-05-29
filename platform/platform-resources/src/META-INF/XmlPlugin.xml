@@ -561,7 +561,7 @@
     <xml.elementDescriptorProvider
       implementation="com.intellij.html.polySymbols.elements.PolySymbolElementDescriptorsProvider"/>
     <completion.contributor language="HtmlCompatible"
-                            implementationClass="com.intellij.html.polySymbols.WebSymbolsHtmlCompletionContributor"/>
+                            implementationClass="com.intellij.html.polySymbols.PolySymbolsHtmlCompletionContributor"/>
 
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                   hostLanguage="HtmlCompatible"
