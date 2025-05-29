@@ -32,7 +32,7 @@ import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFONY
 import com.intellij.webSymbols.context.PolyContextKindRules
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.canUnwrapSymbols
-import com.intellij.webSymbols.js.WebSymbolJsKind
+import com.intellij.webSymbols.js.PolySymbolJsKind
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConverter
@@ -165,7 +165,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
           is CssPseudoClass -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is CssPseudoElement -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is JsProperty -> if (this.readOnly == true) sequenceOf(Pair(PROP_READ_ONLY, true)) else emptySequence()
-          is JsSymbol -> this.kind?.let { kind -> WebSymbolJsKind.values().firstOrNull { it.name.equals(kind.value(), true) } }
+          is JsSymbol -> this.kind?.let { kind -> PolySymbolJsKind.values().firstOrNull { it.name.equals(kind.value(), true) } }
                            ?.let { sequenceOf(Pair(PROP_KIND, it)) }
                          ?: emptySequence()
           else -> emptySequence()

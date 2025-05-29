@@ -22,7 +22,7 @@ import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.documentation.PolySymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.webSymbols.js.WebSymbolJsKind
+import com.intellij.webSymbols.js.PolySymbolJsKind
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -418,14 +418,14 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
     const val PROP_READ_ONLY: String = "read-only"
 
     /**
-     * Name of [WebSymbolJsKind] property used by `js/symbols` symbols to specify kind of the JS symbol.
-     * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
+     * Name of [PolySymbolJsKind] property used by `js/symbols` symbols to specify kind of the JS symbol.
+     * By default, JS symbol is treated as [PolySymbolJsKind.Variable].
      **/
     const val PROP_KIND: String = "kind"
 
     /**
-     * Name of [WebSymbolJsKind] property used by other symbols to specify kind of the JS symbol.
-     * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
+     * Name of [PolySymbolJsKind] property used by other symbols to specify kind of the JS symbol.
+     * By default, JS symbol is treated as [PolySymbolJsKind.Variable].
      **/
     const val PROP_JS_SYMBOL_KIND: String = "js-symbol-kind"
 
