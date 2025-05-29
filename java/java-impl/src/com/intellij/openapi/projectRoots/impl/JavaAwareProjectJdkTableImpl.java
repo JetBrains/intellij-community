@@ -65,7 +65,7 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   }
 
   /**
-   * @deprecated Bundled JDK must not be used. See IDEA-225960"
+   * @deprecated Bundled JDK must not be used. See IDEA-225960
    */
   @Deprecated(forRemoval = true)
   public @NotNull Sdk getInternalJdk() {
