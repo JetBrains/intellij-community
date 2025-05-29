@@ -12,10 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.SeItemsProvider
-import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
-import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder.Companion.initialize
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.Dispatchers
@@ -66,11 +63,15 @@ class SeProvidersHolder(
         val provider: SeItemsProvider?
         val separateTabProvider: SeItemsProvider?
 
+        val providerFactoryId = providerFactory.id.let {
+          if (it.startsWith(SeProviderIdUtils.TOP_HIT_ID)) SeProviderIdUtils.TOP_HIT_ID else it
+        }
+
         if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
-          provider = allContributors[providerFactory.id]?.let {
+          provider = allContributors[providerFactoryId]?.let {
             providerFactory.getItemsProviderCatchingOrNull(project, it)
           }
-          separateTabProvider = separateTabContributors[providerFactory.id]?.let {
+          separateTabProvider = separateTabContributors[providerFactoryId]?.let {
             providerFactory.getItemsProviderCatchingOrNull(project,it)
           }
         }
