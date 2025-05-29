@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemProjectTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside
 import com.intellij.platform.externalSystem.testFramework.toDataNode
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
@@ -36,6 +37,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.junit.Test
 import java.io.File
+import kotlin.io.path.Path
 
 class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
 
@@ -454,13 +456,13 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
         }
       }
     )
-    assertContentRoots("module", contentRoot)
+    ContentRootAssertions.assertContentRoots(project, "module", Path(contentRoot))
     applyProjectModel(
       project {
         module { }
       }
     )
-    assertContentRoots("module")
+    ContentRootAssertions.assertContentRoots(project, "module")
   }
 
   @Test
@@ -546,13 +548,6 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
       }
     }
     return null
-  }
-
-  private fun assertContentRoots(moduleName: String, vararg expectedContentRoots: String) {
-    val module = getModule(moduleName)
-    val rootManger = ModuleRootManager.getInstance(module)
-    val actualContentRoots = rootManger.contentEntries.map { contentEntry -> VfsUtilCore.urlToPath(contentEntry.url)  }
-    assertSameElements("The content roots are not equal", actualContentRoots, expectedContentRoots.toList())
   }
 
   private fun urlToPath(url: String): String {
