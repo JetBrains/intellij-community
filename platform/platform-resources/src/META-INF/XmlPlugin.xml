@@ -10,8 +10,8 @@
   <projectListeners>
     <listener class="com.intellij.codeInsight.completion.HtmlCompletionContributor$HtmlElementInTextLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
-    <listener class="com.intellij.html.webSymbols.WebSymbolHtmlContextChangeListener"
-              topic="com.intellij.webSymbols.context.WebSymbolContextChangeListener"/>
+    <listener class="com.intellij.html.webSymbols.HtmlPolyContextChangeListener"
+              topic="com.intellij.webSymbols.context.PolyContextChangeListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/XmlActions.xml"/>

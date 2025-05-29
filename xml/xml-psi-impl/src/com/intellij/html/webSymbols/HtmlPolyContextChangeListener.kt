@@ -2,9 +2,9 @@
 package com.intellij.html.webSymbols
 
 import com.intellij.javaee.ExternalResourceManager
-import com.intellij.webSymbols.context.WebSymbolContextChangeListener
+import com.intellij.webSymbols.context.PolyContextChangeListener
 
-class WebSymbolHtmlContextChangeListener: WebSymbolContextChangeListener {
+class HtmlPolyContextChangeListener: PolyContextChangeListener {
   override fun contextMayHaveChanged() {
     // Increase modification count to force reload of Xml attribute and tag descriptors
     ExternalResourceManager.getInstance().incModificationCount()

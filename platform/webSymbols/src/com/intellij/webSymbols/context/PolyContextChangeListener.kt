@@ -3,13 +3,13 @@ package com.intellij.webSymbols.context
 
 import com.intellij.util.messages.Topic
 
-fun interface WebSymbolContextChangeListener {
+fun interface PolyContextChangeListener {
 
   fun contextMayHaveChanged()
 
   companion object {
     @JvmStatic
-    val TOPIC: Topic<WebSymbolContextChangeListener> = Topic(WebSymbolContextChangeListener::class.java)
+    val TOPIC: Topic<PolyContextChangeListener> = Topic(PolyContextChangeListener::class.java)
   }
 
 }

@@ -41,7 +41,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lazyUnsafe
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
-import com.intellij.webSymbols.context.WebSymbolContextChangeListener
+import com.intellij.webSymbols.context.PolyContextChangeListener
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules.EnablementRules
@@ -434,10 +434,10 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project, priva
         previousContext.clear()
         cachedData.clear()
         thisLogger().info("Notifying that Web Symbol context may have changed due to roots changes.")
-        project.messageBus.syncPublisher(WebSymbolContextChangeListener.TOPIC).contextMayHaveChanged()
+        project.messageBus.syncPublisher(PolyContextChangeListener.TOPIC).contextMayHaveChanged()
       }
     })
-    messageBus.subscribe(WebSymbolContextChangeListener.TOPIC, WebSymbolContextChangeListener {
+    messageBus.subscribe(PolyContextChangeListener.TOPIC, PolyContextChangeListener {
       DaemonCodeAnalyzer.getInstance(project).restart()
     })
     messageBus.subscribe(VFS_CHANGES, object : BulkFileListener {
@@ -446,7 +446,7 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project, priva
         if (wsFile != null) {
           thisLogger().info("Notifying that Web Symbol context may have changed due to changes in ${wsFile.path}.")
           cs.launch {
-            project.messageBus.syncPublisher(WebSymbolContextChangeListener.TOPIC).contextMayHaveChanged()
+            project.messageBus.syncPublisher(PolyContextChangeListener.TOPIC).contextMayHaveChanged()
           }
         }
       }
