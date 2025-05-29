@@ -8,7 +8,7 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
@@ -141,7 +141,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
         base.jsonOrigin.resolveSourceSymbol(it, base.cacheHolder)
       }
 
-  final override val attributeValue: WebSymbolHtmlAttributeValue?
+  final override val attributeValue: PolySymbolHtmlAttributeValue?
     get() = (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
       .plus(superContributions.asSequence().map { it.attributeValue })
       .merge()
@@ -198,11 +198,11 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   override fun matchContext(context: PolyContext): Boolean =
     super.matchContext(context) && base.contribution.requiredContext.evaluate(context)
 
-  private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : WebSymbolHtmlAttributeValue {
-    override val kind: WebSymbolHtmlAttributeValue.Kind?
+  private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : PolySymbolHtmlAttributeValue {
+    override val kind: PolySymbolHtmlAttributeValue.Kind?
       get() = value.kind?.wrap()
 
-    override val type: WebSymbolHtmlAttributeValue.Type?
+    override val type: PolySymbolHtmlAttributeValue.Type?
       get() = value.type?.wrap()
 
     override val required: Boolean?

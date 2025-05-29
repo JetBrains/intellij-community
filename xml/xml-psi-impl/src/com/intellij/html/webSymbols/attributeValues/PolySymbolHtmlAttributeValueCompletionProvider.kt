@@ -12,7 +12,7 @@ import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue.Type
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue.Type
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttributeValue>() {

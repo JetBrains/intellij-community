@@ -30,7 +30,7 @@ import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_RUBY_GE
 import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_NODE_PACKAGES
 import com.intellij.webSymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
 import com.intellij.webSymbols.context.PolyContextKindRules
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.query.PolySymbolMatch
@@ -371,16 +371,16 @@ internal val WebTypes.descriptionMarkupWithLegacy: WebTypes.DescriptionMarkup?
         }
       }
 
-internal fun HtmlValueType.wrap(): WebSymbolHtmlAttributeValue.Type? =
+internal fun HtmlValueType.wrap(): PolySymbolHtmlAttributeValue.Type? =
   when (this.value) {
-    "enum" -> WebSymbolHtmlAttributeValue.Type.ENUM
-    "symbol" -> WebSymbolHtmlAttributeValue.Type.SYMBOL
-    "of-match" -> WebSymbolHtmlAttributeValue.Type.OF_MATCH
-    "string" -> WebSymbolHtmlAttributeValue.Type.STRING
-    "boolean" -> WebSymbolHtmlAttributeValue.Type.BOOLEAN
-    "number" -> WebSymbolHtmlAttributeValue.Type.NUMBER
+    "enum" -> PolySymbolHtmlAttributeValue.Type.ENUM
+    "symbol" -> PolySymbolHtmlAttributeValue.Type.SYMBOL
+    "of-match" -> PolySymbolHtmlAttributeValue.Type.OF_MATCH
+    "string" -> PolySymbolHtmlAttributeValue.Type.STRING
+    "boolean" -> PolySymbolHtmlAttributeValue.Type.BOOLEAN
+    "number" -> PolySymbolHtmlAttributeValue.Type.NUMBER
     null -> null
-    else -> WebSymbolHtmlAttributeValue.Type.COMPLEX
+    else -> PolySymbolHtmlAttributeValue.Type.COMPLEX
   }
 
 internal fun HtmlValueType.toLangType(): List<Type>? =
@@ -392,11 +392,11 @@ internal fun HtmlValueType.toLangType(): List<Type>? =
     else -> null
   }
 
-internal fun HtmlAttributeValue.Kind.wrap(): WebSymbolHtmlAttributeValue.Kind =
+internal fun HtmlAttributeValue.Kind.wrap(): PolySymbolHtmlAttributeValue.Kind =
   when (this) {
-    HtmlAttributeValue.Kind.NO_VALUE -> WebSymbolHtmlAttributeValue.Kind.NO_VALUE
-    HtmlAttributeValue.Kind.PLAIN -> WebSymbolHtmlAttributeValue.Kind.PLAIN
-    HtmlAttributeValue.Kind.EXPRESSION -> WebSymbolHtmlAttributeValue.Kind.EXPRESSION
+    HtmlAttributeValue.Kind.NO_VALUE -> PolySymbolHtmlAttributeValue.Kind.NO_VALUE
+    HtmlAttributeValue.Kind.PLAIN -> PolySymbolHtmlAttributeValue.Kind.PLAIN
+    HtmlAttributeValue.Kind.EXPRESSION -> PolySymbolHtmlAttributeValue.Kind.EXPRESSION
   }
 
 internal fun GenericHtmlContribution.copyLegacyFrom(other: BaseContribution) {

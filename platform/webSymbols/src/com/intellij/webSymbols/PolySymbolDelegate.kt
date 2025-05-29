@@ -11,7 +11,7 @@ import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.documentation.PolySymbolDocumentation
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
@@ -66,7 +66,7 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
     get() = delegate.proximity
   override val type: Any?
     get() = delegate.type
-  override val attributeValue: WebSymbolHtmlAttributeValue?
+  override val attributeValue: PolySymbolHtmlAttributeValue?
     get() = delegate.attributeValue
   override val pattern: WebSymbolsPattern?
     get() = delegate.pattern

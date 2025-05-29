@@ -13,7 +13,7 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.PolySymbol.Priority
 import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.documentation.PolySymbolDocumentationTarget
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolMatchBuilder
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
@@ -92,7 +92,7 @@ internal open class PolySymbolMatchImpl private constructor(
     get() = reversedSegments().flatMap { it.symbols }
       .mapNotNull { it.type }.firstOrNull()
 
-  override val attributeValue: WebSymbolHtmlAttributeValue?
+  override val attributeValue: PolySymbolHtmlAttributeValue?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.attributeValue }.merge()
 
   override val required: Boolean?

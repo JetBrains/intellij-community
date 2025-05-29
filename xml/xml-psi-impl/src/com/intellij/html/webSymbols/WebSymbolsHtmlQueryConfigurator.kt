@@ -22,7 +22,7 @@ import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTE_VALUES
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.context.PolyContext
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.utils.match
 import com.intellij.xml.XmlAttributeDescriptor
@@ -258,15 +258,15 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     override val source: PsiElement?
       get() = descriptor.declaration
 
-    override val attributeValue: WebSymbolHtmlAttributeValue
+    override val attributeValue: PolySymbolHtmlAttributeValue
       get() {
         val isBooleanAttribute = HtmlUtil.isBooleanAttribute(descriptor, null)
-        return WebSymbolHtmlAttributeValue.create(
+        return PolySymbolHtmlAttributeValue.create(
           null,
           when {
-            isBooleanAttribute -> WebSymbolHtmlAttributeValue.Type.BOOLEAN
-            descriptor.isEnumerated -> WebSymbolHtmlAttributeValue.Type.ENUM
-            else -> WebSymbolHtmlAttributeValue.Type.STRING
+            isBooleanAttribute -> PolySymbolHtmlAttributeValue.Type.BOOLEAN
+            descriptor.isEnumerated -> PolySymbolHtmlAttributeValue.Type.ENUM
+            else -> PolySymbolHtmlAttributeValue.Type.STRING
           },
           !isBooleanAttribute,
           descriptor.defaultValue,

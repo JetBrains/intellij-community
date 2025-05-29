@@ -21,7 +21,7 @@ import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.documentation.PolySymbolDocumentation
 import com.intellij.webSymbols.documentation.PolySymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.PolySymbolDocumentationTargetImpl
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.WebSymbolJsKind
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.PolySymbolMatch
@@ -145,7 +145,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
   /**
    * A special property to support symbols representing HTML attributes.
    */
-  val attributeValue: WebSymbolHtmlAttributeValue?
+  val attributeValue: PolySymbolHtmlAttributeValue?
     get() = null
 
   /**

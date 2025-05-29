@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolNameSegment
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.utils.completeMatch
 import com.intellij.webSymbols.utils.nameSegments
 import java.util.Locale
@@ -22,7 +22,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
     when (value) {
       is PolySymbolCodeCompletionItem -> builder.printCodeCompletionItem(level, value)
       is PolySymbol -> builder.printSymbol(level, value)
-      is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
+      is PolySymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
       is PolySymbolNameSegment -> builder.printSegment(level, value)
       is PolySymbolApiStatus -> builder.printApiStatus(value)
       is Set<*> -> builder.printSet(value)
@@ -107,7 +107,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       }
     }
 
-  private fun StringBuilder.printAttributeValue(topLevel: Int, value: WebSymbolHtmlAttributeValue): StringBuilder =
+  private fun StringBuilder.printAttributeValue(topLevel: Int, value: PolySymbolHtmlAttributeValue): StringBuilder =
     printObject(topLevel) { level ->
       printProperty(level, "kind", value.kind)
         .printProperty(level, "type", value.type)

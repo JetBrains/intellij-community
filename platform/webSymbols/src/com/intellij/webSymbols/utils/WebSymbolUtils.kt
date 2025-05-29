@@ -19,7 +19,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
 import com.intellij.webSymbols.impl.withOffset
@@ -314,16 +314,16 @@ fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> PolySym
 fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> PolySymbolApiStatus?): PolySymbolApiStatus =
   sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) } ?: PolySymbolApiStatus.Stable
 
-fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue? {
-  var kind: WebSymbolHtmlAttributeValue.Kind? = null
-  var type: WebSymbolHtmlAttributeValue.Type? = null
+fun Sequence<PolySymbolHtmlAttributeValue?>.merge(): PolySymbolHtmlAttributeValue? {
+  var kind: PolySymbolHtmlAttributeValue.Kind? = null
+  var type: PolySymbolHtmlAttributeValue.Type? = null
   var required: Boolean? = null
   var default: String? = null
   var langType: Any? = null
 
   for (value in this) {
     if (value == null) continue
-    if (kind == null || kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
+    if (kind == null || kind == PolySymbolHtmlAttributeValue.Kind.PLAIN) {
       kind = value.kind
     }
     if (type == null) {
@@ -344,7 +344,7 @@ fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue?
              || required != null
              || langType != null
              || default != null)
-    WebSymbolHtmlAttributeValue.create(kind, type, required, default, langType)
+    PolySymbolHtmlAttributeValue.create(kind, type, required, default, langType)
   else null
 }
 

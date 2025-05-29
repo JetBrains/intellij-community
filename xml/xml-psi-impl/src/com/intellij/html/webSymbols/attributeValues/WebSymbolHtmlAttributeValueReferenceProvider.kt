@@ -7,8 +7,8 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue.Type
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue.Type
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.utils.asSingleSymbol
@@ -22,7 +22,7 @@ class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvid
     val attribute = psiElement.parentOfType<XmlAttribute>()
     val attributeDescriptor = attribute?.descriptor?.asSafely<WebSymbolAttributeDescriptor>() ?: return null
     val type = attributeDescriptor.symbol.attributeValue
-                 ?.takeIf { it.kind == null || it.kind == WebSymbolHtmlAttributeValue.Kind.PLAIN }
+                 ?.takeIf { it.kind == null || it.kind == PolySymbolHtmlAttributeValue.Kind.PLAIN }
                  ?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
                ?: return null
     val name = psiElement.value.takeIf { it.isNotEmpty() } ?: return null

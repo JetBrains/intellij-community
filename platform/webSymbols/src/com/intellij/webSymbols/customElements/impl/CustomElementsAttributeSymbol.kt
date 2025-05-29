@@ -7,7 +7,7 @@ import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.json.Attribute
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 
 class CustomElementsAttributeSymbol private constructor(
   name: String,
@@ -24,9 +24,9 @@ class CustomElementsAttributeSymbol private constructor(
   override val defaultValue: String?
     get() = contribution.default
 
-  override val attributeValue: WebSymbolHtmlAttributeValue?
-    get() = WebSymbolHtmlAttributeValue.create(
-      type = if (type != null) WebSymbolHtmlAttributeValue.Type.OF_MATCH else null,
+  override val attributeValue: PolySymbolHtmlAttributeValue?
+    get() = PolySymbolHtmlAttributeValue.create(
+      type = if (type != null) PolySymbolHtmlAttributeValue.Type.OF_MATCH else null,
       default = contribution.default,
     ).takeIf { it.type != null || it.default != null }
 

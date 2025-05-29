@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import javax.swing.Icon
 
@@ -90,8 +90,8 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
     ): WebSymbolHtmlAttributeInfo {
       val typeSupport = symbol.origin.typeSupport as? PolySymbolHtmlAttributeValueTypeSupport
       val attrValue = symbol.attributeValue
-      val kind = attrValue?.kind ?: WebSymbolHtmlAttributeValue.Kind.PLAIN
-      val type = attrValue?.type ?: WebSymbolHtmlAttributeValue.Type.STRING
+      val kind = attrValue?.kind ?: PolySymbolHtmlAttributeValue.Kind.PLAIN
+      val type = attrValue?.type ?: PolySymbolHtmlAttributeValue.Type.STRING
 
       val isRequired = symbol.required ?: false
       val priority = symbol.priority ?: PolySymbol.Priority.NORMAL
@@ -99,50 +99,50 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
       val defaultValue = attrValue?.default
       val langType = if (typeSupport != null)
         when (type) {
-          WebSymbolHtmlAttributeValue.Type.STRING -> typeSupport.createStringType(symbol)
-          WebSymbolHtmlAttributeValue.Type.BOOLEAN -> typeSupport.createBooleanType(symbol)
-          WebSymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
-          WebSymbolHtmlAttributeValue.Type.ENUM -> {
+          PolySymbolHtmlAttributeValue.Type.STRING -> typeSupport.createStringType(symbol)
+          PolySymbolHtmlAttributeValue.Type.BOOLEAN -> typeSupport.createBooleanType(symbol)
+          PolySymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
+          PolySymbolHtmlAttributeValue.Type.ENUM -> {
             val valuesSymbols = queryExecutor.runCodeCompletionQuery(
               PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, additionalScope = listOf(symbol))
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
-          WebSymbolHtmlAttributeValue.Type.SYMBOL -> null
-          WebSymbolHtmlAttributeValue.Type.OF_MATCH -> symbol.type
-          WebSymbolHtmlAttributeValue.Type.COMPLEX -> attrValue?.langType
+          PolySymbolHtmlAttributeValue.Type.SYMBOL -> null
+          PolySymbolHtmlAttributeValue.Type.OF_MATCH -> symbol.type
+          PolySymbolHtmlAttributeValue.Type.COMPLEX -> attrValue?.langType
         }
       else null
 
-      val isHtmlBoolean = if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN)
-        if (type == WebSymbolHtmlAttributeValue.Type.BOOLEAN)
+      val isHtmlBoolean = if (kind == PolySymbolHtmlAttributeValue.Kind.PLAIN)
+        if (type == PolySymbolHtmlAttributeValue.Type.BOOLEAN)
           ThreeState.YES
         else
           typeSupport?.isBoolean(symbol, langType, context) ?: ThreeState.YES
       else
         ThreeState.NO
-      val valueRequired = attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
+      val valueRequired = attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != PolySymbolHtmlAttributeValue.Kind.NO_VALUE
       val acceptsNoValue = !valueRequired
-      val acceptsValue = kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE
+      val acceptsValue = kind != PolySymbolHtmlAttributeValue.Kind.NO_VALUE
 
       val enumValues =
         if (isHtmlBoolean == ThreeState.YES) {
           listOf(PolySymbolCodeCompletionItem.create(name))
         }
-        else if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN) {
+        else if (kind == PolySymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {
-            WebSymbolHtmlAttributeValue.Type.ENUM -> {
+            PolySymbolHtmlAttributeValue.Type.ENUM -> {
               queryExecutor.runCodeCompletionQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0,
                                                    additionalScope = listOf(symbol))
                 .filter { !it.completeAfterInsert }
             }
-            WebSymbolHtmlAttributeValue.Type.COMPLEX,
-            WebSymbolHtmlAttributeValue.Type.OF_MATCH -> typeSupport?.getEnumValues(symbol, langType)
+            PolySymbolHtmlAttributeValue.Type.COMPLEX,
+            PolySymbolHtmlAttributeValue.Type.OF_MATCH -> typeSupport?.getEnumValues(symbol, langType)
             else -> null
           }
         }
         else null
 
-      val strictEnumValues = type == WebSymbolHtmlAttributeValue.Type.ENUM || typeSupport?.strictEnumValues(symbol, langType) == true
+      val strictEnumValues = type == PolySymbolHtmlAttributeValue.Type.ENUM || typeSupport?.strictEnumValues(symbol, langType) == true
 
       return WebSymbolHtmlAttributeInfoImpl(name, symbol, acceptsNoValue, acceptsValue,
                                             enumValues, strictEnumValues, langType, icon, isRequired,

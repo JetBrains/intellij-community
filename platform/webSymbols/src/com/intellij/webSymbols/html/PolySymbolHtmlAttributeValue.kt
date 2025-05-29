@@ -2,15 +2,15 @@
 package com.intellij.webSymbols.html
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.webSymbols.html.impl.WebSymbolHtmlAttributeValueImpl
+import com.intellij.webSymbols.html.impl.PolySymbolHtmlAttributeValueImpl
 import com.intellij.webSymbols.query.PolySymbolMatch
 
 /**
  * An interface holding information about Web Symbol HTML attribute value.
  *
  * It can provide information about:
- * - kind ([WebSymbolHtmlAttributeValue.Kind]: `PLAIN`, `EXPRESSION`, `NO_VALUE`),
- * - type ([WebSymbolHtmlAttributeValue.Type]: `BOOLEAN`, `NUMBER`, `STRING`, `ENUM`, `SYMBOL`, `COMPLEX`, `OF_MATCH`),
+ * - kind ([PolySymbolHtmlAttributeValue.Kind]: `PLAIN`, `EXPRESSION`, `NO_VALUE`),
+ * - type ([PolySymbolHtmlAttributeValue.Type]: `BOOLEAN`, `NUMBER`, `STRING`, `ENUM`, `SYMBOL`, `COMPLEX`, `OF_MATCH`),
  * - whether the attribute value is required,
  * - a default value
  * - the expected result type of value expression in the appropriate language. If `COMPLEX` type is set,
@@ -25,7 +25,7 @@ import com.intellij.webSymbols.query.PolySymbolMatch
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface WebSymbolHtmlAttributeValue {
+interface PolySymbolHtmlAttributeValue {
   /**
    * Default: `PLAIN`
    */
@@ -50,7 +50,7 @@ interface WebSymbolHtmlAttributeValue {
            type: Type? = null,
            required: Boolean? = null,
            default: String? = null,
-           langType: Any? = null): WebSymbolHtmlAttributeValue =
+           langType: Any? = null): PolySymbolHtmlAttributeValue =
     create(kind ?: this.kind, type ?: this.type,
            required ?: this.required, default ?: this.default,
            langType ?: this.langType)
@@ -82,8 +82,8 @@ interface WebSymbolHtmlAttributeValue {
                type: Type? = null,
                required: Boolean? = null,
                default: String? = null,
-               langType: Any? = null): WebSymbolHtmlAttributeValue =
-      WebSymbolHtmlAttributeValueImpl(kind, type, required, default, langType)
+               langType: Any? = null): PolySymbolHtmlAttributeValue =
+      PolySymbolHtmlAttributeValueImpl(kind, type, required, default, langType)
   }
 
 }
