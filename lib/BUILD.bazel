@@ -8435,8 +8435,8 @@ jvm_import(
 
 jvm_import(
   name = "pty4j",
-  jar = "@pty4j-0_13_4_http//file",
-  source_jar = "@pty4j-0_13_4-sources_http//file",
+  jar = "@pty4j-0_13_5_http//file",
+  source_jar = "@pty4j-0_13_5-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
