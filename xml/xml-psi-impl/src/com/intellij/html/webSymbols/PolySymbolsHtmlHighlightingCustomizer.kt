@@ -9,9 +9,9 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
-import com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer
+import com.intellij.webSymbols.highlighting.PolySymbolHighlightingCustomizer
 
-class WebSymbolsHtmlHighlightingCustomizer: WebSymbolHighlightingCustomizer {
+class PolySymbolsHtmlHighlightingCustomizer: PolySymbolHighlightingCustomizer {
   override fun getSymbolKindTextAttributes(qualifiedKind: PolySymbolQualifiedKind): TextAttributesKey? =
     when(qualifiedKind) {
       PolySymbol.HTML_ATTRIBUTES -> XmlHighlighterColors.HTML_ATTRIBUTE_NAME

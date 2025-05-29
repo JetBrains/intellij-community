@@ -550,7 +550,7 @@
 
     <webSymbols.highlightingCustomizer
       id="html"
-      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlHighlightingCustomizer"/>
+      implementation="com.intellij.html.webSymbols.PolySymbolsHtmlHighlightingCustomizer"/>
     <webSymbols.queryConfigurator
       implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator"/>
     <webSymbols.codeCompletionItemCustomizer

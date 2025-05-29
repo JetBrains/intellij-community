@@ -35,7 +35,7 @@ import com.intellij.webSymbols.PolySymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsBundle
 import com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider
-import com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer
+import com.intellij.webSymbols.highlighting.PolySymbolHighlightingCustomizer
 import com.intellij.webSymbols.highlighting.newSilentAnnotationWithDebugInfo
 import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.highlightingEnd
@@ -96,7 +96,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
 
     val queue = LinkedList(topLevelSymbols.map {
       SegmentHighlightingInfo(PolySymbolNameSegment.create(it), offsetInFile, 0, null,
-                              WebSymbolHighlightingCustomizer.getDefaultHostTextAttributes(host), emptyList())
+                              PolySymbolHighlightingCustomizer.getDefaultHostTextAttributes(host), emptyList())
     })
     val processedSymbols = mutableSetOf<PolySymbol>()
     while (queue.isNotEmpty()) {
@@ -107,7 +107,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
       if (symbols.isEmpty()) {
         val segmentKind = nameSegment.symbolKinds.singleOrNull()
         if (nameSegment.problem == MatchProblem.UNKNOWN_SYMBOL && segmentKind != null) {
-          WebSymbolHighlightingCustomizer.getTextAttributesFor(segmentKind)
+          PolySymbolHighlightingCustomizer.getTextAttributesFor(segmentKind)
             ?.takeIf { it != parentTextAttributesKey }
             ?.let {
               result.putValue(range, Pair(depth, it))
@@ -123,7 +123,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
         val textAttributesKey = symbols.asSequence()
           .filter { !it.extension }
           .mapNotNull { symbol ->
-            WebSymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
+            PolySymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
               ?.let { return@mapNotNull it }
 
             symbol.properties[PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]?.asSafely<String>()
@@ -131,7 +131,7 @@ class WebSymbolsHighlightingAnnotator : Annotator {
               ?.let { return@mapNotNull it }
 
             if (symbol.qualifiedKind != parentKind)
-              WebSymbolHighlightingCustomizer.getTextAttributesFor(symbol.qualifiedKind)
+              PolySymbolHighlightingCustomizer.getTextAttributesFor(symbol.qualifiedKind)
                 ?.let { return@mapNotNull it }
             null
           }

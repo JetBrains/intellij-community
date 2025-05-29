@@ -7,7 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 
-interface WebSymbolHighlightingCustomizer {
+interface PolySymbolHighlightingCustomizer {
 
   fun getSymbolKindTextAttributes(qualifiedKind: PolySymbolQualifiedKind): TextAttributesKey? = null
 
@@ -17,14 +17,14 @@ interface WebSymbolHighlightingCustomizer {
 
   companion object {
 
-    internal val EP_NAME: ExtensionPointName<WebSymbolHighlightingCustomizer> =
-      ExtensionPointName<WebSymbolHighlightingCustomizer>("com.intellij.webSymbols.highlightingCustomizer")
+    internal val EP_NAME: ExtensionPointName<PolySymbolHighlightingCustomizer> =
+      ExtensionPointName<PolySymbolHighlightingCustomizer>("com.intellij.webSymbols.highlightingCustomizer")
 
     internal fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: PolySymbol, level: Int): TextAttributesKey? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolTextAttributes(host, symbol, level) }
 
     internal fun getTextAttributesFor(kind: PolySymbolQualifiedKind): TextAttributesKey? =
-      EP_NAME.computeIfAbsent(kind, WebSymbolHighlightingCustomizer::class.java) { kind ->
+      EP_NAME.computeIfAbsent(kind, PolySymbolHighlightingCustomizer::class.java) { kind ->
         listOfNotNull(EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolKindTextAttributes(kind) })
       }.firstOrNull()
 

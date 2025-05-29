@@ -73,7 +73,7 @@
                     interface="com.intellij.webSymbols.context.PolyContextSourceProximityProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.highlightingCustomizer"
-                    interface="com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer"
+                    interface="com.intellij.webSymbols.highlighting.PolySymbolHighlightingCustomizer"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
