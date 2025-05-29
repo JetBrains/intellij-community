@@ -95,6 +95,7 @@ class MPSProperties : JetBrainsProductProperties() {
             layout.withProjectLibrary("jackson-jr-objects", LibraryPackMode.MERGED) // for Marketplace plugin (needed by Settings Sync)
             layout.withoutProjectLibrary("Ant")
             layout.withoutProjectLibrary("Gradle")
+            layout.withProjectLibrary("maven-resolver-provider", LibraryPackMode.STANDALONE_MERGED)
         }
 
         modulesToCompileTests = persistentListOf(
