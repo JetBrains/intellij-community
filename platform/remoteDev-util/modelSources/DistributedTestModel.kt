@@ -16,9 +16,10 @@ object DistributedTestModel : Ext(TestRoot) {
     field("launchNumber", int)
     field("agentType", RdAgentType)
     field("productType", RdProductType)
+    field("testIdeProductCode", string)
     field("testQualifiedClassName", string)
     field("testMethodNonParameterizedName", string)
-    field("testMethodWithParameterName", string)
+    field("testMethodParametersArrayString", string)
   }
 
   private val RdAgentType = enum {

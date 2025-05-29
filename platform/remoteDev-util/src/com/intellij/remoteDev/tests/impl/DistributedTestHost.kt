@@ -168,13 +168,15 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           val testClass = Class.forName(testQualifiedClassName, true, testPlugin.pluginClassLoader)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
-          val testMethod = testClass.getMethod(testMethodNonParameterizedName)
+          val testMethod = testClass.declaredMethods.filter { it.name == testMethodNonParameterizedName }
+                             .singleOrNull { it.annotations.isNotEmpty() }
+                           ?: error("Test method '$testMethodNonParameterizedName' is not found. Available methods: ${testClass.declaredMethods.joinToString(",")}")
 
           // Tell test we are running it inside an agent
           val actionsMap = testClassObject.initAgent(session.rdAgentInfo, testMethod)
 
           // Play test method
-          testMethod.invoke(testClassObject)
+          testClassObject.invokeTestMethod(testMethod)
 
           suspend fun <T> runNext(
             actionTitle: String,

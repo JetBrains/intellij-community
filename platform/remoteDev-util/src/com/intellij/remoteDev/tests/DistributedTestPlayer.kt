@@ -12,4 +12,5 @@ import java.util.*
 @ApiStatus.Internal
 interface DistributedTestPlayer {
   fun initAgent(agent: RdAgentInfo, method: Method): Map<String, Queue<AgentAction>>
+  fun invokeTestMethod(testMethod: Method)
 }

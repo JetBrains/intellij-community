@@ -58,7 +58,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = -6488532346478782678L
+        const val serializationHash = 1161112409833170567L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -110,9 +110,10 @@ data class RdAgentInfo (
     val launchNumber: Int,
     val agentType: RdAgentType,
     val productType: RdProductType,
+    val testIdeProductCode: String,
     val testQualifiedClassName: String,
     val testMethodNonParameterizedName: String,
-    val testMethodWithParameterName: String
+    val testMethodParametersArrayString: String
 ) : IPrintable {
     //companion
     
@@ -126,10 +127,11 @@ data class RdAgentInfo (
             val launchNumber = buffer.readInt()
             val agentType = buffer.readEnum<RdAgentType>()
             val productType = buffer.readEnum<RdProductType>()
+            val testIdeProductCode = buffer.readString()
             val testQualifiedClassName = buffer.readString()
             val testMethodNonParameterizedName = buffer.readString()
-            val testMethodWithParameterName = buffer.readString()
-            return RdAgentInfo(id, launchNumber, agentType, productType, testQualifiedClassName, testMethodNonParameterizedName, testMethodWithParameterName)
+            val testMethodParametersArrayString = buffer.readString()
+            return RdAgentInfo(id, launchNumber, agentType, productType, testIdeProductCode, testQualifiedClassName, testMethodNonParameterizedName, testMethodParametersArrayString)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentInfo)  {
@@ -137,9 +139,10 @@ data class RdAgentInfo (
             buffer.writeInt(value.launchNumber)
             buffer.writeEnum(value.agentType)
             buffer.writeEnum(value.productType)
+            buffer.writeString(value.testIdeProductCode)
             buffer.writeString(value.testQualifiedClassName)
             buffer.writeString(value.testMethodNonParameterizedName)
-            buffer.writeString(value.testMethodWithParameterName)
+            buffer.writeString(value.testMethodParametersArrayString)
         }
         
         
@@ -159,9 +162,10 @@ data class RdAgentInfo (
         if (launchNumber != other.launchNumber) return false
         if (agentType != other.agentType) return false
         if (productType != other.productType) return false
+        if (testIdeProductCode != other.testIdeProductCode) return false
         if (testQualifiedClassName != other.testQualifiedClassName) return false
         if (testMethodNonParameterizedName != other.testMethodNonParameterizedName) return false
-        if (testMethodWithParameterName != other.testMethodWithParameterName) return false
+        if (testMethodParametersArrayString != other.testMethodParametersArrayString) return false
         
         return true
     }
@@ -172,9 +176,10 @@ data class RdAgentInfo (
         __r = __r*31 + launchNumber.hashCode()
         __r = __r*31 + agentType.hashCode()
         __r = __r*31 + productType.hashCode()
+        __r = __r*31 + testIdeProductCode.hashCode()
         __r = __r*31 + testQualifiedClassName.hashCode()
         __r = __r*31 + testMethodNonParameterizedName.hashCode()
-        __r = __r*31 + testMethodWithParameterName.hashCode()
+        __r = __r*31 + testMethodParametersArrayString.hashCode()
         return __r
     }
     //pretty print
@@ -185,9 +190,10 @@ data class RdAgentInfo (
             print("launchNumber = "); launchNumber.print(printer); println()
             print("agentType = "); agentType.print(printer); println()
             print("productType = "); productType.print(printer); println()
+            print("testIdeProductCode = "); testIdeProductCode.print(printer); println()
             print("testQualifiedClassName = "); testQualifiedClassName.print(printer); println()
             print("testMethodNonParameterizedName = "); testMethodNonParameterizedName.print(printer); println()
-            print("testMethodWithParameterName = "); testMethodWithParameterName.print(printer); println()
+            print("testMethodParametersArrayString = "); testMethodParametersArrayString.print(printer); println()
         }
         printer.print(")")
     }
