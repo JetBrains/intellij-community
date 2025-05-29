@@ -10,7 +10,7 @@
   <projectListeners>
     <listener class="com.intellij.codeInsight.completion.HtmlCompletionContributor$HtmlElementInTextLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
-    <listener class="com.intellij.html.webSymbols.HtmlPolyContextChangeListener"
+    <listener class="com.intellij.html.polySymbols.HtmlPolyContextChangeListener"
               topic="com.intellij.polySymbols.context.PolyContextChangeListener"/>
   </projectListeners>
 
@@ -532,7 +532,7 @@
     <spellchecker.support language="XML" implementationClass="com.intellij.spellchecker.xml.XmlSpellcheckingStrategy" id="xml"/>
 
 
-    <multiHostInjector implementation="com.intellij.html.webSymbols.PolySymbolsHtmlTextInjector"
+    <multiHostInjector implementation="com.intellij.html.polySymbols.PolySymbolsHtmlTextInjector"
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="WebSymbolsHtmlText"/>
 
@@ -550,30 +550,30 @@
 
     <polySymbols.highlightingCustomizer
       id="html"
-      implementation="com.intellij.html.webSymbols.PolySymbolsHtmlHighlightingCustomizer"/>
+      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlHighlightingCustomizer"/>
     <polySymbols.queryConfigurator
-      implementation="com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator"/>
+      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator"/>
     <polySymbols.codeCompletionItemCustomizer
       id="html"
-      implementation="com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
+      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
-      implementation="com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptorsProvider"/>
+      implementation="com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptorsProvider"/>
     <xml.elementDescriptorProvider
-      implementation="com.intellij.html.webSymbols.elements.PolySymbolElementDescriptorsProvider"/>
+      implementation="com.intellij.html.polySymbols.elements.PolySymbolElementDescriptorsProvider"/>
     <completion.contributor language="HtmlCompatible"
-                            implementationClass="com.intellij.html.webSymbols.WebSymbolsHtmlCompletionContributor"/>
+                            implementationClass="com.intellij.html.polySymbols.WebSymbolsHtmlCompletionContributor"/>
 
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                   hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.webSymbols.elements.PolySymbolInTagNameRefProvider"/>
+                                  implementationClass="com.intellij.html.polySymbols.elements.PolySymbolInTagNameRefProvider"/>
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
                                   hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.webSymbols.attributes.PolySymbolInAttributeNameRefProvider"/>
+                                  implementationClass="com.intellij.html.polySymbols.attributes.PolySymbolInAttributeNameRefProvider"/>
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
                                   hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.webSymbols.attributeValues.PolySymbolHtmlAttributeValueReferenceProvider"/>
-    <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlPolySymbolRenameHandlerVeto"/>
-    <xml.xmlExtension implementation="com.intellij.html.webSymbols.PolySymbolsXmlExtension" id="web-symbols"
+                                  implementationClass="com.intellij.html.polySymbols.attributeValues.PolySymbolHtmlAttributeValueReferenceProvider"/>
+    <vetoRenameCondition implementation="com.intellij.html.polySymbols.HtmlPolySymbolRenameHandlerVeto"/>
+    <xml.xmlExtension implementation="com.intellij.html.polySymbols.PolySymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>
 
     <xml.autoPopupEnabler implementation="com.intellij.xml.microservices.UrlReferencesXmlAutoPopupEnabler"/>
