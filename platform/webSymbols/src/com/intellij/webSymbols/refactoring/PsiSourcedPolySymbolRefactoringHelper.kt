@@ -11,7 +11,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference
 import com.intellij.webSymbols.search.PsiSourcedWebSymbolReference.RenameHandler
 
-private class PsiSourcedWebSymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
+private class PsiSourcedPolySymbolRefactoringHelper : RefactoringHelper<List<RenameHandler>> {
   override fun prepareOperation(usages: Array<out UsageInfo>, elements: List<PsiElement>): List<RenameHandler> =
     usages.mapNotNull { (it.reference as? PsiSourcedWebSymbolReference)?.createRenameHandler() }
 

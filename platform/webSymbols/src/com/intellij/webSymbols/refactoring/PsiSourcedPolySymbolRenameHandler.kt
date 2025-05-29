@@ -16,7 +16,7 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 
-private class PsiSourcedWebSymbolRenameHandler : RenameHandler, TitledHandler {
+private class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
 
   private var symbol: PsiSourcedPolySymbol? = null
 
