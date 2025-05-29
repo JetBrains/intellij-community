@@ -93,6 +93,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private String myExePath;
   private @Nullable Path myWorkingDirectory;
   private final Map<String, String> myEnvParams = new MyMap();
+  private final Map<String, String> myWSLEnvTranslations = new MyMap();
   private ParentEnvironmentType myParentEnvironmentType = ParentEnvironmentType.CONSOLE;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = defaultCharset();
@@ -216,6 +217,10 @@ public class GeneralCommandLine implements UserDataHolder {
     return myEnvParams;
   }
 
+  public @NotNull Map<String, String> getWSLEnvTranslations() {
+    return myWSLEnvTranslations;
+  }
+
   public @NotNull GeneralCommandLine withEnvironment(@Nullable Map<String, String> environment) {
     if (environment != null) {
       getEnvironment().putAll(environment);
@@ -226,6 +231,14 @@ public class GeneralCommandLine implements UserDataHolder {
   public @NotNull GeneralCommandLine withEnvironment(@NotNull String key, @NotNull String value) {
     getEnvironment().put(key, value);
     return this;
+  }
+
+  // https://learn.microsoft.com/en-us/windows/wsl/filesystems#wslenv-flags
+  public @NotNull GeneralCommandLine withEnvironment(@NotNull String key, @NotNull String value, @Nullable String wslEnvTranslation) {
+    if (wslEnvTranslation != null) {
+      getWSLEnvTranslations().put(key, wslEnvTranslation);
+    }
+    return withEnvironment(key, value);
   }
 
   public boolean isPassParentEnvironment() {

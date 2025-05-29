@@ -40,6 +40,7 @@ c:com.intellij.execution.configurations.GeneralCommandLine
 - getPreparedCommandLine():java.lang.String
 - getPreparedCommandLine(com.intellij.execution.Platform):java.lang.String
 - getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- getWSLEnvTranslations():java.util.Map
 - getWorkDirectory():java.io.File
 - getWorkingDirectory():java.nio.file.Path
 - s:inescapableQuote(java.lang.String):java.lang.String
@@ -58,6 +59,7 @@ c:com.intellij.execution.configurations.GeneralCommandLine
 - toProcessBuilder():java.lang.ProcessBuilder
 - withCharset(java.nio.charset.Charset):com.intellij.execution.configurations.GeneralCommandLine
 - withEnvironment(java.lang.String,java.lang.String):com.intellij.execution.configurations.GeneralCommandLine
+- withEnvironment(java.lang.String,java.lang.String,java.lang.String):com.intellij.execution.configurations.GeneralCommandLine
 - withEnvironment(java.util.Map):com.intellij.execution.configurations.GeneralCommandLine
 - withExePath(java.lang.String):com.intellij.execution.configurations.GeneralCommandLine
 - withInput(java.io.File):com.intellij.execution.configurations.GeneralCommandLine

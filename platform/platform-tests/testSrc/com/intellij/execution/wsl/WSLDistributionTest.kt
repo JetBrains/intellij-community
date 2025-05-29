@@ -216,6 +216,7 @@ class WSLDistributionTest {
             cmd = listOf("printenv")
           ))
           environment should be(strategy.environment(
+            cmd,
             "FOO" to "BAR",
             "HURR" to "DURR",
           ))
@@ -335,6 +336,10 @@ class WSLDistributionTest {
         val commandLine = GeneralCommandLine("date")
           .withEnvironment("FOO", "BAR")
           .withEnvironment("HURR", "DURR")
+          .withEnvironment("TRANSLATABLE_PATH", "DUMMY_PATH", WSLEnvTranslationType.Path.translationFlag)
+          .withEnvironment("TRANSLATABLE_PATH_LIST", "DUMMY_PATH_LIST", WSLEnvTranslationType.PathList.translationFlag)
+          .withEnvironment("TO_WSL", "DUMMY_TOWSL", WSLEnvTranslationType.ToWSL.translationFlag)
+          .withEnvironment("TO_WIN", "DUMMY_TOWIN", WSLEnvTranslationType.ToWin.translationFlag)
 
         val options = WSLCommandLineOptions()
           .apply {
@@ -351,8 +356,13 @@ class WSLDistributionTest {
             cmd = listOf(TEST_SHELL, "-l", "-c", "date"),
           ))
           environment should be(strategy.environment(
+            cmd,
             "FOO" to "BAR",
             "HURR" to "DURR",
+            "TRANSLATABLE_PATH" to "DUMMY_PATH",
+            "TRANSLATABLE_PATH_LIST" to "DUMMY_PATH_LIST",
+            "TO_WSL" to "DUMMY_TOWSL",
+            "TO_WIN" to "DUMMY_TOWIN",
           ))
         }
       }
@@ -438,12 +448,16 @@ class WSLDistributionTest {
     WslTestStrategy.Ijent -> cmd
   }
 
-  private fun WslTestStrategy.environment(vararg entries: Pair<String, String>) = when (this) {
-    WslTestStrategy.Legacy ->
-      mapOf(
-        *entries,
-        "WSLENV" to entries.sortedBy { (name, _) -> name }.joinToString(":") { (name, _) -> "$name/ul" },
-      )
+  private fun WslTestStrategy.environment(cmd: GeneralCommandLine, vararg entries: Pair<String, String>) = when (this) {
+    WslTestStrategy.Legacy -> mapOf(
+      *entries,
+      "WSLENV" to entries
+        .sortedBy { (name, _) -> name }
+        .joinToString(":") { (name, _) ->
+          val translationFlag = WSLEnvTranslationType.fromFlag(cmd.wslEnvTranslations.getOrDefault(name, "/u")).translationFlag
+          name + translationFlag
+        },
+    )
 
     WslTestStrategy.Ijent -> mapOf(*entries)
   }
