@@ -8744,8 +8744,8 @@ jvm_import(
 
 jvm_import(
   name = "studio-platform",
-  jar = "@studio-platform-2025_1_1-alpha03-256_http//file",
-  source_jar = "@studio-platform-2025_1_1-alpha03-256-sources_http//file",
+  jar = "@studio-platform-2025_1_1-alpha07-261_http//file",
+  source_jar = "@studio-platform-2025_1_1-alpha07-261-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8758,8 +8758,8 @@ java_library(
 
 jvm_import(
   name = "studio-test-platform",
-  jar = "@studio-test-platform-2025_1_1-alpha03-256_http//file",
-  source_jar = "@studio-test-platform-2025_1_1-alpha03-256-sources_http//file",
+  jar = "@studio-test-platform-2025_1_1-alpha07-261_http//file",
+  source_jar = "@studio-test-platform-2025_1_1-alpha07-261-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
