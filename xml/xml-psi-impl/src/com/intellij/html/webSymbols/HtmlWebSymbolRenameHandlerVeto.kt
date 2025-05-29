@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols
 
 import com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptor
-import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
+import com.intellij.html.webSymbols.elements.PolySymbolElementDescriptor
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
@@ -15,7 +15,7 @@ class HtmlWebSymbolRenameHandlerVeto : Condition<PsiElement> {
   override fun value(t: PsiElement): Boolean {
     if (t.containingFile is HtmlCompatibleFile) {
       val symbol = when (val parent = t.takeIf { it is HtmlTag || it is XmlAttribute } ?: t.parent) {
-        is HtmlTag -> (parent.descriptor as? WebSymbolElementDescriptor)?.symbol
+        is HtmlTag -> (parent.descriptor as? PolySymbolElementDescriptor)?.symbol
         is XmlAttribute -> (parent.descriptor as? PolySymbolAttributeDescriptor)?.symbol
         else -> null
       }

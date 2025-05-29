@@ -3,7 +3,7 @@ package com.intellij.html.webSymbols.attributes
 
 import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator
 import com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptor.Companion.toAttributeDescriptor
-import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
+import com.intellij.html.webSymbols.elements.PolySymbolElementDescriptor
 import com.intellij.html.webSymbols.hasOnlyStandardHtmlSymbols
 import com.intellij.html.webSymbols.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.lang.html.HtmlCompatibleFile
@@ -55,7 +55,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()
-          && (elementDescriptor is WebSymbolElementDescriptor || !it.hasOnlyStandardHtmlSymbols())
+          && (elementDescriptor is PolySymbolElementDescriptor || !it.hasOnlyStandardHtmlSymbols())
         }
         ?.asSingleSymbol()
         ?.getAttributeDescriptor(attributeName, context, queryExecutor)

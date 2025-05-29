@@ -3,7 +3,7 @@ package com.intellij.html.webSymbols
 
 import com.intellij.documentation.mdn.*
 import com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptor
-import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
+import com.intellij.html.webSymbols.elements.PolySymbolElementDescriptor
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -62,7 +62,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope = element.takeIf { queryExecutor.allowResolve }
-                           ?.descriptor?.asSafely<WebSymbolElementDescriptor>()?.symbol?.let { listOf(it) }
+                           ?.descriptor?.asSafely<PolySymbolElementDescriptor>()?.symbol?.let { listOf(it) }
                          ?: queryExecutor.runNameMatchQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, element.name)
 
       elementScope.forEach(consumer)

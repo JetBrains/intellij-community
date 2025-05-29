@@ -25,9 +25,9 @@ import com.intellij.xml.impl.XmlElementDescriptorEx
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import org.jetbrains.annotations.NonNls
 
-open class WebSymbolElementDescriptor private constructor(private val tag: XmlTag,
-                                                          private val name: String,
-                                                          val symbol: PolySymbol)
+open class PolySymbolElementDescriptor private constructor(private val tag: XmlTag,
+                                                           private val name: String,
+                                                           val symbol: PolySymbol)
   : XmlElementDescriptorEx, XmlElementDescriptorAwareAboutChildren, XmlCustomElementDescriptor {
 
   constructor(info: WebSymbolHtmlElementInfo, tag: XmlTag) : this(tag, info.name, info.symbol)
