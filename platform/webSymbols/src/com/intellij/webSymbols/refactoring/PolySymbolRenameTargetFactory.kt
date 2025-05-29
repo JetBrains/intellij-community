@@ -9,7 +9,7 @@ import com.intellij.webSymbols.PolySymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class WebSymbolRenameTargetFactory : SymbolRenameTargetFactory {
+class PolySymbolRenameTargetFactory : SymbolRenameTargetFactory {
   override fun renameTarget(project: Project, symbol: Symbol): RenameTarget? =
     if (symbol is PolySymbol && symbol !is RenameTarget)
       symbol.renameTarget

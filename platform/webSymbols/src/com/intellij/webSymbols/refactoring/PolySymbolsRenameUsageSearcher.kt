@@ -11,7 +11,7 @@ import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.WebSymbolUsageQueries
 
-internal class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
+internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
 
   override fun collectSearchRequests(parameters: RenameUsageSearchParameters): Collection<@JvmWildcard Query<out RenameUsage>> =
     parameters.target

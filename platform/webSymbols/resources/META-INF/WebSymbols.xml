@@ -29,13 +29,13 @@
     <refactoring.helper implementation="com.intellij.webSymbols.refactoring.PsiSourcedPolySymbolRefactoringHelper"/>
     <renameHandler implementation="com.intellij.webSymbols.refactoring.PsiSourcedPolySymbolRenameHandler"/>
 
-    <rename.symbolRenameTargetFactory implementation="com.intellij.webSymbols.refactoring.WebSymbolRenameTargetFactory"/>
+    <rename.symbolRenameTargetFactory implementation="com.intellij.webSymbols.refactoring.PolySymbolRenameTargetFactory"/>
     <lang.symbolSearchTarget forClass="com.intellij.webSymbols.PolySymbol"
                              implementationClass="com.intellij.webSymbols.search.WebSymbolSearchTargetFactory"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="com.intellij.webSymbols.search.WebSymbolsUsageSearcher"/>
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
-              implementationClass="com.intellij.webSymbols.refactoring.WebSymbolsRenameUsageSearcher"/>
+              implementationClass="com.intellij.webSymbols.refactoring.PolySymbolsRenameUsageSearcher"/>
   </extensions>
 </idea-plugin>
