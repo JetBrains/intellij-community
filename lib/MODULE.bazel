@@ -13005,10 +13005,10 @@ http_file(
 )
 
 http_file(
-  name = "xstream-1_4_20_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20.jar",
-  sha256 = "87df0f0be57c92037d0110fbb225a30b651702dc275653d285afcfef31bc2e81",
-  downloaded_file_path = "xstream-1.4.20.jar"
+  name = "xstream-1_4_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar",
+  sha256 = "f56586f3de59ae2a49430acbc9f27942b8c5cebec9245c869fae7136733333ec",
+  downloaded_file_path = "xstream-1.4.21.jar"
 )
 
 http_file(
@@ -13026,10 +13026,10 @@ http_file(
 )
 
 http_file(
-  name = "xstream-1_4_20-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/xstream/xstream/1.4.20/xstream-1.4.20-sources.jar",
-  sha256 = "35f61c5d3f59a8b88cbcca90196ad4355666de185d1584b24e4f2a3a851ae7aa",
-  downloaded_file_path = "xstream-1.4.20-sources.jar"
+  name = "xstream-1_4_21-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21-sources.jar",
+  sha256 = "c9ebc3613b053588aab70e2381951761e24ed94af3dae20df207c32a4fc14dbe",
+  downloaded_file_path = "xstream-1.4.21-sources.jar"
 )
 
 http_file(
