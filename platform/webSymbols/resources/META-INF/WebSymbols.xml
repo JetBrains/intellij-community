@@ -25,7 +25,7 @@
                                  targetClass="com.intellij.webSymbols.PolySymbol"
                                  referenceClass="com.intellij.webSymbols.references.PolySymbolReference"/>
 
-    <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedWebSymbolReferenceSearcher"/>
+    <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedPolySymbolReferenceSearcher"/>
     <refactoring.helper implementation="com.intellij.webSymbols.refactoring.PsiSourcedPolySymbolRefactoringHelper"/>
     <renameHandler implementation="com.intellij.webSymbols.refactoring.PsiSourcedPolySymbolRenameHandler"/>
 

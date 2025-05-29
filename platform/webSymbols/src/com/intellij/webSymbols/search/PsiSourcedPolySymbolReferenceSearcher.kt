@@ -16,7 +16,7 @@ import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.impl.WebSymbolPsiSourcedSymbolHostClassEP
 import com.intellij.webSymbols.utils.qualifiedName
 
-internal class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
+internal class PsiSourcedPolySymbolReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
 
   override fun processQuery(queryParameters: ReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val targetElement = queryParameters.elementToSearch
