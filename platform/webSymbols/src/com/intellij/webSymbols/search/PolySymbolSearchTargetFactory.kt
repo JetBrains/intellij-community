@@ -8,7 +8,7 @@ import com.intellij.webSymbols.PolySymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class WebSymbolSearchTargetFactory : SymbolSearchTargetFactory<PolySymbol> {
+class PolySymbolSearchTargetFactory : SymbolSearchTargetFactory<PolySymbol> {
   override fun searchTarget(project: Project, symbol: PolySymbol): SearchTarget? =
     if (symbol !is SearchTarget) symbol.searchTarget else null
 }

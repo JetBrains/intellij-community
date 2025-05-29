@@ -31,7 +31,7 @@
 
     <rename.symbolRenameTargetFactory implementation="com.intellij.webSymbols.refactoring.PolySymbolRenameTargetFactory"/>
     <lang.symbolSearchTarget forClass="com.intellij.webSymbols.PolySymbol"
-                             implementationClass="com.intellij.webSymbols.search.WebSymbolSearchTargetFactory"/>
+                             implementationClass="com.intellij.webSymbols.search.PolySymbolSearchTargetFactory"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="com.intellij.webSymbols.search.WebSymbolsUsageSearcher"/>
