@@ -29,7 +29,7 @@ import com.intellij.webSymbols.impl.removeZeroLengthSegmentsRecursively
 import com.intellij.webSymbols.inspections.PolySymbolsProblemQuickFixProvider
 import com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
-import com.intellij.webSymbols.references.WebSymbolReference
+import com.intellij.webSymbols.references.PolySymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.utils.asSingleSymbol
@@ -49,10 +49,10 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> =
     emptyList()
 
-  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, PolySymbol>, List<WebSymbolReference>> =
+  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Pair<MultiMap<Int, PolySymbol>, List<PolySymbolReference>> =
     CachedValuesManager.getCachedValue(element, CachedValuesManager.getManager(element.project).getKeyForClass(this.javaClass)) {
       val beans = PsiWebSymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
-      val result = SmartList<WebSymbolReference>()
+      val result = SmartList<PolySymbolReference>()
       val offsets = MultiMap.createSet<Int, PolySymbol>()
       for (bean in beans) {
         @Suppress("UNCHECKED_CAST")
@@ -69,7 +69,7 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
 }
 
-internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: PolySymbol, showProblems: Boolean): List<WebSymbolReference> {
+internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: PolySymbol, showProblems: Boolean): List<PolySymbolReference> {
   val problemOnlyRanges = mutableMapOf<TextRange, Boolean>()
   val result = MultiMap<TextRange, PolySymbolNameSegment>()
 
@@ -138,7 +138,7 @@ private open class NameSegmentReference(
   private val element: PsiElement,
   private val rangeInElement: TextRange,
   val nameSegments: Collection<PolySymbolNameSegment>,
-) : WebSymbolReference {
+) : PolySymbolReference {
 
   override fun getElement(): PsiElement = element
 

@@ -23,7 +23,7 @@
                                  hostLanguage="PolySymbolsEnabledLanguage"
                                  implementationClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderImpl"
                                  targetClass="com.intellij.webSymbols.PolySymbol"
-                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"/>
+                                 referenceClass="com.intellij.webSymbols.references.PolySymbolReference"/>
 
     <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedWebSymbolReferenceSearcher"/>
     <refactoring.helper implementation="com.intellij.webSymbols.refactoring.PsiSourcedPolySymbolRefactoringHelper"/>

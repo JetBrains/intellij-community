@@ -5,7 +5,7 @@ import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.webSymbols.PolySymbol
 
-interface WebSymbolReference : PsiSymbolReference {
+interface PolySymbolReference : PsiSymbolReference {
 
   override fun resolveReference(): Collection<PolySymbol>
 

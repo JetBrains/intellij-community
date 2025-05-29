@@ -40,7 +40,7 @@ import com.intellij.webSymbols.highlighting.newSilentAnnotationWithDebugInfo
 import com.intellij.webSymbols.impl.PolySymbolNameSegmentImpl
 import com.intellij.webSymbols.impl.highlightingEnd
 import com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
-import com.intellij.webSymbols.references.WebSymbolReference
+import com.intellij.webSymbols.references.PolySymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.references.impl.IJ_IGNORE_REFS
@@ -63,7 +63,7 @@ class PolySymbolsHighlightingAnnotator : Annotator {
 
     if (element is PsiExternalReferenceHost) {
       // Use service, as WebSymbols may be contributed directly through PsiSymbolReferenceProvider
-      PsiSymbolReferenceService.getService().getReferences(element, WebSymbolReference::class.java)
+      PsiSymbolReferenceService.getService().getReferences(element, PolySymbolReference::class.java)
         .filter { it.getProblems().isNotEmpty() }
         .forEach { ref -> annotateReference(ref, holder) }
 
@@ -190,7 +190,7 @@ class PolySymbolsHighlightingAnnotator : Annotator {
   }
 
   private fun annotateReference(
-    reference: WebSymbolReference,
+    reference: PolySymbolReference,
     holder: AnnotationHolder,
   ) {
     val map = holder.currentAnnotationSession

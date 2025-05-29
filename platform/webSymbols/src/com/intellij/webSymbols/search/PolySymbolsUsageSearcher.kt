@@ -26,7 +26,7 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.webSymbols.query.PolySymbolNamesProvider
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.webSymbols.references.WebSymbolReference
+import com.intellij.webSymbols.references.PolySymbolReference
 import com.intellij.webSymbols.utils.qualifiedName
 import java.util.*
 
@@ -85,7 +85,7 @@ object WebSymbolUsageQueries {
 
           val foundReferences = getReferences(element, WebSymbolReferenceHints(symbol, offsetInElement))
             .asSequence()
-            .filterIsInstance<WebSymbolReference>()
+            .filterIsInstance<PolySymbolReference>()
             .filter { it.rangeInElement.containsOffset(offsetInElement) }
             .filter { ref -> ref.resolvesTo(symbol) }
             .map { WebSymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
@@ -118,7 +118,7 @@ internal class WebSymbolReferenceHints(private val symbol: Symbol, private val o
   }
 
   override fun getReferenceClass(): Class<out PsiSymbolReference> {
-    return WebSymbolReference::class.java
+    return PolySymbolReference::class.java
   }
 
   override fun getTarget(): Symbol {

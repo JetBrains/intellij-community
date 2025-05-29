@@ -12,7 +12,7 @@ import com.intellij.psi.search.RequestResultProcessor
 import com.intellij.util.Processor
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.references.WebSymbolReference
+import com.intellij.webSymbols.references.PolySymbolReference
 import com.intellij.webSymbols.utils.asSingleSymbol
 import org.jetbrains.annotations.ApiStatus
 
@@ -33,7 +33,7 @@ class PsiSourcedWebSymbolRequestResultProcessor(private val targetElement: PsiEl
       // Web symbol references
       mySymbolReferenceService.getReferences(element, WebSymbolReferenceHints(targetSymbol, offsetInElement))
         .asSequence()
-        .filterIsInstance<WebSymbolReference>()
+        .filterIsInstance<PolySymbolReference>()
         .filter { it.rangeInElement.containsOffset(offsetInElement) }
         .forEach { ref ->
           ProgressManager.checkCanceled()
