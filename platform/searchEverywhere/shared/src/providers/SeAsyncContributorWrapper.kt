@@ -18,7 +18,9 @@ class SeAsyncContributorWrapper<I : Any>(val contributor: SearchEverywhereContri
   ) {
     contributor.fetchElements(pattern, progressIndicator) { t ->
       runBlockingCancellable {
-        SeLog.log(SeLog.ITEM_EMIT) { "Provider async wrapper of ${contributor.searchProviderId} emitting: ${t}" }
+        SeLog.log(SeLog.ITEM_EMIT) {
+          "Provider async wrapper of ${contributor.searchProviderId} emitting: ${t.toString().split('\n').firstOrNull()}"
+        }
         consumer.process(t)
       }
     }

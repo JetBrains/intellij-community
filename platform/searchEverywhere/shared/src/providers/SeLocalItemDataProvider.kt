@@ -15,6 +15,9 @@ import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 
 @ApiStatus.Internal
 class SeLocalItemDataProvider(private val provider: SeItemsProvider,
@@ -25,8 +28,11 @@ class SeLocalItemDataProvider(private val provider: SeItemsProvider,
   val displayName: @Nls String
     get() = provider.displayName
 
+  @OptIn(ExperimentalAtomicApi::class)
   fun getItems(params: SeParams, equalityChecker: SeEqualityChecker?): Flow<SeItemData> {
     return channelFlow {
+      val counter = AtomicInt(0)
+
       provider.collectItems(params, object : SeItemsProvider.Collector {
         override suspend fun put(item: SeItem): Boolean {
           val uuid = UUID.randomUUID().toString()
@@ -47,7 +53,10 @@ class SeLocalItemDataProvider(private val provider: SeItemsProvider,
             sessionRef, uuid, item, id, item.weight(), item.presentation(), uuidToReplace
           ) ?: return true
 
-          SeLog.log(SeLog.ITEM_EMIT) { "$logLabel provider for ${id.value} receives: ${itemData.presentation.text}" }
+          SeLog.log(SeLog.ITEM_EMIT) {
+            val count = counter.incrementAndFetch()
+            "$logLabel provider for ${id.value} receives (total=$count, priority=${itemData.weight}): ${itemData.presentation.text.split("\n").firstOrNull()}"
+          }
           send(itemData)
           return coroutineContext.isActive
         }
