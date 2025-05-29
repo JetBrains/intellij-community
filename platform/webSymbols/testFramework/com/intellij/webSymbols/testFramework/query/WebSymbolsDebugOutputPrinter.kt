@@ -5,7 +5,7 @@ import com.intellij.util.applyIf
 import com.intellij.webSymbols.testFramework.DebugOutputPrinter
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
@@ -24,7 +24,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       is PolySymbol -> builder.printSymbol(level, value)
       is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
       is WebSymbolNameSegment -> builder.printSegment(level, value)
-      is WebSymbolApiStatus -> builder.printApiStatus(value)
+      is PolySymbolApiStatus -> builder.printApiStatus(value)
       is Set<*> -> builder.printSet(value)
       else -> super.printValueImpl(builder, level, value)
     }
@@ -75,7 +75,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
       printProperty(level, "abstract", source.abstract.takeIf { it })
       printProperty(level, "virtual", source.virtual.takeIf { it })
-      printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is WebSymbolApiStatus.Stable || it.since != null })
+      printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is PolySymbolApiStatus.Stable || it.since != null })
       printProperty(level, "priority", source.priority ?: PolySymbol.Priority.NORMAL)
       printProperty(level, "proximity", source.proximity?.takeIf { it > 0 })
       printProperty(level, "has-pattern", if (source.pattern != null) true else null)
@@ -116,18 +116,18 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
         .printProperty(level, "default", value.default)
     }
 
-  private fun StringBuilder.printApiStatus(apiStatus: WebSymbolApiStatus): StringBuilder =
+  private fun StringBuilder.printApiStatus(apiStatus: PolySymbolApiStatus): StringBuilder =
     when (apiStatus) {
-      is WebSymbolApiStatus.Deprecated -> append("deprecated")
+      is PolySymbolApiStatus.Deprecated -> append("deprecated")
         .applyIf(apiStatus.since != null) { append(" in ").append(apiStatus.since) }
         .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
-      is WebSymbolApiStatus.Obsolete -> append("obsolete")
+      is PolySymbolApiStatus.Obsolete -> append("obsolete")
         .applyIf(apiStatus.since != null) { append(" in ").append(apiStatus.since) }
         .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
-      is WebSymbolApiStatus.Experimental -> append("experimental")
+      is PolySymbolApiStatus.Experimental -> append("experimental")
         .applyIf(apiStatus.since != null) { append(" since ").append(apiStatus.since) }
         .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
-      is WebSymbolApiStatus.Stable -> append("stable")
+      is PolySymbolApiStatus.Stable -> append("stable")
         .applyIf(apiStatus.since != null) { append(" since ").append(apiStatus.since) }
     }
 

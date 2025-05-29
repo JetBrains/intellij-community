@@ -4,7 +4,7 @@ package com.intellij.webSymbols.customElements.impl
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.webSymbols.customElements.CustomElementsSymbol
@@ -27,8 +27,8 @@ abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> 
   final override val framework: FrameworkId?
     get() = null
 
-  final override val apiStatus: WebSymbolApiStatus
-    get() = contribution.deprecated.toApiStatus(origin) ?: WebSymbolApiStatus.Stable
+  final override val apiStatus: PolySymbolApiStatus
+    get() = contribution.deprecated.toApiStatus(origin) ?: PolySymbolApiStatus.Stable
 
   final override val description: String?
     get() = (contribution.description?.takeIf { it.isNotBlank() } ?: contribution.summary)

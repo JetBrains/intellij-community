@@ -554,18 +554,18 @@ private fun parseWebTypesPath(path: List<String>, context: PolySymbol?): List<We
 }
 
 @Suppress("HardCodedStringLiteral")
-internal fun BaseContribution.toApiStatus(origin: WebTypesJsonOrigin): WebSymbolApiStatus =
+internal fun BaseContribution.toApiStatus(origin: WebTypesJsonOrigin): PolySymbolApiStatus =
   obsolete?.value?.takeIf { it != false }
-    ?.let { msg -> WebSymbolApiStatus.Obsolete((msg as? String)?.let { origin.renderDescription(it) }, obsoleteSince) }
+    ?.let { msg -> PolySymbolApiStatus.Obsolete((msg as? String)?.let { origin.renderDescription(it) }, obsoleteSince) }
   ?: deprecated?.value?.takeIf { it != false }
-    ?.let { msg -> WebSymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }, deprecatedSince) }
+    ?.let { msg -> PolySymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }, deprecatedSince) }
   ?: experimental?.value?.takeIf { it != false }
-    ?.let { msg -> WebSymbolApiStatus.Experimental((msg as? String)?.let { origin.renderDescription(it) }, since) }
-  ?: since?.let { WebSymbolApiStatus.Stable(it) }
-  ?: WebSymbolApiStatus.Stable
+    ?.let { msg -> PolySymbolApiStatus.Experimental((msg as? String)?.let { origin.renderDescription(it) }, since) }
+  ?: since?.let { PolySymbolApiStatus.Stable(it) }
+  ?: PolySymbolApiStatus.Stable
 
 
-internal fun NamePatternDefault.toApiStatus(origin: WebTypesJsonOrigin): WebSymbolApiStatus? =
+internal fun NamePatternDefault.toApiStatus(origin: WebTypesJsonOrigin): PolySymbolApiStatus? =
   deprecated?.value
     ?.takeIf { it != false }
-    ?.let { msg -> WebSymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
+    ?.let { msg -> PolySymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }

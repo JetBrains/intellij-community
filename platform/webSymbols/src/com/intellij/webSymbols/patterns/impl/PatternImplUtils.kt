@@ -4,7 +4,7 @@ package com.intellij.webSymbols.patterns.impl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -112,7 +112,7 @@ internal fun <T> withPrevMatchScope(
 
 internal fun <T : MatchResult> T.applyToSegments(
   vararg contributions: PolySymbol,
-  apiStatus: WebSymbolApiStatus? = null,
+  apiStatus: PolySymbolApiStatus? = null,
   priority: PolySymbol.Priority? = null,
   proximity: Int? = null,
 ): T =

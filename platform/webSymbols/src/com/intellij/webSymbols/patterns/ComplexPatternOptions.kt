@@ -2,13 +2,13 @@
 package com.intellij.webSymbols.patterns
 
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 data class ComplexPatternOptions(
   val additionalScope: PolySymbol? = null,
-  val apiStatus: WebSymbolApiStatus? = null,
+  val apiStatus: PolySymbolApiStatus? = null,
   val isRequired: Boolean = true,
   val priority: PolySymbol.Priority? = null,
   val proximity: Int? = null,

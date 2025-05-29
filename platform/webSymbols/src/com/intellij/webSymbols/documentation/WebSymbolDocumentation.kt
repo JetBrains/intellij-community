@@ -5,7 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -47,7 +47,7 @@ interface WebSymbolDocumentation {
   /**
    * API status of the symbol - deprecated or experimental
    */
-  val apiStatus: WebSymbolApiStatus?
+  val apiStatus: PolySymbolApiStatus?
 
   /**
    * Whether the symbol is required
@@ -97,7 +97,7 @@ interface WebSymbolDocumentation {
 
   fun withDocUrl(docUrl: @NlsSafe String?): WebSymbolDocumentation
 
-  fun withApiStatus(apiStatus: WebSymbolApiStatus?): WebSymbolDocumentation
+  fun withApiStatus(apiStatus: PolySymbolApiStatus?): WebSymbolDocumentation
 
   fun withRequired(required: Boolean): WebSymbolDocumentation
 
@@ -118,7 +118,7 @@ interface WebSymbolDocumentation {
            definitionDetails: @Nls String? = this.definitionDetails,
            description: @Nls String? = this.description,
            docUrl: @NlsSafe String? = this.docUrl,
-           apiStatus: WebSymbolApiStatus? = this.apiStatus,
+           apiStatus: PolySymbolApiStatus? = this.apiStatus,
            required: Boolean = this.required,
            defaultValue: @NlsSafe String? = this.defaultValue,
            library: @NlsSafe String? = this.library,
@@ -141,7 +141,7 @@ interface WebSymbolDocumentation {
                definitionDetails: String? = null,
                description: @Nls String? = symbol.description,
                docUrl: String? = symbol.docUrl,
-               apiStatus: WebSymbolApiStatus? = symbol.apiStatus,
+               apiStatus: PolySymbolApiStatus? = symbol.apiStatus,
                required: Boolean = symbol.required ?: false,
                defaultValue: String? = symbol.defaultValue ?: symbol.attributeValue?.default,
                library: String? = symbol.origin.takeIf { it.library != null }

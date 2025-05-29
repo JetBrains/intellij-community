@@ -10,8 +10,8 @@ import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
-import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.webSymbols.PolySymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemBuilder
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemInsertHandler
@@ -29,7 +29,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
   override val symbol: PolySymbol? = null,
   override val priority: PolySymbol.Priority? = null,
   override val proximity: Int? = null,
-  override val apiStatus: WebSymbolApiStatus = WebSymbolApiStatus.Stable,
+  override val apiStatus: PolySymbolApiStatus = PolySymbolApiStatus.Stable,
   override val aliases: Set<String> = emptySet(),
   override val icon: Icon? = null,
   val typeTextStatic: String? = null,
@@ -145,7 +145,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
   override fun withProximity(proximity: Int): WebSymbolCodeCompletionItem =
     copy(proximity = proximity)
 
-  override fun withApiStatus(apiStatus: WebSymbolApiStatus): WebSymbolCodeCompletionItem =
+  override fun withApiStatus(apiStatus: PolySymbolApiStatus): WebSymbolCodeCompletionItem =
     copy(apiStatus = apiStatus)
 
   override fun withAliasesReplaced(aliases: Set<String>): WebSymbolCodeCompletionItem =
@@ -196,7 +196,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
     symbol: PolySymbol?,
     priority: PolySymbol.Priority?,
     proximity: Int?,
-    apiStatus: WebSymbolApiStatus,
+    apiStatus: PolySymbolApiStatus,
     icon: Icon?,
     typeText: String?,
     tailText: String?,
@@ -218,7 +218,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
     private var displayName: String? = null
     private var priority: PolySymbol.Priority? = symbol?.priority
     private var proximity: Int? = symbol?.proximity
-    private var apiStatus: WebSymbolApiStatus = symbol?.apiStatus ?: WebSymbolApiStatus.Stable
+    private var apiStatus: PolySymbolApiStatus = symbol?.apiStatus ?: PolySymbolApiStatus.Stable
     private var aliases: Set<String> = emptySet()
     private var icon: Icon? = symbol?.let {
       it.icon
@@ -285,7 +285,7 @@ internal data class WebSymbolCodeCompletionItemImpl(
       return this
     }
 
-    override fun apiStatus(value: WebSymbolApiStatus): WebSymbolCodeCompletionItemBuilder {
+    override fun apiStatus(value: PolySymbolApiStatus): WebSymbolCodeCompletionItemBuilder {
       apiStatus = value
       return this
     }

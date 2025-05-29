@@ -3,7 +3,7 @@ package com.intellij.webSymbols
 
 import org.jetbrains.annotations.Nls
 
-sealed interface WebSymbolApiStatus {
+sealed interface PolySymbolApiStatus {
 
   /**
    * Version of the library, in which the symbol API status was updated
@@ -14,7 +14,7 @@ sealed interface WebSymbolApiStatus {
    * Stable symbols are not expected to change in backward incompatible way
    * and are fit for production code.
    */
-  interface Stable : WebSymbolApiStatus {
+  interface Stable : PolySymbolApiStatus {
     /**
      * Version of the library, in which the stable symbol was first available
      */
@@ -25,7 +25,7 @@ sealed interface WebSymbolApiStatus {
    * Usage of deprecated symbols is discouraged, but such symbols are still supported.
    * Usages of deprecated symbols should be migrated as soon as possible.
    */
-  interface Deprecated : WebSymbolApiStatus {
+  interface Deprecated : PolySymbolApiStatus {
     /**
      * Message with HTML markup
      */
@@ -41,7 +41,7 @@ sealed interface WebSymbolApiStatus {
    * Obsolete symbols are no longer supported.
    * Such symbols should not be used at all.
    */
-  interface Obsolete : WebSymbolApiStatus {
+  interface Obsolete : PolySymbolApiStatus {
     /**
      * Message with HTML markup
      */
@@ -57,7 +57,7 @@ sealed interface WebSymbolApiStatus {
    * Experimental symbols are expected to be changed, or even removed.
    * Such symbols should not be used in production code.
    */
-  interface Experimental : WebSymbolApiStatus {
+  interface Experimental : PolySymbolApiStatus {
     /**
      * Message with HTML markup
      */
@@ -118,10 +118,10 @@ sealed interface WebSymbolApiStatus {
       }
 
     @JvmStatic
-    fun WebSymbolApiStatus?.isDeprecatedOrObsolete(): Boolean =
+    fun PolySymbolApiStatus?.isDeprecatedOrObsolete(): Boolean =
       this is Deprecated || this is Obsolete
 
-    fun WebSymbolApiStatus.getMessage(): @Nls String? =
+    fun PolySymbolApiStatus.getMessage(): @Nls String? =
       when (this) {
         is Deprecated -> message
         is Experimental -> message

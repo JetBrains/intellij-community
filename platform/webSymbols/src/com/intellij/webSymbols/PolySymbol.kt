@@ -132,15 +132,15 @@ interface PolySymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPri
     get() = null
 
   /**
-   * Documents API status of the symbol. It is one of the sub-interfaces of [WebSymbolApiStatus]:
-   * [WebSymbolApiStatus.Stable], [WebSymbolApiStatus.Experimental], [WebSymbolApiStatus.Deprecated]
-   * or [WebSymbolApiStatus.Obsolete].
+   * Documents API status of the symbol. It is one of the sub-interfaces of [PolySymbolApiStatus]:
+   * [PolySymbolApiStatus.Stable], [PolySymbolApiStatus.Experimental], [PolySymbolApiStatus.Deprecated]
+   * or [PolySymbolApiStatus.Obsolete].
    *
    * Deprecated and obsolete symbols are appropriately highlighted in the code editor, code completion and
    * quick documentation.
    */
-  val apiStatus: WebSymbolApiStatus
-    get() = WebSymbolApiStatus.Stable
+  val apiStatus: PolySymbolApiStatus
+    get() = PolySymbolApiStatus.Stable
 
   /**
    * A special property to support symbols representing HTML attributes.

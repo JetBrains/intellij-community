@@ -24,7 +24,7 @@ import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons
 import com.intellij.xml.util.HtmlUtil
@@ -184,7 +184,7 @@ private fun innerGetEventDoc(eventName: String): Pair<MdnDocumentation, MdnDomEv
 interface MdnSymbolDocumentation {
   val name: String
   val url: String?
-  val apiStatus: WebSymbolApiStatus
+  val apiStatus: PolySymbolApiStatus
   val description: String
   val sections: Map<@Nls String, @Nls String>
   val footnote: @Nls String?
@@ -208,15 +208,15 @@ class MdnSymbolDocumentationAdapter(
   override val url: String?
     get() = doc.url?.let { fixMdnUrls(it, source.lang) }
 
-  override val apiStatus: WebSymbolApiStatus
+  override val apiStatus: PolySymbolApiStatus
     get() = doc.status?.let {
       when {
-        it.contains(MdnApiStatus.Obsolete) -> WebSymbolApiStatus.Obsolete
-        it.contains(MdnApiStatus.Deprecated) -> WebSymbolApiStatus.Deprecated
-        it.contains(MdnApiStatus.Experimental) -> WebSymbolApiStatus.Experimental
+        it.contains(MdnApiStatus.Obsolete) -> PolySymbolApiStatus.Obsolete
+        it.contains(MdnApiStatus.Deprecated) -> PolySymbolApiStatus.Deprecated
+        it.contains(MdnApiStatus.Experimental) -> PolySymbolApiStatus.Experimental
         else -> null
       }
-    } ?: WebSymbolApiStatus.Stable
+    } ?: PolySymbolApiStatus.Stable
 
   override val description: String
     get() = renderBaseline() + capitalize(

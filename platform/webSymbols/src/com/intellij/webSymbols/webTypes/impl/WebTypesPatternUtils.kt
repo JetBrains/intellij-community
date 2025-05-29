@@ -3,7 +3,7 @@ package com.intellij.webSymbols.webTypes.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem

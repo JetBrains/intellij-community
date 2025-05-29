@@ -3,7 +3,7 @@ package com.intellij.documentation.mdn
 
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 
 abstract class MdnDocumentedSymbol : PolySymbol {
@@ -14,8 +14,8 @@ abstract class MdnDocumentedSymbol : PolySymbol {
 
   protected abstract fun getMdnDocumentation(): MdnSymbolDocumentation?
 
-  override val apiStatus: WebSymbolApiStatus
-    get() = mdnDoc?.apiStatus ?: WebSymbolApiStatus.Stable
+  override val apiStatus: PolySymbolApiStatus
+    get() = mdnDoc?.apiStatus ?: PolySymbolApiStatus.Stable
 
   override val description: String?
     get() = mdnDoc?.description

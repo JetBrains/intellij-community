@@ -17,7 +17,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val name: String,
   override val origin: WebSymbolOrigin,
   override val pattern: WebSymbolsPattern,
-  override val apiStatus: WebSymbolApiStatus,
+  override val apiStatus: PolySymbolApiStatus,
 ) : CustomElementsSymbol, StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter {
   override val namespace: SymbolNamespace
     get() = PolySymbol.NAMESPACE_HTML
@@ -40,7 +40,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
       val name = export.name ?: return null
       val referencePattern = export.declaration?.createPattern(origin) ?: return null
       return CustomElementsCustomElementExportSymbol(name, origin, referencePattern,
-                                                     export.deprecated.toApiStatus(origin) ?: WebSymbolApiStatus.Stable)
+                                                     export.deprecated.toApiStatus(origin) ?: PolySymbolApiStatus.Stable)
     }
   }
 

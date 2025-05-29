@@ -98,7 +98,7 @@ internal open class PolySymbolMatchImpl private constructor(
   override val required: Boolean?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.required }.firstOrNull()
 
-  override val apiStatus: WebSymbolApiStatus
+  override val apiStatus: PolySymbolApiStatus
     get() = coalesceApiStatus(reversedSegments().flatMap { it.symbols }) { it.apiStatus }
 
   override val icon: Icon?

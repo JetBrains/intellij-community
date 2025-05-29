@@ -6,8 +6,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
-import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.webSymbols.PolySymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.impl.copy
@@ -152,7 +152,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                           queryExecutor: WebSymbolsQueryExecutor,
                           action: (patterns: List<WebSymbolsPattern>,
                                    symbolsResolver: WebSymbolsPatternSymbolsResolver?,
-                                   patternApiStatus: WebSymbolApiStatus?,
+                                   patternApiStatus: PolySymbolApiStatus?,
                                    patternRequired: Boolean,
                                    patternPriority: PolySymbol.Priority?,
                                    patternProximity: Int?,
@@ -177,7 +177,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   private fun <T : MatchResult> List<T>.postProcess(
     owner: PolySymbol?,
-    apiStatus: WebSymbolApiStatus?,
+    apiStatus: PolySymbolApiStatus?,
     priority: PolySymbol.Priority?,
     proximity: Int?
   ): List<T> =

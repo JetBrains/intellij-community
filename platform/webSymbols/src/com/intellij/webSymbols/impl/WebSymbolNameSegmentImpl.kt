@@ -4,7 +4,7 @@ package com.intellij.webSymbols.impl
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.utils.matchedNameOrName
@@ -17,7 +17,7 @@ class WebSymbolNameSegmentImpl internal constructor(
   override val displayName: @NlsSafe String?,
   override val matchScore: Int,
   symbolKinds: Set<WebSymbolQualifiedKind>?,
-  private val explicitApiStatus: WebSymbolApiStatus?,
+  private val explicitApiStatus: PolySymbolApiStatus?,
   private val explicitPriority: PolySymbol.Priority?,
   private val explicitProximity: Int?,
   internal val highlightingEnd: Int?,
@@ -29,7 +29,7 @@ class WebSymbolNameSegmentImpl internal constructor(
 
   private val forcedSymbolKinds = symbolKinds
 
-  override val apiStatus: WebSymbolApiStatus?
+  override val apiStatus: PolySymbolApiStatus?
     get() = explicitApiStatus
 
   override val priority: PolySymbol.Priority?
@@ -67,7 +67,7 @@ class WebSymbolNameSegmentImpl internal constructor(
                              highlightingEnd)
 
   internal fun copy(
-    apiStatus: WebSymbolApiStatus?,
+    apiStatus: PolySymbolApiStatus?,
     priority: PolySymbol.Priority?,
     proximity: Int?,
     problem: WebSymbolNameSegment.MatchProblem?,

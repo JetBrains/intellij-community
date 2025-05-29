@@ -9,7 +9,7 @@ import com.intellij.model.Pointer
 import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PsiSourcedPolySymbol
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.completion.impl.WebSymbolCodeCompletionItemImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.NonExtendable
@@ -34,7 +34,7 @@ interface WebSymbolCodeCompletionItem {
   val priority: PolySymbol.Priority?
   val proximity: Int?
 
-  val apiStatus: WebSymbolApiStatus
+  val apiStatus: PolySymbolApiStatus
   val aliases: Set<String>
   val symbol: PolySymbol?
   val insertHandler: WebSymbolCodeCompletionItemInsertHandler?
@@ -61,7 +61,7 @@ interface WebSymbolCodeCompletionItem {
 
   fun withProximity(proximity: Int): WebSymbolCodeCompletionItem
 
-  fun withApiStatus(apiStatus: WebSymbolApiStatus): WebSymbolCodeCompletionItem
+  fun withApiStatus(apiStatus: PolySymbolApiStatus): WebSymbolCodeCompletionItem
 
   fun withAliasesReplaced(aliases: Set<String>): WebSymbolCodeCompletionItem
 
@@ -99,7 +99,7 @@ interface WebSymbolCodeCompletionItem {
     symbol: PolySymbol? = this.symbol,
     priority: PolySymbol.Priority? = this.priority,
     proximity: Int? = this.proximity,
-    apiStatus: WebSymbolApiStatus = this.apiStatus,
+    apiStatus: PolySymbolApiStatus = this.apiStatus,
     icon: Icon? = this.icon,
     typeText: String? = null,
     tailText: String? = this.tailText,
@@ -117,7 +117,7 @@ interface WebSymbolCodeCompletionItem {
       symbol: PolySymbol? = null,
       priority: PolySymbol.Priority? = null,
       proximity: Int? = null,
-      apiStatus: WebSymbolApiStatus? = null,
+      apiStatus: PolySymbolApiStatus? = null,
       aliases: Set<String>? = null,
       icon: Icon? = null,
       typeText: String? = null,

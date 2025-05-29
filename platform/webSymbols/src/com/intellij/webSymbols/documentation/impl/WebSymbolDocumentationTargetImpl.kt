@@ -13,7 +13,7 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
@@ -115,19 +115,19 @@ internal class WebSymbolDocumentationTargetImpl(
         if (doc.required) sections[WebSymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
         doc.apiStatus?.let { status ->
           when (status) {
-            is WebSymbolApiStatus.Deprecated -> {
+            is PolySymbolApiStatus.Deprecated -> {
               sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = status.message ?: ""
               status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.DeprecatedSince")] = it }
             }
-            is WebSymbolApiStatus.Obsolete -> {
+            is PolySymbolApiStatus.Obsolete -> {
               sections[WebSymbolsBundle.message("mdn.documentation.section.status.Obsolete")] = status.message ?: ""
               status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.ObsoleteSince")] = it }
             }
-            is WebSymbolApiStatus.Experimental -> {
+            is PolySymbolApiStatus.Experimental -> {
               sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] = status.message ?: ""
               status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.Since")] = it }
             }
-            is WebSymbolApiStatus.Stable -> {
+            is PolySymbolApiStatus.Stable -> {
               status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.Since")] = it }
             }
           }

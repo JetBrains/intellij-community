@@ -151,7 +151,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
               ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
             ?: superContributions.asSequence().mapNotNull { it.type }.firstOrNull()
 
-  final override val apiStatus: WebSymbolApiStatus
+  final override val apiStatus: PolySymbolApiStatus
     get() = base.contribution.toApiStatus(origin as WebTypesJsonOrigin)
 
   final override val virtual: Boolean

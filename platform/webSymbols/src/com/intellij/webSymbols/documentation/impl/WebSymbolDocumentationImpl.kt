@@ -1,6 +1,6 @@
 package com.intellij.webSymbols.documentation.impl
 
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -10,7 +10,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                                                override val definitionDetails: String?,
                                                override val description: @Nls String?,
                                                override val docUrl: String?,
-                                               override val apiStatus: WebSymbolApiStatus?,
+                                               override val apiStatus: PolySymbolApiStatus?,
                                                override val required: Boolean,
                                                override val defaultValue: String?,
                                                override val library: String?,
@@ -19,7 +19,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                                                override val footnote: @Nls String?,
                                                override val header: @Nls String?) : WebSymbolDocumentation {
   override fun isNotEmpty(): Boolean =
-    name != definition || description != null || docUrl != null || (apiStatus != null && apiStatus != WebSymbolApiStatus.Stable)
+    name != definition || description != null || docUrl != null || (apiStatus != null && apiStatus != PolySymbolApiStatus.Stable)
     || required || defaultValue != null || library != null || descriptionSections.isNotEmpty() || footnote != null
     || header != null
 
@@ -38,7 +38,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
   override fun withDocUrl(docUrl: String?): WebSymbolDocumentation =
     copy(docUrl = docUrl)
 
-  override fun withApiStatus(apiStatus: WebSymbolApiStatus?): WebSymbolDocumentation =
+  override fun withApiStatus(apiStatus: PolySymbolApiStatus?): WebSymbolDocumentation =
     copy(apiStatus = apiStatus)
 
   override fun withRequired(required: Boolean): WebSymbolDocumentation =
@@ -67,7 +67,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                     definitionDetails: String?,
                     description: @Nls String?,
                     docUrl: String?,
-                    apiStatus: WebSymbolApiStatus?,
+                    apiStatus: PolySymbolApiStatus?,
                     required: Boolean,
                     defaultValue: String?,
                     library: String?,

@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.customElements.json
 
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolTypeSupport
 import com.intellij.webSymbols.customElements.CustomElementsJsonOrigin
@@ -33,8 +33,8 @@ private fun Reference.createQueryPathList(origin: CustomElementsJsonOrigin): Lis
   )
 }
 
-fun Deprecated?.toApiStatus(origin: CustomElementsJsonOrigin): WebSymbolApiStatus? =
-  this?.value?.let { msg -> WebSymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
+fun Deprecated?.toApiStatus(origin: CustomElementsJsonOrigin): PolySymbolApiStatus? =
+  this?.value?.let { msg -> PolySymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
 
 fun CustomElementsManifest.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase)
   : Sequence<StaticWebSymbolsScopeBase.StaticSymbolContributionAdapter> =

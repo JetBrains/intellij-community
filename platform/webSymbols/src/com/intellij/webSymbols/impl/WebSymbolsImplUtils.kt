@@ -11,7 +11,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.containers.Interner
 import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
@@ -109,7 +109,7 @@ internal val WebSymbolNameSegment.highlightingEnd: Int?
     (this as WebSymbolNameSegmentImpl).highlightingEnd
 
 internal fun WebSymbolNameSegment.copy(
-  apiStatus: WebSymbolApiStatus? = null,
+  apiStatus: PolySymbolApiStatus? = null,
   priority: PolySymbol.Priority? = null,
   proximity: Int? = null,
   problem: WebSymbolNameSegment.MatchProblem? = null,

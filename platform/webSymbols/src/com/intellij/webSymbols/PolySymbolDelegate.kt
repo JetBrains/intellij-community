@@ -48,7 +48,7 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
     get() = delegate.docUrl
   override val icon: Icon?
     get() = delegate.icon
-  override val apiStatus: WebSymbolApiStatus
+  override val apiStatus: PolySymbolApiStatus
     get() = delegate.apiStatus
   override val virtual: Boolean
     get() = delegate.virtual

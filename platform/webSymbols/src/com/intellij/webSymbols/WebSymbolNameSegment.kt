@@ -21,7 +21,7 @@ interface WebSymbolNameSegment {
 
   val matchScore: Int
 
-  val apiStatus: WebSymbolApiStatus?
+  val apiStatus: PolySymbolApiStatus?
 
   val priority: PolySymbol.Priority?
 
@@ -53,7 +53,7 @@ interface WebSymbolNameSegment {
       displayName: @NlsSafe String? = null,
       matchScore: Int = end - start,
       symbolKinds: Set<WebSymbolQualifiedKind>? = null,
-      explicitApiStatus: WebSymbolApiStatus? = null,
+      explicitApiStatus: PolySymbolApiStatus? = null,
       explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,
     ): WebSymbolNameSegment =

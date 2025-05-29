@@ -2,7 +2,7 @@
 package com.intellij.webSymbols.completion
 
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus
 import javax.swing.Icon
 
 interface WebSymbolCodeCompletionItemBuilder {
@@ -18,7 +18,7 @@ interface WebSymbolCodeCompletionItemBuilder {
   fun priority(value: PolySymbol.Priority?): WebSymbolCodeCompletionItemBuilder
   fun proximity(value: Int?): WebSymbolCodeCompletionItemBuilder
 
-  fun apiStatus(value: WebSymbolApiStatus): WebSymbolCodeCompletionItemBuilder
+  fun apiStatus(value: PolySymbolApiStatus): WebSymbolCodeCompletionItemBuilder
   fun aliases(value: Set<String>): WebSymbolCodeCompletionItemBuilder
   fun symbol(value: PolySymbol?): WebSymbolCodeCompletionItemBuilder
   fun insertHandler(value: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItemBuilder

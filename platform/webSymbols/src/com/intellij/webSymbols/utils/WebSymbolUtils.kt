@@ -284,35 +284,35 @@ fun List<WebSymbolNameSegment>.withOffset(offset: Int): List<WebSymbolNameSegmen
   if (offset != 0) map { it.withOffset(offset) }
   else this
 
-fun WebSymbolApiStatus?.coalesceWith(other: WebSymbolApiStatus?): WebSymbolApiStatus =
+fun PolySymbolApiStatus?.coalesceWith(other: PolySymbolApiStatus?): PolySymbolApiStatus =
   when (this) {
-    null -> other ?: WebSymbolApiStatus.Stable
-    is WebSymbolApiStatus.Obsolete -> this
-    is WebSymbolApiStatus.Deprecated -> when (other) {
-      is WebSymbolApiStatus.Obsolete -> other
+    null -> other ?: PolySymbolApiStatus.Stable
+    is PolySymbolApiStatus.Obsolete -> this
+    is PolySymbolApiStatus.Deprecated -> when (other) {
+      is PolySymbolApiStatus.Obsolete -> other
       else -> this
     }
-    is WebSymbolApiStatus.Experimental -> when (other) {
-      is WebSymbolApiStatus.Obsolete,
-      is WebSymbolApiStatus.Deprecated,
+    is PolySymbolApiStatus.Experimental -> when (other) {
+      is PolySymbolApiStatus.Obsolete,
+      is PolySymbolApiStatus.Deprecated,
         -> other
       else -> this
     }
-    is WebSymbolApiStatus.Stable -> when (other) {
-      is WebSymbolApiStatus.Obsolete,
-      is WebSymbolApiStatus.Deprecated,
-      is WebSymbolApiStatus.Experimental,
+    is PolySymbolApiStatus.Stable -> when (other) {
+      is PolySymbolApiStatus.Obsolete,
+      is PolySymbolApiStatus.Deprecated,
+      is PolySymbolApiStatus.Experimental,
         -> other
       else -> this
     }
   }
 
-fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> WebSymbolApiStatus?): WebSymbolApiStatus =
+fun <T : Any> coalesceApiStatus(collection: Iterable<T>?, mapper: (T) -> PolySymbolApiStatus?): PolySymbolApiStatus =
   coalesceApiStatus(collection?.asSequence(), mapper)
 
 
-fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> WebSymbolApiStatus?): WebSymbolApiStatus =
-  sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) } ?: WebSymbolApiStatus.Stable
+fun <T : Any> coalesceApiStatus(sequence: Sequence<T>?, mapper: (T) -> PolySymbolApiStatus?): PolySymbolApiStatus =
+  sequence?.map(mapper)?.reduceOrNull { a, b -> a.coalesceWith(b) } ?: PolySymbolApiStatus.Stable
 
 fun Sequence<WebSymbolHtmlAttributeValue?>.merge(): WebSymbolHtmlAttributeValue? {
   var kind: WebSymbolHtmlAttributeValue.Kind? = null

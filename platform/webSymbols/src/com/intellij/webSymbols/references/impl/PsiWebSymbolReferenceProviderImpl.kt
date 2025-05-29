@@ -19,9 +19,9 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolApiStatus
-import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
-import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.webSymbols.PolySymbolApiStatus
+import com.intellij.webSymbols.PolySymbolApiStatus.Companion.getMessage
+import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.highlighting.impl.getDefaultProblemMessage
@@ -165,7 +165,7 @@ private class NameSegmentReferenceWithProblem(
   rangeInElement: TextRange,
   nameSegments: Collection<WebSymbolNameSegment>,
   private val segmentsOffset: Int,
-  private val apiStatus: WebSymbolApiStatus?,
+  private val apiStatus: PolySymbolApiStatus?,
   private val problemOnly: Boolean,
 ) : NameSegmentReference(element, rangeInElement, nameSegments) {
 
@@ -194,10 +194,10 @@ private class NameSegmentReferenceWithProblem(
         )
       }.firstOrNull()
     val deprecationProblem = if (apiStatus.isDeprecatedOrObsolete()) {
-      val isDeprecated = apiStatus is WebSymbolApiStatus.Deprecated
+      val isDeprecated = apiStatus is PolySymbolApiStatus.Deprecated
       val symbolTypes = nameSegments.flatMapTo(LinkedHashSet()) { it.symbolKinds }
       val toolMapping = symbolTypes.map {
-        if (apiStatus is WebSymbolApiStatus.Obsolete)
+        if (apiStatus is PolySymbolApiStatus.Obsolete)
           WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.ObsoleteSymbol)
             ?.let { mapping -> return@map mapping }
         WebSymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
