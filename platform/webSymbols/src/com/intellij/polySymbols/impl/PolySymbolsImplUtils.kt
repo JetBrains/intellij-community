@@ -14,9 +14,9 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.WebSymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.polySymbols.query.WebSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolsQueryParams
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -86,11 +86,11 @@ internal fun List<PolySymbol>.sortSymbolsByPriority(extensionsLast: Boolean = tr
                .thenComparingInt { -(it.priority ?: PolySymbol.Priority.NORMAL).ordinal }
                .thenComparingInt { -(it.proximity ?: 0) })
 
-internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQueryParams): Sequence<T> =
+internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: PolySymbolsQueryParams): Sequence<T> =
   this.filter { symbol ->
     symbol.matchContext(params.queryExecutor.context)
-    && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true
-        || (params as? WebSymbolsListSymbolsQueryParams)?.abstractSymbols == true
+    && ((params as? PolySymbolsNameMatchQueryParams)?.abstractSymbols == true
+        || (params as? PolySymbolsListSymbolsQueryParams)?.abstractSymbols == true
         || !symbol.abstract)
     && (params.virtualSymbols != false || !symbol.virtual)
   }

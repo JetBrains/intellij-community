@@ -35,7 +35,7 @@ private class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
 
   override fun isAvailableOnDataContext(dataContext: DataContext): Boolean =
     dataContext.getData(CommonDataKeys.SYMBOLS)
-      ?.singleOrNull { acceptSymbolForPsiSourcedWebSymbolRenameHandler(it) }
+      ?.singleOrNull { acceptSymbolForPsiSourcedPolySymbolRenameHandler(it) }
       ?.also {
         symbol = it as PsiSourcedPolySymbol
       } != null
@@ -45,7 +45,7 @@ private class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
 
 }
 
-internal fun acceptSymbolForPsiSourcedWebSymbolRenameHandler(symbol: Symbol): Boolean =
+internal fun acceptSymbolForPsiSourcedPolySymbolRenameHandler(symbol: Symbol): Boolean =
   symbol is PsiSourcedPolySymbol
   && symbol.source is PsiNamedElement
   && symbol.source !is SyntheticElement

@@ -10,10 +10,10 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
 
-class WebSymbolsFilterEP() : CustomLoadingExtensionPointBean<PolySymbolsFilter>() {
+class PolySymbolsFilterEP() : CustomLoadingExtensionPointBean<PolySymbolsFilter>() {
 
   companion object {
-    private val EP_NAME = ExtensionPointName<WebSymbolsFilterEP>("com.intellij.webSymbols.webTypes.filter")
+    private val EP_NAME = ExtensionPointName<PolySymbolsFilterEP>("com.intellij.webSymbols.webTypes.filter")
 
     fun get(name: String): PolySymbolsFilter =
       EP_NAME.getByKey(name, PolySymbol::class.java) { it.name }?.instance

@@ -12,7 +12,7 @@ import com.intellij.polySymbols.patterns.ComplexPatternOptions
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.impl.*
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.json.*
@@ -77,7 +77,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
 
   override fun getOptions(queryExecutor: PolySymbolsQueryExecutor,
                           scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions {
-    val queryParams = WebSymbolsNameMatchQueryParams.create(queryExecutor, true, false)
+    val queryParams = PolySymbolsNameMatchQueryParams.create(queryExecutor, true, false)
     val delegate = pattern.delegate?.resolve(scopeStack, queryParams.queryExecutor)?.firstOrNull()
 
     // Allow delegate pattern to override settings

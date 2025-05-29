@@ -5,7 +5,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.webTypes.impl.WebSymbolsFilterEP
+import com.intellij.polySymbols.webTypes.impl.PolySymbolsFilterEP
 
 interface PolySymbolsFilter {
 
@@ -23,7 +23,7 @@ interface PolySymbolsFilter {
   companion object {
 
     @JvmStatic
-    fun get(name: String): PolySymbolsFilter = WebSymbolsFilterEP.get(name)
+    fun get(name: String): PolySymbolsFilter = PolySymbolsFilterEP.get(name)
 
   }
 

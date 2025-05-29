@@ -31,19 +31,19 @@ class PsiSourcedPolySymbolRequestResultProcessor(private val targetElement: PsiE
     if (element is PsiExternalReferenceHost) {
       val targetSymbol = targetSymbols.asSingleSymbol() ?: myTargetSymbol
       // Web symbol references
-      mySymbolReferenceService.getReferences(element, WebSymbolReferenceHints(targetSymbol, offsetInElement))
+      mySymbolReferenceService.getReferences(element, PolySymbolReferenceHints(targetSymbol, offsetInElement))
         .asSequence()
         .filterIsInstance<PolySymbolReference>()
         .filter { it.rangeInElement.containsOffset(offsetInElement) }
         .forEach { ref ->
           ProgressManager.checkCanceled()
-          val psiSourcedWebSymbols = ref.resolveReference().filterIsInstance<PsiSourcedPolySymbol>()
-          if (psiSourcedWebSymbols.isEmpty()) return@forEach
+          val psiSourcedPolySymbols = ref.resolveReference().filterIsInstance<PsiSourcedPolySymbol>()
+          if (psiSourcedPolySymbols.isEmpty()) return@forEach
           val equivalentSymbol = if (targetSymbols.isEmpty()) {
-            psiSourcedWebSymbols.find { it.isEquivalentTo(myTargetSymbol) }
+            psiSourcedPolySymbols.find { it.isEquivalentTo(myTargetSymbol) }
           }
           else {
-            targetSymbols.find { targetSymbol -> psiSourcedWebSymbols.any { it.isEquivalentTo(targetSymbol) } }
+            targetSymbols.find { targetSymbol -> psiSourcedPolySymbols.any { it.isEquivalentTo(targetSymbol) } }
           }
           if (equivalentSymbol == null) return@forEach
           if (!consumer.process(

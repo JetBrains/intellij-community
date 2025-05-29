@@ -4,11 +4,11 @@ package com.intellij.polySymbols.context
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.containers.MultiMap
-import com.intellij.polySymbols.ContextKind
+import com.intellij.polySymbols.PolyContextKind
 
 interface PolyContextRulesProvider : ModificationTracker {
 
-  fun getContextRules(): MultiMap<ContextKind, PolyContextKindRules>
+  fun getContextRules(): MultiMap<PolyContextKind, PolyContextKindRules>
 
   fun createPointer(): Pointer<out PolyContextRulesProvider>
 

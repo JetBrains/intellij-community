@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.getCachedValue
 import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.text.minimatch.Minimatch
 import com.intellij.util.text.minimatch.MinimatchOptions
-import com.intellij.polySymbols.ContextKind
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextKind
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.PolyContext
 import java.io.IOException
 
@@ -33,7 +33,7 @@ internal class PolyContextFileData private constructor(
 
   class DirectoryContext(
     private val filePattern: Regex?,
-    val context: Map<ContextKind, ContextName>,
+    val context: Map<PolyContextKind, PolyContextName>,
     val priority: Float,
   ) {
     fun matches(fileName: String?): Boolean =
@@ -46,7 +46,7 @@ internal class PolyContextFileData private constructor(
   private data class ContextEntry(
     val dirPattern: Minimatch?,
     val filePattern: Regex?,
-    val context: Map<ContextKind, ContextName>,
+    val context: Map<PolyContextKind, PolyContextName>,
     val priority: Int,
   )
 
@@ -81,7 +81,7 @@ internal class PolyContextFileData private constructor(
 
     private fun readContextPattern(reader: JsonReader, dirPattern: String, contexts: MutableList<ContextEntry>) {
       reader.beginObject()
-      val dirContext = mutableMapOf<ContextKind, ContextName>()
+      val dirContext = mutableMapOf<PolyContextKind, PolyContextName>()
       while (reader.hasNext()) {
         val key = reader.nextName()
         if (reader.peek() == JsonToken.BEGIN_OBJECT) {
@@ -111,7 +111,7 @@ internal class PolyContextFileData private constructor(
       }
     }
 
-    private fun buildContextEntry(pattern: String, dirContext: MutableMap<ContextKind, ContextName>): ContextEntry {
+    private fun buildContextEntry(pattern: String, dirContext: MutableMap<PolyContextKind, PolyContextName>): ContextEntry {
       val lastSlash = pattern.lastIndexOf('/')
       val filePattern = pattern.substring(lastSlash + 1).takeIf { it != "**" }
       val dirPattern = (if (filePattern == null) pattern else if (lastSlash >= 0) pattern.substring(0, lastSlash) else "/")

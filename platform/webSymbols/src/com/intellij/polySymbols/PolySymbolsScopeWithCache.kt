@@ -95,10 +95,10 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
   }
 
-  private fun createCachedSearchMap(namesProvider: PolySymbolNamesProvider): CachedValue<WebSymbolsSearchMap> =
+  private fun createCachedSearchMap(namesProvider: PolySymbolNamesProvider): CachedValue<PolySymbolsSearchMap> =
     CachedValuesManager.getManager(project).createCachedValue {
       val dependencies = mutableSetOf<Any>()
-      val map = WebSymbolsSearchMap(namesProvider, framework)
+      val map = PolySymbolsSearchMap(namesProvider, framework)
       initialize(
         {
           if (!provides(it.qualifiedKind))
@@ -114,7 +114,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
 
   override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                  params: WebSymbolsNameMatchQueryParams,
+                                  params: PolySymbolsNameMatchQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
@@ -124,7 +124,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     else emptyList()
 
   override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                          params: WebSymbolsListSymbolsQueryParams,
+                          params: PolySymbolsListSymbolsQueryParams,
                           scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
@@ -134,7 +134,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     else emptyList()
 
   override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                  params: WebSymbolsCodeCompletionQueryParams,
+                                  params: PolySymbolsCodeCompletionQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
@@ -143,15 +143,15 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
     else emptyList()
 
-  private fun getMap(queryExecutor: PolySymbolsQueryExecutor): WebSymbolsSearchMap =
+  private fun getMap(queryExecutor: PolySymbolsQueryExecutor): PolySymbolsSearchMap =
     getNamesProviderToMapCache().getOrCreateMap(queryExecutor.namesProvider, this::createCachedSearchMap)
 
   private class NamesProviderToMapCache {
-    private val cache: ConcurrentMap<PolySymbolNamesProvider, CachedValue<WebSymbolsSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+    private val cache: ConcurrentMap<PolySymbolNamesProvider, CachedValue<PolySymbolsSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
     private var cacheMisses = 0
 
     fun getOrCreateMap(namesProvider: PolySymbolNamesProvider,
-                       createCachedSearchMap: (namesProvider: PolySymbolNamesProvider) -> CachedValue<WebSymbolsSearchMap>): WebSymbolsSearchMap {
+                       createCachedSearchMap: (namesProvider: PolySymbolNamesProvider) -> CachedValue<PolySymbolsSearchMap>): PolySymbolsSearchMap {
       if (cacheMisses > 20) {
         // Get rid of old soft keys
         cacheMisses = 0
@@ -164,14 +164,14 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
   }
 
-  private class WebSymbolsSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?)
+  private class PolySymbolsSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?)
     : SearchMap<PolySymbol>(namesProvider) {
 
-    override fun Sequence<PolySymbol>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol> = this
+    override fun Sequence<PolySymbol>.mapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol> = this
 
     fun add(symbol: PolySymbol) {
       assert(framework == null || symbol.origin.framework == framework || symbol.origin.framework == null) {
-        "WebSymbolsScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
+        "PolySymbolsScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
       }
       add(symbol.qualifiedName, symbol.pattern, symbol)
     }

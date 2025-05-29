@@ -45,7 +45,7 @@ import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
 import com.intellij.polySymbols.references.impl.IJ_IGNORE_REFS
 import com.intellij.polySymbols.references.impl.PsiPolySymbolReferenceProviderImpl
-import com.intellij.polySymbols.search.WebSymbolReferenceHints
+import com.intellij.polySymbols.search.PolySymbolReferenceHints
 import com.intellij.polySymbols.utils.applyIfNotNull
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.polySymbols.utils.nameSegments
@@ -62,14 +62,14 @@ class PolySymbolsHighlightingAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
 
     if (element is PsiExternalReferenceHost) {
-      // Use service, as WebSymbols may be contributed directly through PsiSymbolReferenceProvider
+      // Use service, as PolySymbols may be contributed directly through PsiSymbolReferenceProvider
       PsiSymbolReferenceService.getService().getReferences(element, PolySymbolReference::class.java)
         .filter { it.getProblems().isNotEmpty() }
         .forEach { ref -> annotateReference(ref, holder) }
 
-      // For symbols contributed through PsiWebSymbolReferenceProvider and WebSymbolDeclarationProvider
+      // For symbols contributed through PsiPolySymbolReferenceProvider and PolySymbolDeclarationProvider
       // provide automatic symbol kind highlighting
-      val multiMap = symbolReferencesProvider.getSymbolOffsetsAndReferences(element, WebSymbolReferenceHints.NO_HINTS).first.copy()
+      val multiMap = symbolReferencesProvider.getSymbolOffsetsAndReferences(element, PolySymbolReferenceHints.NO_HINTS).first.copy()
 
       PolySymbolDeclarationProvider.getAllDeclarations(element, -1).forEach { declaration ->
         multiMap.putValue(declaration.rangeInDeclaringElement.startOffset, declaration.symbol)

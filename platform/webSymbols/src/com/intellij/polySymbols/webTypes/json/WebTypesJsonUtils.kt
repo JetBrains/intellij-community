@@ -190,7 +190,7 @@ internal fun Reference.resolve(name: String,
                                queryExecutor: PolySymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
                                abstractSymbols: Boolean = false): List<PolySymbol> =
-  processWebSymbols(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+  processPolySymbols(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
   }
 
@@ -198,8 +198,8 @@ internal fun Reference.resolve(scope: List<PolySymbolsScope>,
                                queryExecutor: PolySymbolsQueryExecutor,
                                virtualSymbols: Boolean = true,
                                abstractSymbols: Boolean = false): List<PolySymbol> =
-  processWebSymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
-    if (path.isEmpty()) return@processWebSymbols emptyList()
+  processPolySymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+    if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
     if (lastSegment.name.isEmpty())
       runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
@@ -213,14 +213,14 @@ internal fun Reference.list(scope: List<PolySymbolsScope>,
                             expandPatterns: Boolean,
                             virtualSymbols: Boolean = true,
                             abstractSymbols: Boolean = false): List<PolySymbol> =
-  processWebSymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
-    if (path.isEmpty()) return@processWebSymbols emptyList()
+  processPolySymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
+    if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
     runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
                         expandPatterns, virtualSymbols2, abstractSymbols2, false, scope)
   }
 
-private fun Reference.processWebSymbols(
+private fun Reference.processPolySymbols(
   name: String?,
   scope: List<PolySymbolsScope>,
   queryExecutor: PolySymbolsQueryExecutor,

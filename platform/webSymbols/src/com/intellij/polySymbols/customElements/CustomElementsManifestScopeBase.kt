@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
-import com.intellij.polySymbols.ContextKind
+import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
@@ -55,7 +55,7 @@ abstract class CustomElementsManifestScopeBase :
   override fun matchContext(origin: CustomElementsJsonOrigin, context: PolyContext): Boolean =
     true
 
-  override fun getContextRules(): MultiMap<ContextKind, PolyContextKindRules> = MultiMap.empty()
+  override fun getContextRules(): MultiMap<PolyContextKind, PolyContextKindRules> = MultiMap.empty()
 
   override fun getNameConversionRulesProvider(framework: FrameworkId): PolySymbolNameConversionRulesProvider =
     object : PolySymbolNameConversionRulesProvider {

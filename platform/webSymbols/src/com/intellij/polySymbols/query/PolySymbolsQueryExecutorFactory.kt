@@ -6,8 +6,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.ContextKind
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextKind
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.query.impl.PolySymbolsQueryExecutorBuilderImpl
 import org.jetbrains.annotations.TestOnly
@@ -22,20 +22,20 @@ interface PolySymbolsQueryExecutorFactory : Disposable {
   @TestOnly
   fun addScope(scope: PolySymbolsScope, contextDirectory: VirtualFile?, disposable: Disposable)
 
-  interface WebSymbolsQueryExecutorBuilder {
-    fun addRootScope(scope: PolySymbolsScope): WebSymbolsQueryExecutorBuilder
+  interface PolySymbolsQueryExecutorBuilder {
+    fun addRootScope(scope: PolySymbolsScope): PolySymbolsQueryExecutorBuilder
 
-    fun addRootScopes(scope: List<PolySymbolsScope>): WebSymbolsQueryExecutorBuilder
+    fun addRootScopes(scope: List<PolySymbolsScope>): PolySymbolsQueryExecutorBuilder
 
-    fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder
+    fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): PolySymbolsQueryExecutorBuilder
 
-    fun addNameConversionRules(rules: PolySymbolNameConversionRules): WebSymbolsQueryExecutorBuilder
+    fun addNameConversionRules(rules: PolySymbolNameConversionRules): PolySymbolsQueryExecutorBuilder
 
-    fun setFramework(framework: String): WebSymbolsQueryExecutorBuilder
+    fun setFramework(framework: String): PolySymbolsQueryExecutorBuilder
 
-    fun addWebSymbolsContext(kind: ContextKind, name: ContextName?): WebSymbolsQueryExecutorBuilder
+    fun addPolyContext(kind: PolyContextKind, name: PolyContextName?): PolySymbolsQueryExecutorBuilder
 
-    fun allowResolve(allowResolve: Boolean): WebSymbolsQueryExecutorBuilder
+    fun allowResolve(allowResolve: Boolean): PolySymbolsQueryExecutorBuilder
 
     fun create(): PolySymbolsQueryExecutor
   }
@@ -48,10 +48,10 @@ interface PolySymbolsQueryExecutorFactory : Disposable {
     fun create(location: PsiElement, allowResolve: Boolean = true): PolySymbolsQueryExecutor =
       getInstance(location.project).create(location, allowResolve)
 
-    fun createCustom(): WebSymbolsQueryExecutorBuilder =
+    fun createCustom(): PolySymbolsQueryExecutorBuilder =
       PolySymbolsQueryExecutorBuilderImpl()
 
-    fun createCustom(setup: WebSymbolsQueryExecutorBuilder.() -> Unit): PolySymbolsQueryExecutor =
+    fun createCustom(setup: PolySymbolsQueryExecutorBuilder.() -> Unit): PolySymbolsQueryExecutor =
       PolySymbolsQueryExecutorBuilderImpl()
         .let { setup(it); it.create() }
 

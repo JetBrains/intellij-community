@@ -83,7 +83,7 @@ object PolySymbolUsageQueries {
               }
           }
 
-          val foundReferences = getReferences(element, WebSymbolReferenceHints(symbol, offsetInElement))
+          val foundReferences = getReferences(element, PolySymbolReferenceHints(symbol, offsetInElement))
             .asSequence()
             .filterIsInstance<PolySymbolReference>()
             .filter { it.rangeInElement.containsOffset(offsetInElement) }
@@ -112,7 +112,7 @@ object PolySymbolUsageQueries {
     }
 }
 
-internal class WebSymbolReferenceHints(private val symbol: Symbol, private val offsetInElement: Int) : PsiSymbolReferenceHints {
+internal class PolySymbolReferenceHints(private val symbol: Symbol, private val offsetInElement: Int) : PsiSymbolReferenceHints {
   override fun getOffsetInElement(): Int {
     return offsetInElement
   }

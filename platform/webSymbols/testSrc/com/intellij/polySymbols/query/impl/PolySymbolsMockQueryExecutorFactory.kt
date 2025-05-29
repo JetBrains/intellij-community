@@ -3,8 +3,8 @@ package com.intellij.polySymbols.query.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.ContextKind
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextKind
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
@@ -17,7 +17,7 @@ class PolySymbolsMockQueryExecutorFactory : PolySymbolsQueryExecutorFactory {
 
   private val scopeList = mutableListOf<PolySymbolsScope>()
 
-  val context: MutableMap<ContextKind, ContextName> = mutableMapOf()
+  val context: MutableMap<PolyContextKind, PolyContextName> = mutableMapOf()
 
   override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolsQueryExecutor =
     PolySymbolsQueryExecutorImpl(location, scopeList,

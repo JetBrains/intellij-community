@@ -11,9 +11,9 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.polySymbols.customElements.json.CustomElementsContribution
-import com.intellij.polySymbols.query.WebSymbolsCodeCompletionQueryParams
-import com.intellij.polySymbols.query.WebSymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import java.util.*
 
 abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContribution> protected constructor(
@@ -24,21 +24,21 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
 ) : CustomElementsContributionSymbol<Container>(name, container, origin) {
 
   override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                  params: WebSymbolsNameMatchQueryParams,
+                                  params: PolySymbolsNameMatchQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<PolySymbol> =
     rootScope
       .getMatchingSymbols(contribution, this.origin, qualifiedName, params, scope)
       .toList()
 
   override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                          params: WebSymbolsListSymbolsQueryParams,
+                          params: PolySymbolsListSymbolsQueryParams,
                           scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
     rootScope
       .getSymbols(contribution, this.origin, qualifiedKind, params)
       .toList()
 
   override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                  params: WebSymbolsCodeCompletionQueryParams,
+                                  params: PolySymbolsCodeCompletionQueryParams,
                                   scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
     rootScope
       .getCodeCompletions(contribution, this.origin, qualifiedName, params, scope)

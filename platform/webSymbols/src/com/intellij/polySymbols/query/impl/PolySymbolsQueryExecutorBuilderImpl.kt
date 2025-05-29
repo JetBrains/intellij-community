@@ -2,51 +2,51 @@
 package com.intellij.polySymbols.query.impl
 
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.polySymbols.ContextKind
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextKind
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory.WebSymbolsQueryExecutorBuilder
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory.PolySymbolsQueryExecutorBuilder
 import com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
 
-class PolySymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
+class PolySymbolsQueryExecutorBuilderImpl() : PolySymbolsQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolsScope>()
   private val customizers = mutableListOf<PolySymbolsQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
-  private val context = mutableMapOf<ContextKind, ContextName>()
+  private val context = mutableMapOf<PolyContextKind, PolyContextName>()
   private var allowResolve = true
 
-  override fun addRootScope(scope: PolySymbolsScope): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addRootScope(scope: PolySymbolsScope): PolySymbolsQueryExecutorBuilder = apply {
     rootScopes.add(scope)
   }
 
-  override fun addRootScopes(scope: List<PolySymbolsScope>): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addRootScopes(scope: List<PolySymbolsScope>): PolySymbolsQueryExecutorBuilder = apply {
     rootScopes.addAll(scope)
   }
 
-  override fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): PolySymbolsQueryExecutorBuilder = apply {
     customizers.add(customizer)
   }
 
-  override fun addNameConversionRules(rules: PolySymbolNameConversionRules): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addNameConversionRules(rules: PolySymbolNameConversionRules): PolySymbolsQueryExecutorBuilder = apply {
     nameConversionRules.add(rules)
   }
 
-  override fun addWebSymbolsContext(kind: ContextKind, name: ContextName?): WebSymbolsQueryExecutorBuilder = apply {
+  override fun addPolyContext(kind: PolyContextKind, name: PolyContextName?): PolySymbolsQueryExecutorBuilder = apply {
     if (name == null)
       context.remove(kind)
     else
       context[kind] = name
   }
 
-  override fun setFramework(framework: String): WebSymbolsQueryExecutorBuilder = apply {
+  override fun setFramework(framework: String): PolySymbolsQueryExecutorBuilder = apply {
     context[KIND_FRAMEWORK] = framework
   }
 
-  override fun allowResolve(allowResolve: Boolean): WebSymbolsQueryExecutorBuilder = apply {
+  override fun allowResolve(allowResolve: Boolean): PolySymbolsQueryExecutorBuilder = apply {
     this.allowResolve = allowResolve
   }
 

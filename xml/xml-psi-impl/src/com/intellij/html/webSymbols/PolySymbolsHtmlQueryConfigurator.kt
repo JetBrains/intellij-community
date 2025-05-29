@@ -122,7 +122,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     }
 
     override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                            params: WebSymbolsListSymbolsQueryParams,
+                            params: PolySymbolsListSymbolsQueryParams,
                             scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
       if (params.queryExecutor.allowResolve) {
         when (qualifiedKind) {
@@ -147,7 +147,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       else emptyList()
 
     override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                    params: WebSymbolsNameMatchQueryParams,
+                                    params: PolySymbolsNameMatchQueryParams,
                                     scope: Stack<PolySymbolsScope>): List<PolySymbol> {
       if (params.queryExecutor.allowResolve) {
         when (qualifiedName.qualifiedKind) {
@@ -276,7 +276,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
 
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
-      params: WebSymbolsListSymbolsQueryParams,
+      params: PolySymbolsListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbolsScope> =
       if (qualifiedKind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)

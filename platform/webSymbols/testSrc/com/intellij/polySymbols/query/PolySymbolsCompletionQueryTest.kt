@@ -235,7 +235,7 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
         override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
 
         override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                        params: WebSymbolsCodeCompletionQueryParams,
+                                        params: PolySymbolsCodeCompletionQueryParams,
                                         scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> {
           return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
             listOf(PolySymbolCodeCompletionItem.create("bar"))

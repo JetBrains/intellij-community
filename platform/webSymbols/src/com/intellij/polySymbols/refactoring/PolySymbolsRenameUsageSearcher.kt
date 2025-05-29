@@ -20,7 +20,7 @@ internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
         PolySymbolUsageQueries.buildPolySymbolUsagesQueries(symbol, parameters.project, parameters.searchScope)
           .map { query ->
             query.mapping {
-              WebSymbolPsiModifiableRenameUsage(
+              PolySymbolPsiModifiableRenameUsage(
                 PolySymbolsQueryExecutorFactory.create(PsiTreeUtil.findElementOfClassAtRange(it.file, it.range.startOffset, it.range.endOffset, PsiElement::class.java)
                                                        ?: it.file), symbol,
                 PsiRenameUsage.defaultPsiRenameUsage(it))
@@ -29,7 +29,7 @@ internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
       }
     ?: emptyList()
 
-  private class WebSymbolPsiModifiableRenameUsage(
+  private class PolySymbolPsiModifiableRenameUsage(
     private val queryExecutor: PolySymbolsQueryExecutor,
     private val symbol: PolySymbol,
     private val psiRenameUsage: PsiRenameUsage,
@@ -49,7 +49,7 @@ internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
         val queryExecutor = queryExecutorPtr.dereference() ?: return@Pointer null
         val symbol = symbolPtr.dereference() ?: return@Pointer null
         val usage = usagePtr.dereference() ?: return@Pointer null
-        WebSymbolPsiModifiableRenameUsage(queryExecutor, symbol, usage)
+        PolySymbolPsiModifiableRenameUsage(queryExecutor, symbol, usage)
       }
     }
   }

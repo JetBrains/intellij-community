@@ -390,7 +390,7 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
     polySymbolsQueryExecutorFactory.addScope(
       object : PolySymbolsScope {
         override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                        params: WebSymbolsNameMatchQueryParams,
+                                        params: PolySymbolsNameMatchQueryParams,
                                         scope: Stack<PolySymbolsScope>): List<PolySymbol> {
           return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {

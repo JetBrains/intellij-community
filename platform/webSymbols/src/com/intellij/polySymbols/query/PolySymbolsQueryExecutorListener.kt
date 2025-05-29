@@ -5,9 +5,9 @@ import com.intellij.util.messages.Topic
 
 interface PolySymbolsQueryExecutorListener {
 
-  fun beforeQuery(queryParams: WebSymbolsQueryParams)
+  fun beforeQuery(queryParams: PolySymbolsQueryParams)
 
-  fun afterQuery(queryParams: WebSymbolsQueryParams)
+  fun afterQuery(queryParams: PolySymbolsQueryParams)
 
   companion object {
     val TOPIC: Topic<PolySymbolsQueryExecutorListener> = Topic(PolySymbolsQueryExecutorListener::class.java)

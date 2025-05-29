@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
-import com.intellij.polySymbols.ContextKind
+import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolsPrioritizedScope
 import com.intellij.polySymbols.PolySymbolsScope
@@ -86,8 +86,8 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
   }
 
   internal fun getContextRules(project: Project,
-                               dir: VirtualFile): Pair<MultiMap<ContextKind, PolyContextKindRules>, ModificationTracker> {
-    val result = MultiMap<ContextKind, PolyContextKindRules>()
+                               dir: VirtualFile): Pair<MultiMap<PolyContextKind, PolyContextKindRules>, ModificationTracker> {
+    val result = MultiMap<PolyContextKind, PolyContextKindRules>()
 
     getCustomScope(dir)
       .filterIsInstance<PolyContextRulesProvider>()

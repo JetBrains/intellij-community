@@ -14,7 +14,7 @@ interface PolySymbolRenameTarget : RenameTarget {
 
   companion object {
     fun create(symbol: PolySymbol): PolySymbolRenameTarget? =
-      if (!acceptSymbolForPsiSourcedWebSymbolRenameHandler(symbol))
+      if (!acceptSymbolForPsiSourcedPolySymbolRenameHandler(symbol))
         PolySymbolRenameTargetImpl(symbol)
       else
         null

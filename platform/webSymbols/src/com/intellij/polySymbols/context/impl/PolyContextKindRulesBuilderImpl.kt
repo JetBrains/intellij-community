@@ -2,15 +2,15 @@
 package com.intellij.polySymbols.context.impl
 
 import com.intellij.util.SmartList
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.PolyContextKindRules
 import java.util.Collections.unmodifiableList
 
 class PolyContextKindRulesBuilderImpl : PolyContextKindRules.Builder {
 
-  private val contextNames = mutableMapOf<ContextName, ContextKindBuilderImpl>()
+  private val contextNames = mutableMapOf<PolyContextName, ContextKindBuilderImpl>()
 
-  override fun contextName(name: ContextName, builder: PolyContextKindRules.ContextKindBuilder.() -> Unit) {
+  override fun contextName(name: PolyContextName, builder: PolyContextKindRules.ContextKindBuilder.() -> Unit) {
     contextNames.computeIfAbsent(name) { ContextKindBuilderImpl() }.apply(builder)
   }
 

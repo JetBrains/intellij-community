@@ -154,7 +154,7 @@ private open class NameSegmentReference(
     ?: emptyList()
 
   override fun toString(): String {
-    return "WebSymbolReference$rangeInElement - $nameSegments"
+    return "PolySymbolReference$rangeInElement - $nameSegments"
   }
 
 }

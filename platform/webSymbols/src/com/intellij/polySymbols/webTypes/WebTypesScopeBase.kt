@@ -11,8 +11,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.polySymbols.ContextKind
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextKind
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
@@ -38,7 +38,7 @@ abstract class WebTypesScopeBase :
   private val frameworkConfigs = mutableMapOf<WebTypes, FrameworkConfig>()
   private val contextsConfigs = mutableMapOf<WebTypes, ContextsConfig>()
 
-  private val contextRulesCache: ClearableLazyValue<MultiMap<ContextKind, PolyContextKindRules>> = createContextRulesCache()
+  private val contextRulesCache: ClearableLazyValue<MultiMap<PolyContextKind, PolyContextKindRules>> = createContextRulesCache()
 
   private val nameConversionRulesCache = createNameConversionRulesCache()
 
@@ -48,7 +48,7 @@ abstract class WebTypesScopeBase :
     return WebTypesSymbolNameConversionRulesProvider(framework, this, nameConversionRulesCache)
   }
 
-  override fun getContextRules(): MultiMap<ContextKind, PolyContextKindRules> = contextRulesCache.value
+  override fun getContextRules(): MultiMap<PolyContextKind, PolyContextKindRules> = contextRulesCache.value
 
   protected open fun addWebTypes(webTypes: WebTypes, context: WebTypesJsonOrigin) {
     addRoot(webTypes.contributions, context)
@@ -108,7 +108,7 @@ abstract class WebTypesScopeBase :
         list.map { it.wrap(origin, this@WebTypesScopeBase, namespace, kind) }
       }
 
-  private fun createContextRulesCache(): ClearableLazyValue<MultiMap<ContextKind, PolyContextKindRules>> {
+  private fun createContextRulesCache(): ClearableLazyValue<MultiMap<PolyContextKind, PolyContextKindRules>> {
     return ClearableLazyValue.create {
       val deprecatedContextConfigRules = contextsConfigs.values.asSequence()
         .flatMap { it.additionalProperties.entries }
@@ -137,7 +137,7 @@ abstract class WebTypesScopeBase :
         .plus(frameworkConfigRules)
         .groupBy { it.kind }
 
-      val result = MultiMap.create<ContextKind, PolyContextKindRules>()
+      val result = MultiMap.create<PolyContextKind, PolyContextKindRules>()
       rulesPerKind.forEach { (kind, rules) ->
         val rulesPerName = rules.groupBy { it.name }
         val enablementRules = rulesPerName.mapValues { (_, entries) -> entries.mapNotNull { it.enablementRules } }
@@ -238,8 +238,8 @@ private class WebTypesSymbolNameConversionRulesProvider(
 private val EOL_PATTERN: Regex = Regex("\n|\r\n")
 
 private data class RulesEntry(
-  val kind: ContextKind,
-  val name: ContextName,
+  val kind: PolyContextKind,
+  val name: PolyContextName,
   val enablementRules: EnablementRules?,
   val disablementRules: DisablementRules?,
 )

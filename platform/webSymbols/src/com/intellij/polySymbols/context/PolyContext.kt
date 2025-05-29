@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.ContextKind
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextKind
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionCollector
@@ -19,7 +19,7 @@ interface PolyContext {
   val framework: FrameworkId?
     get() = this[KIND_FRAMEWORK]
 
-  operator fun get(kind: ContextKind): ContextName?
+  operator fun get(kind: PolyContextKind): PolyContextName?
 
   @Suppress("MayBeConstant")
   companion object {
@@ -48,11 +48,11 @@ interface PolyContext {
     val PKG_MANAGER_SYMFONY_BUNDLES: String = "symfony-bundles"
 
     @JvmStatic
-    fun get(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =
+    fun get(kind: PolyContextKind, location: VirtualFile, project: Project): PolyContextName? =
       findPolyContext(kind, location, project)
 
     @JvmStatic
-    fun get(kind: ContextKind, location: PsiElement): ContextName? =
+    fun get(kind: PolyContextKind, location: PsiElement): PolyContextName? =
       findPolyContext(kind, location)
 
     @JvmStatic
@@ -60,7 +60,7 @@ interface PolyContext {
       PolyContextImpl.empty
 
     @JvmStatic
-    fun create(map: Map<ContextKind, ContextName>): PolyContext =
+    fun create(map: Map<PolyContextKind, PolyContextName>): PolyContext =
       PolyContextImpl(map)
 
   }

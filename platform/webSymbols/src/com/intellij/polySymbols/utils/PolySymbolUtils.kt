@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("WebSymbolUtils")
+@file:JvmName("PolySymbolUtils")
 
 package com.intellij.polySymbols.utils
 
@@ -143,7 +143,7 @@ fun PolySymbolMatch.withSegments(segments: List<PolySymbolNameSegment>): PolySym
 
 fun PolySymbol.match(
   nameToMatch: String,
-  params: WebSymbolsNameMatchQueryParams,
+  params: PolySymbolsNameMatchQueryParams,
   context: Stack<PolySymbolsScope>,
 ): List<PolySymbol> {
   pattern?.let { pattern ->
@@ -176,7 +176,7 @@ fun PolySymbol.match(
 
 fun PolySymbol.toCodeCompletionItems(
   name: String,
-  params: WebSymbolsCodeCompletionQueryParams,
+  params: PolySymbolsCodeCompletionQueryParams,
   context: Stack<PolySymbolsScope>,
 ): List<PolySymbolCodeCompletionItem> =
   pattern?.let { pattern ->
@@ -389,11 +389,11 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
 
 fun PolySymbolsScope.getDefaultCodeCompletions(
   qualifiedName: PolySymbolQualifiedName,
-  params: WebSymbolsCodeCompletionQueryParams,
+  params: PolySymbolsCodeCompletionQueryParams,
   scope: Stack<PolySymbolsScope>,
 ): List<PolySymbolCodeCompletionItem> =
   getSymbols(qualifiedName.qualifiedKind,
-             WebSymbolsListSymbolsQueryParams.create(
+             PolySymbolsListSymbolsQueryParams.create(
                params.queryExecutor,
                expandPatterns = false,
                virtualSymbols = params.virtualSymbols

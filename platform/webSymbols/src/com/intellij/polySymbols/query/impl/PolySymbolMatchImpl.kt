@@ -113,7 +113,7 @@ internal open class PolySymbolMatchImpl private constructor(
       .toMap()
 
   override fun createPointer(): Pointer<out PolySymbolMatchImpl> =
-    WebSymbolMatchPointer<PolySymbolMatchImpl>(this, ::PolySymbolMatchImpl)
+    PolySymbolMatchPointer<PolySymbolMatchImpl>(this, ::PolySymbolMatchImpl)
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     if (nameSegments.size == 1)
@@ -251,7 +251,7 @@ internal open class PolySymbolMatchImpl private constructor(
         .mapNotNull { (it as? PsiSourcedPolySymbol)?.source }.singleOrNull()
 
     override fun createPointer(): Pointer<PsiSourcedPolySymbolMatch> =
-      WebSymbolMatchPointer<PsiSourcedPolySymbolMatch>(this, ::PsiSourcedPolySymbolMatch)
+      PolySymbolMatchPointer<PsiSourcedPolySymbolMatch>(this, ::PsiSourcedPolySymbolMatch)
 
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
       super<PolySymbolMatchImpl>.getNavigationTargets(project)
@@ -301,7 +301,7 @@ internal open class PolySymbolMatchImpl private constructor(
     }
   }
 
-  private class WebSymbolMatchPointer<T : PolySymbolMatch>(
+  private class PolySymbolMatchPointer<T : PolySymbolMatch>(
     webSymbolMatch: PolySymbolMatchImpl,
     private val newInstanceProvider: (
       matchedName: String,

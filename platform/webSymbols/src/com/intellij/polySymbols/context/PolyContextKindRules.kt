@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.context
 
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.impl.PolyContextKindRulesBuilderImpl
 import com.intellij.polySymbols.context.impl.PolyContextKindRulesImpl
 import org.jetbrains.annotations.ApiStatus
 
 interface PolyContextKindRules {
 
-  val enable: Map<ContextName, List<EnablementRules>>
-  val disable: Map<ContextName, List<DisablementRules>>
+  val enable: Map<PolyContextName, List<EnablementRules>>
+  val disable: Map<PolyContextName, List<DisablementRules>>
 
   @ApiStatus.NonExtendable
   interface DisablementRules {
@@ -28,7 +28,7 @@ interface PolyContextKindRules {
 
   @ApiStatus.NonExtendable
   interface Builder {
-    fun contextName(name: ContextName, builder: ContextKindBuilder.() -> Unit)
+    fun contextName(name: PolyContextName, builder: ContextKindBuilder.() -> Unit)
   }
 
   @ApiStatus.NonExtendable
@@ -58,8 +58,8 @@ interface PolyContextKindRules {
   companion object {
 
     @JvmStatic
-    fun create(enable: Map<ContextName, List<EnablementRules>>,
-               disable: Map<ContextName, List<DisablementRules>>): PolyContextKindRules =
+    fun create(enable: Map<PolyContextName, List<EnablementRules>>,
+               disable: Map<PolyContextName, List<DisablementRules>>): PolyContextKindRules =
       PolyContextKindRulesImpl(enable, disable)
 
 

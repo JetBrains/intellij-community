@@ -14,14 +14,14 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.query.PolySymbolsCompoundScope
-import com.intellij.polySymbols.query.WebSymbolsListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
 abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : PolySymbolsCompoundScope() {
 
   protected abstract val rootPsiElement: R?
 
-  protected abstract val scopesBuilderProvider: (rootPsiScope: R, holder: WebSymbolsPsiScopesHolder) -> PsiElementVisitor?
+  protected abstract val scopesBuilderProvider: (rootPsiScope: R, holder: PolySymbolsPsiScopesHolder) -> PsiElementVisitor?
 
   protected abstract val providedSymbolKinds: Set<PolySymbolQualifiedKind>
 
@@ -35,7 +35,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
       ?.let { findBestMatchingScope(it) }
       ?.let {
         val structuredScopePtr = this@PolySymbolsStructuredScope.createPointer()
-        WebSymbolsPsiScopeWithPointer(it) {
+        PolySymbolsPsiScopeWithPointer(it) {
           structuredScopePtr.dereference()?.getCurrentScope()
         }
       }
@@ -47,7 +47,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
     val providedSymbolKinds = providedSymbolKinds
     return manager
       .getCachedValue(rootPsiElement, manager.getKeyForClass(this.javaClass), {
-        val holder = WebSymbolsPsiScopesHolder(rootPsiElement, providedSymbolKinds)
+        val holder = PolySymbolsPsiScopesHolder(rootPsiElement, providedSymbolKinds)
         scopeBuilderProvider(rootPsiElement, holder)?.let { rootPsiElement.accept(it) }
         CachedValueProvider.Result.create(holder.topLevelScope, rootPsiElement, PsiModificationTracker.MODIFICATION_COUNT)
       }, false)
@@ -67,7 +67,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
   protected open fun findBestMatchingScope(rootScope: PolySymbolsPsiScope): PolySymbolsPsiScope? =
     (rootScope as PolySymbolsPsiScopeImpl).findBestMatchingScope(location.textOffset)
 
-  protected class WebSymbolsPsiScopesHolder(val rootElement: PsiElement, val providedSymbolKinds: Set<PolySymbolQualifiedKind>) {
+  protected class PolySymbolsPsiScopesHolder(val rootElement: PsiElement, val providedSymbolKinds: Set<PolySymbolQualifiedKind>) {
     private val scopes = Stack<PolySymbolsPsiScope>()
 
     internal val topLevelScope: PolySymbolsPsiScope
@@ -119,7 +119,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
     private inner class ScopeModifierImpl(private val scope: PolySymbolsPsiScopeImpl) : ScopeModifier {
       override fun addSymbol(symbol: PolySymbol) {
         if (symbol.qualifiedKind !in providedSymbolKinds)
-          throw IllegalStateException("WebSymbol of kind ${symbol.qualifiedKind} should not be provided by ${this::class.java.name}")
+          throw IllegalStateException("PolySymbol of kind ${symbol.qualifiedKind} should not be provided by ${this::class.java.name}")
         scope.add(symbol)
       }
 
@@ -138,7 +138,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
     fun getAllSymbols(qualifiedKind: PolySymbolQualifiedKind): List<PolySymbol>
   }
 
-  private class WebSymbolsPsiScopeWithPointer(
+  private class PolySymbolsPsiScopeWithPointer(
     private val delegate: PolySymbolsPsiScope,
     private val pointer: Pointer<out PolySymbolsPsiScope>,
   ) : PolySymbolsPsiScope by delegate {
@@ -148,7 +148,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
 
     override fun equals(other: Any?): Boolean =
       other === this || delegate == other ||
-      other is WebSymbolsPsiScopeWithPointer
+      other is PolySymbolsPsiScopeWithPointer
       && other.delegate == delegate
 
     override fun hashCode(): Int =
@@ -198,7 +198,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
 
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
-      params: WebSymbolsListSymbolsQueryParams,
+      params: PolySymbolsListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbolsScope> =
       getAllSymbols(qualifiedKind)
@@ -232,7 +232,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
       source.hashCode()
 
     override fun createPointer(): Pointer<out PolySymbolsScope> =
-      throw IllegalStateException("WebSymbolsPsiScopeImpl cannot be pointed to. It should be wrapped with WebSymbolsPsiScopeWithPointer.")
+      throw IllegalStateException("PolySymbolsPsiScopeImpl cannot be pointed to. It should be wrapped with PolySymbolsPsiScopeWithPointer.")
 
     override fun getModificationCount(): Long = 0
   }

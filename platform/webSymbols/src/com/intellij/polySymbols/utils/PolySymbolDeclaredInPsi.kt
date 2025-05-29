@@ -32,7 +32,7 @@ interface PolySymbolDeclaredInPsi : PolySymbol, SearchTarget, RenameTarget {
   override fun createPointer(): Pointer<out PolySymbolDeclaredInPsi>
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> {
-    return listOf(PsiNavigatableWebSymbolNavigationTarget(this))
+    return listOf(PsiNavigatablePolySymbolNavigationTarget(this))
   }
 
   override val usageHandler: UsageHandler
@@ -48,12 +48,12 @@ interface PolySymbolDeclaredInPsi : PolySymbol, SearchTarget, RenameTarget {
     return presentation
   }
 
-  class PsiNavigatableWebSymbolNavigationTarget internal constructor(private val symbol: PolySymbolDeclaredInPsi) : NavigationTarget {
+  class PsiNavigatablePolySymbolNavigationTarget internal constructor(private val symbol: PolySymbolDeclaredInPsi) : NavigationTarget {
 
     override fun createPointer(): Pointer<out NavigationTarget> {
       val symbolPtr = symbol.createPointer()
       return Pointer {
-        symbolPtr.dereference()?.let { PsiNavigatableWebSymbolNavigationTarget(it) }
+        symbolPtr.dereference()?.let { PsiNavigatablePolySymbolNavigationTarget(it) }
       }
     }
 

@@ -39,8 +39,8 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lazyUnsafe
-import com.intellij.polySymbols.ContextKind
-import com.intellij.polySymbols.ContextName
+import com.intellij.polySymbols.PolyContextKind
+import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.PolyContextChangeListener
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
@@ -63,13 +63,13 @@ private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(PolyContext::class.java)
 
 @RequiresReadLock
-internal fun findPolyContext(kind: ContextKind, location: PsiElement): ContextName? =
+internal fun findPolyContext(kind: PolyContextKind, location: PsiElement): PolyContextName? =
   forPsiLocation(location) {
     findPolyContext(kind, it)
   }
 
 @RequiresReadLock
-internal fun findPolyContext(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =
+internal fun findPolyContext(kind: PolyContextKind, location: VirtualFile, project: Project): PolyContextName? =
   forVfsLocation(project, location) {
     findPolyContext(kind, it)
   }
@@ -84,7 +84,7 @@ internal fun buildPolyContext(location: PsiElement): PolyContext =
       .let { PolyContext.create(it) }
   } ?: PolyContext.empty()
 
-private fun findPolyContext(kind: ContextKind, locationInfo: LocationInfo): ContextName? =
+private fun findPolyContext(kind: PolyContextKind, locationInfo: LocationInfo): PolyContextName? =
   locationInfo.psiFile
     ?.let { findEnabledFromProviders(kind, it) }
   ?: locationInfo.file
@@ -141,7 +141,7 @@ private class LocationInfo(
 private fun allKinds(rulesConfigInDir: ContextRulesConfigInDir?, fileConfigInDir: ContextFileConfigInDir?): Set<String> =
   (rulesConfigInDir?.kinds ?: emptySet()) + (fileConfigInDir?.kinds ?: emptySet()) + WEB_SYMBOLS_CONTEXT_EP.allKinds()
 
-private fun findContextInDirOrFileCached(kind: ContextKind, locationInfo: LocationInfo): ContextName? {
+private fun findContextInDirOrFileCached(kind: PolyContextKind, locationInfo: LocationInfo): PolyContextName? {
   val project = locationInfo.project
   val contextInfo = locationInfo.contextInfo
   val dir = locationInfo.dir
@@ -188,10 +188,10 @@ private fun findContextInDirOrFileCached(kind: ContextKind, locationInfo: Locati
 
 private fun calcProximityPerContextFromRules(project: Project,
                                              directory: VirtualFile,
-                                             enableWhen: Map<ContextKind, Map<ContextName, List<EnablementRules>>>)
-  : Pair<Map<ContextKind, Map<ContextName, Double>>, Set<ModificationTracker>> {
+                                             enableWhen: Map<PolyContextKind, Map<PolyContextName, List<EnablementRules>>>)
+  : Pair<Map<PolyContextKind, Map<PolyContextName, Double>>, Set<ModificationTracker>> {
 
-  val result = mutableMapOf<ContextKind, MutableMap<String, Double>>()
+  val result = mutableMapOf<PolyContextKind, MutableMap<String, Double>>()
   val modificationTrackers = mutableSetOf<ModificationTracker>()
 
   val sourceKindToDepsToContext = enableWhen
@@ -259,21 +259,21 @@ private fun loadContextRulesConfiguration(project: Project, directory: VirtualFi
 
 private class ContextRulesConfigInDir(val project: Project,
                                       val directory: VirtualFile,
-                                      val rules: Map<ContextKind, PolyContextKindRules>,
+                                      val rules: Map<PolyContextKind, PolyContextKindRules>,
                                       val dependencies: List<Any>) {
 
-  private val contextByFile = ConcurrentHashMap<Pair<ContextKind, String>, ContextName>()
+  private val contextByFile = ConcurrentHashMap<Pair<PolyContextKind, String>, PolyContextName>()
 
   private val proximityCache = CachedValuesManager.getManager(project).createCachedValue {
     val result = calcProximityPerContextFromRules(project, directory, rules.mapValues { it.value.enable })
     CachedValueProvider.Result.create(result.first, result.second + dependencies)
   }
 
-  val kinds: Set<ContextKind> get() = rules.keys
+  val kinds: Set<PolyContextKind> get() = rules.keys
 
   fun getProximityPerContext(kind: String): Map<String, Double> = proximityCache.value[kind] ?: emptyMap()
 
-  fun findByFileName(kind: String, file: VirtualFile): ContextName? {
+  fun findByFileName(kind: String, file: VirtualFile): PolyContextName? {
     val fileName = file.name
     return contextByFile.computeIfAbsent(Pair(kind, fileName)) {
       val rules = rules[kind]
@@ -312,37 +312,37 @@ private class ContextFileConfigInDir(
   val contexts: List<PolyContextFileData.DirectoryContext>,
   val dependencies: List<Any>
 ) {
-  val kinds: Set<ContextKind> = setOf()
+  val kinds: Set<PolyContextKind> = setOf()
 
-  fun findByFileName(kind: ContextKind, fileName: String?): ContextName? =
+  fun findByFileName(kind: PolyContextKind, fileName: String?): PolyContextName? =
     contexts.firstNotNullOfOrNull { directoryContext ->
       directoryContext.context[kind]?.takeIf { directoryContext.matches(fileName) }
     }
 }
 
-private fun isForbiddenFromProviders(kind: ContextKind,
-                                     name: ContextName,
+private fun isForbiddenFromProviders(kind: PolyContextKind,
+                                     name: PolyContextName,
                                      file: VirtualFile,
                                      project: Project,
                                      disableWhen: List<PolyContextKindRules.DisablementRules>?): Boolean =
   WEB_SYMBOLS_CONTEXT_EP.allFor(kind, name).any { it.isForbidden(file, project) }
   || disableWhen?.any { matchFileName(file.name, it.fileNamePatterns) || matchFileExt(file.name, it.fileExtensions) } == true
 
-private fun isAnyForbidden(kind: ContextKind, context: VirtualFile, project: Project): Boolean =
+private fun isAnyForbidden(kind: PolyContextKind, context: VirtualFile, project: Project): Boolean =
   WEB_SYMBOLS_CONTEXT_EP.forAny(kind).any { it.isForbidden(context, project) }
 
-private fun findEnabledFromProviders(kind: ContextKind, psiFile: PsiFile): ContextName? =
+private fun findEnabledFromProviders(kind: PolyContextKind, psiFile: PsiFile): PolyContextName? =
   WEB_SYMBOLS_CONTEXT_EP.allOf(kind).entries
     .firstOrNull { (_, providers) -> providers.any { it.isEnabled(psiFile) } }
     ?.key
 
-private fun findEnabledFromProviders(kind: ContextKind, file: VirtualFile, project: Project): ContextName? =
+private fun findEnabledFromProviders(kind: PolyContextKind, file: VirtualFile, project: Project): PolyContextName? =
   WEB_SYMBOLS_CONTEXT_EP.allOf(kind).entries
     .firstOrNull { (_, providers) -> providers.any { it.isEnabled(file, project) } }
     ?.key
 
-private fun webContextProximityFromProviders(kind: ContextKind,
-                                             name: ContextName,
+private fun webContextProximityFromProviders(kind: PolyContextKind,
+                                             name: PolyContextName,
                                              project: Project,
                                              directory: VirtualFile): CachedValueProvider.Result<Int?> {
   val dependencies = mutableSetOf<Any>()
@@ -367,7 +367,7 @@ private fun webContextProximityFromProviders(kind: ContextKind,
 
 private const val EMPTY_CONTEXT = "%EMPTY%"
 
-private fun withContextChangeCheck(kind: ContextKind, locationInfo: LocationInfo): ContextName? {
+private fun withContextChangeCheck(kind: PolyContextKind, locationInfo: LocationInfo): PolyContextName? {
   val currentState = findContextInDirOrFileCached(kind, locationInfo)
     ?.takeIf { it != PolyContext.VALUE_NONE }
 
@@ -389,7 +389,7 @@ private fun matchFileExt(fileName: String, fileExtensions: List<String>): Boolea
   return fileExtensions.any { ext == it }
 }
 
-private fun reloadProject(kind: ContextKind, prevState: ContextName, newState: ContextName, project: Project, file: VirtualFile) {
+private fun reloadProject(kind: PolyContextKind, prevState: PolyContextName, newState: PolyContextName, project: Project, file: VirtualFile) {
   synchronized(reloadMonitor) {
     if (project.getUserData(CONTEXT_RELOAD_MARKER_KEY) != null) {
       return
@@ -424,7 +424,7 @@ private val Project.contextInfo
 @Service(Service.Level.PROJECT)
 private class PolyContextDiscoveryInfo(private val project: Project, private val cs: CoroutineScope) : Disposable {
 
-  private val previousContext = ConcurrentHashMap<ContextKind, MutableMap<VirtualFile, String>>()
+  private val previousContext = ConcurrentHashMap<PolyContextKind, MutableMap<VirtualFile, String>>()
   private val cachedData = ContainerUtil.createConcurrentWeakMap<VirtualFile, CachedData>()
 
   init {
@@ -453,7 +453,7 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
     })
   }
 
-  fun getProximityFromExtensions(dir: VirtualFile, kind: ContextKind, name: ContextName): Int? =
+  fun getProximityFromExtensions(dir: VirtualFile, kind: PolyContextKind, name: PolyContextName): Int? =
     getCachedDataForDir(dir)
       .proximity
       .computeIfAbsent(Pair(kind, name)) {
@@ -463,7 +463,7 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
       }
       .value
 
-  fun updateContext(contextFile: VirtualFile, kind: ContextKind, name: ContextName): String? =
+  fun updateContext(contextFile: VirtualFile, kind: PolyContextKind, name: PolyContextName): String? =
     previousContext.computeIfAbsent(kind) { ContainerUtil.createConcurrentWeakMap() }
       .put(contextFile, name)
 
@@ -483,8 +483,8 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
   private class CachedData(private val project: Project,
                            private val directory: VirtualFile) {
 
-    val proximity: MutableMap<Pair<ContextKind, ContextName>, CachedValue<Int?>> =
-      ConcurrentHashMap<Pair<ContextKind, ContextName>, CachedValue<Int?>>()
+    val proximity: MutableMap<Pair<PolyContextKind, PolyContextName>, CachedValue<Int?>> =
+      ConcurrentHashMap<Pair<PolyContextKind, PolyContextName>, CachedValue<Int?>>()
 
     val rulesConfig: CachedValue<ContextRulesConfigInDir> =
       CachedValuesManager.getManager(project).createCachedValue {
