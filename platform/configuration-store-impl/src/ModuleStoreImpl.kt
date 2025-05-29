@@ -26,10 +26,6 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
 
   override val storageManager: StateStorageManagerImpl = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  @Volatile
-  override var isStoreInitialized: Boolean = false
-    private set
-
   override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
     return SaveSessionProducerManager(isUseVfsForWrite = storageManager.isUseVfsForWrite, collectVfsEvents = true)
   }
@@ -100,7 +96,6 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
           storageManager.updatePath(spec = StoragePathMacros.MODULE_FILE, newPath = path)
         }
       })
-    isStoreInitialized = true
   }
 }
 

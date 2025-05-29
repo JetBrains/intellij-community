@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -646,7 +646,6 @@ class ApplicationStoreTest {
       get() = ApplicationManager.getApplication() as ComponentManagerEx
 
     override val storageManager = ApplicationStateStorageManager(pathMacroManager = null, service<SettingsController>())
-    override val isStoreInitialized: Boolean = true
 
     init {
       setPath(testAppConfigPath)

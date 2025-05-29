@@ -12,9 +12,6 @@ object NonPersistentModuleStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = NonPersistentStateStorageManager
 
-  override val isStoreInitialized: Boolean
-    get() = true
-
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
   }
 

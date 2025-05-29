@@ -48,7 +48,6 @@ class SettingsSyncIdeMediatorTest : BasePlatformTestCase() {
     val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = TODO("Not yet implemented")
-      override val isStoreInitialized: Boolean = true
 
       override fun setPath(path: Path) {
         TODO("Not yet implemented")
@@ -75,7 +74,6 @@ true
     val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = ApplicationManager.getApplication().stateStore.storageManager
-      override val isStoreInitialized: Boolean = true
 
       override fun setPath(path: Path) {
         TODO("Not yet implemented")
@@ -127,7 +125,6 @@ true
     val componentStore = object : ComponentStoreImpl() {
       override val storageManager: StateStorageManager
         get() = ApplicationManager.getApplication().stateStore.storageManager
-      override val isStoreInitialized: Boolean = true
 
       override fun setPath(path: Path) {
         TODO("Not yet implemented")

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:OptIn(SettingsInternalApi::class)
 
@@ -7,11 +7,7 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.SerializablePersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.settings.*
 import com.intellij.platform.settings.local.SettingsControllerMediator
@@ -28,7 +24,6 @@ import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
@@ -500,7 +495,6 @@ private class ControllerBackedTestComponentStore(
     get() = ApplicationManager.getApplication() as ComponentManagerEx
 
   override val storageManager = ApplicationStateStorageManager(pathMacroManager = null, controller = controller)
-  override val isStoreInitialized: Boolean = true
 
   init {
     setPath(testAppConfigPath)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
@@ -42,7 +42,6 @@ class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled:
 private class TestComponentStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = TODO("not implemented")
-  override val isStoreInitialized: Boolean = true
 
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
   }
