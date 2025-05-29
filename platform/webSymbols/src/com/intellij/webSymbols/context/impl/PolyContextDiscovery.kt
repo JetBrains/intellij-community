@@ -298,7 +298,7 @@ private fun loadContextFilesConfiguration(directory: VirtualFile): ContextFileCo
       dir.findFile(PolyContext.WEB_SYMBOLS_CONTEXT_FILE)
         ?.let {
           dependencies.add(it)
-          WebSymbolsContextFileData.getOrCreate(it)
+          PolyContextFileData.getOrCreate(it)
         }
         ?.getContextsInDirectory(directory, proximity)
       ?: emptyList()
@@ -309,7 +309,7 @@ private fun loadContextFilesConfiguration(directory: VirtualFile): ContextFileCo
 }
 
 private class ContextFileConfigInDir(
-  val contexts: List<WebSymbolsContextFileData.DirectoryContext>,
+  val contexts: List<PolyContextFileData.DirectoryContext>,
   val dependencies: List<Any>
 ) {
   val kinds: Set<ContextKind> = setOf()

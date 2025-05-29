@@ -18,7 +18,7 @@ import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.PolyContext
 import java.io.IOException
 
-internal class WebSymbolsContextFileData private constructor(
+internal class PolyContextFileData private constructor(
   private val file: VirtualFile,
   private val contexts: List<ContextEntry>
 ) {
@@ -51,12 +51,12 @@ internal class WebSymbolsContextFileData private constructor(
   )
 
   companion object {
-    private val WEB_SYMBOLS_CONTEXT_FILE_DATA = Key<VirtualFileCachedValue<WebSymbolsContextFileData>>("web-symbols-context-file-data")
+    private val WEB_SYMBOLS_CONTEXT_FILE_DATA = Key<VirtualFileCachedValue<PolyContextFileData>>("web-symbols-context-file-data")
 
-    fun getOrCreate(file: VirtualFile): WebSymbolsContextFileData =
+    fun getOrCreate(file: VirtualFile): PolyContextFileData =
       file.getCachedValue(WEB_SYMBOLS_CONTEXT_FILE_DATA, provider = ::parseSafely)
 
-    private fun parseSafely(file: VirtualFile, contents: CharSequence?): WebSymbolsContextFileData {
+    private fun parseSafely(file: VirtualFile, contents: CharSequence?): PolyContextFileData {
       if (!contents.isNullOrEmpty()) {
         try {
           return parse(file, contents)
@@ -65,10 +65,10 @@ internal class WebSymbolsContextFileData private constructor(
           thisLogger().debug("Failed to parse " + file.path, e)
         }
       }
-      return WebSymbolsContextFileData(file, emptyList())
+      return PolyContextFileData(file, emptyList())
     }
 
-    private fun parse(file: VirtualFile, contents: CharSequence): WebSymbolsContextFileData {
+    private fun parse(file: VirtualFile, contents: CharSequence): PolyContextFileData {
       val reader = JsonReader(CharSequenceReader(contents))
       reader.isLenient = true
       if (reader.peek() != JsonToken.BEGIN_OBJECT) {
@@ -76,7 +76,7 @@ internal class WebSymbolsContextFileData private constructor(
       }
       val contexts = mutableListOf<ContextEntry>()
       readContextPattern(reader, "", contexts)
-      return WebSymbolsContextFileData(file, contexts)
+      return PolyContextFileData(file, contexts)
     }
 
     private fun readContextPattern(reader: JsonReader, dirPattern: String, contexts: MutableList<ContextEntry>) {
