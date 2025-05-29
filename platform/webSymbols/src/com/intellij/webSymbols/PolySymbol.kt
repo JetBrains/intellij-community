@@ -26,7 +26,7 @@ import com.intellij.webSymbols.js.PolySymbolJsKind
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
-import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
+import com.intellij.webSymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.matchedNameOrName
 import com.intellij.webSymbols.utils.qualifiedName
@@ -229,7 +229,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
 
   /**
    * Returns [TargetPresentation] used by [SearchTarget] and [RenameTarget].
-   * Default implementations of [WebSymbolRenameTarget] and [WebSymbolSearchTarget] use the presentation property.
+   * Default implementations of [PolySymbolRenameTarget] and [WebSymbolSearchTarget] use the presentation property.
    */
   @get:RequiresReadLock
   @get:RequiresBackgroundThread
@@ -268,16 +268,16 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
   /**
    * Implement to provide rename refactoring for the symbol.
    * In most cases the implementation would simply create
-   * [WebSymbolRenameTarget] object.
+   * [PolySymbolRenameTarget] object.
    *
    * Symbol can also implement [RenameTarget] interface directly
-   * and override its methods, in which case [WebSymbolRenameTarget]
+   * and override its methods, in which case [PolySymbolRenameTarget]
    * returned by [renameTarget] property is ignored.
    *
    * @see [RenameableSymbol]
    * @see [RenameTarget]
    */
-  val renameTarget: WebSymbolRenameTarget?
+  val renameTarget: PolySymbolRenameTarget?
     get() = null
 
   /**

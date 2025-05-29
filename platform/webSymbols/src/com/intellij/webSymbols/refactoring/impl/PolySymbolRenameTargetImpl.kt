@@ -4,14 +4,14 @@ package com.intellij.webSymbols.refactoring.impl
 import com.intellij.model.Pointer
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
+import com.intellij.webSymbols.refactoring.PolySymbolRenameTarget
 
-internal class WebSymbolRenameTargetImpl(override val symbol: PolySymbol) : WebSymbolRenameTarget {
+internal class PolySymbolRenameTargetImpl(override val symbol: PolySymbol) : PolySymbolRenameTarget {
 
-  override fun createPointer(): Pointer<out WebSymbolRenameTarget> {
+  override fun createPointer(): Pointer<out PolySymbolRenameTarget> {
     val symbolPtr = symbol.createPointer()
     return Pointer {
-      symbolPtr.dereference()?.let { WebSymbolRenameTargetImpl(it) }
+      symbolPtr.dereference()?.let { PolySymbolRenameTargetImpl(it) }
     }
   }
 
@@ -22,7 +22,7 @@ internal class WebSymbolRenameTargetImpl(override val symbol: PolySymbol) : WebS
     symbol.presentation
 
   override fun equals(other: Any?): Boolean =
-    other is WebSymbolRenameTargetImpl && other.symbol == symbol
+    other is PolySymbolRenameTargetImpl && other.symbol == symbol
 
   override fun hashCode(): Int =
     symbol.hashCode()

@@ -4,18 +4,18 @@ package com.intellij.webSymbols.refactoring
 import com.intellij.model.Pointer
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.refactoring.impl.WebSymbolRenameTargetImpl
+import com.intellij.webSymbols.refactoring.impl.PolySymbolRenameTargetImpl
 
-interface WebSymbolRenameTarget : RenameTarget {
+interface PolySymbolRenameTarget : RenameTarget {
 
   val symbol: PolySymbol
 
-  override fun createPointer(): Pointer<out WebSymbolRenameTarget>
+  override fun createPointer(): Pointer<out PolySymbolRenameTarget>
 
   companion object {
-    fun create(symbol: PolySymbol): WebSymbolRenameTarget? =
+    fun create(symbol: PolySymbol): PolySymbolRenameTarget? =
       if (!acceptSymbolForPsiSourcedWebSymbolRenameHandler(symbol))
-        WebSymbolRenameTargetImpl(symbol)
+        PolySymbolRenameTargetImpl(symbol)
       else
         null
   }

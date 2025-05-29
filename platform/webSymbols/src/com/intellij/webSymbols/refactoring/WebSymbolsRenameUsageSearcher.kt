@@ -15,7 +15,7 @@ internal class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
 
   override fun collectSearchRequests(parameters: RenameUsageSearchParameters): Collection<@JvmWildcard Query<out RenameUsage>> =
     parameters.target
-      .let { it as? PolySymbol ?: (it as? WebSymbolRenameTarget)?.symbol }
+      .let { it as? PolySymbol ?: (it as? PolySymbolRenameTarget)?.symbol }
       ?.let { symbol ->
         WebSymbolUsageQueries.buildWebSymbolUsagesQueries(symbol, parameters.project, parameters.searchScope)
           .map { query ->

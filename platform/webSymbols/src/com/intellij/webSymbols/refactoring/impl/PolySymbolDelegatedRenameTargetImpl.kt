@@ -10,22 +10,22 @@ import com.intellij.refactoring.rename.api.ReplaceTextTarget
 import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolDelegate
-import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
+import com.intellij.webSymbols.refactoring.PolySymbolRenameTarget
 
 /**
- * Used when creating a [WebSymbolRenameTarget] in [PolySymbolDelegate]. Allows to wrap a [RenameTarget] symbol
- * as a [WebSymbolRenameTarget], while exposing original behavior to the platform.
+ * Used when creating a [PolySymbolRenameTarget] in [PolySymbolDelegate]. Allows to wrap a [RenameTarget] symbol
+ * as a [PolySymbolRenameTarget], while exposing original behavior to the platform.
  */
-internal class WebSymbolDelegatedRenameTargetImpl(override val symbol: PolySymbol) : WebSymbolRenameTarget {
+internal class PolySymbolDelegatedRenameTargetImpl(override val symbol: PolySymbol) : PolySymbolRenameTarget {
 
   init {
     assert(symbol is RenameTarget)
   }
 
-  override fun createPointer(): Pointer<out WebSymbolRenameTarget> {
+  override fun createPointer(): Pointer<out PolySymbolRenameTarget> {
     val symbolPtr = symbol.createPointer()
     return Pointer {
-      symbolPtr.dereference()?.let { WebSymbolDelegatedRenameTargetImpl(it) }
+      symbolPtr.dereference()?.let { PolySymbolDelegatedRenameTargetImpl(it) }
     }
   }
 
@@ -45,7 +45,7 @@ internal class WebSymbolDelegatedRenameTargetImpl(override val symbol: PolySymbo
     (symbol as RenameTarget).validator()
 
   override fun equals(other: Any?): Boolean =
-    other is WebSymbolDelegatedRenameTargetImpl && other.symbol == symbol
+    other is PolySymbolDelegatedRenameTargetImpl && other.symbol == symbol
 
   override fun hashCode(): Int =
     symbol.hashCode()

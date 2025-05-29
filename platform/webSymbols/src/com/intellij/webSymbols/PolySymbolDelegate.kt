@@ -16,8 +16,8 @@ import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
-import com.intellij.webSymbols.refactoring.impl.WebSymbolDelegatedRenameTargetImpl
+import com.intellij.webSymbols.refactoring.PolySymbolRenameTarget
+import com.intellij.webSymbols.refactoring.impl.PolySymbolDelegatedRenameTargetImpl
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.search.impl.WebSymbolDelegatedSearchTargetImpl
 import javax.swing.Icon
@@ -107,9 +107,9 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
       else -> delegate.searchTarget
     }
 
-  override val renameTarget: WebSymbolRenameTarget?
+  override val renameTarget: PolySymbolRenameTarget?
     get() = when (delegate) {
-      is RenameTarget -> WebSymbolDelegatedRenameTargetImpl(delegate)
+      is RenameTarget -> PolySymbolDelegatedRenameTargetImpl(delegate)
       else -> delegate.renameTarget
     }
 
