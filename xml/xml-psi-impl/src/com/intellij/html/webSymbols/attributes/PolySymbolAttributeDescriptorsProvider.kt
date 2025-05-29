@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols.attributes
 
 import com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator
-import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor.Companion.toAttributeDescriptor
+import com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptor.Companion.toAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.html.webSymbols.hasOnlyStandardHtmlSymbols
 import com.intellij.html.webSymbols.hasOnlyStandardHtmlSymbolsOrExtensions
@@ -21,7 +21,7 @@ import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlAttributeDescriptorsProvider
 
-class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
+class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
 
   override fun getAttributeDescriptors(context: XmlTag?): Array<XmlAttributeDescriptor> =
     if (context == null || DumbService.isDumb(context.project) || context.containingFile !is HtmlCompatibleFile)

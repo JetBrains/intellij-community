@@ -3,7 +3,7 @@ package com.intellij.html.webSymbols.attributeValues
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
+import com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
@@ -26,7 +26,7 @@ class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProv
     val patchedResultSet = result.withPrefixMatcher(result.prefixMatcher.cloneWithPrefix(name))
 
     val attribute = context.parent as? XmlAttribute ?: return
-    val attributeDescriptor = attribute.descriptor.asSafely<WebSymbolAttributeDescriptor>() ?: return
+    val attributeDescriptor = attribute.descriptor.asSafely<PolySymbolAttributeDescriptor>() ?: return
 
     val type = attributeDescriptor.symbol.attributeValue?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
                ?: return

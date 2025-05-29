@@ -22,17 +22,17 @@ import com.intellij.xml.impl.BasicXmlAttributeDescriptor
 import com.intellij.xml.impl.XmlAttributeDescriptorEx
 import javax.swing.Icon
 
-open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
-                                                            private val name: String,
-                                                            val symbol: PolySymbol,
-                                                            private val acceptsNoValue: Boolean,
-                                                            private val acceptsValue: Boolean,
-                                                            private val enumValues: List<PolySymbolCodeCompletionItem>?,
-                                                            private val strictEnumValues: Boolean,
-                                                            val type: Any?,
-                                                            private val icon: Icon?,
-                                                            private val isRequired: Boolean,
-                                                            private val defaultValue: String?)
+open class PolySymbolAttributeDescriptor private constructor(val tag: XmlTag?,
+                                                             private val name: String,
+                                                             val symbol: PolySymbol,
+                                                             private val acceptsNoValue: Boolean,
+                                                             private val acceptsValue: Boolean,
+                                                             private val enumValues: List<PolySymbolCodeCompletionItem>?,
+                                                             private val strictEnumValues: Boolean,
+                                                             val type: Any?,
+                                                             private val icon: Icon?,
+                                                             private val isRequired: Boolean,
+                                                             private val defaultValue: String?)
   : BasicXmlAttributeDescriptor(), XmlAttributeDescriptorEx, PsiPresentableMetaData {
 
   constructor(info: PolySymbolHtmlAttributeInfo, tag: XmlTag?)

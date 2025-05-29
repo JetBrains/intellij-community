@@ -11,7 +11,7 @@ class PolySymbolInAttributeNameRefProvider : PsiPolySymbolReferenceProvider<XmlA
 
   override fun getReferencedSymbol(psiElement: XmlAttribute): PolySymbol? =
     psiElement.descriptor
-      ?.asSafely<WebSymbolAttributeDescriptor>()
+      ?.asSafely<PolySymbolAttributeDescriptor>()
       ?.symbol
 
   override fun shouldShowProblems(element: XmlAttribute): Boolean =

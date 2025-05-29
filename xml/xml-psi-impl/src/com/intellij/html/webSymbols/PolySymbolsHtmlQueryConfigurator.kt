@@ -2,7 +2,7 @@
 package com.intellij.html.webSymbols
 
 import com.intellij.documentation.mdn.*
-import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
+import com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
@@ -69,7 +69,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
 
       val attribute = context as? XmlAttribute ?: return
       attribute.takeIf { queryExecutor.allowResolve }
-        ?.descriptor?.asSafely<WebSymbolAttributeDescriptor>()?.symbol?.let(consumer)
+        ?.descriptor?.asSafely<PolySymbolAttributeDescriptor>()?.symbol?.let(consumer)
       ?: queryExecutor.runNameMatchQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTES,
                                          attribute.name, additionalScope = elementScope)
         .forEach(consumer)

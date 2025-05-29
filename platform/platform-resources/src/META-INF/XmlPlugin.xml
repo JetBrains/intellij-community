@@ -557,7 +557,7 @@
       id="html"
       implementation="com.intellij.html.webSymbols.PolySymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
-      implementation="com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptorsProvider"/>
+      implementation="com.intellij.html.webSymbols.attributes.PolySymbolAttributeDescriptorsProvider"/>
     <xml.elementDescriptorProvider
       implementation="com.intellij.html.webSymbols.elements.WebSymbolElementDescriptorsProvider"/>
     <completion.contributor language="HtmlCompatible"
