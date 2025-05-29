@@ -16,7 +16,7 @@ def _jvm_resources_impl(ctx):
         mnemonic = "PackageResources",
         inputs = ctx.files.files,
         # avoid creating small files on disk – trick Bazel using this workaround
-        arguments = ["--flagfile=|jar|" + resultJar.path + "|" + strip_prefix],
+        arguments = ["--flagfile=|jar|" + resultJar.path + "|" + ctx.attr.add_prefix + "|" + strip_prefix],
         #         arguments = [args],
         outputs = [resultJar],
         use_default_shell_env = True,
@@ -53,8 +53,12 @@ jvm_resources = rule(
             mandatory = True,
             providers = ["FileProvider"],
         ),
+        "add_prefix": attr.string(
+            doc = """The path prefix to prepend to Java resources, after applying `strip_prefix` (if any) to each file's relative path""",
+            default = "",
+        ),
         "strip_prefix": attr.label(
-            doc = """The path prefix to strip from Java resources""",
+            doc = """The path prefix to remove from Java resources""",
             allow_single_file = True,
             providers = ["FileProvider"],
         ),
