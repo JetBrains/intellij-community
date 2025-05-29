@@ -131,6 +131,8 @@ com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 - a:installTheme(javax.swing.UIDefaults):V
 - a:isDark():Z
 - a:isInitialized():Z
+c:com.intellij.ide.util.treeView.NodeRenderer
+- p:getMinHeight():I
 com.intellij.ide.warmup.WarmupConfigurator
 - sf:Companion:com.intellij.ide.warmup.WarmupConfigurator$Companion
 - a:getConfiguratorPresentableName():java.lang.String

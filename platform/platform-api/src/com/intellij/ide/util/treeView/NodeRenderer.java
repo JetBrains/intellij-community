@@ -17,6 +17,8 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl;
 import com.intellij.ui.treeStructure.TreeNodeViewModel;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Contract;
@@ -27,6 +29,30 @@ import javax.swing.*;
 import java.awt.*;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
+  /**
+   * The minimum height of variable height tree nodes.
+   * <p>
+   * By default, the minimum height is chosen so that the total height of the node matches
+   * the default height for non-variable-height trees, as defined by the {@code Tree.rowHeight} theme (UI Defaults) key.
+   * So nodes can become larger than this value (e.g., if they contain large icons or use a larger font), but not smaller.
+   * This behavior can be overridden by overriding this function.
+   * The value returned must not include the top and bottom insets defined by the inner padding
+   * ({@link #getIpad()}) and the border ({@link #getMyBorder()}).
+   * </p>
+   * @return the minimum height of variable height tree nodes, excluding borders and internal padding
+   */
+  @Override
+  protected int getMinHeight() {
+    var padding = getIpad();
+    var border = getMyBorder();
+    var additionalHeight = padding.top + padding.bottom;
+    if (border != null) {
+      var borderInsets = border.getBorderInsets(this);
+      additionalHeight += borderInsets.top + borderInsets.bottom;
+    }
+    return JBUI.CurrentTheme.Tree.rowHeight() - additionalHeight;
+  }
+
   protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
     var dark = icon != null && !StartupUiUtil.INSTANCE.isDarkTheme() && Registry.is("ide.project.view.change.icon.on.selection", true) && selected && hasFocus;
     return dark ? IconLoader.getDarkIcon(icon, true) : icon;
