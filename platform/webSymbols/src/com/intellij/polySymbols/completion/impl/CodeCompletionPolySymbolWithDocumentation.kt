@@ -8,7 +8,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolDelegate
 
 /**
- * We need to render documentation for lookup elements. Regular `WebSymbol` does not implement
+ * We need to render documentation for lookup elements. Regular `PolySymbol` does not implement
  * `DocumentationSymbol` to have a context aware documentation, so the symbol needs to be wrapped
  * for code completion.
  */

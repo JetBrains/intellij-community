@@ -44,7 +44,7 @@ import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
 import com.intellij.polySymbols.references.impl.IJ_IGNORE_REFS
-import com.intellij.polySymbols.references.impl.PsiWebSymbolReferenceProviderImpl
+import com.intellij.polySymbols.references.impl.PsiPolySymbolReferenceProviderImpl
 import com.intellij.polySymbols.search.WebSymbolReferenceHints
 import com.intellij.polySymbols.utils.applyIfNotNull
 import com.intellij.polySymbols.utils.hasOnlyExtensions
@@ -57,7 +57,7 @@ private val INSPECTION_TOOL_INFO_CACHE = Key.create<MutableMap<String, Inspectio
 
 class PolySymbolsHighlightingAnnotator : Annotator {
 
-  private val symbolReferencesProvider = PsiWebSymbolReferenceProviderImpl()
+  private val symbolReferencesProvider = PsiPolySymbolReferenceProviderImpl()
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
 

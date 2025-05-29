@@ -9,7 +9,7 @@ import com.intellij.util.Query
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.polySymbols.search.WebSymbolUsageQueries
+import com.intellij.polySymbols.search.PolySymbolUsageQueries
 
 internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
 
@@ -17,7 +17,7 @@ internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
     parameters.target
       .let { it as? PolySymbol ?: (it as? PolySymbolRenameTarget)?.symbol }
       ?.let { symbol ->
-        WebSymbolUsageQueries.buildWebSymbolUsagesQueries(symbol, parameters.project, parameters.searchScope)
+        PolySymbolUsageQueries.buildPolySymbolUsagesQueries(symbol, parameters.project, parameters.searchScope)
           .map { query ->
             query.mapping {
               WebSymbolPsiModifiableRenameUsage(

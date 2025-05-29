@@ -63,28 +63,28 @@ private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(PolyContext::class.java)
 
 @RequiresReadLock
-internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): ContextName? =
+internal fun findPolyContext(kind: ContextKind, location: PsiElement): ContextName? =
   forPsiLocation(location) {
-    findWebSymbolsContext(kind, it)
+    findPolyContext(kind, it)
   }
 
 @RequiresReadLock
-internal fun findWebSymbolsContext(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =
+internal fun findPolyContext(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =
   forVfsLocation(project, location) {
-    findWebSymbolsContext(kind, it)
+    findPolyContext(kind, it)
   }
 
 @RequiresReadLock
-internal fun buildWebSymbolsContext(location: PsiElement): PolyContext =
+internal fun buildPolyContext(location: PsiElement): PolyContext =
   forPsiLocation(location) { locationInfo ->
     allKinds(locationInfo.rulesConfigInDir, locationInfo.fileConfigInDir)
       .asSequence()
-      .mapNotNull { kind -> findWebSymbolsContext(kind, locationInfo)?.let { Pair(kind, it) } }
+      .mapNotNull { kind -> findPolyContext(kind, locationInfo)?.let { Pair(kind, it) } }
       .toMap()
       .let { PolyContext.create(it) }
   } ?: PolyContext.empty()
 
-private fun findWebSymbolsContext(kind: ContextKind, locationInfo: LocationInfo): ContextName? =
+private fun findPolyContext(kind: ContextKind, locationInfo: LocationInfo): ContextName? =
   locationInfo.psiFile
     ?.let { findEnabledFromProviders(kind, it) }
   ?: locationInfo.file
@@ -133,7 +133,7 @@ private class LocationInfo(
   val psiFile: PsiFile?,
   val file: VirtualFile?,
 ) {
-  val contextInfo: WebSymbolsContextDiscoveryInfo = project.contextInfo
+  val contextInfo: PolyContextDiscoveryInfo = project.contextInfo
   val rulesConfigInDir: ContextRulesConfigInDir by lazyUnsafe { contextInfo.getContextRulesConfigInDir(dir) }
   val fileConfigInDir: ContextFileConfigInDir by lazyUnsafe { contextInfo.getContextFileConfigInDir(dir) }
 }
@@ -419,10 +419,10 @@ private fun reloadProject(kind: ContextKind, prevState: ContextName, newState: C
 }
 
 private val Project.contextInfo
-  get() = service<WebSymbolsContextDiscoveryInfo>()
+  get() = service<PolyContextDiscoveryInfo>()
 
 @Service(Service.Level.PROJECT)
-private class WebSymbolsContextDiscoveryInfo(private val project: Project, private val cs: CoroutineScope) : Disposable {
+private class PolyContextDiscoveryInfo(private val project: Project, private val cs: CoroutineScope) : Disposable {
 
   private val previousContext = ConcurrentHashMap<ContextKind, MutableMap<VirtualFile, String>>()
   private val cachedData = ContainerUtil.createConcurrentWeakMap<VirtualFile, CachedData>()

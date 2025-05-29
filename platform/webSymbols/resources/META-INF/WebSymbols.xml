@@ -21,7 +21,7 @@
     <!--suppress PluginXmlRegistrationCheck -->
     <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
                                  hostLanguage="PolySymbolsEnabledLanguage"
-                                 implementationClass="com.intellij.polySymbols.references.impl.PsiWebSymbolReferenceProviderImpl"
+                                 implementationClass="com.intellij.polySymbols.references.impl.PsiPolySymbolReferenceProviderImpl"
                                  targetClass="com.intellij.polySymbols.PolySymbol"
                                  referenceClass="com.intellij.polySymbols.references.PolySymbolReference"/>
 
@@ -34,7 +34,7 @@
                              implementationClass="com.intellij.polySymbols.search.PolySymbolSearchTargetFactory"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
-              implementationClass="com.intellij.polySymbols.search.WebSymbolsUsageSearcher"/>
+              implementationClass="com.intellij.polySymbols.search.PolySymbolsUsageSearcher"/>
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
               implementationClass="com.intellij.polySymbols.refactoring.PolySymbolsRenameUsageSearcher"/>
   </extensions>

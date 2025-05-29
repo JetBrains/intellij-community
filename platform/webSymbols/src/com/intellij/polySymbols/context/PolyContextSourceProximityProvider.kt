@@ -16,11 +16,11 @@ interface PolyContextSourceProximityProvider {
 
     companion object {
       @JvmStatic
-      val empty: Result = WebSymbolsContextSourceProximityProviderResultData(emptyMap(), emptySet())
+      val empty: Result = PolyContextSourceProximityProviderResultData(emptyMap(), emptySet())
 
       @JvmStatic
       fun create(dependency2proximity: Map<String, Double>, modificationTrackers: Collection<ModificationTracker>): Result =
-        WebSymbolsContextSourceProximityProviderResultData(dependency2proximity, modificationTrackers)
+        PolyContextSourceProximityProviderResultData(dependency2proximity, modificationTrackers)
     }
   }
 
@@ -62,7 +62,7 @@ interface PolyContextSourceProximityProvider {
 
 }
 
-private data class WebSymbolsContextSourceProximityProviderResultData(
+private data class PolyContextSourceProximityProviderResultData(
   override val dependency2proximity: Map<String, Double>,
   override val modificationTrackers: Collection<ModificationTracker>
 ) : PolyContextSourceProximityProvider.Result

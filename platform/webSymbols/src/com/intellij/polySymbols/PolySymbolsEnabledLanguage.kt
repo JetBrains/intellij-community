@@ -27,11 +27,11 @@ class PolySymbolsEnabledLanguage private constructor() : MetaLanguage("PolySymbo
       }
 
   private object Companion {
-    val EP_NAME = ExtensionPointName<WebSymbolsSupportInLanguageEP>("com.intellij.webSymbols.enableInLanguage")
+    val EP_NAME = ExtensionPointName<PolySymbolsSupportInLanguageEP>("com.intellij.webSymbols.enableInLanguage")
   }
 
   @ApiStatus.Experimental
-  class WebSymbolsSupportInLanguageEP : BaseKeyedLazyInstance<String?>() {
+  class PolySymbolsSupportInLanguageEP : BaseKeyedLazyInstance<String?>() {
     @Attribute("language")
     lateinit var language: String
 

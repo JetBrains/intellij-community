@@ -11,7 +11,7 @@
       <with attribute="implementation" implements="com.intellij.polySymbols.context.PolyContextProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.polySymbols.enableInLanguage"
-                    beanClass="com.intellij.polySymbols.PolySymbolsEnabledLanguage$WebSymbolsSupportInLanguageEP"
+                    beanClass="com.intellij.polySymbols.PolySymbolsEnabledLanguage$PolySymbolsSupportInLanguageEP"
                     dynamic="true">
     </extensionPoint>
     <!--suppress PluginXmlValidity -->

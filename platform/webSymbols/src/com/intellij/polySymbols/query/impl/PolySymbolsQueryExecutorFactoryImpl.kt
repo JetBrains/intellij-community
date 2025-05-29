@@ -20,7 +20,7 @@ import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.context.PolyContextRulesProvider
-import com.intellij.polySymbols.context.impl.buildWebSymbolsContext
+import com.intellij.polySymbols.context.impl.buildPolyContext
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.createModificationTracker
 import com.intellij.polySymbols.utils.findOriginalFile
@@ -37,7 +37,7 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
     PolySymbolsQueryConfigurator.EP_NAME.extensionList
       .forEach { it.beforeQueryExecutorCreation(project) }
 
-    val context = location?.let { buildWebSymbolsContext(it) } ?: PolyContext.empty()
+    val context = location?.let { buildPolyContext(it) } ?: PolyContext.empty()
 
     val scopeList = mutableListOf<PolySymbolsScope>()
     getCustomScope(location).forEach(scopeList::add)

@@ -30,19 +30,19 @@ import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.utils.qualifiedName
 import java.util.*
 
-internal class WebSymbolsUsageSearcher : UsageSearcher {
+internal class PolySymbolsUsageSearcher : UsageSearcher {
 
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> =
     parameters.target
       .let { it as? PolySymbol ?: (it as? PolySymbolSearchTarget)?.symbol }
-      ?.let { WebSymbolUsageQueries.buildWebSymbolUsagesQueries(it, parameters.project, parameters.searchScope) }
+      ?.let { PolySymbolUsageQueries.buildPolySymbolUsagesQueries(it, parameters.project, parameters.searchScope) }
     ?: emptyList()
 
 }
 
-object WebSymbolUsageQueries {
+object PolySymbolUsageQueries {
 
-  fun buildWebSymbolUsagesQueries(symbol: PolySymbol, project: Project, searchScope: SearchScope): List<Query<out PsiUsage>> =
+  fun buildPolySymbolUsagesQueries(symbol: PolySymbol, project: Project, searchScope: SearchScope): List<Query<out PsiUsage>> =
     (symbol.psiContext
        ?.let { PolySymbolsQueryExecutorFactory.create(it, true) }
        ?.namesProvider

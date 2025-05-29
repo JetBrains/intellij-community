@@ -11,7 +11,7 @@ import com.intellij.polySymbols.ContextName
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionCollector
-import com.intellij.polySymbols.context.impl.findWebSymbolsContext
+import com.intellij.polySymbols.context.impl.findPolyContext
 import org.jetbrains.annotations.TestOnly
 
 interface PolyContext {
@@ -49,11 +49,11 @@ interface PolyContext {
 
     @JvmStatic
     fun get(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =
-      findWebSymbolsContext(kind, location, project)
+      findPolyContext(kind, location, project)
 
     @JvmStatic
     fun get(kind: ContextKind, location: PsiElement): ContextName? =
-      findWebSymbolsContext(kind, location)
+      findPolyContext(kind, location)
 
     @JvmStatic
     fun empty(): PolyContext =

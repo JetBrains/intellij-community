@@ -84,14 +84,14 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
       filter: ((PolySymbolCodeCompletionItem) -> Boolean)? = null,
       consumer: (PolySymbolCodeCompletionItem) -> Unit,
     ) {
-      processWebSymbolCodeCompletionItems(
+      processPolySymbolCodeCompletionItems(
         queryExecutor.runCodeCompletionQuery(qualifiedKind, name, position, additionalScope = queryContext),
         result, qualifiedKind, name, queryExecutor.framework, location, providedNames, filter, consumer
       )
     }
 
     @JvmStatic
-    fun processWebSymbolCodeCompletionItems(
+    fun processPolySymbolCodeCompletionItems(
       symbols: List<PolySymbolCodeCompletionItem>,
       result: CompletionResultSet,
       qualifiedKind: PolySymbolQualifiedKind,

@@ -41,7 +41,7 @@ import java.util.*
 
 internal const val IJ_IGNORE_REFS = "ij-no-psi-refs"
 
-class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
+class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> =
     getSymbolOffsetsAndReferences(element, hints).second
