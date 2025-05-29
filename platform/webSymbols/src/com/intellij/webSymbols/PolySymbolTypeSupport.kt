@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
-import com.intellij.webSymbols.impl.WebSymbolTypeSupportTypeReferenceData
+import com.intellij.webSymbols.impl.PolySymbolTypeSupportTypeReferenceData
 
 interface PolySymbolTypeSupport {
 
@@ -16,7 +16,7 @@ interface PolySymbolTypeSupport {
         module: String?,
         name: String,
       ): TypeReference =
-        WebSymbolTypeSupportTypeReferenceData(module, name)
+        PolySymbolTypeSupportTypeReferenceData(module, name)
     }
   }
 }

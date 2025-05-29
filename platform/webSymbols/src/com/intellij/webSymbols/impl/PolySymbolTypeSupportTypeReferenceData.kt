@@ -3,7 +3,7 @@ package com.intellij.webSymbols.impl
 
 import com.intellij.webSymbols.PolySymbolTypeSupport
 
-data class WebSymbolTypeSupportTypeReferenceData(
+data class PolySymbolTypeSupportTypeReferenceData(
   override val module: String?,
   override val name: String,
 ): PolySymbolTypeSupport.TypeReference
