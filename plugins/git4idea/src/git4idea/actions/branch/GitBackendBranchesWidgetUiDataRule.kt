@@ -5,12 +5,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.UiDataRule
+import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
 import git4idea.repo.GitRepositoryIdCache
 
-class GitBackendBranchesWidgetUiDataRule: UiDataRule {
+internal class GitBackendBranchesWidgetUiDataRule: UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
-    val affectedRepositories = snapshot[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES]
-    val selectedRepository = snapshot[GitBranchActionsDataKeys.SELECTED_REPOSITORY]
+    val affectedRepositories = snapshot[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES]
+    val selectedRepository = snapshot[GitBranchesWidgetKeys.SELECTED_REPOSITORY]
 
     if (affectedRepositories == null && selectedRepository == null) return
 
@@ -18,7 +19,7 @@ class GitBackendBranchesWidgetUiDataRule: UiDataRule {
 
     val repositoryIdCache = GitRepositoryIdCache.getInstance(project)
 
-    sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepository?.rpcId?.let { repositoryIdCache.get(it) }
-    sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = affectedRepositories?.mapNotNull { repositoryIdCache.get(it.rpcId) }
+    sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepository?.repositoryId?.let { repositoryIdCache.get(it) }
+    sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = affectedRepositories?.mapNotNull { repositoryIdCache.get(it.repositoryId) }
   }
 }
