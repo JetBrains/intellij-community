@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -74,7 +74,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     }
   }
 
-  override fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
+  final override fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
     super.unloadServices(module, services)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
@@ -83,7 +83,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     }
   }
 
-  override fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
+  final override fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
                                    activityPrefix: String,
                                    syncScope: CoroutineScope,
                                    onlyIfAwait: Boolean) {
@@ -94,7 +94,7 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     }
   }
 
-  override fun isPreInitialized(service: Any): Boolean {
+  final override fun isPreInitialized(service: Any): Boolean {
     return super.isPreInitialized(service) || service is ClientSessionsManager<*>
   }
 }

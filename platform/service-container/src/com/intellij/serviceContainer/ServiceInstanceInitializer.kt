@@ -59,18 +59,22 @@ internal abstract class ServiceInstanceInitializer(
     if (instance is Disposable) {
       Disposer.register(componentManager.serviceParentDisposable, instance)
     }
-    // If a service is requested during highlighting (under impatient=true),
-    // then it's initialization might be broken forever.
-    // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
-    // so it leaks to initializeComponent call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
-    // for example, if a service obtains a read action in loadState.
-    // Non-cancellable section is required to silence throwIfImpatient().
-    // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
-    // which happens only on project/application shutdown, or on plugin unload.
-    Cancellation.withNonCancelableSection().use {
-      // loadState may invokeLater => don't capture the context
-      withStoredTemporaryContext(parentScope) {
-        componentManager.initializeService(instance, serviceDescriptor, pluginId)
+
+    // do not call Cancellation.withNonCancelableSection or perform any other setup if the service doesn't need to be initialized
+    componentManager.initializeService(instance, serviceDescriptor, pluginId) { action ->
+      // If a service is requested during highlighting (under impatient=true),
+      // then it's initialization might be broken forever.
+      // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
+      // so it leaks to initializeComponent call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
+      // for example, if a service obtains a read action in loadState.
+      // Non-cancellable section is required to silence throwIfImpatient().
+      // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
+      // which happens only on project/application shutdown, or on plugin unload.
+      Cancellation.withNonCancelableSection().use {
+        // loadState may invokeLater => don't capture the context
+        withStoredTemporaryContext(parentScope) {
+          action()
+        }
       }
     }
     return instance

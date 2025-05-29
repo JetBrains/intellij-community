@@ -617,25 +617,33 @@ abstract class ComponentManagerImpl(
   }
 
   internal fun initializeService(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+    initializeService(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId) {
+      it()
+    }
+  }
+
+  internal inline fun initializeService(
+    component: Any,
+    serviceDescriptor: ServiceDescriptor?,
+    pluginId: PluginId,
+    invocator: (() -> Unit) -> Unit,
+  ) {
     @Suppress("DEPRECATION")
     if ((serviceDescriptor == null || !isPreInitialized(component)) &&
-        (component is PersistentStateComponent<*> ||
-         component is SettingsSavingComponent ||
-         component is JDOMExternalizable)) {
-      check(canBeInitOutOfOrder(component) || componentStore.isStoreInitialized || getApplication()!!.isUnitTestMode) {
+        (component is PersistentStateComponent<*> || component is SettingsSavingComponent || component is JDOMExternalizable)) {
+      val componentStore = componentStore
+      check(component is ProjectIdManager || componentStore.isStoreInitialized || getApplication()!!.isUnitTestMode) {
         "You cannot get $component before component store is initialized"
       }
 
-      componentStore.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+      invocator {
+        componentStore.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+      }
     }
   }
 
   protected open fun isPreInitialized(service: Any): Boolean {
     return service is PathMacroManager || service is IComponentStore || service is MessageBusFactory
-  }
-
-  private fun canBeInitOutOfOrder(service: Any): Boolean {
-    return service is ProjectIdManager
   }
 
   protected abstract fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor
