@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 
 internal abstract class ServiceInstanceInitializer(
-  val componentManager: ComponentManagerImpl,
+  private val componentManager: ComponentManagerImpl,
   private val pluginId: PluginId,
   private val serviceDescriptor: ServiceDescriptor?,
 ) : InstanceInitializer {

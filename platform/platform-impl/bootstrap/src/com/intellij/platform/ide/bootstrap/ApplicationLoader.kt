@@ -392,7 +392,7 @@ private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: Corou
     if (loadIconMapping != null) {
       launch {
         loadIconMapping.join()
-        ExperimentalUI.getInstance().installIconPatcher()
+        serviceAsync<ExperimentalUI>().installIconPatcher()
       }
     }
 

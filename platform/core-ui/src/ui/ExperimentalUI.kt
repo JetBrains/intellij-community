@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ui
@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -49,6 +50,7 @@ abstract class ExperimentalUI {
     }
 
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(): ExperimentalUI = ApplicationManager.getApplication().service<ExperimentalUI>()
 
     @JvmStatic
@@ -78,7 +80,7 @@ abstract class ExperimentalUI {
   open fun lookAndFeelChanged() {
   }
 
-  open fun installIconPatcher() {
+  open suspend fun installIconPatcher() {
   }
 
   open fun earlyInitValue() = EarlyAccessRegistryManager.getBoolean(KEY)
