@@ -15,7 +15,7 @@
       implementation="com.intellij.webSymbols.webTypes.WebTypesDocumentationCustomizer"/>
 
     <platform.backend.documentation.targetProvider
-      implementation="com.intellij.webSymbols.documentation.WebSymbolDocumentationTargetProvider"/>
+      implementation="com.intellij.webSymbols.documentation.PolySymbolDocumentationTargetProvider"/>
     <psi.declarationProvider implementation="com.intellij.webSymbols.declarations.impl.PolySymbolDeclarationProviderDelegate"/>
 
     <!--suppress PluginXmlRegistrationCheck -->

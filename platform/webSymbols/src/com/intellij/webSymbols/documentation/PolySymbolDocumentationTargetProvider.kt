@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
 @ApiStatus.Internal
-class WebSymbolDocumentationTargetProvider : DocumentationTargetProvider {
+class PolySymbolDocumentationTargetProvider : DocumentationTargetProvider {
   override fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> {
     val location = getContextElement(file, offset)
     return targetSymbols(file, offset).mapNotNull {
