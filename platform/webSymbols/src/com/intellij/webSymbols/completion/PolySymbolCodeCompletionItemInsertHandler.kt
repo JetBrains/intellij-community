@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.webSymbols.PolySymbol
 
-interface WebSymbolCodeCompletionItemInsertHandler {
+interface PolySymbolCodeCompletionItemInsertHandler {
 
   val priority: PolySymbol.Priority
     get() = PolySymbol.Priority.NORMAL
@@ -16,8 +16,8 @@ interface WebSymbolCodeCompletionItemInsertHandler {
   companion object {
 
     internal fun adapt(insertHandler: InsertHandler<LookupElement>,
-                       priority: PolySymbol.Priority): WebSymbolCodeCompletionItemInsertHandler =
-      object : WebSymbolCodeCompletionItemInsertHandler {
+                       priority: PolySymbol.Priority): PolySymbolCodeCompletionItemInsertHandler =
+      object : PolySymbolCodeCompletionItemInsertHandler {
 
         override val priority: PolySymbol.Priority
           get() = priority

@@ -3,9 +3,9 @@ package com.intellij.webSymbols.completion.impl
 
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemInsertHandler
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemInsertHandler
 
-internal class CompoundInsertHandler private constructor(val handlers: List<WebSymbolCodeCompletionItemInsertHandler>) : WebSymbolCodeCompletionItemInsertHandler {
+internal class CompoundInsertHandler private constructor(val handlers: List<PolySymbolCodeCompletionItemInsertHandler>) : PolySymbolCodeCompletionItemInsertHandler {
 
   override fun prepare(context: InsertionContext, item: LookupElement, completeAfterInsert: Boolean): Runnable? {
     val runnables = handlers.asSequence()
@@ -22,8 +22,8 @@ internal class CompoundInsertHandler private constructor(val handlers: List<WebS
 
   companion object {
 
-    fun merge(a: WebSymbolCodeCompletionItemInsertHandler?,
-              b: WebSymbolCodeCompletionItemInsertHandler?): WebSymbolCodeCompletionItemInsertHandler? {
+    fun merge(a: PolySymbolCodeCompletionItemInsertHandler?,
+              b: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemInsertHandler? {
       if (a == null) return b
       if (b == null) return a
 

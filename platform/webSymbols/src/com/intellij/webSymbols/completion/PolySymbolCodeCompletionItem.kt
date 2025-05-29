@@ -37,7 +37,7 @@ interface PolySymbolCodeCompletionItem {
   val apiStatus: PolySymbolApiStatus
   val aliases: Set<String>
   val symbol: PolySymbol?
-  val insertHandler: WebSymbolCodeCompletionItemInsertHandler?
+  val insertHandler: PolySymbolCodeCompletionItemInsertHandler?
 
   fun withPrefix(prefix: String): PolySymbolCodeCompletionItem
 
@@ -81,14 +81,14 @@ interface PolySymbolCodeCompletionItem {
 
   fun withCompleteAfterCharsAdded(chars: List<Char>): PolySymbolCodeCompletionItem
 
-  fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItem
+  fun withInsertHandlerReplaced(insertHandler: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItem
 
   fun withInsertHandlerAdded(
     insertHandler: InsertHandler<LookupElement>,
     priority: PolySymbol.Priority = PolySymbol.Priority.NORMAL,
   ): PolySymbolCodeCompletionItem
 
-  fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem
+  fun withInsertHandlerAdded(insertHandler: PolySymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem
 
   fun with(
     name: String = this.name,
@@ -122,7 +122,7 @@ interface PolySymbolCodeCompletionItem {
       icon: Icon? = null,
       typeText: String? = null,
       tailText: String? = null,
-      insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null,
+      insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null,
     ): PolySymbolCodeCompletionItem =
       create(name, offset, symbol) {
         completeAfterInsert(completeAfterInsert)

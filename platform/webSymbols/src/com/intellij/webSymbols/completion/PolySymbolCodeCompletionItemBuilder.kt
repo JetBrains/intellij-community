@@ -21,5 +21,5 @@ interface PolySymbolCodeCompletionItemBuilder {
   fun apiStatus(value: PolySymbolApiStatus): PolySymbolCodeCompletionItemBuilder
   fun aliases(value: Set<String>): PolySymbolCodeCompletionItemBuilder
   fun symbol(value: PolySymbol?): PolySymbolCodeCompletionItemBuilder
-  fun insertHandler(value: WebSymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemBuilder
+  fun insertHandler(value: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemBuilder
 }

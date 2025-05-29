@@ -14,7 +14,7 @@ import com.intellij.webSymbols.PolySymbolApiStatus
 import com.intellij.webSymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemBuilder
-import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItemInsertHandler
+import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemInsertHandler
 import com.intellij.webSymbols.impl.scaleToHeight
 import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 import org.jetbrains.annotations.ApiStatus
@@ -35,7 +35,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
   val typeTextStatic: String? = null,
   val typeTextProvider: (() -> String?)? = null,
   override val tailText: String? = null,
-  override val insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null,
+  override val insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null,
   @get:ApiStatus.Internal
   val stopSequencePatternEvaluation: Boolean = false,
 ) : PolySymbolCodeCompletionItem {
@@ -175,16 +175,16 @@ internal data class PolySymbolCodeCompletionItemImpl(
   override fun withCompleteAfterCharsAdded(chars: List<Char>): PolySymbolCodeCompletionItem =
     copy(completeAfterChars = if (!completeAfterInsert) completeAfterChars + chars else emptySet())
 
-  override fun withInsertHandlerReplaced(insertHandler: WebSymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItem =
+  override fun withInsertHandlerReplaced(insertHandler: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItem =
     copy(insertHandler = insertHandler)
 
   override fun withInsertHandlerAdded(
     insertHandler: InsertHandler<LookupElement>,
     priority: PolySymbol.Priority,
   ): PolySymbolCodeCompletionItem =
-    withInsertHandlerAdded(WebSymbolCodeCompletionItemInsertHandler.adapt(insertHandler, priority))
+    withInsertHandlerAdded(PolySymbolCodeCompletionItemInsertHandler.adapt(insertHandler, priority))
 
-  override fun withInsertHandlerAdded(insertHandler: WebSymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem =
+  override fun withInsertHandlerAdded(insertHandler: PolySymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem =
     copy(insertHandler = CompoundInsertHandler.merge(this.insertHandler, insertHandler))
 
   override fun with(
@@ -228,7 +228,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
     private var typeTextStatic: String? = null
     private var typeTextProvider: (() -> String?)? = null
     private var tailText: String? = null
-    private var insertHandler: WebSymbolCodeCompletionItemInsertHandler? = null
+    private var insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null
     private var stopSequencePatternEvaluation: Boolean = false
 
     fun build(): PolySymbolCodeCompletionItem = PolySymbolCodeCompletionItemImpl(
@@ -300,7 +300,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
       return this
     }
 
-    override fun insertHandler(value: WebSymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemBuilder {
+    override fun insertHandler(value: PolySymbolCodeCompletionItemInsertHandler?): PolySymbolCodeCompletionItemBuilder {
       insertHandler = value
       return this
     }
