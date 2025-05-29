@@ -13,7 +13,7 @@ import com.intellij.util.Processor
 import com.intellij.webSymbols.PsiSourcedPolySymbolProvider
 import com.intellij.webSymbols.query.PolySymbolNamesProvider
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.webSymbols.search.impl.WebSymbolPsiSourcedSymbolHostClassEP
+import com.intellij.webSymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP
 import com.intellij.webSymbols.utils.qualifiedName
 
 internal class PsiSourcedPolySymbolReferenceSearcher : QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters>(true) {
@@ -46,8 +46,8 @@ internal class PsiSourcedPolySymbolReferenceSearcher : QueryExecutorBase<PsiRefe
 
   private val elementClasses: ClearableLazyValue<Set<Class<PsiElement>>> = ExtensionPointUtil.dropLazyValueOnChange(
     ClearableLazyValue.create {
-      WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME.extensionList.map { it.instance }.toSet()
-    }, WebSymbolPsiSourcedSymbolHostClassEP.EP_NAME, null
+      PolySymbolPsiSourcedSymbolHostClassEP.EP_NAME.extensionList.map { it.instance }.toSet()
+    }, PolySymbolPsiSourcedSymbolHostClassEP.EP_NAME, null
   )
 
 }

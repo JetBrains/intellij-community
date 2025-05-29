@@ -61,7 +61,7 @@
                     interface="com.intellij.webSymbols.PsiSourcedPolySymbolProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbol"
-                    beanClass="com.intellij.webSymbols.search.impl.WebSymbolPsiSourcedSymbolHostClassEP"
+                    beanClass="com.intellij.webSymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.inspectionToolMapping"
                     beanClass="com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP"
