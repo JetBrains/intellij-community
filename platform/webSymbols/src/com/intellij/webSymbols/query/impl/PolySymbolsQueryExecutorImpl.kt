@@ -299,7 +299,7 @@ class PolySymbolsQueryExecutorImpl(
     return RecursionManager.doPreventingRecursion(Pair(path, params.virtualSymbols), false) {
       val contextQueryParams = WebSymbolsNameMatchQueryParams.create(this, true, false)
       val publisher = if (nestingLevel++ == 0)
-        ApplicationManager.getApplication().messageBus.syncPublisher(WebSymbolsQueryExecutorListener.TOPIC)
+        ApplicationManager.getApplication().messageBus.syncPublisher(PolySymbolsQueryExecutorListener.TOPIC)
       else
         null
       publisher?.beforeQuery(params)

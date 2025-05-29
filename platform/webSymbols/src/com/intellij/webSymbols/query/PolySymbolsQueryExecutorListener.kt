@@ -3,14 +3,14 @@ package com.intellij.webSymbols.query
 
 import com.intellij.util.messages.Topic
 
-interface WebSymbolsQueryExecutorListener {
+interface PolySymbolsQueryExecutorListener {
 
   fun beforeQuery(queryParams: WebSymbolsQueryParams)
 
   fun afterQuery(queryParams: WebSymbolsQueryParams)
 
   companion object {
-    val TOPIC: Topic<WebSymbolsQueryExecutorListener> = Topic(WebSymbolsQueryExecutorListener::class.java)
+    val TOPIC: Topic<PolySymbolsQueryExecutorListener> = Topic(PolySymbolsQueryExecutorListener::class.java)
   }
 
 }
