@@ -26,6 +26,11 @@ interface GitRepositoryApi : RemoteApi<Unit> {
 
   suspend fun getRepository(repositoryId: RepositoryId): GitRepositoryDto?
 
+  /**
+   * Subscription to repositories' updates in the given project.
+   * [GitRepositoryEvent] is sent produced on corresponding updates.
+   * However, [GitRepositoryEvent.RepositoriesSync] is sent periodically and once the connection is established
+   */
   suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent>
 
   suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean)
@@ -47,6 +52,10 @@ sealed interface GitRepositoryEvent {
   sealed interface SingleRepositoryUpdate: GitRepositoryEvent {
     val repositoryId: RepositoryId
   }
+
+  @Serializable
+  @ApiStatus.Internal
+  class RepositoriesSync(val repositories: List<RepositoryId>) : GitRepositoryEvent
 
   @Serializable
   @ApiStatus.Internal

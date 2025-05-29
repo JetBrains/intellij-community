@@ -20,7 +20,10 @@ import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.isActive
+import kotlin.time.Duration.Companion.seconds
 
 private typealias SharedRefUtil = com.intellij.vcs.git.shared.ref.GitRefUtil
 
@@ -50,6 +53,10 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       getAllRepositories(project).forEach(synchronizer::sendDeletedEventOnDispose)
 
       connection.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
+      while (isActive) {
+        send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
+        delay(SYNC_INTERVAL)
+      }
     }
   }
 
@@ -152,6 +159,8 @@ class GitRepositoryApiImpl : GitRepositoryApi {
   }
 
   private companion object {
+    val SYNC_INTERVAL = 10.seconds
+
     val LOG = Logger.getInstance(GitRepositoryApiImpl::class.java)
 
     private fun getAllRepositories(project: Project): List<GitRepository> = GitRepositoryManager.getInstance(project).repositories

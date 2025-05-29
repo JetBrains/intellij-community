@@ -16,6 +16,7 @@ import com.intellij.vcs.git.shared.ref.GitReferencesSet
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -71,30 +72,57 @@ class GitRepositoriesFrontendHolder(
     initLock.withLock {
       if (initialized) return
 
-      cs.childScope("Git repository state synchronization").launch {
-        GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
-          LOG.debug("Received repository event: $event")
-
-          when (event) {
-            is GitRepositoryEvent.RepositoryCreated -> {
-              repositories[event.repository.repositoryId] = convertToRepositoryInfo(event.repository)
-            }
-            is GitRepositoryEvent.RepositoryDeleted -> repositories.remove(event.repositoryId)
-            is GitRepositoryEvent.SingleRepositoryUpdate -> handleSingleRepoUpdate(event)
-            GitRepositoryEvent.TagsHidden -> {}
-          }
-
-          project.messageBus.syncPublisher(UPDATES).afterUpdate(getUpdateType(event))
-        }
-      }
-
-      val initialRecord = GitRepositoryApi.getInstance().getRepositories(project.projectId()).map { repositoryDto ->
-        repositoryDto.repositoryId to convertToRepositoryInfo(repositoryDto)
-      }
+      subscribeToRepoEvents()
+      val initialRecord = fetchAllRepositories()
       repositories.putAll(initialRecord)
 
       initialized = true
     }
+  }
+
+  private suspend fun fetchAllRepositories(): Map<RepositoryId, GitRepositoryFrontendModelImpl> = GitRepositoryApi.getInstance().getRepositories(project.projectId()).associate { repositoryDto ->
+    repositoryDto.repositoryId to convertToRepositoryInfo(repositoryDto)
+  }
+
+  /**
+   * @return once the connection is established and first [GitRepositoryEvent.RepositoriesSync] is received
+   */
+  private suspend fun subscribeToRepoEvents() {
+    val syncSignalReceived = CompletableDeferred<Unit>()
+    cs.childScope("Git repository state synchronization").launch() {
+      GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
+        LOG.debug("Received repository event: $event")
+
+        when (event) {
+          is GitRepositoryEvent.RepositoriesSync -> {
+            if (!initialized) {
+              LOG.debug("Received initial sync signal")
+              syncSignalReceived.complete(Unit)
+            }
+            else if (event.repositories.size != repositories.size || !repositories.keys.containsAll(event.repositories)) {
+              LOG.warn("State of repositories is not synchronized. " +
+                       "Received repositories: ${event.repositories.joinToString { it.toString() }}. " +
+                       "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
+              val allRepositories = fetchAllRepositories()
+              val reposToRemove = repositories.keys - allRepositories.keys
+              repositories.putAll(allRepositories)
+              reposToRemove.forEach { repositories.remove(it) }
+            } else {
+              LOG.debug("Repositories state is synchronized")
+            }
+          }
+          is GitRepositoryEvent.RepositoryCreated -> {
+            repositories[event.repository.repositoryId] = convertToRepositoryInfo(event.repository)
+          }
+          is GitRepositoryEvent.RepositoryDeleted -> repositories.remove(event.repositoryId)
+          is GitRepositoryEvent.SingleRepositoryUpdate -> handleSingleRepoUpdate(event)
+          GitRepositoryEvent.TagsHidden -> {}
+        }
+
+        getUpdateType(event)?.let { project.messageBus.syncPublisher(UPDATES).afterUpdate(it) }
+      }
+    }
+    syncSignalReceived.await()
   }
 
   private suspend fun handleSingleRepoUpdate(event: GitRepositoryEvent.SingleRepositoryUpdate) {
@@ -151,13 +179,14 @@ class GitRepositoriesFrontendHolder(
         rootFileId = repositoryDto.root,
       )
 
-    private fun getUpdateType(rpcEvent: GitRepositoryEvent): UpdateType = when (rpcEvent) {
+    private fun getUpdateType(rpcEvent: GitRepositoryEvent): UpdateType? = when (rpcEvent) {
       is GitRepositoryEvent.FavoriteRefsUpdated -> UpdateType.FAVORITE_REFS_UPDATED
       is GitRepositoryEvent.RepositoryCreated -> UpdateType.REPOSITORY_CREATED
       is GitRepositoryEvent.RepositoryDeleted -> UpdateType.REPOSITORY_DELETED
       is GitRepositoryEvent.RepositoryStateUpdated -> UpdateType.REPOSITORY_STATE_UPDATED
       GitRepositoryEvent.TagsHidden -> UpdateType.TAGS_HIDDEN
       is GitRepositoryEvent.TagsLoaded -> UpdateType.TAGS_LOADED
+      is GitRepositoryEvent.RepositoriesSync -> null
     }
   }
 
