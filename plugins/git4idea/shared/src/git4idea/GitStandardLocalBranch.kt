@@ -21,6 +21,16 @@ open class GitStandardLocalBranch(name: String) : GitBranch(name) {
     }
     return super.compareTo(o)
   }
+
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || o !is GitStandardLocalBranch) return false
+    return BRANCH_NAME_HASHING_STRATEGY.equals(name, o.name)
+  }
+
+  override fun hashCode(): Int {
+    return BRANCH_NAME_HASHING_STRATEGY.hashCode(name)
+  }
 }
 
 private object GitStandardLocalBranchSerializer : GitReferenceSimpleSerializer<GitStandardLocalBranch>("git4idea.GitStandardLocalBranch") {

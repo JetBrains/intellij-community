@@ -165,7 +165,8 @@ class GitRepositoriesFrontendHolder(
   companion object {
     fun getInstance(project: Project): GitRepositoriesFrontendHolder = project.getService(GitRepositoriesFrontendHolder::class.java)
 
-    internal val UPDATES = Topic(UpdatesListener::class.java, Topic.BroadcastDirection.NONE)
+    @ApiStatus.Internal
+    val UPDATES: Topic<UpdatesListener> = Topic(UpdatesListener::class.java, Topic.BroadcastDirection.NONE)
 
     private val LOG = Logger.getInstance(GitRepositoriesFrontendHolder::class.java)
 
@@ -189,11 +190,13 @@ class GitRepositoriesFrontendHolder(
     }
   }
 
-  internal fun interface UpdatesListener {
+  @ApiStatus.Internal
+  fun interface UpdatesListener {
     fun afterUpdate(updateType: UpdateType)
   }
 
-  internal enum class UpdateType {
+  @ApiStatus.Internal
+  enum class UpdateType {
     REPOSITORY_CREATED, REPOSITORY_DELETED, FAVORITE_REFS_UPDATED, REPOSITORY_STATE_UPDATED, TAGS_LOADED, TAGS_HIDDEN
   }
 }

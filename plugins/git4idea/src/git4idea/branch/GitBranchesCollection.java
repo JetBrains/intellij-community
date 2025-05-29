@@ -7,8 +7,10 @@ import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,7 +27,9 @@ import java.util.Map;
  * </p>
  */
 public final class GitBranchesCollection {
-  private static final int MAX_RECENT_CHECKOUT_BRANCHES = 5;
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static final int MAX_RECENT_CHECKOUT_BRANCHES = 5;
 
   private final @NotNull Map<GitLocalBranch, Hash> myLocalBranches;
   private final @NotNull Map<GitRemoteBranch, Hash> myRemoteBranches;

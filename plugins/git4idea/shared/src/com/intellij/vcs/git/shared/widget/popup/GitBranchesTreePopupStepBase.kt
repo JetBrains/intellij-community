@@ -103,7 +103,7 @@ abstract class GitBranchesTreePopupStepBase(
     }
   }
 
-  internal fun getNodeText(node: Any?): @NlsSafe String? {
+  fun getNodeText(node: Any?): @NlsSafe String? {
     val value = node ?: return null
     return when (value) {
       is GitRefType -> when {
