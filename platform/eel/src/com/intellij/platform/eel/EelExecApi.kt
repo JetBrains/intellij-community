@@ -5,10 +5,6 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -130,34 +126,10 @@ sealed interface EelExecApi {
     val path: EelPath
 
     /**
-     * Every time the script is called, this channel gets a new item.
-     * Use [delete] to stop listening.
-     */
-    val invocations: ReceiveChannel<ExternalCliProcess>
-
-    /**
-     * Stops listening and deletes the script file.
-     */
-    suspend fun delete()
-
-    /**
-     * Helper method, todo move to extension function?
-     * Listens to the invocations of external app lets [processor] to answer the cli requests.
+     * Listens to the invocations of the script and lets [processor] to answer the cli requests.
      * Never exits normally, so should be canceled externally when not needed.
      */
-    suspend fun listenAndDelete(processor: suspend (ExternalCliProcess) -> Int): Nothing {
-      try {
-        invocations.consumeEach { process ->
-          val exitCode = processor(process)
-          process.exit(exitCode)
-        }
-        error("Invocations channel shouldn't be closed other way than cancelling.")
-      } finally {
-        withContext(NonCancellable) {
-          delete()
-        }
-      }
-    }
+    suspend fun consumeInvocations(processor: suspend (ExternalCliProcess) -> Int): Nothing
   }
 
   interface ExternalCliProcess {
