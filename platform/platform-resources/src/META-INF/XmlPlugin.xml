@@ -534,7 +534,7 @@
 
     <multiHostInjector implementation="com.intellij.html.polySymbols.PolySymbolsHtmlTextInjector"
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
-                       id="WebSymbolsHtmlText"/>
+                       id="PolySymbolsHtmlText"/>
 
     <polySymbols.enableInLanguage language="HtmlCompatible"/>
 

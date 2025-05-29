@@ -2982,7 +2982,7 @@
             {
               "key": "class",
               "type": "string",
-              "value": "com.intellij.javascript.webSymbols.nodejs.PackageJsonWebSymbolsRegistryManagerStartup"
+              "value": "com.intellij.javascript.webSymbols.nodejs.PackageJsonPolySymbolsRegistryManagerStartup"
             },
             {
               "key": "plugin",
