@@ -17,7 +17,7 @@ import com.intellij.webSymbols.query.PolySymbolsCompoundScope
 import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 
-abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : PolySymbolsCompoundScope() {
+abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : PolySymbolsCompoundScope() {
 
   protected abstract val rootPsiElement: R?
 
@@ -34,7 +34,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     getRootScope()
       ?.let { findBestMatchingScope(it) }
       ?.let {
-        val structuredScopePtr = this@WebSymbolsStructuredScope.createPointer()
+        val structuredScopePtr = this@PolySymbolsStructuredScope.createPointer()
         WebSymbolsPsiScopeWithPointer(it) {
           structuredScopePtr.dereference()?.getCurrentScope()
         }
@@ -53,11 +53,11 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       }, false)
   }
 
-  abstract override fun createPointer(): Pointer<out WebSymbolsStructuredScope<T, R>>
+  abstract override fun createPointer(): Pointer<out PolySymbolsStructuredScope<T, R>>
 
   override fun equals(other: Any?): Boolean =
     other === this || (
-      other is WebSymbolsStructuredScope<*, *>
+      other is PolySymbolsStructuredScope<*, *>
       && other.javaClass === this.javaClass
       && other.location == location)
 
