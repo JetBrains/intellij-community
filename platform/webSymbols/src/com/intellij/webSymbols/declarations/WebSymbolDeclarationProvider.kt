@@ -11,9 +11,9 @@ interface WebSymbolDeclarationProvider {
    * otherwise try to provide only those at the hinted offset. Declarations outside the offset
    * will be filtered out anyway.
    */
-  fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<WebSymbolDeclaration>
+  fun getDeclarations(element: PsiElement, offsetInElement: Int): Collection<PolySymbolDeclaration>
 
-  fun getEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<WebSymbolDeclaration> =
+  fun getEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<PolySymbolDeclaration> =
     getDeclarations(element, offsetInElement)
       .filter { it.symbol.isEquivalentTo(target) }
 
@@ -21,12 +21,12 @@ interface WebSymbolDeclarationProvider {
     private val EP_NAME = ExtensionPointName<WebSymbolDeclarationProvider>("com.intellij.webSymbols.declarationProvider")
 
     @JvmStatic
-    fun getAllEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<WebSymbolDeclaration> {
+    fun getAllEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<PolySymbolDeclaration> {
       return EP_NAME.extensionList.flatMap { it.getEquivalentDeclarations(element, offsetInElement, target) }
     }
 
     @JvmStatic
-    fun getAllDeclarations(element: PsiElement, offsetInElement: Int): Collection<WebSymbolDeclaration> {
+    fun getAllDeclarations(element: PsiElement, offsetInElement: Int): Collection<PolySymbolDeclaration> {
       return EP_NAME.extensionList.flatMap { it.getDeclarations(element, offsetInElement) }
     }
   }
