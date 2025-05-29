@@ -10,13 +10,13 @@ import com.intellij.webSymbols.SymbolNamespace
 import com.intellij.webSymbols.PolySymbol
 import javax.swing.Icon
 
-interface WebSymbolDefaultIconProvider {
+interface PolySymbolDefaultIconProvider {
 
   fun getDefaultIcon(namespace: SymbolNamespace, kind: SymbolKind): Icon?
 
   companion object {
 
-    private val EP_NAME = ExtensionPointName<WebSymbolDefaultIconProvider>("com.intellij.webSymbols.defaultIconProvider")
+    private val EP_NAME = ExtensionPointName<PolySymbolDefaultIconProvider>("com.intellij.webSymbols.defaultIconProvider")
 
     fun get(namespace: SymbolNamespace, kind: SymbolKind): Icon? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultIcon(namespace, kind) }

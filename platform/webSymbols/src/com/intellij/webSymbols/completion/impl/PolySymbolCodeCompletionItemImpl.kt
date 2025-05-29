@@ -16,7 +16,7 @@ import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemBuilder
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemInsertHandler
 import com.intellij.webSymbols.impl.scaleToHeight
-import com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
+import com.intellij.webSymbols.query.PolySymbolDefaultIconProvider
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -223,7 +223,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
     private var icon: Icon? = symbol?.let {
       it.icon
       ?: it.origin.defaultIcon
-      ?: WebSymbolDefaultIconProvider.get(it.namespace, it.kind)
+      ?: PolySymbolDefaultIconProvider.get(it.namespace, it.kind)
     }
     private var typeTextStatic: String? = null
     private var typeTextProvider: (() -> String?)? = null

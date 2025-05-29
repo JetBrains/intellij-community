@@ -43,7 +43,7 @@
                     interface="com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.defaultIconProvider"
-                    interface="com.intellij.webSymbols.query.WebSymbolDefaultIconProvider"
+                    interface="com.intellij.webSymbols.query.PolySymbolDefaultIconProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.queryResultsCustomizerFactory"
                     interface="com.intellij.webSymbols.query.PolySymbolsQueryResultsCustomizerFactory"
