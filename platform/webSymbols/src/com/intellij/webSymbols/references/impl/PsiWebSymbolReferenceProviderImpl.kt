@@ -28,7 +28,7 @@ import com.intellij.webSymbols.highlighting.impl.getDefaultProblemMessage
 import com.intellij.webSymbols.impl.removeZeroLengthSegmentsRecursively
 import com.intellij.webSymbols.inspections.PolySymbolsProblemQuickFixProvider
 import com.intellij.webSymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
-import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
+import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
@@ -56,7 +56,7 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
       val offsets = MultiMap.createSet<Int, PolySymbol>()
       for (bean in beans) {
         @Suppress("UNCHECKED_CAST")
-        val provider = bean.instance as PsiWebSymbolReferenceProvider<PsiExternalReferenceHost>
+        val provider = bean.instance as PsiPolySymbolReferenceProvider<PsiExternalReferenceHost>
         val showProblems = provider.shouldShowProblems(element)
         val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element, hints)
         result.addAll(offsetsFromProvider.flatMap { (offset, symbol) ->

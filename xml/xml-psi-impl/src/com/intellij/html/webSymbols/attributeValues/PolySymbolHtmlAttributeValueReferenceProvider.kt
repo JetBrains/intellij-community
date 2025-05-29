@@ -10,11 +10,11 @@ import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue.Type
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
+import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.hasOnlyExtensions
 
-class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvider<XmlAttributeValue> {
+class PolySymbolHtmlAttributeValueReferenceProvider : PsiPolySymbolReferenceProvider<XmlAttributeValue> {
   override fun getReferencedSymbolNameOffset(psiElement: XmlAttributeValue): Int =
     psiElement.valueTextRange.startOffset - psiElement.startOffset
 
@@ -50,6 +50,6 @@ class WebSymbolHtmlAttributeValueReferenceProvider : PsiWebSymbolReferenceProvid
           && !it.hasOnlyExtensions()
         }
         ?.asSingleSymbol()
-      ?: PsiWebSymbolReferenceProvider.unresolvedSymbol(PolySymbol.HTML_ATTRIBUTE_VALUES, name)
+      ?: PsiPolySymbolReferenceProvider.unresolvedSymbol(PolySymbol.HTML_ATTRIBUTE_VALUES, name)
   }
 }

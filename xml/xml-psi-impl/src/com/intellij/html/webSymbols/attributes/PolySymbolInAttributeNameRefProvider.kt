@@ -4,10 +4,10 @@ package com.intellij.html.webSymbols.attributes
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
+import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 
-class WebSymbolInAttributeNameRefProvider : PsiWebSymbolReferenceProvider<XmlAttribute> {
+class PolySymbolInAttributeNameRefProvider : PsiPolySymbolReferenceProvider<XmlAttribute> {
 
   override fun getReferencedSymbol(psiElement: XmlAttribute): PolySymbol? =
     psiElement.descriptor

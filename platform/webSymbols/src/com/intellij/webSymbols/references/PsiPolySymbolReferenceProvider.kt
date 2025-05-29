@@ -10,7 +10,7 @@ import com.intellij.webSymbols.PolySymbolOrigin
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.query.PolySymbolMatch
 
-interface PsiWebSymbolReferenceProvider<T : PsiExternalReferenceHost> {
+interface PsiPolySymbolReferenceProvider<T : PsiExternalReferenceHost> {
 
   fun getReferencedSymbol(psiElement: T): PolySymbol? = null
 

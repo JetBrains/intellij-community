@@ -5,10 +5,10 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
+import com.intellij.webSymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.xml.util.XmlTagUtil
 
-class WebSymbolInTagNameRefProvider : PsiWebSymbolReferenceProvider<XmlTag> {
+class PolySymbolInTagNameRefProvider : PsiPolySymbolReferenceProvider<XmlTag> {
 
   override fun getReferencedSymbol(psiElement: XmlTag): PolySymbol? =
     psiElement.descriptor

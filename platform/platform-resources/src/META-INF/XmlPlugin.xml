@@ -565,13 +565,13 @@
 
     <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                   hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.webSymbols.elements.WebSymbolInTagNameRefProvider"/>
+                                  implementationClass="com.intellij.html.webSymbols.elements.PolySymbolInTagNameRefProvider"/>
     <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
                                   hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"/>
+                                  implementationClass="com.intellij.html.webSymbols.attributes.PolySymbolInAttributeNameRefProvider"/>
     <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
                                   hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.webSymbols.attributeValues.WebSymbolHtmlAttributeValueReferenceProvider"/>
+                                  implementationClass="com.intellij.html.webSymbols.attributeValues.PolySymbolHtmlAttributeValueReferenceProvider"/>
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>
