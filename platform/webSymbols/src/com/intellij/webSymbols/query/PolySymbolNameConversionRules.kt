@@ -47,19 +47,19 @@ interface PolySymbolNameConversionRules {
 
     @JvmStatic
     fun create(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): PolySymbolNameConversionRules =
-      WebSymbolNameConversionRulesBuilder().addRule(symbolKind, converter).build()
+      PolySymbolNameConversionRulesBuilder().addRule(symbolKind, converter).build()
 
     @JvmStatic
     fun create(vararg rules: Pair<PolySymbolQualifiedKind, WebSymbolNameConverter>): PolySymbolNameConversionRules =
-      WebSymbolNameConversionRulesBuilder().apply { rules.forEach { rule -> addRule(rule.first, rule.second) } }.build()
+      PolySymbolNameConversionRulesBuilder().apply { rules.forEach { rule -> addRule(rule.first, rule.second) } }.build()
 
     @JvmStatic
     fun empty(): PolySymbolNameConversionRules =
       PolySymbolNameConversionRulesImpl.EMPTY
 
     @JvmStatic
-    fun builder(): WebSymbolNameConversionRulesBuilder =
-      WebSymbolNameConversionRulesBuilder()
+    fun builder(): PolySymbolNameConversionRulesBuilder =
+      PolySymbolNameConversionRulesBuilder()
 
   }
 

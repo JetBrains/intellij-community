@@ -3,30 +3,30 @@ package com.intellij.webSymbols.query
 
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 
-class WebSymbolNameConversionRulesBuilder internal constructor() {
+class PolySymbolNameConversionRulesBuilder internal constructor() {
 
   private val canonicalNames = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
   private val matchNames = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
   private val renameRules = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
   private val completionVariants = mutableMapOf<PolySymbolQualifiedKind, WebSymbolNameConverter>()
 
-  fun addCanonicalNamesRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRulesBuilder = apply {
+  fun addCanonicalNamesRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): PolySymbolNameConversionRulesBuilder = apply {
     canonicalNames.putIfAbsent(symbolKind, converter)
   }
 
-  fun addMatchNamesRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRulesBuilder = apply {
+  fun addMatchNamesRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): PolySymbolNameConversionRulesBuilder = apply {
     matchNames.putIfAbsent(symbolKind, converter)
   }
 
-  fun addRenameRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRulesBuilder = apply {
+  fun addRenameRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): PolySymbolNameConversionRulesBuilder = apply {
     renameRules.putIfAbsent(symbolKind, converter)
   }
 
-  fun addCompletionVariantsRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRulesBuilder = apply {
+  fun addCompletionVariantsRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): PolySymbolNameConversionRulesBuilder = apply {
     completionVariants.putIfAbsent(symbolKind, converter)
   }
 
-  fun addRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): WebSymbolNameConversionRulesBuilder = apply {
+  fun addRule(symbolKind: PolySymbolQualifiedKind, converter: WebSymbolNameConverter): PolySymbolNameConversionRulesBuilder = apply {
     addCanonicalNamesRule(symbolKind, converter)
     addMatchNamesRule(symbolKind, converter)
     addRenameRule(symbolKind, converter)
