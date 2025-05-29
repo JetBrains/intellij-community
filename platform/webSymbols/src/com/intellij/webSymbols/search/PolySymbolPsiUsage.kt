@@ -8,14 +8,14 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class WebSymbolPsiUsage(override val file: PsiFile,
-                        override val range: TextRange,
-                        override val declaration: Boolean) : PsiUsage {
+class PolySymbolPsiUsage(override val file: PsiFile,
+                         override val range: TextRange,
+                         override val declaration: Boolean) : PsiUsage {
 
-  override fun createPointer(): Pointer<WebSymbolPsiUsage> {
+  override fun createPointer(): Pointer<PolySymbolPsiUsage> {
     val declaration = declaration
     return Pointer.fileRangePointer(file, range) { restoredFile, restoredRange ->
-      WebSymbolPsiUsage(restoredFile, restoredRange, declaration)
+      PolySymbolPsiUsage(restoredFile, restoredRange, declaration)
     }
   }
 }

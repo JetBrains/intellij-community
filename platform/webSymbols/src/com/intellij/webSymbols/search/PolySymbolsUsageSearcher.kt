@@ -69,7 +69,7 @@ object WebSymbolUsageQueries {
         if (psiSource == element) {
           val nameIdentifier = (element as? PsiNameIdentifierOwner)?.nameIdentifier
           if (nameIdentifier != null)
-            return listOf(WebSymbolPsiUsage(element.containingFile, nameIdentifier.textRange, true))
+            return listOf(PolySymbolPsiUsage(element.containingFile, nameIdentifier.textRange, true))
         }
 
         if (element is PsiExternalReferenceHost) {
@@ -77,9 +77,9 @@ object WebSymbolUsageQueries {
           if (declarations.isNotEmpty()) {
             return declarations
               .map {
-                WebSymbolPsiUsage(it.declaringElement.containingFile,
-                                  it.rangeInDeclaringElement.shiftRight(it.declaringElement.startOffset),
-                                  true)
+                PolySymbolPsiUsage(it.declaringElement.containingFile,
+                                   it.rangeInDeclaringElement.shiftRight(it.declaringElement.startOffset),
+                                   true)
               }
           }
 
@@ -88,7 +88,7 @@ object WebSymbolUsageQueries {
             .filterIsInstance<PolySymbolReference>()
             .filter { it.rangeInElement.containsOffset(offsetInElement) }
             .filter { ref -> ref.resolvesTo(symbol) }
-            .map { WebSymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
+            .map { PolySymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
             .toList()
 
           if (foundReferences.isNotEmpty()) {
@@ -100,7 +100,7 @@ object WebSymbolUsageQueries {
           val foundReferences = element.references.asSequence()
             .filter { it.rangeInElement.containsOffset(offsetInElement) }
             .filter { it.isReferenceTo(psiSource) }
-            .map { WebSymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
+            .map { PolySymbolPsiUsage(it.element.containingFile, it.absoluteRange, false) }
             .toList()
 
           if (foundReferences.isNotEmpty()) {
