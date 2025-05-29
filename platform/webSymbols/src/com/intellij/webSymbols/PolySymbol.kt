@@ -27,7 +27,7 @@ import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutor
 import com.intellij.webSymbols.refactoring.PolySymbolRenameTarget
-import com.intellij.webSymbols.search.WebSymbolSearchTarget
+import com.intellij.webSymbols.search.PolySymbolSearchTarget
 import com.intellij.webSymbols.utils.matchedNameOrName
 import com.intellij.webSymbols.utils.qualifiedName
 import org.jetbrains.annotations.Nls
@@ -229,7 +229,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
 
   /**
    * Returns [TargetPresentation] used by [SearchTarget] and [RenameTarget].
-   * Default implementations of [PolySymbolRenameTarget] and [WebSymbolSearchTarget] use the presentation property.
+   * Default implementations of [PolySymbolRenameTarget] and [PolySymbolSearchTarget] use the presentation property.
    */
   @get:RequiresReadLock
   @get:RequiresBackgroundThread
@@ -253,16 +253,16 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
   /**
    * Implement to provide usage search for the symbol.
    * In most cases the implementation would simply call
-   * [WebSymbolSearchTarget.create].
+   * [PolySymbolSearchTarget.create].
    *
    * Symbol can also implement [SearchTarget] interface directly
-   * and override its methods, in which case [WebSymbolSearchTarget]
+   * and override its methods, in which case [PolySymbolSearchTarget]
    * returned by [searchTarget] property is ignored.
    *
    * @see [SearchTargetSymbol]
    * @see [SearchTarget]
    */
-  val searchTarget: WebSymbolSearchTarget?
+  val searchTarget: PolySymbolSearchTarget?
     get() = null
 
   /**

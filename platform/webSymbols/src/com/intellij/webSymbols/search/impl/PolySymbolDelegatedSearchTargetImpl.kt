@@ -9,22 +9,22 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.search.SearchScope
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolDelegate
-import com.intellij.webSymbols.search.WebSymbolSearchTarget
+import com.intellij.webSymbols.search.PolySymbolSearchTarget
 
 /**
- * Used when creating a [WebSymbolSearchTarget] in [PolySymbolDelegate]. Allows to wrap a [SearchTarget] symbol
- * as a [WebSymbolSearchTarget], while exposing original behavior to the platform.
+ * Used when creating a [PolySymbolSearchTarget] in [PolySymbolDelegate]. Allows to wrap a [SearchTarget] symbol
+ * as a [PolySymbolSearchTarget], while exposing original behavior to the platform.
  */
-internal class WebSymbolDelegatedSearchTargetImpl(override val symbol: PolySymbol) : WebSymbolSearchTarget {
+internal class PolySymbolDelegatedSearchTargetImpl(override val symbol: PolySymbol) : PolySymbolSearchTarget {
 
   init {
     assert(symbol is SearchTarget)
   }
 
-  override fun createPointer(): Pointer<out WebSymbolSearchTarget> {
+  override fun createPointer(): Pointer<out PolySymbolSearchTarget> {
     val symbolPtr = symbol.createPointer()
     return Pointer {
-      symbolPtr.dereference()?.let { WebSymbolDelegatedSearchTargetImpl(it) }
+      symbolPtr.dereference()?.let { PolySymbolDelegatedSearchTargetImpl(it) }
     }
   }
 
@@ -42,7 +42,7 @@ internal class WebSymbolDelegatedSearchTargetImpl(override val symbol: PolySymbo
 
   override fun equals(other: Any?): Boolean =
     other === this ||
-    (other is WebSymbolDelegatedSearchTargetImpl && other.symbol == symbol)
+    (other is PolySymbolDelegatedSearchTargetImpl && other.symbol == symbol)
 
   override fun hashCode(): Int =
     symbol.hashCode()

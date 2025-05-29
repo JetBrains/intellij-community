@@ -17,7 +17,7 @@ import com.intellij.webSymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.PolySymbolMatch
 import com.intellij.webSymbols.query.PolySymbolMatchBuilder
 import com.intellij.webSymbols.refactoring.PolySymbolRenameTarget
-import com.intellij.webSymbols.search.WebSymbolSearchTarget
+import com.intellij.webSymbols.search.PolySymbolSearchTarget
 import com.intellij.webSymbols.utils.coalesceApiStatus
 import com.intellij.webSymbols.utils.merge
 import javax.swing.Icon
@@ -142,7 +142,7 @@ internal open class PolySymbolMatchImpl private constructor(
         && nonEmptySegments[0].symbols.any { it.isEquivalentTo(symbol) }
       }
 
-  override val searchTarget: WebSymbolSearchTarget?
+  override val searchTarget: PolySymbolSearchTarget?
     get() = nameSegments.filter { it.start != it.end }
       .takeIf { it.size == 1 }
       ?.get(0)

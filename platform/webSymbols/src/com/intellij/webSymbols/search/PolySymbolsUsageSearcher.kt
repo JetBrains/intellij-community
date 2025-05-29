@@ -34,7 +34,7 @@ internal class WebSymbolsUsageSearcher : UsageSearcher {
 
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> =
     parameters.target
-      .let { it as? PolySymbol ?: (it as? WebSymbolSearchTarget)?.symbol }
+      .let { it as? PolySymbol ?: (it as? PolySymbolSearchTarget)?.symbol }
       ?.let { WebSymbolUsageQueries.buildWebSymbolUsagesQueries(it, parameters.project, parameters.searchScope) }
     ?: emptyList()
 

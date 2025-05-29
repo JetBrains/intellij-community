@@ -18,8 +18,8 @@ import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.webSymbols.refactoring.impl.PolySymbolDelegatedRenameTargetImpl
-import com.intellij.webSymbols.search.WebSymbolSearchTarget
-import com.intellij.webSymbols.search.impl.WebSymbolDelegatedSearchTargetImpl
+import com.intellij.webSymbols.search.PolySymbolSearchTarget
+import com.intellij.webSymbols.search.impl.PolySymbolDelegatedSearchTargetImpl
 import javax.swing.Icon
 
 abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol {
@@ -101,9 +101,9 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
   override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     delegate.isExclusiveFor(qualifiedKind)
 
-  override val searchTarget: WebSymbolSearchTarget?
+  override val searchTarget: PolySymbolSearchTarget?
     get() = when (delegate) {
-      is SearchTarget -> WebSymbolDelegatedSearchTargetImpl(delegate)
+      is SearchTarget -> PolySymbolDelegatedSearchTargetImpl(delegate)
       else -> delegate.searchTarget
     }
 

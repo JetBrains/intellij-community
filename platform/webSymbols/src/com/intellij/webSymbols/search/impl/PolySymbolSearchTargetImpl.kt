@@ -5,14 +5,14 @@ import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.search.WebSymbolSearchTarget
+import com.intellij.webSymbols.search.PolySymbolSearchTarget
 
-internal class WebSymbolSearchTargetImpl(override val symbol: PolySymbol) : WebSymbolSearchTarget {
+internal class PolySymbolSearchTargetImpl(override val symbol: PolySymbol) : PolySymbolSearchTarget {
 
-  override fun createPointer(): Pointer<out WebSymbolSearchTarget> {
+  override fun createPointer(): Pointer<out PolySymbolSearchTarget> {
     val symbolPtr = symbol.createPointer()
     return Pointer {
-      symbolPtr.dereference()?.let { WebSymbolSearchTargetImpl(it) }
+      symbolPtr.dereference()?.let { PolySymbolSearchTargetImpl(it) }
     }
   }
 
@@ -24,7 +24,7 @@ internal class WebSymbolSearchTargetImpl(override val symbol: PolySymbol) : WebS
 
   override fun equals(other: Any?): Boolean =
     other === this ||
-    (other is WebSymbolSearchTargetImpl && other.symbol == symbol)
+    (other is PolySymbolSearchTargetImpl && other.symbol == symbol)
 
   override fun hashCode(): Int =
     symbol.hashCode()
