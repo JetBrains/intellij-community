@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginRevie
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginWriteReviewUrl
 import com.intellij.ide.plugins.newui.PluginsViewCustomizer.PluginDetailsCustomizer
 import com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction.OptionButtonController
+import com.intellij.ide.plugins.newui.buttons.InstallOptionButton
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -62,7 +64,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
@@ -95,7 +96,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val nameComponent = createNameComponent()
   private var nameAndButtons: BaselinePanel? = null
   private var restartButton: JButton? = null
-  private var installButton: InstallButton? = null
+  private var installButton: PluginInstallButton? = null
   private val mySuggestedIdeBanner = SuggestedIdeBanner()
   private var updateButton: JButton? = null
   private var gearButton: JComponent? = null
@@ -301,7 +302,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     nameAndButtons!!.add(JBLabel().setCopyable(true).also { myVersion1 = it })
 
     createButtons()
-    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton else updateButton)!!)
+    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else updateButton)!!)
 
     topPanel.add(ErrorComponent().also { errorComponent = it }, VerticalLayout.FILL_HORIZONTAL)
     topPanel.add(licensePanel)
@@ -418,10 +419,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       )
     }
 
-    nameAndButtons.addButtonComponent(InstallButton(true).also { installButton = it })
-    installButton!!.addActionListener(ActionListener { _ ->
-      pluginModel.installOrUpdatePlugin(this, plugin!!, null, ModalityState.stateForComponent(installButton!!))
-    })
+    nameAndButtons.addButtonComponent(createInstallButton().also { installButton = it }.getComponent())
 
     enableDisableController = SelectionBasedPluginModelAction.createOptionButton(
       { action -> this.createEnableDisableAction(action) },
@@ -754,7 +752,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
       installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
-      nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton else updateButton)!!)
+      nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton?.getComponent() else updateButton)!!)
     }
     showPlugin()
 
@@ -763,7 +761,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val suggestedCommercialIde: String? = plugin!!.suggestedCommercialIde
 
     if (suggestedCommercialIde != null) {
-      installButton!!.isVisible = false
+      installButton!!.setVisible(false)
     }
 
     if (plugin != null) {
@@ -1161,7 +1159,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun updateButtons() {
     if (!isPluginAvailable) {
       restartButton!!.isVisible = false
-      installButton!!.isVisible = false
+      installButton!!.setVisible(false)
       updateButton!!.isVisible = false
       gearButton!!.isVisible = false
       myUninstallButton?.isVisible = false
@@ -1177,7 +1175,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       installButton!!.setEnabled(getPlugin(
         plugin!!.pluginId) == null && !installedWithoutRestart,
                                  IdeBundle.message("plugins.configurable.installed"))
-      installButton!!.isVisible = !installed
+      installButton!!.setVisible(!installed)
 
       updateButton!!.isVisible = false
       myUninstallButton?.isVisible = false
@@ -1190,12 +1188,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         val uninstalled = state[0]
         val uninstalledWithoutRestart = state[1]
 
-        installButton!!.isVisible = false
+        installButton!!.setVisible(false)
 
         if (uninstalled) {
           if (uninstalledWithoutRestart) {
             restartButton!!.isVisible = false
-            installButton!!.isVisible = true
+            installButton!!.setVisible(true)
             installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
           }
           else {
@@ -1215,7 +1213,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       }
     }
     else {
-      installButton!!.isVisible = false
+      installButton!!.setVisible(false)
 
       val state = getDeletedState(plugin!!)
       val uninstalled = state[0]
@@ -1224,7 +1222,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       if (uninstalled) {
         if (uninstalledWithoutRestart) {
           restartButton!!.isVisible = false
-          installButton!!.isVisible = true
+          installButton!!.setVisible(true)
           installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
         }
         else {
@@ -1312,10 +1310,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         val installButton = installButton
         if (installButton != null) {
           installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
-          if (installButton.isVisible) {
+          if (installButton.isVisible()) {
             installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
             installedDescriptorForMarketplace?.let {
-              installButton.isVisible = false
+              installButton.setVisible(false)
               myVersion1!!.text = it.version
               myVersion1!!.isVisible = true
               updateEnabledState()
@@ -1332,6 +1330,28 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     fullRepaint()
+  }
+
+  private fun createInstallButton(): PluginInstallButton {
+    if (Registry.`is`("reworked.plugin.manager.enabled")) {
+      val button = InstallOptionButton()
+      button.action = object : AbstractAction() {
+        override fun actionPerformed(e: ActionEvent?) {
+          installOrUpdatePlugin()
+        }
+      }
+      return button
+    }
+    val installButton = InstallButton(true)
+    installButton.addActionListener { _ ->
+      installOrUpdatePlugin()
+    }
+    return installButton
+  }
+
+  private fun installOrUpdatePlugin() {
+    val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
+    pluginModel.installOrUpdatePlugin(this, plugin!!, null, modalityState)
   }
 
   private fun updateEnableForNameAndIcon() {
@@ -1368,7 +1388,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   fun updateAfterUninstall(showRestart: Boolean) {
-    installButton!!.isVisible = false
+    installButton!!.setVisible(false)
     updateButton!!.isVisible = false
     gearButton!!.isVisible = false
     myUninstallButton?.isVisible = false
@@ -1378,7 +1398,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     restartButton!!.isVisible = isPluginAvailable && showRestart
 
     if (!showRestart && InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(descriptorForActions!!.pluginId)) {
-      installButton!!.isVisible = true
+      installButton!!.setVisible(true)
       installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
     }
 

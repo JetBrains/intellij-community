@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins.newui
+package com.intellij.ide.plugins.newui.buttons
 
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.ui.UIUtil
@@ -7,7 +7,7 @@ import java.awt.Dimension
 import javax.swing.Action
 import javax.swing.JButton
 
-class OptionButton @JvmOverloads constructor(
+open class OptionButton @JvmOverloads constructor(
   action: Action? = null,
   options: Array<Action>? = null
 ) : JBOptionButton(action, options) {
