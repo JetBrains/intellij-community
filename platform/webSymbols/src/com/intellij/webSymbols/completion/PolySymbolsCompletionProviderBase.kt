@@ -20,7 +20,7 @@ import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItemCustomizer
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 
-abstract class WebSymbolsCompletionProviderBase<T : PsiElement> : CompletionProvider<CompletionParameters>() {
+abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionProvider<CompletionParameters>() {
   final override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val psiContext = getContext(parameters.position.originalElement) ?: return
     val queryExecutor = WebSymbolsQueryExecutorFactory.create(psiContext)

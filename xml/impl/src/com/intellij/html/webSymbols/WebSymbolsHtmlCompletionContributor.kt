@@ -4,10 +4,10 @@ package com.intellij.html.webSymbols
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.HtmlCompletionContributor
-import com.intellij.html.webSymbols.attributeValues.WebSymbolHtmlAttributeValueCompletionProvider
-import com.intellij.html.webSymbols.attributes.WebSymbolAttributeNameCompletionProvider
-import com.intellij.html.webSymbols.elements.WebSymbolElementNameCompletionProvider
-import com.intellij.html.webSymbols.elements.WebSymbolElementNameInTextCompletionProvider
+import com.intellij.html.webSymbols.attributeValues.PolySymbolHtmlAttributeValueCompletionProvider
+import com.intellij.html.webSymbols.attributes.PolySymbolAttributeNameCompletionProvider
+import com.intellij.html.webSymbols.elements.PolySymbolElementNameCompletionProvider
+import com.intellij.html.webSymbols.elements.PolySymbolElementNameInTextCompletionProvider
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.tree.TokenSet
@@ -20,25 +20,25 @@ class WebSymbolsHtmlCompletionContributor : CompletionContributor() {
     extend(CompletionType.BASIC,
            psiElement(XmlTokenType.XML_NAME).withParent(psiElement(XmlAttribute::class.java)
                                                           .withParent(HtmlTag::class.java)),
-           WebSymbolAttributeNameCompletionProvider())
+           PolySymbolAttributeNameCompletionProvider())
 
     extend(CompletionType.BASIC,
            psiElement(XmlTokenType.XML_NAME).withParent(HtmlTag::class.java),
-           WebSymbolElementNameCompletionProvider())
+           PolySymbolElementNameCompletionProvider())
 
     extend(CompletionType.BASIC,
            psiElement(XmlTokenType.XML_TAG_NAME).withParent(HtmlTag::class.java),
-           WebSymbolElementNameCompletionProvider())
+           PolySymbolElementNameCompletionProvider())
 
     extend(CompletionType.BASIC,
            psiElement().withElementType(TokenSet.create(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN))
              .withSuperParent(1, XmlAttributeValue::class.java)
              .withSuperParent(2, XmlAttribute::class.java)
              .withSuperParent(3, HtmlTag::class.java),
-           WebSymbolHtmlAttributeValueCompletionProvider())
+           PolySymbolHtmlAttributeValueCompletionProvider())
 
     extend(CompletionType.BASIC,
            HtmlCompletionContributor.getHtmlElementInTextPattern(),
-           WebSymbolElementNameInTextCompletionProvider())
+           PolySymbolElementNameInTextCompletionProvider())
   }
 }

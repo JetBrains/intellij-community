@@ -12,10 +12,10 @@ import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol.Companion.HTML_ELEMENTS
-import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
-internal class WebSymbolElementNameInTextCompletionProvider : WebSymbolsCompletionProviderBase<XmlElement>() {
+internal class PolySymbolElementNameInTextCompletionProvider : PolySymbolsCompletionProviderBase<XmlElement>() {
 
   override fun getContext(position: PsiElement): XmlElement? =
     position.parent.asSafely<XmlElement>()
@@ -36,7 +36,7 @@ internal class WebSymbolElementNameInTextCompletionProvider : WebSymbolsCompleti
 
     processCompletionQueryResults(queryExecutor, patchedResultSet, HTML_ELEMENTS,
                                   name, position, context,
-                                  filter = WebSymbolElementNameCompletionProvider.Companion::filterStandardHtmlSymbols) {
+                                  filter = PolySymbolElementNameCompletionProvider.Companion::filterStandardHtmlSymbols) {
       it.withInsertHandlerAdded(XmlTagInsertHandler.INSTANCE)
         .withName("<" + it.name)
         .withDisplayName("<" + (it.displayName ?: it.name))

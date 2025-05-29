@@ -11,11 +11,11 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
-import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue.Type
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
-class WebSymbolHtmlAttributeValueCompletionProvider : WebSymbolsCompletionProviderBase<XmlAttributeValue>() {
+class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttributeValue>() {
   override fun getContext(position: PsiElement): XmlAttributeValue? =
     PsiTreeUtil.getParentOfType(position, XmlAttributeValue::class.java, false)
 

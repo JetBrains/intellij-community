@@ -15,12 +15,12 @@ import com.intellij.webSymbols.PolySymbol.Companion.HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.PolySymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
-import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 
-class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlAttribute>() {
+class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
 
   override fun getContext(position: PsiElement): XmlAttribute? =
     PsiTreeUtil.getParentOfType(position, XmlAttribute::class.java)
