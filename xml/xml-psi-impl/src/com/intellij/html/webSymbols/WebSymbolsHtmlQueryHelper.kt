@@ -10,7 +10,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.PolySymbol
 import com.intellij.webSymbols.PolySymbolQualifiedKind
 import com.intellij.webSymbols.PolySymbolsScope
-import com.intellij.webSymbols.WebSymbolsScopeWithCache
+import com.intellij.webSymbols.PolySymbolsScopeWithCache
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -29,7 +29,7 @@ object WebSymbolsHtmlQueryHelper {
   ): PolySymbolsScope =
     StandardHtmlAttributeSymbolsScope(project, tagName)
 
-  private class StandardHtmlElementSymbolsScope(project: Project) : WebSymbolsScopeWithCache<Project, Unit>(null, project, project, Unit) {
+  private class StandardHtmlElementSymbolsScope(project: Project) : PolySymbolsScopeWithCache<Project, Unit>(null, project, project, Unit) {
 
     override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       HtmlDescriptorUtils.getHtmlNSDescriptor(project)
@@ -48,7 +48,7 @@ object WebSymbolsHtmlQueryHelper {
 
   }
 
-  private class StandardHtmlAttributeSymbolsScope(project: Project, tagName: String) : WebSymbolsScopeWithCache<Project, String>(null, project, project, tagName) {
+  private class StandardHtmlAttributeSymbolsScope(project: Project, tagName: String) : PolySymbolsScopeWithCache<Project, String>(null, project, project, tagName) {
 
     override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       (HtmlDescriptorUtils.getStandardHtmlElementDescriptor(project, key)

@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentMap
  * Caches the list of symbols and uses efficient cache to speed up queries. When extending the class,
  * you only need to override the initialize method and provide parameters to the super constructor to specify how results should be cached.
  */
-abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
+abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
   /**
    * Allows to optimize for symbols with a particular [PolySymbolOrigin.framework].
    * If `null` all symbols will be accepted and scope will be queried in all contexts.
@@ -61,7 +61,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
    */
   protected abstract fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean
 
-  abstract override fun createPointer(): Pointer<out WebSymbolsScopeWithCache<T, K>>
+  abstract override fun createPointer(): Pointer<out PolySymbolsScopeWithCache<T, K>>
 
   private val requiresResolve: Boolean get() = true
 
@@ -71,7 +71,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
   override fun equals(other: Any?): Boolean =
     other === this
     || (other != null
-        && other is WebSymbolsScopeWithCache<*, *>
+        && other is PolySymbolsScopeWithCache<*, *>
         && other::class.java == this::class.java
         && other.framework == framework
         && other.key == key
