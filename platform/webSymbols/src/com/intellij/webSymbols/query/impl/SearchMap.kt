@@ -16,7 +16,7 @@ import com.intellij.webSymbols.utils.withMatchedName
 import java.util.*
 
 internal abstract class SearchMap<T> internal constructor(
-  private val namesProvider: WebSymbolNamesProvider) {
+  private val namesProvider: PolySymbolNamesProvider) {
 
   private val patterns: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
   private val statics: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
@@ -27,7 +27,7 @@ internal abstract class SearchMap<T> internal constructor(
                    pattern: PolySymbolsPattern?,
                    item: T) {
     if (pattern == null) {
-      namesProvider.getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE)
+      namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE)
         .forEach {
           statics.computeIfAbsent(SearchMapEntry(qualifiedName.qualifiedKind, it)) { SmartList() }.add(item)
         }
@@ -49,7 +49,7 @@ internal abstract class SearchMap<T> internal constructor(
   internal fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
                                   params: WebSymbolsNameMatchQueryParams,
                                   scope: Stack<PolySymbolsScope>): Sequence<PolySymbol> =
-    namesProvider.getNames(qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY)
+    namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY)
       .asSequence()
       .mapNotNull { statics[SearchMapEntry(qualifiedName.qualifiedKind, it)] }
       .flatMapWithQueryParameters(params)

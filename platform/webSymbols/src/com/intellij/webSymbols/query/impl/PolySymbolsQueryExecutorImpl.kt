@@ -31,7 +31,7 @@ import kotlin.math.min
 class PolySymbolsQueryExecutorImpl(
   override val location: PsiElement?,
   rootScope: List<PolySymbolsScope>,
-  override val namesProvider: WebSymbolNamesProvider,
+  override val namesProvider: PolySymbolNamesProvider,
   override val resultsCustomizer: PolySymbolsQueryResultsCustomizer,
   override val context: PolyContext,
   override val allowResolve: Boolean,
@@ -211,7 +211,7 @@ class PolySymbolsQueryExecutorImpl(
         }
         .groupBy {
           queryParams.queryExecutor.namesProvider
-            .getNames(qualifiedName.copy(name = it.name), WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).firstOrNull()
+            .getNames(qualifiedName.copy(name = it.name), PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).firstOrNull()
           ?: it.name
         }
         .flatMap { (name, list) ->
@@ -223,7 +223,7 @@ class PolySymbolsQueryExecutorImpl(
               asSingleSymbol()
                 ?.let { symbol ->
                   params.queryExecutor.namesProvider
-                    .getNames(symbol.qualifiedName, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+                    .getNames(symbol.qualifiedName, PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
                     .firstOrNull()
                     ?.let { name -> listOf(symbol.withMatchedName(name)) }
                 }

@@ -30,7 +30,7 @@ interface PolySymbolsQueryExecutor : ModificationTracker {
   @get:JvmName("allowResolve")
   val allowResolve: Boolean
 
-  val namesProvider: WebSymbolNamesProvider
+  val namesProvider: PolySymbolNamesProvider
 
   val resultsCustomizer: PolySymbolsQueryResultsCustomizer
 

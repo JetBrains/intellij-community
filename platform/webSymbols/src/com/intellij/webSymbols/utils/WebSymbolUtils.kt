@@ -190,14 +190,14 @@ fun PolySymbol.toCodeCompletionItems(
     }
   }
   ?: params.queryExecutor.namesProvider
-    .getNames(PolySymbolQualifiedName(namespace, kind, this.name), WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+    .getNames(PolySymbolQualifiedName(namespace, kind, this.name), PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
 fun PolySymbol.nameMatches(name: String, queryExecutor: PolySymbolsQueryExecutor): Boolean {
   val queryNames = queryExecutor.namesProvider.getNames(
-    PolySymbolQualifiedName(this.namespace, this.kind, name), WebSymbolNamesProvider.Target.NAMES_QUERY)
+    PolySymbolQualifiedName(this.namespace, this.kind, name), PolySymbolNamesProvider.Target.NAMES_QUERY)
   val symbolNames = queryExecutor.namesProvider.getNames(
-    PolySymbolQualifiedName(this.namespace, this.kind, this.name), WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
+    PolySymbolQualifiedName(this.namespace, this.kind, this.name), PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return queryNames.any { symbolNames.contains(it) }
 }
 

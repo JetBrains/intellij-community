@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Internal
 abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin : PolySymbolOrigin> : StaticPolySymbolsScope {
 
-  private val namesProviderCache: MutableMap<WebSymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+  private val namesProviderCache: MutableMap<PolySymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0
 
   private val queryExecutorCache: MutableMap<PolySymbolsQueryExecutor, QueryExecutorContributionsCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
@@ -122,7 +122,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
                              mapInitializer: (consumer: (StaticSymbolContributionAdapter) -> Unit) -> Unit): ContributionSearchMap =
     getNameProvidersCache(queryExecutor.namesProvider).getOrCreateMap(key, mapInitializer)
 
-  private fun getNameProvidersCache(namesProvider: WebSymbolNamesProvider): NameProvidersCache {
+  private fun getNameProvidersCache(namesProvider: PolySymbolNamesProvider): NameProvidersCache {
     if (namesProviderCacheMisses > 100) {
       // Get rid of old soft keys
       namesProviderCacheMisses = 0
@@ -169,7 +169,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
       framework == null || context.framework == null || context.framework == framework
   }
 
-  private inner class ContributionSearchMap(namesProvider: WebSymbolNamesProvider)
+  private inner class ContributionSearchMap(namesProvider: PolySymbolNamesProvider)
     : SearchMap<StaticSymbolContributionAdapter>(namesProvider) {
 
     fun add(item: StaticSymbolContributionAdapter) {
@@ -184,7 +184,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   }
 
-  private inner class NameProvidersCache(private val namesProvider: WebSymbolNamesProvider) {
+  private inner class NameProvidersCache(private val namesProvider: PolySymbolNamesProvider) {
     private val mapsCache: MutableMap<Any, ContributionSearchMap> = ConcurrentHashMap()
     private var namesProviderTimestamp: Long = -1
 

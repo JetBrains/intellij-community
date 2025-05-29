@@ -5,9 +5,9 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.webSymbols.PolySymbolQualifiedName
 
-interface WebSymbolNamesProvider : ModificationTracker {
+interface PolySymbolNamesProvider : ModificationTracker {
 
-  fun createPointer(): Pointer<WebSymbolNamesProvider>
+  fun createPointer(): Pointer<PolySymbolNamesProvider>
 
   fun getNames(qualifiedName: PolySymbolQualifiedName, target: Target): List<String>
 
@@ -15,7 +15,7 @@ interface WebSymbolNamesProvider : ModificationTracker {
                    newName: String,
                    occurence: String): String
 
-  fun withRules(rules: List<PolySymbolNameConversionRules>): WebSymbolNamesProvider
+  fun withRules(rules: List<PolySymbolNameConversionRules>): PolySymbolNamesProvider
 
   enum class Target {
     CODE_COMPLETION_VARIANTS,

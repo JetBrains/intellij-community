@@ -9,7 +9,7 @@ import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.webSymbols.patterns.PolySymbolsPattern
 import com.intellij.webSymbols.patterns.PolySymbolsPatternSymbolsResolver
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
+import com.intellij.webSymbols.query.PolySymbolNamesProvider
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.nameMatches
 import com.intellij.webSymbols.utils.qualifiedName
@@ -55,7 +55,7 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
     if (owner != null
         && params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList()).isNotEmpty()) {
       CompletionResults(params.queryExecutor.namesProvider
-                          .getNames(owner.qualifiedName, WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+                          .getNames(owner.qualifiedName, PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
                           .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = owner) })
     }
     else {

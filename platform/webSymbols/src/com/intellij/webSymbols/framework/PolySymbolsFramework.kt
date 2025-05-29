@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.context.PolyContext
 import com.intellij.webSymbols.context.PolyContext.Companion.KIND_FRAMEWORK
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
+import com.intellij.webSymbols.query.PolySymbolNamesProvider
 import javax.swing.Icon
 
 abstract class PolySymbolsFramework {
@@ -24,7 +24,7 @@ abstract class PolySymbolsFramework {
   open val icon: Icon?
     get() = null
 
-  open fun getNames(qualifiedName: PolySymbolQualifiedName, target: WebSymbolNamesProvider.Target): List<String> = emptyList()
+  open fun getNames(qualifiedName: PolySymbolQualifiedName, target: PolySymbolNamesProvider.Target): List<String> = emptyList()
 
   fun isInContext(location: PsiElement): Boolean = PolyContext.get(KIND_FRAMEWORK, location) == id
 

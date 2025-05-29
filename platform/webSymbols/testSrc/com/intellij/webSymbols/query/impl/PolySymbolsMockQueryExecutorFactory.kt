@@ -21,7 +21,7 @@ class PolySymbolsMockQueryExecutorFactory : PolySymbolsQueryExecutorFactory {
 
   override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolsQueryExecutor =
     PolySymbolsQueryExecutorImpl(location, scopeList,
-                                 WebSymbolNamesProviderImpl(
+                                 PolySymbolNamesProviderImpl(
                                   context[KIND_FRAMEWORK],
                                   context[KIND_FRAMEWORK]?.let { framework ->
                                     scopeList.filterIsInstance<WebTypesMockScopeImpl>().map {

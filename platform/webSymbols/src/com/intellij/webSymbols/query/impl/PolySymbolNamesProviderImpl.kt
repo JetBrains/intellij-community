@@ -10,17 +10,17 @@ import com.intellij.webSymbols.PolySymbolQualifiedName
 import com.intellij.webSymbols.framework.PolySymbolsFramework
 import com.intellij.webSymbols.query.PolySymbolNameConversionRules
 import com.intellij.webSymbols.query.PolySymbolNameConverter
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
-import com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.*
+import com.intellij.webSymbols.query.PolySymbolNamesProvider
+import com.intellij.webSymbols.query.PolySymbolNamesProvider.Target.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
-class WebSymbolNamesProviderImpl(
+class PolySymbolNamesProviderImpl(
   private val framework: FrameworkId?,
   private val configuration: List<PolySymbolNameConversionRules>,
   private val modificationTracker: ModificationTracker,
-) : WebSymbolNamesProvider {
+) : PolySymbolNamesProvider {
 
   private val canonicalNamesProviders: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
@@ -49,24 +49,24 @@ class WebSymbolNamesProviderImpl(
     this.renameProviders = renameProviders
   }
 
-  override fun createPointer(): Pointer<WebSymbolNamesProvider> =
+  override fun createPointer(): Pointer<PolySymbolNamesProvider> =
     Pointer.hardPointer(this)
 
   override fun hashCode(): Int =
     Objects.hash(framework, configuration)
 
   override fun equals(other: Any?): Boolean =
-    other is WebSymbolNamesProviderImpl
+    other is PolySymbolNamesProviderImpl
     && other.framework == framework
     && other.configuration == configuration
 
   override fun getModificationCount(): Long =
     modificationTracker.modificationCount
 
-  override fun withRules(rules: List<PolySymbolNameConversionRules>): WebSymbolNamesProvider =
-    WebSymbolNamesProviderImpl(framework, rules + configuration, modificationTracker)
+  override fun withRules(rules: List<PolySymbolNameConversionRules>): PolySymbolNamesProvider =
+    PolySymbolNamesProviderImpl(framework, rules + configuration, modificationTracker)
 
-  override fun getNames(qualifiedName: PolySymbolQualifiedName, target: WebSymbolNamesProvider.Target): List<String> =
+  override fun getNames(qualifiedName: PolySymbolQualifiedName, target: PolySymbolNamesProvider.Target): List<String> =
     when (target) {
       CODE_COMPLETION_VARIANTS -> completionVariantsProviders[qualifiedName.qualifiedKind]
       NAMES_MAP_STORAGE -> canonicalNamesProviders[qualifiedName.qualifiedKind]

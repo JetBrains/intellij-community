@@ -54,7 +54,7 @@ class WebSymbolsQueryExecutorBuilderImpl() : WebSymbolsQueryExecutorBuilder {
     PolySymbolsQueryExecutorImpl(
       null,
       rootScopes,
-      WebSymbolNamesProviderImpl(context[KIND_FRAMEWORK], nameConversionRules, ModificationTracker.NEVER_CHANGED),
+      PolySymbolNamesProviderImpl(context[KIND_FRAMEWORK], nameConversionRules, ModificationTracker.NEVER_CHANGED),
       PolySymbolsCompoundQueryResultsCustomizer(customizers),
       PolyContextImpl(context),
       allowResolve

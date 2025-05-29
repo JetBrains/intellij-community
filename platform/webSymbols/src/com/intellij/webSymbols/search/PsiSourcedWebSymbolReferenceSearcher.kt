@@ -11,7 +11,7 @@ import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.webSymbols.PsiSourcedPolySymbolProvider
-import com.intellij.webSymbols.query.WebSymbolNamesProvider
+import com.intellij.webSymbols.query.PolySymbolNamesProvider
 import com.intellij.webSymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.webSymbols.search.impl.WebSymbolPsiSourcedSymbolHostClassEP
 import com.intellij.webSymbols.utils.qualifiedName
@@ -28,7 +28,7 @@ internal class PsiSourcedWebSymbolReferenceSearcher : QueryExecutorBase<PsiRefer
       val queryExecutor = PolySymbolsQueryExecutorFactory.create(targetElement, true)
       val namesProvider = queryExecutor.namesProvider
       foundSymbols
-        .flatMap { namesProvider.getNames(it.qualifiedName, WebSymbolNamesProvider.Target.NAMES_QUERY) }
+        .flatMap { namesProvider.getNames(it.qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY) }
         .distinct()
     }
     else {

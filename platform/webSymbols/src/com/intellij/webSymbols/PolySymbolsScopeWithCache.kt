@@ -95,7 +95,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
   }
 
-  private fun createCachedSearchMap(namesProvider: WebSymbolNamesProvider): CachedValue<WebSymbolsSearchMap> =
+  private fun createCachedSearchMap(namesProvider: PolySymbolNamesProvider): CachedValue<WebSymbolsSearchMap> =
     CachedValuesManager.getManager(project).createCachedValue {
       val dependencies = mutableSetOf<Any>()
       val map = WebSymbolsSearchMap(namesProvider, framework)
@@ -147,11 +147,11 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     getNamesProviderToMapCache().getOrCreateMap(queryExecutor.namesProvider, this::createCachedSearchMap)
 
   private class NamesProviderToMapCache {
-    private val cache: ConcurrentMap<WebSymbolNamesProvider, CachedValue<WebSymbolsSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+    private val cache: ConcurrentMap<PolySymbolNamesProvider, CachedValue<WebSymbolsSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
     private var cacheMisses = 0
 
-    fun getOrCreateMap(namesProvider: WebSymbolNamesProvider,
-                       createCachedSearchMap: (namesProvider: WebSymbolNamesProvider) -> CachedValue<WebSymbolsSearchMap>): WebSymbolsSearchMap {
+    fun getOrCreateMap(namesProvider: PolySymbolNamesProvider,
+                       createCachedSearchMap: (namesProvider: PolySymbolNamesProvider) -> CachedValue<WebSymbolsSearchMap>): WebSymbolsSearchMap {
       if (cacheMisses > 20) {
         // Get rid of old soft keys
         cacheMisses = 0
@@ -164,7 +164,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
   }
 
-  private class WebSymbolsSearchMap(namesProvider: WebSymbolNamesProvider, private val framework: FrameworkId?)
+  private class WebSymbolsSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?)
     : SearchMap<PolySymbol>(namesProvider) {
 
     override fun Sequence<PolySymbol>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<PolySymbol> = this

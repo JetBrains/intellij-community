@@ -9,28 +9,28 @@ interface PolySymbolNameConversionRules {
   /**
    * Used for storing and comparing symbols.
    *
-   * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.NAMES_MAP_STORAGE]
+   * @see [com.intellij.webSymbols.query.PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE]
    */
   val canonicalNames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
   /**
    * Used for matching symbols.
    *
-   * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.NAMES_QUERY]
+   * @see [com.intellij.webSymbols.query.PolySymbolNamesProvider.Target.NAMES_QUERY]
    */
   val matchNames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
   /**
    * Used for renaming symbols.
    *
-   * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.RENAME_QUERY]
+   * @see [com.intellij.webSymbols.query.PolySymbolNamesProvider.Target.RENAME_QUERY]
    */
   val renames: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
   /**
    * Used for code completion.
    *
-   * @see [com.intellij.webSymbols.query.WebSymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS]
+   * @see [com.intellij.webSymbols.query.PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS]
    */
   val completionVariants: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
