@@ -47,7 +47,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
   @ApiStatus.Internal
   class HtmlContextualPolySymbolsScope(private val location: PsiElement)
-    : PolySymbolsCompoundScope(), WebSymbolsPrioritizedScope {
+    : PolySymbolsCompoundScope(), PolySymbolsPrioritizedScope {
 
     init {
       assert(location !is XmlTag) { "Cannot create HtmlContextualWebSymbolsScope on a tag." }

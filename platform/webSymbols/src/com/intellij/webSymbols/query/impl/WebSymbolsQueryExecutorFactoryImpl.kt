@@ -15,7 +15,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.PolySymbol
-import com.intellij.webSymbols.WebSymbolsPrioritizedScope
+import com.intellij.webSymbols.PolySymbolsPrioritizedScope
 import com.intellij.webSymbols.PolySymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
@@ -61,7 +61,7 @@ class WebSymbolsQueryExecutorFactoryImpl(private val project: Project) : WebSymb
         }
     })
 
-    scopeList.sortBy { (it.asSafely<WebSymbolsPrioritizedScope>()?.priority ?: PolySymbol.Priority.NORMAL).value }
+    scopeList.sortBy { (it.asSafely<PolySymbolsPrioritizedScope>()?.priority ?: PolySymbol.Priority.NORMAL).value }
 
     return WebSymbolsQueryExecutorImpl(location,
                                        scopeList,
