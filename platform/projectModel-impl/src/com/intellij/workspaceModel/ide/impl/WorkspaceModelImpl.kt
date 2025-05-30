@@ -400,6 +400,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
 
       val unloadBuilder = unloadStorageReplacement.builder
       unloadedEntitiesStorage.replace(unloadBuilder.toSnapshot(), unloadStorageReplacement.changes, {}, ::onUnloadedEntitiesChanged)
+      log.info("Project model updated to version ${entityStorage.pointer.version}")
     }
     return true
   }
