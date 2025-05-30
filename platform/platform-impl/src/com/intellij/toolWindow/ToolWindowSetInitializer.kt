@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -114,7 +113,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
 
     val layout = pendingLayout.getAndSet(null) ?: throw IllegalStateException("Expected some pending layout")
-    val stripeManager = project.service<ToolWindowStripeManager>()
+    val stripeManager = project.serviceAsync<ToolWindowStripeManager>()
     val list = span("toolwindow creating preparation") {
       addExtraTasks(tasks = tasks, project = project, ep = ep).map { task ->
         val existingInfo = layout.getInfo(task.id)
