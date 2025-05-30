@@ -77,10 +77,13 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
       dfType = typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method));
     }
     DfaValue defaultResult = interpreter.getFactory().fromDfType(dfType);
-    Nullability expectedNullability = DfaPsiUtil.getTypeNullability(LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
-    if (expectedNullability == Nullability.NOT_NULL) {
-      CheckNotNullInstruction.checkNotNullable(interpreter, state, defaultResult, 
-                                               NullabilityProblemKind.nullableFunctionReturn.problem(methodRef, null));
+    PsiType type = LambdaUtil.getFunctionalInterfaceReturnType(methodRef);
+    if (!(type instanceof PsiPrimitiveType)) { // primitive type may be subject to boxing and handled separately
+      Nullability expectedNullability = DfaPsiUtil.getTypeNullability(type);
+      if (expectedNullability == Nullability.NOT_NULL) {
+        CheckNotNullInstruction.checkNotNullable(interpreter, state, defaultResult,
+                                                 NullabilityProblemKind.nullableFunctionReturn.problem(methodRef, null));
+      }
     }
     if (contracts.isEmpty() || !JavaMethodContractUtil.isPure(method)) return;
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments, defaultResult));
