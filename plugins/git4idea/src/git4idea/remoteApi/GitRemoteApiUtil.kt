@@ -8,12 +8,15 @@ import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.isActive
 
 internal fun <T> flowWithMessageBus(
   project: Project,
   scope: CoroutineScope,
   operation: suspend ProducerScope<T>.(connection: SimpleMessageBusConnection) -> Unit,
 ): Flow<T> = callbackFlow<T> {
+  if (!scope.isActive || project.isDisposed) return@callbackFlow
+
   val connection = project.messageBus.connect(scope)
   operation(connection)
   awaitClose { connection.disconnect() }
