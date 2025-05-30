@@ -12,6 +12,8 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.ref.GitReferenceName
+import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
@@ -21,14 +23,12 @@ import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
 import git4idea.GitReference
 import git4idea.i18n.GitBundle
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
-@ApiStatus.Internal
-class GitBranchesTreePopup(
+internal class GitBranchesTreePopup private constructor(
   project: Project,
   step: GitBranchesTreePopupStep,
   parent: JBPopup? = null,
@@ -123,12 +123,20 @@ class GitBranchesTreePopup(
 
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
+
+    fun create(project: Project, selectedRepository: GitRepositoryFrontendModel?): GitBranchesTreePopup {
+      val repositories = GitRepositoriesFrontendHolder.getInstance(project).getAll().sorted()
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep.create(project, selectedRepository, repositories)).also {
+        it.setIsMovable(true)
+      }
+    }
   }
 }
 
 private object GitBranchesTreePopupActions {
   @Language("devkit-action-id")
   const val HEADER_SETTINGS_GROUP = "Git.Branches.Popup.Settings"
+
   @Language("devkit-action-id")
   const val FETCH = "Git.Branches.Popup.Fetch"
 }

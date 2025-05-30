@@ -8,7 +8,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopup
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import git4idea.repo.GitRepository
@@ -29,7 +29,7 @@ class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCorou
     val repository = getGitRepository(context)
 
     withContext(Dispatchers.EDT) {
-      val treePopup = (GitBranchesTreePopupOnBackend.create(context.project, repository) as GitBranchesTreePopup)
+      val treePopup = (GitBranchesTreePopupOnBackend.create(context.project, repository) as GitBranchesWidgetPopup)
       treePopup.showCenteredInCurrentWindow(context.project)
       PerformanceTestSpan.TRACER.spanBuilder(NAME).use { span->
         treePopup.promiseExpandTree().waitForPromise(3.minutes)

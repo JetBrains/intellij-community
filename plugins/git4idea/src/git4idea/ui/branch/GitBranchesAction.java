@@ -23,7 +23,7 @@ public class GitBranchesAction extends DumbAwareAction {
     if (project == null) return;
     GitRepository repository = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
     if (repository == null) return;
-    GitBranchesTreePopupOnBackend.show(project, repository);
+    GitBranchesTreePopupOnBackend.create(project, repository).showCenteredInCurrentWindow(project);
   }
 
   @Override

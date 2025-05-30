@@ -754,12 +754,12 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   }
 
   @TestOnly
-  fun promiseExpandTree(): Promise<*> {
+  override fun promiseExpandTree(): Promise<*> {
     return TreeUtil.promiseExpandAll(tree)
   }
 
   @TestOnly
-  fun getExpandedPathsSize(): Int {
+  override fun getExpandedPathsSize(): Int {
     return tree.expandedPaths.size
   }
 

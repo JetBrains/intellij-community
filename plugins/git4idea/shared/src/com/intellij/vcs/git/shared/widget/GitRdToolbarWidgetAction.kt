@@ -14,10 +14,10 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.ui.RowIcon
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import git4idea.i18n.GitBundle
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.ApiStatus
@@ -46,7 +46,10 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
         GitWidgetPlaceholder.updatePlaceholder(project, null)
         getPopupForRepoSetup(state.trustedProject, event)
       }
-      is GitWidgetState.OnRepository -> getPopupForRepo(project, state.repository)
+      is GitWidgetState.OnRepository -> {
+        val repo = GitRepositoriesFrontendHolder.getInstance(project).get(state.repository)
+        GitBranchesWidgetPopup.createPopup(project, repo)
+      }
       GitWidgetState.UnknownGitRepository -> getPopupForUnknownGitRepo(project, event)
     }
   }
@@ -108,8 +111,6 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
 
     e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, getInAndOutIcons(presentation))
   }
-
-  protected abstract fun getPopupForRepo(project: Project, repositoryId: RepositoryId): JBPopup?
 
   protected abstract fun getPopupForUnknownGitRepo(project: Project, event: AnActionEvent): JBPopup?
 

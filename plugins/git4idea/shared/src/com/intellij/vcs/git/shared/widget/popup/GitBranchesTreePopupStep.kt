@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-class GitBranchesTreePopupStep(
+class GitBranchesTreePopupStep private constructor(
   project: Project,
   selectedRepository: GitRepositoryFrontendModel?,
   repositories: List<GitRepositoryFrontendModel>,
@@ -82,7 +82,7 @@ class GitBranchesTreePopupStep(
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
     if (selectedValue is GitBranchesTreeModel.RepositoryNode) {
-      return GitBranchesTreePopupStep(project, selectedValue.repository, listOf(selectedValue.repository), false)
+      return createPopupStepForSelectedRepo(project, selectedValue.repository)
     }
 
     val refUnderRepository = selectedValue as? GitBranchesTreeModel.RefUnderRepository
@@ -131,6 +131,18 @@ class GitBranchesTreePopupStep(
   }
 
   companion object {
+    fun create(
+      project: Project,
+      selectedRepository: GitRepositoryFrontendModel?,
+      repositories: List<GitRepositoryFrontendModel>,
+    ): GitBranchesTreePopupStep = GitBranchesTreePopupStep(project, selectedRepository, repositories, true)
+
+    /**
+     * 2nd-level popup shown on repository click
+     */
+    private fun createPopupStepForSelectedRepo(project: Project, repository: GitRepositoryFrontendModel): GitBranchesTreePopupStep =
+      GitBranchesTreePopupStep(project, repository, listOf(repository), false)
+
     private fun createActionStep(actionGroup: ActionGroup,
                                  project: Project,
                                  selectedRepository: GitRepositoryFrontendModel?,

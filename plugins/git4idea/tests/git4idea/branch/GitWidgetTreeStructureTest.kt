@@ -14,6 +14,7 @@ import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupRenderer
+import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStep
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStepBase
 import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
 import git4idea.GitUtil
@@ -249,9 +250,15 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     repositoryManager.updateAllRepositories()
 
     return invokeAndWaitIfNeeded {
+      val holder = GitRepositoriesFrontendHolder.getInstance(project)
+      val repositories = holder.getAll().sorted()
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
-      popupStep = GitBranchesTreePopupOnBackend.createBranchesTreePopupStep(project, repo)
+      popupStep = GitBranchesTreePopupStep.create(
+        project,
+        GitBranchesTreePopupOnBackend.selectedRepoIfNeeded(repo),
+        repositories,
+      )
       tree.cellRenderer = GitBranchesTreePopupRenderer(popupStep)
       tree.model = popupStep.treeModel
       popupStep.updateTreeModelIfNeeded(tree, filter)
