@@ -11,7 +11,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,10 +64,7 @@ public final class MixedResultsSearcher implements SESearcher {
       }
     }
 
-    Map<? extends SearchEverywhereContributor<?>, Integer> map =
-      Registry.is("search.everywhere.ml.spell.checker.enabled")
-      ? applySpellCheckIfNeeded(contributorsAndLimits, pattern)
-      : contributorsAndLimits;
+    Map<? extends SearchEverywhereContributor<?>, Integer> map = applySpellCheckIfNeeded(contributorsAndLimits, pattern);
 
     Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier = indicator ->
       new ResultsAccumulator(map, myEqualityProvider, myListener, myNotificationExecutor, indicator);
@@ -83,10 +79,7 @@ public final class MixedResultsSearcher implements SESearcher {
     Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier = indicator ->
       new ResultsAccumulator(alreadyFound, contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor, indicator);
 
-    Map<? extends SearchEverywhereContributor<?>, Integer> map =
-      Registry.is("search.everywhere.ml.spell.checker.enabled")
-      ? incrementSpellCheckLimits(contributorsAndLimits)
-      : contributorsAndLimits;
+    Map<? extends SearchEverywhereContributor<?>, Integer> map = incrementSpellCheckLimits(contributorsAndLimits);
 
     return performSearch(map.keySet(), pattern, accumulatorSupplier);
   }
