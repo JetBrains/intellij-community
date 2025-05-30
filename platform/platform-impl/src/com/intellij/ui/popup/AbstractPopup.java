@@ -1385,6 +1385,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       window.setType(Window.Type.NORMAL);
     }
     myWindow = window;
+    ClientProperty.put(window, KEY, this);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Setting minimum size to " + myMinSize);
     }
@@ -2040,6 +2041,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
       }
 
+      ClientProperty.put(myWindow, KEY, null);
       myWindow = null;
       myWindowListener = null;
     }
@@ -2090,6 +2092,23 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
+      // This is a really horrible way to get the editor for popups shown from the floating toolbar.
+      // First we find the parent popup by its window,
+      // then we find its lightweight hint (because that's what the floating toolbar is),
+      // then we find its editor.
+      // It would be really nice to have a better way.
+      for (Component component = this; component != null; component = component.getParent()) {
+        var popup = ClientProperty.get(component, KEY);
+        if (popup instanceof AbstractPopup abstractPopup) {
+          var hint = ClientProperty.get(abstractPopup.getContent(), LightweightHint.POPUP_HINT_KEY);
+          if (hint != null) {
+            var editor = ClientProperty.get(hint.getComponent(), LightweightHint.HINT_COMPONENT_EDITOR_KEY);
+            if (editor != null) {
+              sink.set(CommonDataKeys.EDITOR, editor);
+            }
+          }
+        }
+      }
       DataSink.uiDataSnapshot(sink, myDataProvider);
     }
 

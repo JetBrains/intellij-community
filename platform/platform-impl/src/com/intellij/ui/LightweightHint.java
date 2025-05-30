@@ -7,6 +7,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -17,6 +18,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,6 +35,10 @@ import java.util.EventObject;
 public class LightweightHint extends UserDataHolderBase implements Hint {
   public static final Key<Boolean> SHOWN_AT_DEBUG = Key.create("shown.at.debug");
   private static final Logger LOG = Logger.getInstance(LightweightHint.class);
+  @ApiStatus.Internal
+  public static final Key<LightweightHint> POPUP_HINT_KEY = Key.create("POPUP_HINT");
+  @ApiStatus.Internal
+  public static final Key<Editor> HINT_COMPONENT_EDITOR_KEY = Key.create("HINT_COMPONENT_EDITOR");
 
   private final @NotNull JComponent myComponent;
   private final EventListenerList myListenerList = new EventListenerList();
@@ -269,10 +275,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       .createPopup();
 
     beforeShow();
+    ClientProperty.put(myPopup.getContent(), POPUP_HINT_KEY, this);
     myPopup.show(new RelativePoint(myParentComponent, new Point(actualPoint.x, actualPoint.y)));
   }
 
   protected void onPopupCancel() {
+    ClientProperty.remove(myPopup.getContent(), POPUP_HINT_KEY);
   }
 
   private void fixActualPoint(Point actualPoint) {
