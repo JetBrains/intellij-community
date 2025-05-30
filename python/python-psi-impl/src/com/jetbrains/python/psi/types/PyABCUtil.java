@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +125,10 @@ public final class PyABCUtil {
       }
     }
     if (type instanceof PyUnionType) {
-      return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
+      if (!Registry.is("python.typing.strict.unions", true)) {
+        return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
+      }
+      return PyTypeUtil.toStream(type).nonNull().allMatch(it -> isSubtype(it, superClassName, context));
     }
     return false;
   }

@@ -1526,10 +1526,10 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                title: str
                                year: int
                            
-                           movies1: list[Movie] = [
+                           movies1: list[Movie] = <warning descr="Expected type 'list[Movie]', got 'list[Movie | dict[str, str]]' instead">[
                                {"title": "Blade Runner", "year": 1982}, # OK
                                {"title": "The Matrix"},
-                           ]
+                           ]</warning>
                            movies2: list[Movie] = <warning descr="Expected type 'list[Movie]', got 'list[dict[str, str]]' instead">[
                                {"title": "The Matrix"},
                            ]</warning>

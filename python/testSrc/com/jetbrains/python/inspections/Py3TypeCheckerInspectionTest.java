@@ -3085,12 +3085,17 @@ def foo(param: str | int) -> TypeGuard[str]:
                    call = <warning descr="Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead">empty</warning>
                    """);
   }
-  
+
   public void testNoWarningIfUnreachable() {
     doTestByText("""
                    def foo() -> int:
                        assert False
                        return "42" # no warning here, because it is unreachable
                    """);
+  }
+
+  // PY-24834
+  public void testStrictUnionImplicitProtocolMatching() {
+    doTest();
   }
 }

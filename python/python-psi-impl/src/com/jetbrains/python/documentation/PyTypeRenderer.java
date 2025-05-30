@@ -297,7 +297,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     if (ContainerUtil.all(unionType.getMembers(), t -> t instanceof PyClassType ct && ct.isDefinition())) {
       return wrapInTypingType(render(unionType.map(type -> type != null ? ((PyClassType)type).toInstance() : null)));
     }
-    if (PyTypeChecker.isUnknown(unionType, false, myTypeEvalContext)) {
+    if (unionType.isWeak()) {
       // Always put Any at the end of the union
       return renderUnion(List.of(render(unionType.excludeNull()), visitUnknownType()));
     }

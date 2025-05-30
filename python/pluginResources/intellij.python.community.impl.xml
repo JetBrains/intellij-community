@@ -669,6 +669,8 @@
     <registryKey key="python.activate.virtualenv.on.run" defaultValue="true"
                  description="Whether enabled activates virtualenv before script execution and passes environment to the process"/>
 
+    <registryKey key="python.typing.strict.unions" defaultValue="true" description="Enable strict union types semantics"/>
+
     <!-- uv -->
     <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
   </extensions>
