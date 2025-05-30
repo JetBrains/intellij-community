@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.markdown.frontend.editor.lists
+package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
@@ -20,7 +20,6 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
-import org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler
 import org.intellij.plugins.markdown.lang.psi.impl.*
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil

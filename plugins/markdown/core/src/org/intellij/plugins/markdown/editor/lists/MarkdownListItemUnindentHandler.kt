@@ -12,14 +12,12 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.sublists
 import org.intellij.plugins.markdown.editor.lists.Replacement.Companion.replaceSafelyIn
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * This handler decreases nesting of the current/selected list item(s), if it is nested at all.
  * The children (paragraphs and lists) are unindented as well.
  */
-@ApiStatus.Internal
-class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?) : ListItemIndentUnindentHandlerBase(baseHandler) {
+internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?) : ListItemIndentUnindentHandlerBase(baseHandler) {
 
   override fun doIndentUnindent(item: MarkdownListItem, file: MarkdownFile, document: Document): Boolean {
     val outerItem = item.parentOfType<MarkdownListItem>()

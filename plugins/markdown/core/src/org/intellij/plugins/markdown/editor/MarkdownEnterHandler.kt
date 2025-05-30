@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.markdown.frontend.editor
+package org.intellij.plugins.markdown.editor
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate

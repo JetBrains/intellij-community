@@ -13,10 +13,8 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-object ListUtils {
+internal object ListUtils {
   /** [offset] may be located inside the indent of the returned item, but not on a blank line */
   fun PsiFile.getListItemAt(offset: Int, document: Document): MarkdownListItem? {
     return getListItemAtLine(document.getLineNumber(offset), document)

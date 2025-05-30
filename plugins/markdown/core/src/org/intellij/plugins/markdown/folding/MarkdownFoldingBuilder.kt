@@ -1,4 +1,4 @@
-package com.intellij.markdown.frontend.folding
+package org.intellij.plugins.markdown.folding
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.CustomFoldingBuilder

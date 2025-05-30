@@ -17,10 +17,8 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parentOfType
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-object MarkdownPsiStructureUtil {
+internal object MarkdownPsiStructureUtil {
   @JvmField
   val PRESENTABLE_TYPES: TokenSet = MarkdownTokenTypeSets.HEADERS
 
@@ -54,8 +52,7 @@ object MarkdownPsiStructureUtil {
   /**
    * @return true if element is on the file top level.
    */
-  @ApiStatus.Internal
-  fun ASTNode.isTopLevel(): Boolean {
+  internal fun ASTNode.isTopLevel(): Boolean {
     return treeParent?.hasType(MarkdownElementTypes.MARKDOWN_FILE_ELEMENT_TYPE) == true
   }
 

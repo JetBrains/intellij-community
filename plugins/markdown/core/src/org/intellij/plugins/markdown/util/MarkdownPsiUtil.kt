@@ -4,10 +4,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-object MarkdownPsiUtil {
+internal object MarkdownPsiUtil {
   object WhiteSpaces {
     /** Check if element is new line */
     @JvmStatic

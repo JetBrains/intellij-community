@@ -8,10 +8,8 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-fun PsiElement.hasType(type: IElementType): Boolean {
+internal fun PsiElement.hasType(type: IElementType): Boolean {
   return PsiUtilCore.getElementType(this) == type
 }
 
