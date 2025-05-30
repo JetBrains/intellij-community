@@ -54,7 +54,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//images/backend.svg",
-    "//platform/webSymbols:webSymbols-testFramework",
+    "//platform/polySymbols:polySymbols-testFramework",
   ],
   runtime_deps = [
     ":tests_test_resources",

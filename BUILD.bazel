@@ -219,7 +219,7 @@ java_library(
     "//plugins/evaluation-plugin/languages/java",
     "//platform/warmup",
     "//plugins/remote-control",
-    "//platform/webSymbols",
+    "//platform/polySymbols",
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/smart-update",
     "//plugins/gradle/intellij.gradle.analysis:analysis",

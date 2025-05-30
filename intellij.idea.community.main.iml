@@ -199,7 +199,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.workspaceModel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteControl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.webSymbols" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.polySymbols" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.performanceTesting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.performanceTesting.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.smart.update" scope="RUNTIME" />

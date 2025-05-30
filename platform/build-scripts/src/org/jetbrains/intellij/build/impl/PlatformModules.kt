@@ -85,7 +85,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
 
   "intellij.relaxng",
   "intellij.spellchecker",
-  "intellij.platform.webSymbols",
+  "intellij.platform.polySymbols",
   "intellij.xml.dom.impl",
 
   "intellij.platform.vcs.log",
@@ -222,7 +222,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       )
     )
   }
-  
+
   //used as a transitive dependency in the 'proxy-vole' library and excluded from it, so needs to be included explicitly
   layout.withProjectLibrary("rhino")
 
@@ -608,7 +608,7 @@ suspend fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathRe
       moduleElement.parent.removeContent(moduleElement)
       continue
     }
-    
+
     val descriptor = getModuleDescriptor(moduleName = moduleName, jpsModuleName = jpsModuleName, xIncludePathResolver = xIncludePathResolver, context = context)
     if (jpsModuleName == moduleName &&
         dependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName.removeSuffix("._test")), layout, frontendModuleFilter)) {

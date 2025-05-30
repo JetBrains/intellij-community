@@ -40,7 +40,7 @@ jvm_library(
     "//platform/core-ui",
     "//spellchecker",
     "//xml/dom-openapi:dom",
-    "//platform/webSymbols",
+    "//platform/polySymbols",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util/xmlDom",

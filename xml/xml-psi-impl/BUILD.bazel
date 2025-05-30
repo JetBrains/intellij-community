@@ -39,7 +39,7 @@ jvm_library(
     "@lib//:jackson-module-kotlin",
     "@lib//:caffeine",
     "//platform/util/jdom",
-    "//platform/webSymbols",
+    "//platform/polySymbols",
     "//platform/markdown-utils",
   ],
   exports = [

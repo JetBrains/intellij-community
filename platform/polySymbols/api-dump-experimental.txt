@@ -610,7 +610,7 @@
 - <init>():V
 - sf:get(java.lang.String):com.intellij.polySymbols.framework.PolySymbolsFramework
 - sf:getAll():java.util.List
-- sf:getAllAsSequence$intellij_platform_webSymbols():kotlin.sequences.Sequence
+- sf:getAllAsSequence$intellij_platform_polySymbols():kotlin.sequences.Sequence
 - a:getDisplayName():java.lang.String
 - getIcon():javax.swing.Icon
 - f:getId():java.lang.String

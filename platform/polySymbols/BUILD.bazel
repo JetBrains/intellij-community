@@ -1,17 +1,17 @@
-### auto-generated section `build intellij.platform.webSymbols` start
+### auto-generated section `build intellij.platform.polySymbols` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "webSymbols_resources",
+  name = "polySymbols_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "webSymbols",
-  module_name = "intellij.platform.webSymbols",
+  name = "polySymbols",
+  module_name = "intellij.platform.polySymbols",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
@@ -33,21 +33,21 @@ jvm_library(
     "@lib//:gson",
     "//platform/markdown-utils",
   ],
-  runtime_deps = [":webSymbols_resources"]
+  runtime_deps = [":polySymbols_resources"]
 )
-### auto-generated section `build intellij.platform.webSymbols` end
+### auto-generated section `build intellij.platform.polySymbols` end
 
-### auto-generated section `build intellij.platform.webSymbols.testFramework` start
+### auto-generated section `build intellij.platform.polySymbols.testFramework` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "webSymbols-testFramework",
-  module_name = "intellij.platform.webSymbols.testFramework",
+  name = "polySymbols-testFramework",
+  module_name = "intellij.platform.polySymbols.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["testFramework/**/*.kt", "testFramework/**/*.java"], allow_empty = True),
   deps = [
     "//platform/editor-ui-api:editor-ui",
-    "//platform/webSymbols",
+    "//platform/polySymbols",
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
@@ -70,20 +70,20 @@ jvm_library(
     "//java/java-runtime:rt",
   ]
 )
-### auto-generated section `build intellij.platform.webSymbols.testFramework` end
+### auto-generated section `build intellij.platform.polySymbols.testFramework` end
 
-### auto-generated section `build intellij.platform.webSymbols.tests` start
+### auto-generated section `build intellij.platform.polySymbols.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "webSymbols-tests_test_resources",
+  name = "polySymbols-tests_test_resources",
   files = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
 jvm_library(
-  name = "webSymbols-tests_test_lib",
+  name = "polySymbols-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
@@ -109,15 +109,15 @@ jvm_library(
     "//platform/markdown-utils:markdown-utils_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//platform/webSymbols",
-    "//platform/webSymbols:webSymbols-testFramework",
+    "//platform/polySymbols",
+    "//platform/polySymbols:polySymbols-testFramework",
     "//java/java-runtime:rt",
   ],
-  runtime_deps = [":webSymbols-tests_test_resources"]
+  runtime_deps = [":polySymbols-tests_test_resources"]
 )
 
 jvm_test(
-  name = "webSymbols-tests_test",
-  runtime_deps = [":webSymbols-tests_test_lib"]
+  name = "polySymbols-tests_test",
+  runtime_deps = [":polySymbols-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.webSymbols.tests` end
+### auto-generated section `build intellij.platform.polySymbols.tests` end

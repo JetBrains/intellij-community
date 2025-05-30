@@ -17,7 +17,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/refactoring",
     "//xml/impl",
-    "//platform/webSymbols",
+    "//platform/polySymbols",
     "//platform/lang-impl",
     "//images",
     "//platform/platform-impl:ide-impl",
