@@ -29,8 +29,11 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
 public abstract class CompletionPhase implements Disposable {
@@ -270,7 +274,17 @@ public abstract class CompletionPhase implements Disposable {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
           if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled() && ownerId.equals(ClientId.getCurrent())) {
-            indicator.scheduleRestart();
+            indicator.cancel();
+            if (EDT.isCurrentThreadEdt()) {
+              indicator.scheduleRestart();
+            } else {
+              // this branch is possible because completion can be canceled on background write action
+              ApplicationManager.getApplication().invokeLater(
+                indicator::scheduleRestart,
+                // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
+                // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
+                (__) -> CompletionServiceImpl.getCurrentCompletionProgressIndicator() != indicator);
+            }
           }
         }
       }, this);
