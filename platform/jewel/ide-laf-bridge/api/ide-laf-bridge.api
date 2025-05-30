@@ -173,6 +173,7 @@ public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeSplitButtonKt {
 public final class org/jetbrains/jewel/bridge/theme/IntUiBridgeTextKt {
 	public static final fun retrieveConsoleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveDefaultTextStyle ()Landroidx/compose/ui/text/TextStyle;
+	public static final fun retrieveDefaultTextStyle (F)Landroidx/compose/ui/text/TextStyle;
 	public static final fun retrieveEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 }
 

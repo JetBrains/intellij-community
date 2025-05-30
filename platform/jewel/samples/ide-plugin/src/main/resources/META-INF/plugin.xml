@@ -1,3 +1,4 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <idea-plugin>
     <id>org.jetbrains.jewel.demo</id>
     <name>Jewel Demo</name>
@@ -23,7 +24,7 @@ See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for mo
 
     <extensions defaultExtensionNs="com.intellij">
 
-        <toolWindow id="JewelDemo" anchor="bottom" secondary="false" canCloseContents="false"
+        <toolWindow id="JewelDemoToolWindow" anchor="bottom" secondary="false" canCloseContents="false"
                     icon="JewelIcons.ToolWindowIcon"
                     factoryClass="org.jetbrains.jewel.samples.ideplugin.JewelDemoToolWindowFactory"/>
 

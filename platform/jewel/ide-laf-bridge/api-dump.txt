@@ -28,3 +28,5 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:toDpSize(java.awt.Dimension):J
 - sf:toPaddingValues(com.intellij.util.ui.JBInsets):androidx.compose.foundation.layout.PaddingValues
 - sf:toPaddingValues(java.awt.Insets):androidx.compose.foundation.layout.PaddingValues
+f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt
+- sf:retrieveDefaultTextStyle(F):androidx.compose.ui.text.TextStyle
