@@ -699,45 +699,45 @@ http_file(
 )
 
 http_file(
-  name = "asm-analysis-9_7_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.7/asm-analysis-9.7.jar",
-  sha256 = "7bc6bcbc21379948a0c8c467fb0f864206e5b818f6bc0b546872f5c9f941556f",
-  downloaded_file_path = "asm-analysis-9.7.jar"
+  name = "asm-analysis-9_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar",
+  sha256 = "e640732fbcd3c6271925a504f125e38384688f4dfbbf92c8622dfcee0d09edb9",
+  downloaded_file_path = "asm-analysis-9.8.jar"
 )
 
 http_file(
-  name = "asm-tree-9_7_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.7/asm-tree-9.7.jar",
-  sha256 = "62f4b3bc436045c1acb5c3ba2d8ec556ec3369093d7f5d06c747eb04b56d52b1",
-  downloaded_file_path = "asm-tree-9.7.jar"
+  name = "asm-tree-9_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar",
+  sha256 = "14b7880cb7c85eed101e2710432fc3ffb83275532a6a894dc4c4095d49ad59f1",
+  downloaded_file_path = "asm-tree-9.8.jar"
 )
 
 http_file(
-  name = "asm-9_7_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.7/asm-9.7.jar",
-  sha256 = "adf46d5e34940bdf148ecdd26a9ee8eea94496a72034ff7141066b3eea5c4e9d",
-  downloaded_file_path = "asm-9.7.jar"
+  name = "asm-9_8_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.8/asm-9.8.jar",
+  sha256 = "876eab6a83daecad5ca67eb9fcabb063c97b5aeb8cf1fca7a989ecde17522051",
+  downloaded_file_path = "asm-9.8.jar"
 )
 
 http_file(
-  name = "asm-analysis-9_7-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.7/asm-analysis-9.7-sources.jar",
-  sha256 = "266e2905af30ba8f2527a22a87d31cd6e20a6908f595aa8e85a4a7ad74d99a60",
-  downloaded_file_path = "asm-analysis-9.7-sources.jar"
+  name = "asm-analysis-9_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8-sources.jar",
+  sha256 = "ff731d401ea2407759ea19b4b025800d32495a51a912f2553d987cddda424773",
+  downloaded_file_path = "asm-analysis-9.8-sources.jar"
 )
 
 http_file(
-  name = "asm-tree-9_7-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.7/asm-tree-9.7-sources.jar",
+  name = "asm-tree-9_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.8/asm-tree-9.8-sources.jar",
   sha256 = "442d32be6106a41b61c2edf05f8ae496c4c54cca6e73d9d59d38e9cb54820c44",
-  downloaded_file_path = "asm-tree-9.7-sources.jar"
+  downloaded_file_path = "asm-tree-9.8-sources.jar"
 )
 
 http_file(
-  name = "asm-9_7-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.7/asm-9.7-sources.jar",
-  sha256 = "11dfd88129204be18c0f592f8e066d0c07d8a6bc001f6c7b2cce5ff0588d5d71",
-  downloaded_file_path = "asm-9.7-sources.jar"
+  name = "asm-9_8-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.8/asm-9.8-sources.jar",
+  sha256 = "c6294794f956f21e2b252a9bf65a96ce0489fb4c0f978447d85c8a75e485b633",
+  downloaded_file_path = "asm-9.8-sources.jar"
 )
 
 http_file(
@@ -3233,24 +3233,10 @@ http_file(
 )
 
 http_file(
-  name = "asm-9_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.8/asm-9.8.jar",
-  sha256 = "876eab6a83daecad5ca67eb9fcabb063c97b5aeb8cf1fca7a989ecde17522051",
-  downloaded_file_path = "asm-9.8.jar"
-)
-
-http_file(
   name = "asm-commons-9_8_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar",
   sha256 = "3301a1c1cb4c59fcc5292648dac1d7c5aed4c0f067dfbe88873b8cdfe77404f4",
   downloaded_file_path = "asm-commons-9.8.jar"
-)
-
-http_file(
-  name = "asm-tree-9_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar",
-  sha256 = "14b7880cb7c85eed101e2710432fc3ffb83275532a6a894dc4c4095d49ad59f1",
-  downloaded_file_path = "asm-tree-9.8.jar"
 )
 
 http_file(
@@ -3282,24 +3268,10 @@ http_file(
 )
 
 http_file(
-  name = "asm-9_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm/9.8/asm-9.8-sources.jar",
-  sha256 = "c6294794f956f21e2b252a9bf65a96ce0489fb4c0f978447d85c8a75e485b633",
-  downloaded_file_path = "asm-9.8-sources.jar"
-)
-
-http_file(
   name = "asm-commons-9_8-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.8/asm-commons-9.8-sources.jar",
   sha256 = "a2bd3ba563c5f2e19eea66df99437ef81d69a0dcb3def07028442a273a2da562",
   downloaded_file_path = "asm-commons-9.8-sources.jar"
-)
-
-http_file(
-  name = "asm-tree-9_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.8/asm-tree-9.8-sources.jar",
-  sha256 = "442d32be6106a41b61c2edf05f8ae496c4c54cca6e73d9d59d38e9cb54820c44",
-  downloaded_file_path = "asm-tree-9.8-sources.jar"
 )
 
 http_file(
@@ -4689,17 +4661,17 @@ http_file(
 )
 
 http_file(
-  name = "kotlin-metadata-jvm-2_1_20-Beta2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta2/kotlin-metadata-jvm-2.1.20-Beta2.jar",
-  sha256 = "a4d99e5b88eff9972c117b577436aa587e83f78e60cf005cd614065f59ead7a9",
-  downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta2.jar"
+  name = "kotlin-metadata-jvm-2_2_0-RC_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0-RC/kotlin-metadata-jvm-2.2.0-RC.jar",
+  sha256 = "20f43af25341c67cc402af4339bab0a7581a17eb1eeafcd360fffa80caa438cd",
+  downloaded_file_path = "kotlin-metadata-jvm-2.2.0-RC.jar"
 )
 
 http_file(
-  name = "kotlin-metadata-jvm-2_1_20-Beta2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta2/kotlin-metadata-jvm-2.1.20-Beta2-sources.jar",
-  sha256 = "3f5468b5c409702c7cac30067208b7218ab9e3f7209e686966c6c2de2134dd18",
-  downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta2-sources.jar"
+  name = "kotlin-metadata-jvm-2_2_0-RC-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0-RC/kotlin-metadata-jvm-2.2.0-RC-sources.jar",
+  sha256 = "2ab97ab16e203e715633593c480bcf0ac1cc151e54cd2adaaa7dca1085835ede",
+  downloaded_file_path = "kotlin-metadata-jvm-2.2.0-RC-sources.jar"
 )
 
 http_file(
@@ -5431,17 +5403,17 @@ http_file(
 )
 
 http_file(
-  name = "kotlinx-collections-immutable-jvm-0_3_8_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.8/kotlinx-collections-immutable-jvm-0.3.8.jar",
-  sha256 = "72e9a9b0003ec5254b638186f7ca1675b08006bdde4c9c4c589970342ccd2e77",
-  downloaded_file_path = "kotlinx-collections-immutable-jvm-0.3.8.jar"
+  name = "kotlinx-collections-immutable-jvm-0_4_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.4.0/kotlinx-collections-immutable-jvm-0.4.0.jar",
+  sha256 = "d767014ad0c9a27d27d26fd38e7afa030aee0d141338f108781ff02ecf2fdab5",
+  downloaded_file_path = "kotlinx-collections-immutable-jvm-0.4.0.jar"
 )
 
 http_file(
-  name = "kotlinx-collections-immutable-jvm-0_3_8-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.8/kotlinx-collections-immutable-jvm-0.3.8-sources.jar",
-  sha256 = "80219b91c78709f696305970895d27481c78bda7cae0c180c7c8202240f47d34",
-  downloaded_file_path = "kotlinx-collections-immutable-jvm-0.3.8-sources.jar"
+  name = "kotlinx-collections-immutable-jvm-0_4_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.4.0/kotlinx-collections-immutable-jvm-0.4.0-sources.jar",
+  sha256 = "b5100e18f87ea5014838482f550046bac26b23f6c32eb681bfccf6e8f736c9b0",
+  downloaded_file_path = "kotlinx-collections-immutable-jvm-0.4.0-sources.jar"
 )
 
 http_file(
@@ -12522,17 +12494,17 @@ http_file(
 )
 
 http_file(
-  name = "sqlite-jdbc-3_48_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.48.0.0/sqlite-jdbc-3.48.0.0.jar",
-  sha256 = "dbe24ab138e9654c918f561299e47cb6a3baf1a946eda97871f6f3abd4eca395",
-  downloaded_file_path = "sqlite-jdbc-3.48.0.0.jar"
+  name = "sqlite-jdbc-3_49_1_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.49.1.0/sqlite-jdbc-3.49.1.0.jar",
+  sha256 = "5c8609d2ca341deb8c6f71778974b5ba4995c7d32d7c7c89d9392a3e72c39291",
+  downloaded_file_path = "sqlite-jdbc-3.49.1.0.jar"
 )
 
 http_file(
-  name = "sqlite-jdbc-3_48_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.48.0.0/sqlite-jdbc-3.48.0.0-sources.jar",
-  sha256 = "bf314b54527fa5b9ec77d1e4ec2616252b048d45cd4cda29de3a2d0261cb660a",
-  downloaded_file_path = "sqlite-jdbc-3.48.0.0-sources.jar"
+  name = "sqlite-jdbc-3_49_1_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.49.1.0/sqlite-jdbc-3.49.1.0-sources.jar",
+  sha256 = "d01f0122343efb1558143ed06525cd33244f5295b12317d7f46f5f2f3ddebae7",
+  downloaded_file_path = "sqlite-jdbc-3.49.1.0-sources.jar"
 )
 
 http_file(
@@ -13166,17 +13138,17 @@ http_file(
 )
 
 http_file(
-  name = "zstd-jni-1_5_7-2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-2/zstd-jni-1.5.7-2.jar",
-  sha256 = "c5530c6fe99df04f9ac041e1b11fcb5772a7f4218c727d7273e0a6e5948b5d12",
-  downloaded_file_path = "zstd-jni-1.5.7-2.jar"
+  name = "zstd-jni-1_5_7-3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-3/zstd-jni-1.5.7-3.jar",
+  sha256 = "a38a4a97f1b43b878c91e0dd7f1e3d17f0e70beec71d95bacaf56a2f207624a3",
+  downloaded_file_path = "zstd-jni-1.5.7-3.jar"
 )
 
 http_file(
-  name = "zstd-jni-1_5_7-2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-2/zstd-jni-1.5.7-2-sources.jar",
-  sha256 = "5bef1c8433fe03e605017d82112f42d0c59d337e85c000248781343203e225c4",
-  downloaded_file_path = "zstd-jni-1.5.7-2-sources.jar"
+  name = "zstd-jni-1_5_7-3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/luben/zstd-jni/1.5.7-3/zstd-jni-1.5.7-3-sources.jar",
+  sha256 = "a7041fddbe8f58eb74e3220da038366a67f05b7836c0c2401efa57e0477e645e",
+  downloaded_file_path = "zstd-jni-1.5.7-3-sources.jar"
 )
 
 http_file(

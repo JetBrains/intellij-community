@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="zstd-jni" type="repository">
-    <properties maven-id="com.github.luben:zstd-jni:1.5.7-2">
+    <properties maven-id="com.github.luben:zstd-jni:1.5.7-3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.7-2/zstd-jni-1.5.7-2.jar">
-          <sha256sum>c5530c6fe99df04f9ac041e1b11fcb5772a7f4218c727d7273e0a6e5948b5d12</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.7-3/zstd-jni-1.5.7-3.jar">
+          <sha256sum>a38a4a97f1b43b878c91e0dd7f1e3d17f0e70beec71d95bacaf56a2f207624a3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.7-2/zstd-jni-1.5.7-2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.7-3/zstd-jni-1.5.7-3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.7-2/zstd-jni-1.5.7-2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.7-3/zstd-jni-1.5.7-3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

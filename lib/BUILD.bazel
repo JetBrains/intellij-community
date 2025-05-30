@@ -798,29 +798,29 @@ java_library(
 java_library(
   name = "asm-tools",
   exports = [
-    ":asm-analysis-9_7_http_import",
-    ":asm-tree-9_7_http_import",
-    ":asm-9_7_http_import",
+    ":asm-analysis-9_8_http_import",
+    ":asm-tree-9_8_http_import",
+    ":asm-9_8_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "asm-analysis-9_7_http_import",
-  jar = "@asm-analysis-9_7_http//file",
-  source_jar = "@asm-analysis-9_7-sources_http//file"
+  name = "asm-analysis-9_8_http_import",
+  jar = "@asm-analysis-9_8_http//file",
+  source_jar = "@asm-analysis-9_8-sources_http//file"
 )
 
 jvm_import(
-  name = "asm-tree-9_7_http_import",
-  jar = "@asm-tree-9_7_http//file",
-  source_jar = "@asm-tree-9_7-sources_http//file"
+  name = "asm-tree-9_8_http_import",
+  jar = "@asm-tree-9_8_http//file",
+  source_jar = "@asm-tree-9_8-sources_http//file"
 )
 
 jvm_import(
-  name = "asm-9_7_http_import",
-  jar = "@asm-9_7_http//file",
-  source_jar = "@asm-9_7-sources_http//file"
+  name = "asm-9_8_http_import",
+  jar = "@asm-9_8_http//file",
+  source_jar = "@asm-9_8-sources_http//file"
 )
 
 java_library(
@@ -2426,21 +2426,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "asm-9_8_http_import",
-  jar = "@asm-9_8_http//file",
-  source_jar = "@asm-9_8-sources_http//file"
-)
-
-jvm_import(
   name = "asm-commons-9_8_http_import",
   jar = "@asm-commons-9_8_http//file",
   source_jar = "@asm-commons-9_8-sources_http//file"
-)
-
-jvm_import(
-  name = "asm-tree-9_8_http_import",
-  jar = "@asm-tree-9_8_http//file",
-  source_jar = "@asm-tree-9_8-sources_http//file"
 )
 
 jvm_import(
@@ -3363,8 +3351,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlin-metadata",
-  jar = "@kotlin-metadata-jvm-2_1_20-Beta2_http//file",
-  source_jar = "@kotlin-metadata-jvm-2_1_20-Beta2-sources_http//file",
+  jar = "@kotlin-metadata-jvm-2_2_0-RC_http//file",
+  source_jar = "@kotlin-metadata-jvm-2_2_0-RC-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3924,8 +3912,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlinx-collections-immutable",
-  jar = "@kotlinx-collections-immutable-jvm-0_3_8_http//file",
-  source_jar = "@kotlinx-collections-immutable-jvm-0_3_8-sources_http//file",
+  jar = "@kotlinx-collections-immutable-jvm-0_4_0_http//file",
+  source_jar = "@kotlinx-collections-immutable-jvm-0_4_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8710,8 +8698,8 @@ jvm_import(
 
 jvm_import(
   name = "sqlite",
-  jar = "@sqlite-jdbc-3_48_0_0_http//file",
-  source_jar = "@sqlite-jdbc-3_48_0_0-sources_http//file",
+  jar = "@sqlite-jdbc-3_49_1_0_http//file",
+  source_jar = "@sqlite-jdbc-3_49_1_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8905,13 +8893,6 @@ jvm_import(
 jvm_import(
   name = "tips-pycharm-community",
   jar = "@tips-pycharm-community-241_74_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "tools-api_dump-kotlin-metadata-bcv",
-  jar = "@kotlin-metadata-jvm-2_0_0_http//file",
-  source_jar = "@kotlin-metadata-jvm-2_0_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9144,8 +9125,8 @@ jvm_import(
 
 jvm_import(
   name = "zstd-jni",
-  jar = "@zstd-jni-1_5_7-2_http//file",
-  source_jar = "@zstd-jni-1_5_7-2-sources_http//file",
+  jar = "@zstd-jni-1_5_7-3_http//file",
+  source_jar = "@zstd-jni-1_5_7-3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
