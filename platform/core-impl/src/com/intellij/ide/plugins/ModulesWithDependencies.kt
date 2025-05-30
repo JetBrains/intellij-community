@@ -178,6 +178,7 @@ private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
  * See [this article](https://youtrack.jetbrains.com/articles/IJPL-A-956#keep-compatibility-with-external-plugins) for more details.
  */
 private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = listOf(
+  "intellij.platform.tasks",
   "intellij.platform.tasks.impl",
 )
 

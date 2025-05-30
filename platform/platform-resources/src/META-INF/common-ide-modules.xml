@@ -7,6 +7,7 @@
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.smRunner.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.tasks.impl"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.libraries.skiko"/>
