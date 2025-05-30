@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
 /**
@@ -25,6 +26,16 @@ interface GradleExecutionHelperExtension {
   }
 
   /**
+   * Prepare a Gradle [settings] before any Gradle execution.
+   *
+   * **Note: This function will be called for any Gradle execution.
+   * I.e., for Gradle sync and Gradle task executions.**
+   *
+   * **Note: This function may be called more than once with different [settings]s for a single Gradle project sync.**
+   */
+  fun configureSettings(settings: GradleExecutionSettings, context: GradleExecutionContext): Unit = Unit
+
+  /**
    * Prepare a Gradle [operation] before any Gradle execution.
    *
    * **Note: This function will be called for any Gradle execution.
@@ -32,6 +43,9 @@ interface GradleExecutionHelperExtension {
    *
    * **Note: This function may be called more than once with different [operation]s for a single Gradle project sync.**
    */
+  fun configureOperation(operation: LongRunningOperation, context: GradleExecutionContext): Unit = Unit
+
+  @Deprecated("Use [configureSettings] or [configureOperation] instead")
   fun prepareForExecution(
     id: ExternalSystemTaskId,
     operation: LongRunningOperation,

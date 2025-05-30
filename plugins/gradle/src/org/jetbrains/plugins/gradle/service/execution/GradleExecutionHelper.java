@@ -247,13 +247,17 @@ public final class GradleExecutionHelper {
     var listener = context.getListener();
     var buildEnvironment = context.getBuildEnvironment();
 
-    clearSystemProperties(operation);
-
     applyIdeaParameters(settings);
 
-    setupJvmArguments(operation, settings);
-
     setupLogging(settings, buildEnvironment);
+
+    GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
+      proc.configureSettings(settings, context);
+    });
+
+    clearSystemProperties(operation);
+
+    setupJvmArguments(operation, settings);
 
     setupArguments(operation, settings);
 
@@ -268,6 +272,7 @@ public final class GradleExecutionHelper {
     operation.withCancellationToken(context.getCancellationToken());
 
     GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
+      proc.configureOperation(operation, context);
       proc.prepareForExecution(id, operation, settings, buildEnvironment);
     });
   }
