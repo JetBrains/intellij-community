@@ -70,6 +70,8 @@
                   For WSL environments, the shell process in WSL will be launched via IJEnt instead of using wsl.exe."/>
     <registryKey key="terminal.new.ui.completion.popup" defaultValue="false"
                  description="Disabled completion popUp for reworked terminal for development time"/>
+    <registryKey key="terminal.type.ahead" defaultValue="false"
+                 description="Early prototype of type-ahead for the reworked terminal"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>

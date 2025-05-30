@@ -36,6 +36,10 @@ interface TerminalOutputModel {
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
   fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int)
+  
+  fun insertAtCursor(text: String)
+  
+  fun backspace()
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 

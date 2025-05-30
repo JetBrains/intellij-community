@@ -116,6 +116,7 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalInput,
+      typeAhead = null,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
       scrollingModel = null,
       fusCursorPaintingListener,
@@ -131,6 +132,7 @@ internal class ReworkedTerminalView(
     scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
+    val typeAhead = TerminalTypeAhead(outputModel)
     configureOutputEditor(
       project,
       editor = outputEditor,
@@ -139,6 +141,7 @@ internal class ReworkedTerminalView(
       sessionModel,
       encodingManager,
       terminalInput,
+      typeAhead,
       coroutineScope.childScope("TerminalOutputModel"),
       scrollingModel,
       fusCursorPaintingListener,
@@ -170,6 +173,7 @@ internal class ReworkedTerminalView(
       coroutineScope.childScope("TerminalSessionController"),
       fusActivity,
     )
+    controller.addShellIntegrationListener(this, typeAhead)
 
     sessionFuture.thenAccept { session ->
       controller.handleEvents(session)
@@ -285,6 +289,7 @@ internal class ReworkedTerminalView(
     sessionModel: TerminalSessionModel,
     encodingManager: TerminalKeyEncodingManager,
     terminalInput: TerminalInput,
+    typeAhead: TerminalTypeAhead?,
     coroutineScope: CoroutineScope,
     scrollingModel: TerminalOutputScrollingModel?,
     fusCursorPainterListener: TerminalFusCursorPainterListener?,
@@ -325,7 +330,7 @@ internal class ReworkedTerminalView(
       addTopAndBottomInsets(editor)
     }
 
-    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model)
+    val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel, model, typeAhead)
     setupKeyEventDispatcher(editor, settings, eventsHandler, parentDisposable)
     setupMouseListener(editor, sessionModel, settings, eventsHandler, parentDisposable)
 

@@ -42,6 +42,7 @@ internal open class TerminalEventsHandlerImpl(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
+  private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
@@ -85,6 +86,9 @@ internal open class TerminalEventsHandlerImpl(
       val keyCode = e.original.keyCode
       val keyChar = e.original.keyChar
       updateLookupOnAction(keyCode)
+      if (isNoModifiers(e.original) && keyCode == KeyEvent.VK_BACK_SPACE) {
+        typeAhead?.backspace()
+      }
 
       // numLock does not change the code sent by keypad VK_DELETE,
       // although it send the char '.'
@@ -135,14 +139,24 @@ internal open class TerminalEventsHandlerImpl(
       // Command + backtick is a short-cut on Mac OSX, so we shouldn't type anything
       return false
     }
+    val typedString = keyChar.toString()
     if (e.original.id == KeyEvent.KEY_TYPED) {
-      terminalInput.sendTrackedString(keyChar.toString(), eventTime = e.initTime)
+      typeAhead?.stringTyped(typedString)
+      terminalInput.sendTrackedString(typedString, eventTime = e.initTime)
     }
-    else terminalInput.sendString(keyChar.toString())
+    else terminalInput.sendString(typedString)
 
     scrollingModel?.scrollToCursor(force = true)
 
     return true
+  }
+
+  private fun isNoModifiers(e: KeyEvent): Boolean {
+    val modifiersEx = e.modifiersEx
+    return modifiersEx and InputEvent.ALT_DOWN_MASK == 0
+           && modifiersEx and InputEvent.ALT_GRAPH_DOWN_MASK == 0
+           && modifiersEx and InputEvent.CTRL_DOWN_MASK == 0
+           && modifiersEx and InputEvent.SHIFT_DOWN_MASK == 0
   }
 
   private fun isAltPressedOnly(e: KeyEvent): Boolean {

@@ -83,6 +83,25 @@ class TerminalOutputModelImpl(
     mutableCursorOffsetState.value = lineStartOffset + trimmedColumnIndex
   }
 
+  override fun insertAtCursor(text: String) {
+    changeDocumentContent { 
+      val offset = mutableCursorOffsetState.value
+      document.insertString(offset, text)
+      offset
+    }
+    ++mutableCursorOffsetState.value
+  }
+
+  override fun backspace() {
+    val offset = mutableCursorOffsetState.value
+    if (offset <= 1) return
+    changeDocumentContent {
+      document.deleteString(offset - 1, offset)
+      offset - 1
+    }
+    --mutableCursorOffsetState.value
+  }
+
   /** Returns offset from which document was updated */
   private fun doUpdateContent(documentLineIndex: Int, text: String, styles: List<StyleRange>): Int {
     if (documentLineIndex > 0 && documentLineIndex >= document.lineCount) {
