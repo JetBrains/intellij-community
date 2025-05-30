@@ -42,8 +42,14 @@ class PolySymbolsQueryExecutorImpl(
 
   override var keepUnresolvedTopLevelReferences: Boolean = false
 
-  override fun hashCode(): Int =
-    Objects.hash(location, rootScope, context, namesProvider, resultsCustomizer)
+  override fun hashCode(): Int {
+    var result = location.hashCode()
+    result = 31 * result + rootScope.hashCode()
+    result = 31 * result + context.hashCode()
+    result = 31 * result + namesProvider.hashCode()
+    result = 31 * result + resultsCustomizer.hashCode()
+    return result
+  }
 
   override fun equals(other: Any?): Boolean =
     other === this ||

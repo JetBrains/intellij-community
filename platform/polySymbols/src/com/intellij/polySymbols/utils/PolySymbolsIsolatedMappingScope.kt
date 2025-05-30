@@ -14,7 +14,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.applyIf
 import com.intellij.util.containers.Stack
-import java.util.*
 
 abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
   protected val mappings: Map<PolySymbolQualifiedKind, PolySymbolQualifiedKind>,
@@ -83,7 +82,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
         && other.location == location)
 
   override fun hashCode(): Int =
-    Objects.hash(framework, location)
+    31 * framework.hashCode() + location.hashCode()
 
   private val subQuery by lazy(LazyThreadSafetyMode.PUBLICATION) {
     getCachedSubQueryExecutorAndScope().first

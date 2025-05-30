@@ -18,7 +18,6 @@ import com.intellij.polySymbols.webTypes.impl.wrap
 import com.intellij.polySymbols.webTypes.json.*
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.Stack
-import java.util.*
 import javax.swing.Icon
 
 open class WebTypesSymbolBase : WebTypesSymbol {
@@ -56,7 +55,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     && other.queryExecutor === queryExecutor
 
   override fun hashCode(): Int =
-    Objects.hash(base.hashCode(), queryExecutor.hashCode())
+    31 * base.hashCode() + queryExecutor.hashCode()
 
   override fun createPointer(): Pointer<WebTypesSymbolBase> {
     val queryExecutorPtr = this.queryExecutor.createPointer()

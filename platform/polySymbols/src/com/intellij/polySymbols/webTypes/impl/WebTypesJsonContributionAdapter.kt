@@ -20,7 +20,6 @@ import com.intellij.polySymbols.webTypes.WebTypesScopeBase
 import com.intellij.polySymbols.webTypes.WebTypesSymbolBase
 import com.intellij.polySymbols.webTypes.json.*
 import com.intellij.util.ui.EmptyIcon
-import java.util.*
 import javax.swing.Icon
 
 abstract class WebTypesJsonContributionAdapter private constructor(
@@ -108,8 +107,13 @@ abstract class WebTypesJsonContributionAdapter private constructor(
     && other.rootScope === rootScope
     && other.qualifiedKind === qualifiedKind
 
-  override fun hashCode(): Int =
-    Objects.hash(contribution, jsonOrigin, rootScope, qualifiedKind)
+  override fun hashCode(): Int {
+    var result = contribution.hashCode()
+    result = 31 * result + jsonOrigin.hashCode()
+    result = 31 * result + rootScope.hashCode()
+    result = 31 * result + qualifiedKind.hashCode()
+    return result
+  }
 
   private class Static(
     contribution: BaseContribution,

@@ -29,7 +29,6 @@ import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
 
@@ -224,9 +223,8 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       other is HtmlElementDescriptorBasedSymbol
       && other.descriptor == this.descriptor
 
-    override fun hashCode(): Int {
-      return descriptor.hashCode()
-    }
+    override fun hashCode(): Int =
+      descriptor.hashCode()
   }
 
   class HtmlAttributeDescriptorBasedSymbol private constructor(
@@ -306,8 +304,13 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       && other.descriptor == descriptor
       && other.tagName == tagName
 
-    override fun hashCode(): Int =
-      Objects.hash(descriptor, tag, tagName)
+    override fun hashCode(): Int {
+      var result = 31
+      result = 31 * result + descriptor.hashCode()
+      result = 31 * result + tag.hashCode()
+      result = 31 * result + tagName.hashCode()
+      return result
+    }
 
   }
 

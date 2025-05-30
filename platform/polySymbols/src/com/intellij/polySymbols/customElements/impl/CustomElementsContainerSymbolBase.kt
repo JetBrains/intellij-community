@@ -66,7 +66,12 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
     && other.origin == origin
     && other.contribution == contribution
 
-  override fun hashCode(): Int =
-    Objects.hash(name, origin, rootScope, contribution)
+  override fun hashCode(): Int {
+    var result = name.hashCode()
+    result = 31 * result + origin.hashCode()
+    result = 31 * result + rootScope.hashCode()
+    result = 31 * result + contribution.hashCode()
+    return result
+  }
 
 }

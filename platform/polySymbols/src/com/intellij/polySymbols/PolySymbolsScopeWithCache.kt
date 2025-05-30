@@ -15,7 +15,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -77,8 +76,14 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
         && other.project == project
         && other.dataHolder == dataHolder)
 
-  override fun hashCode(): Int =
-    Objects.hash(framework, project, dataHolder, key)
+  override fun hashCode(): Int {
+    var result = 31
+    result = 31 * result + framework.hashCode()
+    result = 31 * result + project.hashCode()
+    result = 31 * result + dataHolder.hashCode()
+    result = 31 * result + key.hashCode()
+    return result
+  }
 
   private fun getNamesProviderToMapCache(): NamesProviderToMapCache {
     val manager = CachedValuesManager.getManager(project)

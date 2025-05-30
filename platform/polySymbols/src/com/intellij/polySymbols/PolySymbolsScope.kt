@@ -3,7 +3,6 @@ package com.intellij.polySymbols
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
@@ -11,6 +10,7 @@ import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.utils.getDefaultCodeCompletions
 import com.intellij.polySymbols.utils.match
 import com.intellij.polySymbols.utils.toCodeCompletionItems
+import com.intellij.util.containers.Stack
 
 /**
  * Web Symbols are contained within a loose model built from Web Symbols scopes, each time anew for a particular context.
@@ -39,9 +39,11 @@ interface PolySymbolsScope : ModificationTracker {
    * If the scope contains many symbols, or results should be cached consider extending [PolySymbolsScopeWithCache].
    *
    */
-  fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                         params: PolySymbolsNameMatchQueryParams,
-                         scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+  fun getMatchingSymbols(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsNameMatchQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     getSymbols(qualifiedName.qualifiedKind,
                PolySymbolsListSymbolsQueryParams.create(
                  params.queryExecutor, expandPatterns = false, virtualSymbols = params.virtualSymbols,
@@ -57,9 +59,11 @@ interface PolySymbolsScope : ModificationTracker {
    *
    * If the scope contains many symbols, or results should be cached consider extending [PolySymbolsScopeWithCache].
    */
-  fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                 params: PolySymbolsListSymbolsQueryParams,
-                 scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+  fun getSymbols(
+    qualifiedKind: PolySymbolQualifiedKind,
+    params: PolySymbolsListSymbolsQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolsScope> =
     emptyList()
 
   /**
@@ -71,9 +75,11 @@ interface PolySymbolsScope : ModificationTracker {
    *
    * Default implementation calls `getSymbols` and runs [PolySymbol.toCodeCompletionItems] on each symbol.
    */
-  fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                         params: PolySymbolsCodeCompletionQueryParams,
-                         scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+  fun getCodeCompletions(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsCodeCompletionQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolCodeCompletionItem> =
     getDefaultCodeCompletions(qualifiedName, params, scope)
 
   /**

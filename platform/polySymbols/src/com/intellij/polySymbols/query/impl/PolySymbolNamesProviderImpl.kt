@@ -53,7 +53,7 @@ class PolySymbolNamesProviderImpl(
     Pointer.hardPointer(this)
 
   override fun hashCode(): Int =
-    Objects.hash(framework, configuration)
+    framework.hashCode() * 31 + configuration.hashCode()
 
   override fun equals(other: Any?): Boolean =
     other is PolySymbolNamesProviderImpl

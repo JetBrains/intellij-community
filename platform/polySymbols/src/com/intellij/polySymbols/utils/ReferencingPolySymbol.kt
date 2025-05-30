@@ -10,7 +10,6 @@ import com.intellij.polySymbols.patterns.ComplexPatternOptions
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
 import com.intellij.polySymbols.patterns.PolySymbolsPatternReferenceResolver
-import java.util.*
 
 /**
  * A utility [PolySymbol], which allows to reference
@@ -67,8 +66,15 @@ class ReferencingPolySymbol private constructor(
     && other.location == location
     && other.references == references
 
-  override fun hashCode(): Int =
-    Objects.hash(qualifiedKind, name, origin, priority, location, references)
+  override fun hashCode(): Int {
+    var result = qualifiedKind.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + origin.hashCode()
+    result = 31 * result + priority.hashCode()
+    result = 31 * result + location.hashCode()
+    result = 31 * result + references.hashCode()
+    return result
+  }
 
   override fun createPointer(): Pointer<out PolySymbol> =
     Pointer.hardPointer(this)

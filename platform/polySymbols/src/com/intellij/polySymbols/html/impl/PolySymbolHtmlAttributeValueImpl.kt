@@ -19,7 +19,13 @@ internal class PolySymbolHtmlAttributeValueImpl(override val kind: PolySymbolHtm
     && other.default == default
     && other.langType == langType
 
-  override fun hashCode(): Int =
-    Objects.hash(kind, type, required, default, langType)
+  override fun hashCode(): Int {
+    var result = kind.hashCode()
+    result = 31 * result + type.hashCode()
+    result = 31 * result + required.hashCode()
+    result = 31 * result + default.hashCode()
+    result = 31 * result + langType.hashCode()
+    return result
+  }
 
 }
