@@ -1,7 +1,7 @@
 package test.pkg
 
 public final class Test {
-    @org.jetbrains.annotations.Nullable @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN) private var pOld_accessors_deprecatedOnProperty: java.lang.String = null
+    @org.jetbrains.annotations.Nullable private var pOld_accessors_deprecatedOnProperty: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pOld_accessors_deprecatedOnGetter: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pOld_accessors_deprecatedOnSetter: java.lang.String = null
     @org.jetbrains.annotations.Nullable private var pNew_accessors: java.lang.String = null
