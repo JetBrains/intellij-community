@@ -98,7 +98,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
         T foo = "";
       }
       """);
-    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+    assertEquals("NOT_NULL (inherited @NotNull)", type.getNullability().toString());
   }
 
   public void testTypeParameterTwoSupertypes() {
@@ -109,7 +109,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
         T foo = "";
       }
       """);
-    assertEquals("NOT_NULL ([@NotNull, @NotNull])", type.getNullability().toString());
+    assertEquals("NOT_NULL (inherited [@NotNull, @NotNull])", type.getNullability().toString());
   }
 
   public void testTypeParameterTwoSupertypesDifferentNullability() {
@@ -121,7 +121,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
         T foo = "";
       }
       """);
-    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+    assertEquals("NOT_NULL (inherited @NotNull)", type.getNullability().toString());
   }
 
   public void testTypeParameterSupertypeRecursive() {
@@ -301,4 +301,39 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals("NOT_NULL (@NotNull)", type.getDeepComponentType().getNullability().toString());
   }
 
+  public void testNotNullInstantiationOnNullableFromDeclaration() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.Nullable;
+      import org.jetbrains.annotations.NotNull;
+      
+      final class X<T> {
+        native @Nullable T m();
+
+        static void test(X<@NotNull String> x) {>) {
+          x.m(<caret>);
+        }
+      }
+      """);
+    assertEquals("NULLABLE (@Nullable)",
+                 ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0].getReturnType().getNullability().toString());
+    assertEquals("NULLABLE (@Nullable)", type.getNullability().toString());
+  }
+
+  public void testNotNullInstantiationOnNullableFromSupertype() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.Nullable;
+      import org.jetbrains.annotations.NotNull;
+      
+      final class X<T extends @Nullable Object> {
+        native T m();
+
+        static void test(X<@NotNull String> x) {>) {
+          x.m(<caret>);
+        }
+      }
+      """);
+    assertEquals("NULLABLE (inherited @Nullable)",
+                 ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0].getReturnType().getNullability().toString());
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+  }
 }

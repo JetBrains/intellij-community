@@ -21,7 +21,12 @@ public /* sealed */ interface NullabilitySource {
     /**
      * Type nullability is not specified
      */
-    NONE,
+    NONE {
+      @Override
+      public NullabilitySource inherited() {
+        return this;
+      }
+    },
     /**
      * Type nullability is mandated by language specification
      * (e.g., primitive type, or disjunction type)
@@ -32,6 +37,59 @@ public /* sealed */ interface NullabilitySource {
      * Currently, not possible in Java, but may be used in other languages like Kotlin.
      */
     LANGUAGE_DEFINED
+  }
+
+  /**
+   * @return source of type nullability inherited from a bound
+   * @see ExtendsBound
+   */
+  default NullabilitySource inherited() {
+    return new ExtendsBound(this);
+  }
+
+  /**
+   * Source of type nullability inherited from a bound.
+   * <p>
+   * Sometimes, it's important to distinguish.
+   * E.g., consider the method return type for two declarations:
+   * <ol>
+   *   <li>{@code <T> @Nullable T m()}
+   *   <li>{@code <T extends @Nullable Object> T m()}
+   * </ol>
+   * In both cases, return type nullability is {@code Nullable}. 
+   * However, with {@code T = @NotNull String} instantiation, the first should 
+   * produce {@code @Nullable String}, while the second should produce {@code @NotNull String}.
+   */
+  final class ExtendsBound implements NullabilitySource {
+    private final @NotNull NullabilitySource myBoundSource;
+
+    public ExtendsBound(@NotNull NullabilitySource source) { myBoundSource = source; }
+    
+    public @NotNull NullabilitySource boundSource() {
+      return myBoundSource;
+    }
+
+    @Override
+    public ExtendsBound inherited() {
+      return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      ExtendsBound bound = (ExtendsBound)o;
+      return myBoundSource.equals(bound.myBoundSource);
+    }
+
+    @Override
+    public int hashCode() {
+      return myBoundSource.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "inherited " + myBoundSource;
+    }
   }
 
   /**

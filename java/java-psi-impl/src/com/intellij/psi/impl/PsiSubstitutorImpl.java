@@ -211,7 +211,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
             result = result.annotate(getMergedProvider(classType, result));
           }
           TypeNullability origNullability = classType.getNullability();
-          result = origNullability.equals(TypeNullability.UNKNOWN) ? result : result.withNullability(origNullability);
+          result = origNullability.equals(TypeNullability.UNKNOWN) ? result : result.withNullability(origNullability.instantiatedWith(result.getNullability()));
         }
         return result;
       }

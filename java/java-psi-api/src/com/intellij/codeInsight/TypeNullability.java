@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,30 @@ public final class TypeNullability {
    */
   public @NotNull NullabilitySource source() {
     return mySource;
+  }
+
+  /**
+   * @return the same nullability but marked as inherited from a bound.
+   * @see NullabilitySource.ExtendsBound
+   */
+  public @NotNull TypeNullability inherited() {
+    return new TypeNullability(myNullability, mySource.inherited());
+  }
+
+  public @NotNull TypeNullability instantiatedWith(@NotNull TypeNullability nullability) {
+    if (this.nullability() == nullability.nullability()) {
+      return intersect(Arrays.asList(this, nullability));
+    }
+    if (this.nullability() == Nullability.NOT_NULL) {
+      return this;
+    }
+    if (nullability.nullability() == Nullability.NOT_NULL && this.source() instanceof NullabilitySource.ExtendsBound) {
+      return nullability;
+    }
+    if (this.source() == NullabilitySource.Standard.NONE) {
+      return nullability;
+    }
+    return this;
   }
 
   /**
