@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.ref.GitReferenceName
@@ -22,6 +22,7 @@ import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.seconds
 
@@ -29,7 +30,8 @@ private typealias SharedRefUtil = com.intellij.vcs.git.shared.ref.GitRefUtil
 
 class GitRepositoryApiImpl : GitRepositoryApi {
   override suspend fun getRepositories(projectId: ProjectId): List<GitRepositoryDto> {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return emptyList()
+
     val repositories = getAllRepositories(project)
     if (LOG.isDebugEnabled) {
       LOG.debug("Known repositories: $repositories")
@@ -38,14 +40,15 @@ class GitRepositoryApiImpl : GitRepositoryApi {
   }
 
   override suspend fun getRepository(repositoryId: RepositoryId): GitRepositoryDto? {
-    val project = repositoryId.projectId.findProject()
+    val project = repositoryId.projectId.findProjectOrNull() ?: return null
+
     return GitRepositoryIdCache.getInstance(project).get(repositoryId)?.let {
       GitRepositoryToDtoConverter.convertToDto(it)
     }
   }
 
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
     val scope = GitDisposable.getInstance(project).childScope("Git repository synchronizer in ${project}")
 
     return flowWithMessageBus(project, scope) { connection ->
@@ -53,15 +56,18 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       getAllRepositories(project).forEach(synchronizer::sendDeletedEventOnDispose)
 
       connection.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
+
+      val allRepositories = getAllRepositories(project).map { GitRepositoryToDtoConverter.convertToDto(it) }
+      send(GitRepositoryEvent.InitialState(allRepositories))
       while (isActive) {
-        send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
         delay(SYNC_INTERVAL)
+        send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
       }
     }
   }
 
   override suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean) {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return
 
     val resolvedRepositories = resolveRepositories(project, repositories)
 

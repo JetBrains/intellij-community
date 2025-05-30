@@ -55,6 +55,10 @@ sealed interface GitRepositoryEvent {
 
   @Serializable
   @ApiStatus.Internal
+  class InitialState(val repositories: List<GitRepositoryDto>) : GitRepositoryEvent
+
+  @Serializable
+  @ApiStatus.Internal
   class RepositoriesSync(val repositories: List<RepositoryId>) : GitRepositoryEvent
 
   @Serializable

@@ -73,8 +73,6 @@ class GitRepositoriesFrontendHolder(
       if (initialized) return
 
       subscribeToRepoEvents()
-      val initialRecord = fetchAllRepositories()
-      repositories.putAll(initialRecord)
 
       initialized = true
     }
@@ -85,21 +83,22 @@ class GitRepositoriesFrontendHolder(
   }
 
   /**
-   * @return once the connection is established and first [GitRepositoryEvent.RepositoriesSync] is received
+   * @return once the connection is established and [GitRepositoryEvent.InitialState] is received
    */
   private suspend fun subscribeToRepoEvents() {
-    val syncSignalReceived = CompletableDeferred<Unit>()
+    val initialized = CompletableDeferred<Unit>()
     cs.childScope("Git repository state synchronization").launch() {
       GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
         LOG.debug("Received repository event: $event")
-
         when (event) {
-          is GitRepositoryEvent.RepositoriesSync -> {
-            if (!initialized) {
-              LOG.debug("Received initial sync signal")
-              syncSignalReceived.complete(Unit)
+          is GitRepositoryEvent.InitialState -> {
+            if (!initialized.isCompleted) {
+              repositories.putAll(event.repositories.associate { it.repositoryId to convertToRepositoryInfo(it) })
+              initialized.complete(Unit)
             }
-            else if (event.repositories.size != repositories.size || !repositories.keys.containsAll(event.repositories)) {
+          }
+          is GitRepositoryEvent.RepositoriesSync -> {
+            if (event.repositories.size != repositories.size || !repositories.keys.containsAll(event.repositories)) {
               LOG.warn("State of repositories is not synchronized. " +
                        "Received repositories: ${event.repositories.joinToString { it.toString() }}. " +
                        "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
@@ -122,13 +121,13 @@ class GitRepositoriesFrontendHolder(
         getUpdateType(event)?.let { project.messageBus.syncPublisher(UPDATES).afterUpdate(it) }
       }
     }
-    syncSignalReceived.await()
+    initialized.await()
   }
 
   private suspend fun handleSingleRepoUpdate(event: GitRepositoryEvent.SingleRepositoryUpdate) {
     val repoId = event.repositoryId
 
-    val repoInfo = repositories.computeIfPresent(repoId) { k, info ->
+    val repoInfo = repositories.computeIfPresent(repoId) { _, info ->
       when (event) {
         is GitRepositoryEvent.FavoriteRefsUpdated -> {
           info.favoriteRefs = event.favoriteRefs
@@ -186,7 +185,7 @@ class GitRepositoriesFrontendHolder(
       is GitRepositoryEvent.RepositoryStateUpdated -> UpdateType.REPOSITORY_STATE_UPDATED
       GitRepositoryEvent.TagsHidden -> UpdateType.TAGS_HIDDEN
       is GitRepositoryEvent.TagsLoaded -> UpdateType.TAGS_LOADED
-      is GitRepositoryEvent.RepositoriesSync -> null
+      is GitRepositoryEvent.RepositoriesSync, is GitRepositoryEvent.InitialState -> null
     }
   }
 
