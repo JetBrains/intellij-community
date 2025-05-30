@@ -2894,6 +2894,28 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  // PY-74277
+  public void testPassingTypeIsCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> doTestByText("""
+                           from typing_extensions import TypeIs, Callable
+                           
+                           def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
+                               if narrower(x):
+                                   expr1: int = x
+                                   #            └─ should be of `int` type
+                               else:
+                                   expr2: str = x
+                                   #            └─ should be of `str` type
+                           
+                           def is_bool(x: object) -> TypeIs[bool]:
+                               return isinstance(x, bool)
+                           
+                           takes_narrower(42, <warning descr="Expected type '(object) -> TypeIs[int]', got '(x: object) -> TypeIs[bool]' instead">is_bool</warning>)
+                           """));
+  }
+
   // PY-75556
   public void testLiteralTypeOnKwargs() {
     doTestByText("""

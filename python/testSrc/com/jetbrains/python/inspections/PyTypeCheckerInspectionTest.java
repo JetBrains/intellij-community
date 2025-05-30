@@ -1601,29 +1601,6 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
-  // PY-74277
-  public void testPassingTypeIsCallable() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON312,
-      () -> doTestByText("""
-                   from typing_extensions import TypeIs
-                   
-                   def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
-                       if narrower(x):
-                           expr1: int = x
-                           #            └─ should be of `int` type
-                       else:
-                           expr2: str = x
-                           #            └─ should be of `str` type
-                   
-                   def is_bool(x: object) -> TypeIs[bool]:
-                       return isinstance(x, bool)
-
-                   takes_narrower(42, is_bool)
-                   """));
-  }
-
-
   public void testGeneratorTypeHint() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
