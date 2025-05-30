@@ -106,36 +106,59 @@ private fun PsiFile.findMethodsByName(methodName: String): List<PsiMethod> {
   return foundMethods.toList()
 }
 
-fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
-  val apiMethods = extractCalledApiMethods(psiElement)
-  return apiMethods.filter {
-    val containingFile = it.containingFile
-    val isSameFile = containingFile != null && containingFile == psiElement.containingFile
-    return@filter isSameFile || isInternalApiMethod(it)
+fun extractCalledExternalApiMethodsQualifiedNames(psiElement: PsiElement): List<String> {
+  val externalApiMethodsQualifiedNames = mutableListOf<String>()
+  extractMethodCallExpressionsFromMethods(psiElement).forEach {
+    val psiMethodCall = (it as? PsiMethodCallExpression) ?: return@forEach
+    val referenceName = psiMethodCall.methodExpression.referenceName ?: return@forEach
+    val method = it.resolveMethod()
+    if (method != null && (
+        isInternalApiMethod(method, psiElement) ||
+        isFromStandardLibrary(method)
+                          )) {
+      return@forEach
+    }
+    externalApiMethodsQualifiedNames.add(referenceName)
   }
+  return externalApiMethodsQualifiedNames.toList()
 }
 
-private fun isInternalApiMethod(method: PsiMethod): Boolean {
+fun isFromStandardLibrary(method: PsiMethod): Boolean {
+  val containingClass = method.containingClass ?: return false
+  val qualifiedName = containingClass.qualifiedName ?: return false
+  return qualifiedName.startsWith("java.") ||
+         qualifiedName.startsWith("javax.") ||
+         qualifiedName.startsWith("sun.") ||
+         qualifiedName.startsWith("com.sun.") ||
+         qualifiedName.startsWith("jdk.") ||
+         qualifiedName.startsWith("org.w3c.dom") ||
+         qualifiedName.startsWith("org.xml.sax") ||
+         qualifiedName.startsWith("org.ietf.jgss") ||
+         qualifiedName.startsWith("org.omg") ||
+         qualifiedName.startsWith("netscape.javascript")
+}
+
+fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
+  val apiMethods = extractMethodCallExpressionsFromMethods(psiElement).mapNotNull { it.resolveMethod() }
+  return apiMethods.filter { isInternalApiMethod(it, psiElement) }
+}
+
+private fun isInternalApiMethod(method: PsiMethod, fromWhereCalled: PsiElement): Boolean {
+  if (isInTheSameFile(method, fromWhereCalled)) return true
   val project = method.project
   val containingFile = method.containingFile?.virtualFile ?: return false
   val projectFileIndex = ProjectFileIndex.getInstance(project)
   return projectFileIndex.isInContent(containingFile)
 }
 
-fun extractCalledApiMethods(psiElement: PsiElement): List<PsiMethod> {
-  return extractMethodCallExpressionsFromMethods(psiElement) {
-    !isSuperCall(it)
-  }.mapNotNull { it.resolveMethod() }
+private fun isInTheSameFile(method: PsiMethod, fromWhereCalled: PsiElement): Boolean {
+  val containingFile = method.containingFile
+  return containingFile != null && containingFile == fromWhereCalled.containingFile
 }
 
-private fun isSuperCall(callExpression: PsiCallExpression): Boolean {
-  return (callExpression is PsiMethodCallExpression)
-         && (callExpression.methodExpression.qualifierExpression is PsiSuperExpression)
-}
 
 private fun extractMethodCallExpressionsFromMethods(
   psiElement: PsiElement,
-  filter: (PsiCallExpression) -> Boolean = { true },
 ): List<PsiCallExpression> {
   val result: MutableList<PsiCallExpression> = mutableListOf()
   val visitor = object : JavaRecursiveElementVisitor() {
@@ -145,11 +168,16 @@ private fun extractMethodCallExpressionsFromMethods(
     }
 
     override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
-      if (!filter(expression)) return
+      if (isSuperCall(expression)) return
       result.add(expression)
       super.visitMethodCallExpression(expression)
     }
   }
   psiElement.accept(visitor)
   return result
+}
+
+private fun isSuperCall(callExpression: PsiCallExpression): Boolean {
+  return (callExpression is PsiMethodCallExpression)
+         && (callExpression.methodExpression.qualifierExpression is PsiSuperExpression)
 }
