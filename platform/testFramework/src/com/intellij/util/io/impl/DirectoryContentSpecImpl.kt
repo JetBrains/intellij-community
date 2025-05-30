@@ -81,7 +81,7 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
 
 class DirectorySpec(originalFile: Path? = null) : DirectorySpecBase(originalFile) {
   override fun generate(path: Path) {
-    path.createParentDirectories()
+    path.createDirectories()
     generateInDirectory(path)
   }
 }
