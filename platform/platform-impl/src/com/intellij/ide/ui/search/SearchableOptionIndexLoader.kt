@@ -202,11 +202,11 @@ private fun findBundle(classLoader: ClassLoader, locale: Locale, bundlePath: Str
 }
 
 private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
-  val visited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
+  val xmlVisited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
   val serializer = ConfigurableEntry.serializer()
   for (module in getPluginSet().getEnabledModules()) {
     val classLoader = module.pluginClassLoader
-    if (classLoader !is UrlClassLoader || !visited.add(classLoader)) {
+    if (classLoader !is UrlClassLoader) {
       continue
     }
 
@@ -238,6 +238,9 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
       continue
     }
 
+    if (!xmlVisited.add(classLoader)) {
+      continue
+    }
     val xmlName = "${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.xml"
     classLoader.processResources("search", Predicate { it.endsWith(xmlName) }) { _, stream ->
       try {
