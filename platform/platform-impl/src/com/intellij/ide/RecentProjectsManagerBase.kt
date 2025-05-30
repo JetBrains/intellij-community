@@ -4,6 +4,7 @@
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
@@ -42,6 +43,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
+import com.intellij.util.application
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -77,7 +79,7 @@ private val LOG = logger<RecentProjectsManager>()
 @State(name = "RecentProjectsManager",
        category = SettingsCategory.SYSTEM,
        storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
-open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
+open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope) :
   RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
     const val MAX_PROJECTS_IN_MAIN_MENU: Int = 6
@@ -117,11 +119,18 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
           }
         }
     }
+
+    application.messageBus.connect().subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
+      override fun change() {
+        updateSystemDockMenu()
+      }
+    })
   }
 
   final override fun getState(): RecentProjectManagerState = state
 
-  @Internal fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
+  @Internal
+  fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
     val path = getProjectPath(projectStoreBaseDir) ?: return null
     return getProjectMetaInfo(path)
   }
@@ -207,6 +216,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
         @Suppress("DEPRECATION")
         state.recentPaths.clear()
       }
+    }
+
+    coroutineScope.launch(Dispatchers.EDT) {
+      updateSystemDockMenu()
     }
   }
 
@@ -570,9 +583,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return ApplicationManager.getApplication().isHeadlessEnvironment || WindowManagerEx.getInstanceEx().getFrameHelper(null) != null
   }
 
-  private suspend fun openOneByOne(openPaths: List<Entry<String, RecentProjectMetaInfo>>,
-                                   index: Int,
-                                   someProjectWasOpened: Boolean): Boolean {
+  private suspend fun openOneByOne(
+    openPaths: List<Entry<String, RecentProjectMetaInfo>>,
+    index: Int,
+    someProjectWasOpened: Boolean,
+  ): Boolean {
     val (key, value) = openPaths.get(index)
     EelInitialization.runEelInitialization(key)
     val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
