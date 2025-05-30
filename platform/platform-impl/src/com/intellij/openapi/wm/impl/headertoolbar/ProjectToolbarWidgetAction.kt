@@ -300,15 +300,16 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
+          val rowGaps = UnscaledGaps(bottom = 3, top = 3)
+
           icon(IconUtil.downscaleIconToSize(action.projectIcon, userScaledProjectIconSize(), userScaledProjectIconSize()))
             .align(AlignY.TOP)
-            .customize(UnscaledGaps(right = 8))
+            .customize(rowGaps.copy(right = 8))
 
           panel {
-            val textGaps = UnscaledGaps(bottom = 4, top = 4)
             row {
               nameLbl = label(action.projectNameToDisplay)
-                .customize(textGaps.copy(top = 0))
+                .customize(rowGaps)
                 .applyToComponent {
                   foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                 }.component
@@ -316,12 +317,12 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
               if (action.isProjectOpening) {
                 panel {
                   row {
-                    icon(AnimatedIcon.Default.INSTANCE)
-                      .customize(customGaps = UnscaledGaps(right = 5))
-                      .align(AlignY.CENTER)
                     label(UIBundle.message("project.widget.opening.project.progress.text"))
                       .align(AlignY.CENTER)
-                      .customize(textGaps.copy(top = 0))
+                      .applyToComponent {
+                        icon = AnimatedIcon.Default.INSTANCE
+                        font = JBFont.smallOrNewUiMedium()
+                      }
                   }
                 }
                   .align(AlignX.RIGHT)
@@ -330,13 +331,10 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
             val providerPath = action.providerPathToDisplay
             if (providerPath != null) {
               row {
-                icon(action.providerIcon ?: AllIcons.Nodes.Console)
-                  .align(AlignY.CENTER)
-                  .customize(customGaps = UnscaledGaps(right = 5))
                 providerPathLbl = label(providerPath)
-                  .customize(textGaps)
-                  .align(AlignY.CENTER)
+                  .customize(rowGaps)
                   .applyToComponent {
+                    icon = action.providerIcon ?: AllIcons.Nodes.Console
                     font = JBFont.smallOrNewUiMedium()
                     foreground = UIUtil.getLabelInfoForeground()
                   }.component
@@ -346,7 +344,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
             if (projectPathToDisplay != null) {
               row {
                 projectPathLbl = label(projectPathToDisplay)
-                  .customize(textGaps)
+                  .customize(rowGaps)
                   .applyToComponent {
                     font = JBFont.smallOrNewUiMedium()
                     foreground = UIUtil.getLabelInfoForeground()
@@ -356,7 +354,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
             action.branchName?.let {
               row {
                 label(it)
-                  .customize(textGaps)
+                  .customize(rowGaps)
                   .applyToComponent {
                     icon = AllIcons.Vcs.Branch
                     font = JBFont.smallOrNewUiMedium()
@@ -368,7 +366,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
         }
       }
     }.apply {
-      border = JBUI.Borders.empty(8, 0)
+      border = JBUI.Borders.empty(5, 0)
       isOpaque = false
     }
 
