@@ -25,7 +25,7 @@ final class CommandProcessorImpl extends CoreCommandProcessor {
         failed = true;
         if (!(throwable instanceof ProcessCanceledException)) {
           ExceptionUtil.rethrowUnchecked(throwable);
-          CommandLog.LOG.error(throwable);
+          LOG.error(throwable);
         }
       }
       else {
