@@ -113,14 +113,6 @@ public final class PyTypeChecker {
       }
     }
 
-    if (actual instanceof PyNeverType) {
-      return Optional.of(true);
-    }
-
-    if (expected instanceof PyNeverType) {
-      return Optional.of(false);
-    }
-
     if (expected instanceof PyClassType) {
       Optional<Boolean> match = matchObject((PyClassType)expected, actual);
       if (match.isPresent()) {
@@ -170,6 +162,14 @@ public final class PyTypeChecker {
 
     if (expected instanceof PyCallableParameterListType callableParameterListType) {
       return Optional.of(match(callableParameterListType, actual, context));
+    }
+
+    if (actual instanceof PyNeverType) {
+      return Optional.of(true);
+    }
+
+    if (expected instanceof PyNeverType) {
+      return Optional.of(false);
     }
 
     if (actual instanceof PyUnionType) {

@@ -846,6 +846,11 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
   public void testTypeAliasStatement() {
     checkHTMLOnly();
   }
+  
+  // PY-78119
+  public void testNeverType() {
+    checkHTMLOnly();
+  }
 
   // PY-23067
   public void testFunctoolsWraps() {

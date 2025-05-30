@@ -1270,12 +1270,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       typeHintedWithName(owner, context, CLASS_VAR));
   }
 
-  public static boolean isNoReturn(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    return PyUtil.getParameterizedCachedValue(function, context, p ->
-      typeHintedWithName(function, context, NO_RETURN, NO_RETURN_EXT, NEVER, NEVER_EXT));
-  }
-
-
   private static boolean resolvesToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context, String... names) {
     final var qualifiedNames = resolveToQualifiedNames(expression, context);
     return ContainerUtil.exists(names, qualifiedNames::contains);
@@ -1465,8 +1459,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static @Nullable PyType getNeverType(@NotNull PsiElement element) {
     var qName = getQualifiedName(element);
     if (qName == null) return null;
-    if (List.of(NEVER, NEVER_EXT, NO_RETURN, NO_RETURN_EXT).contains(qName)) {
-      return PyNeverType.INSTANCE;
+    if (List.of(NEVER, NEVER_EXT).contains(qName)) {
+      return PyNeverType.NEVER;
+    }
+    if (List.of(NO_RETURN, NO_RETURN_EXT).contains(qName)) {
+      return PyNeverType.NO_RETURN;
     }
     return null;
   }

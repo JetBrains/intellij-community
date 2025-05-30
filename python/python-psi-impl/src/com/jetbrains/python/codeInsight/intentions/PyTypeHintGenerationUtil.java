@@ -322,6 +322,12 @@ public final class PyTypeHintGenerationUtil {
       }
 
       @Override
+      public @NotNull Traversal visitPyNeverType(@NotNull PyNeverType neverType) {
+        typingTypes.add(neverType.getName());
+        return Traversal.CONTINUE;
+      }
+
+      @Override
       public @NotNull Traversal visitPyNamedTupleType(@NotNull PyNamedTupleType namedTupleType) {
         final PyQualifiedNameOwner element = namedTupleType.getDeclarationElement();
         if (element instanceof PsiNamedElement) {

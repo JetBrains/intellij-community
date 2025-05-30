@@ -74,6 +74,10 @@ public abstract class PyTypeVisitor<T> {
   public T visitPyCallableParameterListType(@NotNull PyCallableParameterListType callableParameterListType) {
     return visitPyType(callableParameterListType);
   }
+  
+  public T visitPyNeverType(@NotNull PyNeverType neverType) {
+    return visitPyType(neverType);
+  }
 
   public T visitUnknownType() {
     return null;

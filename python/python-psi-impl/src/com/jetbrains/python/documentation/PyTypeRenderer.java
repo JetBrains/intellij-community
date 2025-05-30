@@ -230,6 +230,11 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   }
 
   @Override
+  public @NotNull HtmlChunk visitPyNeverType(@NotNull PyNeverType neverType) {
+    return className(neverType.getName());
+  }
+
+  @Override
   public HtmlChunk visitPyUnionType(@NotNull PyUnionType unionType) {
     // TODO Exclude "Unknown" once it's introduced, don't exclude explicit typing.Any
     if (isOptional(unionType)) {

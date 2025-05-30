@@ -172,6 +172,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         inferredType = returnType;
       }
     }
+    inferredType = PyNeverType.toNoReturnIfNeeded(inferredType);
     return PyTypingTypeProvider.removeNarrowedTypeIfNeeded(PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType));
   }
 

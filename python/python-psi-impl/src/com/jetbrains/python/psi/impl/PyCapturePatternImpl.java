@@ -125,7 +125,7 @@ public class PyCapturePatternImpl extends PyElementImpl implements PyCapturePatt
 
         PyType mappingType = PyTypeUtil.convertToType(type, "typing.Mapping", pattern, context);
         if (mappingType == null) {
-          return PyNeverType.INSTANCE;
+          return PyNeverType.NEVER;
         }
         else if (mappingType instanceof PyCollectionType collectionType) {
           return collectionType.getElementTypes().get(1);

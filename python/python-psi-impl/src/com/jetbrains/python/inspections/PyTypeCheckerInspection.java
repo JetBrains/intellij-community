@@ -333,14 +333,15 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
         }
 
-        if (PyUtil.isInitMethod(node) && !(returnsNone || PyTypingTypeProvider.isNoReturn(node, myTypeEvalContext))) {
+        final PyType annotatedType = myTypeEvalContext.getReturnType(node);
+
+        if (PyUtil.isInitMethod(node) && !(returnsNone || annotatedType instanceof PyNeverType)) {
           registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
                           PyPsiBundle.message("INSP.type.checker.init.should.return.none"));
         }
 
         if (node.isGenerator()) {
           boolean shouldBeAsync = node.isAsync() && node.isAsyncAllowed();
-          final PyType annotatedType = myTypeEvalContext.getReturnType(node);
           final var generatorDesc = GeneratorTypeDescriptor.create(annotatedType);
           if (generatorDesc != null && generatorDesc.isAsync() != shouldBeAsync) {
             final PyType inferredType = node.getInferredReturnType(myTypeEvalContext);

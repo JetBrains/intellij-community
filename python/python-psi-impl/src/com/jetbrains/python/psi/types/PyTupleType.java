@@ -113,7 +113,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
           return type;
         }
       });
-    return PyUnionType.union(unpackedTypes);
+    return PyUnionType.unionOrNever(unpackedTypes);
   }
 
   public @NotNull PyUnpackedTupleType asUnpackedTupleType() {

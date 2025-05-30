@@ -844,7 +844,7 @@ private fun PyClassType.resolveConstructors(callSite: PyCallSiteExpression?, res
         val callType = if (callSite != null) callableType.getCallType(context, callSite) else callableType.getReturnType(context)
         val expectedType = toInstance()
         PyTypeUtil.toStream(callType).anyMatch {
-          it == null || !PyTypeChecker.match(expectedType, it, context)
+          it == null || it is PyNeverType || !PyTypeChecker.match(expectedType, it, context)
         }
       }
       else false
