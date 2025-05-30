@@ -40,6 +40,7 @@ org.jetbrains.debugger.sourcemap.MappingEntry
 org.jetbrains.debugger.sourcemap.SourceMap
 - a:getSourceMappingsInLine(I,I):java.lang.Iterable
 f:org.jetbrains.debugger.sourcemap.SourceMapDecoderKt
+- sf:decodeSourceMapSafely(java.lang.CharSequence,Z,com.intellij.util.Url,Z):org.jetbrains.debugger.sourcemap.SourceMap
 - sf:decodeSourceMapSafely(java.lang.CharSequence,Z,com.intellij.util.Url,Z,Z):org.jetbrains.debugger.sourcemap.SourceMap
 - bs:decodeSourceMapSafely$default(java.lang.CharSequence,Z,com.intellij.util.Url,Z,Z,I,java.lang.Object):org.jetbrains.debugger.sourcemap.SourceMap
 org.jetbrains.debugger.values.Value

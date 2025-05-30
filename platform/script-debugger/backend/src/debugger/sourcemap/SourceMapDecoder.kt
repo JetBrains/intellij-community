@@ -35,6 +35,7 @@ fun decodeSourceMapFromFile(file: Path,
 }
 
 @Deprecated("This function isn not a part of the public API and will be removed in the future")
+@JvmOverloads
 fun decodeSourceMapSafely(
   sourceMapData: CharSequence,
   trimFileScheme: Boolean,
