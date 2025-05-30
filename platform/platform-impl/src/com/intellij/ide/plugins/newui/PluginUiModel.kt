@@ -40,9 +40,7 @@ interface PluginUiModel {
   val isPaid: Boolean
   val isEnabled: Boolean
 
-  val source: PluginSource
   val dependencies: List<PluginDependencyModel>
-
   var dependencyNames: Collection<String>?
 
   @get:NlsSafe
@@ -56,13 +54,15 @@ interface PluginUiModel {
 
   @get:NlsSafe
   val productCode: String?
+
   @get:NlsSafe
   val size: String?
-
   val releaseVersion: Int
 
   @get:NlsSafe
   val displayCategory: String?
+
+  var source: PluginSource
 
   @get:NlsSafe
   var forumUrl: String?
@@ -147,7 +147,7 @@ private fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {
 
 @ApiStatus.Internal
 enum class PluginSource {
-  LOCAL, REMOTE
+  LOCAL, REMOTE, BOTH
 }
 
 /**
