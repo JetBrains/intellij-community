@@ -34,7 +34,6 @@ jvm_library(
     "@lib//:jps-javac-extension",
     "@rules_jvm//jps-builders-6:build-javac-rt",
     "//platform/tracing:tracing-rt",
-    "//platform/runtime/repository",
     "//platform/util/zip",
     "@rules_jvm//dependency-graph",
     "@lib//:caffeine",
