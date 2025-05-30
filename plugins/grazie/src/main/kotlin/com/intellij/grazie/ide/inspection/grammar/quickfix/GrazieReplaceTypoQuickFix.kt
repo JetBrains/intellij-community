@@ -1,24 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
-import ai.grazie.nlp.langs.Language
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
+import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight
-import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
+import com.intellij.codeInsight.intention.EventTrackingIntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.detection.LangDetector
+import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.ui.components.dsl.msg
-import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
 import com.intellij.openapi.editor.Document
@@ -38,8 +35,8 @@ import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.min
 
 object GrazieReplaceTypoQuickFix {
-  private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
-    HighPriorityAction, DumbAware {
+  private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) :
+    ChoiceTitleIntentionAction(family, title), HighPriorityAction, DumbAware {
     override fun compareTo(other: IntentionAction): Int {
       if (other is GrazieCustomFixWrapper) return -1
       return super.compareTo(other)
@@ -47,17 +44,16 @@ object GrazieReplaceTypoQuickFix {
   }
 
   private open class ChangeToVariantAction(
-    private val rule: Rule,
     override val index: Int,
+    private val total: Int,
     @IntentionFamilyName private val family: String,
     @NlsSafe private val suggestion: String,
     private val replacements: List<Pair<SmartPsiFileRange, String>>,
     private val underlineRanges: List<SmartPsiFileRange>,
     private val toHighlight: List<SmartPsiFileRange>,
-    private val detectedLanguage: Language?,
-    private val batchId: String?
-  )
-    : ChoiceVariantIntentionAction(), HighPriorityAction, IntentionActionWithFixAllOption, DumbAware {
+    private val batchId: String?,
+    private val tracker: AcceptanceRateTracker,
+  ) : ChoiceVariantIntentionAction(), HighPriorityAction, IntentionActionWithFixAllOption, DumbAware, EventTrackingIntentionAction {
     override fun getName(): String {
       if (suggestion.isEmpty()) return msg("grazie.grammar.quickfix.remove.typo.tooltip")
       if (suggestion[0].isWhitespace() || suggestion.last().isWhitespace()) return "'$suggestion'"
@@ -95,11 +91,11 @@ object GrazieReplaceTypoQuickFix {
     override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile): Boolean = replacements.all { it.first.range != null }
 
     override fun getFileModifierForPreview(target: PsiFile): FileModifier {
-      return ForPreview(rule, index, family, suggestion, replacements, underlineRanges, toHighlight, detectedLanguage)
+      return ForPreview(index, total, family, suggestion, replacements, underlineRanges, toHighlight, batchId, tracker)
     }
 
     override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
-      GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
+      GrazieFUSCounter.suggestionAccepted(project, tracker, index, total)
       performFix(project, psiFile)
     }
 
@@ -126,16 +122,23 @@ object GrazieReplaceTypoQuickFix {
       }
     }
 
+   override fun suggestionShown(project: Project, editor: Editor, psiFile: PsiFile) {
+      if (tracker.markShown()) {
+        GrazieFUSCounter.suggestionShown(project, tracker)
+      }
+    }
+
     private class ForPreview(
-      rule: Rule,
       index: Int,
+      total: Int,
       @IntentionFamilyName family: String,
       @NlsSafe suggestion: String,
       replacements: List<Pair<SmartPsiFileRange, String>>,
       underlineRanges: List<SmartPsiFileRange>,
       toHighlight: List<SmartPsiFileRange>,
-      detectedLanguage: Language?
-    ): ChangeToVariantAction(rule, index, family, suggestion, replacements, underlineRanges, toHighlight, detectedLanguage, null) {
+      batchId: String?,
+      tracker: AcceptanceRateTracker,
+    ) : ChangeToVariantAction(index, total, family, suggestion, replacements, underlineRanges, toHighlight, batchId, tracker), IntentionPreviewInfo {
       override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
         performFix(project, psiFile)
       }
@@ -145,7 +148,6 @@ object GrazieReplaceTypoQuickFix {
   @JvmStatic
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val file = problem.text.containingFile
-    val language = LangDetector.getLanguage(problem.text.toString())
     val spm = SmartPointerManager.getInstance(file.project)
     val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
@@ -155,7 +157,14 @@ object GrazieReplaceTypoQuickFix {
       val replacements = changes.flatMap { toFileReplacements(it.range, it.replacement, problem.text) }
       val presentable = suggestion.presentableText
       val toHighlight = changes.map { spm.createSmartPsiFileRangePointer(file, makeNonEmpty(problem.text.textRangeToFile(it.range), file)) }
-      result.add(ChangeToVariantAction(problem.rule, index, familyName, presentable, replacements, underlineRanges, toHighlight, language, suggestion.batchId))
+      val tracker = AcceptanceRateTracker(problem)
+      result.add(
+        ChangeToVariantAction(index, problem.suggestions.size,
+                              familyName, presentable, replacements,
+                              underlineRanges, toHighlight,
+                              suggestion.batchId, tracker
+        )
+      )
     }
     return result
   }

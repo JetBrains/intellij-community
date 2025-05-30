@@ -2,10 +2,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.CustomizableIntentionAction;
-import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
@@ -174,6 +171,13 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
       return ((CustomizableIntentionAction)action).hasSeparatorAbove();
     }
     return false;
+  }
+
+  public void suggestionShown(Project project, Editor editor, PsiFile psiFile) {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof EventTrackingIntentionAction et) {
+      et.suggestionShown(project, editor, psiFile);
+    }
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.grazie.ide.fus.AcceptanceRateTracker
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrapper
@@ -201,10 +202,9 @@ class CheckerRunner(val text: TextContent) {
     problem.customFixes.forEachIndexed { index, fix -> result.add(GrazieCustomFixWrapper(problem, fix, descriptor, index)) }
 
     val suppressionPattern = defaultSuppressionPattern(problem, findSentence(problem))
-    val rule = problem.rule
     result.add(object : GrazieAddExceptionQuickFix(suppressionPattern, underline) {
       override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
-        GrazieFUSCounter.quickFixInvoked(rule, project, "add.exception")
+        GrazieFUSCounter.exceptionAdded(project, AcceptanceRateTracker(problem))
         super.applyFix(project, psiFile, editor)
       }
     })

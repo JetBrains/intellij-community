@@ -4090,27 +4090,6 @@ f:com.intellij.codeInsight.intention.impl.DefaultIntentionsOrderProvider
 f:com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent
 - com.intellij.ui.EditorNotificationPanel
 - <init>(java.lang.String,com.intellij.lang.annotation.HighlightSeverity,com.intellij.codeInsight.daemon.GutterMark,java.util.List,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,java.lang.String):V
-f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
-- com.intellij.codeInsight.intention.IntentionActionDelegate
-- com.intellij.openapi.actionSystem.ShortcutProvider
-- java.lang.Comparable
-- <init>(com.intellij.codeInsight.intention.IntentionAction):V
-- compareTo(com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching):I
-- equals(java.lang.Object):Z
-- getAction():com.intellij.codeInsight.intention.IntentionAction
-- getDelegate():com.intellij.codeInsight.intention.IntentionAction
-- getFixOffset():I
-- getFixRange():com.intellij.openapi.util.TextRange
-- getIcon():javax.swing.Icon
-- getOptionActions():java.util.List
-- getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
-- s:getShortcutSet(com.intellij.codeInsight.intention.IntentionAction):com.intellij.openapi.actionSystem.ShortcutSet
-- getText():java.lang.String
-- getToolId():java.lang.String
-- hasSeparatorAbove():Z
-- hashCode():I
-- isSelectable():Z
-- isShowIcon():Z
 com.intellij.codeInsight.intention.impl.IntentionContainer
 - a:getAllActions():java.util.List
 - getErrorFixes():java.util.Set

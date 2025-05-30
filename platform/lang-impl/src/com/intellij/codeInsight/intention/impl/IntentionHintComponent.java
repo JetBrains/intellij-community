@@ -718,8 +718,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
 
       myPreviewHandler.showInitially();
-
-      IntentionFUSCollector.reportShownIntentions(myPsiFile.getProject(), myListPopup, myPsiFile.getLanguage(), myEditor, source);
+      onIntentionShown(source);
       myPopupShown = true;
     }
 
@@ -751,6 +750,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
 
         myOuterComboboxPopupListener = null;
+      }
+    }
+
+    private void onIntentionShown(@NotNull IntentionSource source) {
+      @SuppressWarnings("unchecked") List<IntentionActionWithTextCaching> values = myListPopup.getListStep().getValues();
+      for (int i = 0; i < values.size(); i++) {
+        IntentionActionWithTextCaching intention = values.get(i);
+        intention.suggestionShown(myProject, myEditor, myPsiFile);
+        IntentionFUSCollector.reportShownIntention(myPsiFile.getProject(), intention, myPsiFile.getLanguage(), myEditor, source, i);
       }
     }
 

@@ -233,6 +233,28 @@ com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
 - a:getRelativeOrderings():java.util.List
 - handleClick(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.codeVision.CodeVisionEntry):V
 - preparePreview(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
+f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
+- com.intellij.codeInsight.intention.IntentionActionDelegate
+- com.intellij.openapi.actionSystem.ShortcutProvider
+- java.lang.Comparable
+- <init>(com.intellij.codeInsight.intention.IntentionAction):V
+- compareTo(com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching):I
+- equals(java.lang.Object):Z
+- getAction():com.intellij.codeInsight.intention.IntentionAction
+- getDelegate():com.intellij.codeInsight.intention.IntentionAction
+- getFixOffset():I
+- getFixRange():com.intellij.openapi.util.TextRange
+- getIcon():javax.swing.Icon
+- getOptionActions():java.util.List
+- getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
+- s:getShortcutSet(com.intellij.codeInsight.intention.IntentionAction):com.intellij.openapi.actionSystem.ShortcutSet
+- getText():java.lang.String
+- getToolId():java.lang.String
+- hasSeparatorAbove():Z
+- hashCode():I
+- isSelectable():Z
+- isShowIcon():Z
+- suggestionShown(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 com.intellij.codeInsight.intention.impl.IntentionsOrderProvider
 - sf:EXTENSION:com.intellij.lang.LanguageExtension
 - a:getSortedIntentions(com.intellij.codeInsight.intention.impl.CachedIntentions,java.util.List):java.util.List
