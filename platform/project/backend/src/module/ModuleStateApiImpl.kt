@@ -24,8 +24,10 @@ internal class ModuleStateApiImpl : ModuleStateApi {
   @OptIn(ExperimentalCoroutinesApi::class)
   override suspend fun getModulesUpdateEvents(projectId: ProjectId): Flow<ModuleUpdatedEvent> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    val initialModules = ModuleManager.getInstance(project).modules.map { it.name }
     val connection = project.messageBus.simpleConnect()
     val flow = channelFlow {
+      send(ModulesAddedEvent(initialModules))
       connection.subscribe(ModuleListener.TOPIC, object : ModuleListener {
         override fun modulesAdded(project: Project, modules: List<Module>) {
           launch {
@@ -51,11 +53,6 @@ internal class ModuleStateApiImpl : ModuleStateApi {
       awaitClose { connection.disconnect() }
     }
     return flow
-  }
-
-  override suspend fun getCurrentModuleNames(projectId: ProjectId): List<String> {
-    val project = projectId.findProjectOrNull() ?: return emptyList()
-    return ModuleManager.getInstance(project).modules.map { it.name }
   }
 }
 

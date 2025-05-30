@@ -16,8 +16,6 @@ interface ModuleStateApi : RemoteApi<Unit> {
 
   suspend fun getModulesUpdateEvents(projectId: ProjectId): Flow<ModuleUpdatedEvent>
 
-  suspend fun getCurrentModuleNames(projectId: ProjectId): List<String>
-
   companion object {
     @JvmStatic
     suspend fun getInstance(): ModuleStateApi {
