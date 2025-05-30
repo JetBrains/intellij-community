@@ -947,9 +947,6 @@
 - f:buildPolySymbolUsagesQueries(com.intellij.polySymbols.PolySymbol,com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope):java.util.List
 *f:com.intellij.polySymbols.utils.FileUtils
 - sf:findOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
-*f:com.intellij.polySymbols.utils.HtmlMarkdownUtils
-- s:toHtml(java.lang.String):java.lang.String
-- s:toHtml(java.lang.String,Z):java.lang.String
 *f:com.intellij.polySymbols.utils.MappedPolySymbol
 - com.intellij.polySymbols.PolySymbol
 - *sf:Companion:com.intellij.polySymbols.utils.MappedPolySymbol$Companion
@@ -1180,3 +1177,22 @@
 - s:get(java.lang.String):com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
 *f:com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter$Companion
 - f:get(java.lang.String):com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
+*f:com.intellij.webSymbols.references.WebSymbolReferenceProvider
+- *sf:Companion:com.intellij.webSymbols.references.WebSymbolReferenceProvider$Companion
+- <init>():V
+- *sf:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
+*f:com.intellij.webSymbols.references.WebSymbolReferenceProvider$Companion
+- *f:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
+*f:com.intellij.webSymbols.utils.HtmlMarkdownUtils
+- s:toHtml(java.lang.String):java.lang.String
+- s:toHtml(java.lang.String,Z):java.lang.String
+*f:com.intellij.webSymbols.utils.NameCaseUtils
+- sf:INSTANCE:com.intellij.webSymbols.utils.NameCaseUtils
+- sf:toCamelCase(java.lang.String):java.lang.String
+- sf:toCamelCase(java.lang.String,Z):java.lang.String
+- sf:toKebabCase(java.lang.String):java.lang.String
+- sf:toKebabCase(java.lang.String,Z,Z,Z):java.lang.String
+- sf:toPascalCase(java.lang.String):java.lang.String
+- sf:toPascalCase(java.lang.String,Z):java.lang.String
+- sf:toSnakeCase(java.lang.String):java.lang.String
+- sf:toSnakeCase(java.lang.String,Z,Z,Z):java.lang.String
