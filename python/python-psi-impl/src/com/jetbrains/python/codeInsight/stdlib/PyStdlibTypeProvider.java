@@ -117,15 +117,17 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
           PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
           if (enumType != null) {
             PyClass enumClass = enumType.getPyClass();
-            PyTargetExpression firstEnumItem = ContainerUtil.getFirstItem(enumClass.getClassAttributes());
-            if (firstEnumItem != null) {
-              EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, firstEnumItem, context);
-              if (attributeInfo != null) {
-                return Ref.create(attributeInfo.assignedValueType);
+            if (isCustomEnum(enumClass, context)) {
+              PyTargetExpression firstEnumItem = ContainerUtil.getFirstItem(enumClass.getClassAttributes());
+              if (firstEnumItem != null) {
+                EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, firstEnumItem, context);
+                if (attributeInfo != null) {
+                  return Ref.create(attributeInfo.assignedValueType);
+                }
               }
-            }
-            else {
-              return Ref.create();
+              else {
+                return Ref.create();
+              }
             }
           }
         }

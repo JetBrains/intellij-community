@@ -4160,6 +4160,19 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-79330
+  public void testTypeHintedEnumItemValueAttribute2() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("() -> Any", // Should be 'Any' PY-71603
+                   """
+                     from enum import Enum
+                     
+                     def f(p: Enum):
+                         expr = p.value""")
+    );
+  }
+
   // PY-54503
   public void testImportedEnumGetItemResultValueAttribute() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
