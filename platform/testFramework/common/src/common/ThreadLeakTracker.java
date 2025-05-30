@@ -242,7 +242,13 @@ public final class ThreadLeakTracker {
            || isJMXRemoteCall(stackTrace)
            || isBuildLogCall(stackTrace)
            || isIjentMediatorThread(stackTrace)
+           || windowsCompletionPortLeakForDocker(stackTrace)
            || isSwingAccessibilityThread(stackTrace);
+  }
+
+  private static boolean windowsCompletionPortLeakForDocker(StackTraceElement[] trace) {
+    // IOCP on Windows leaked by a docker client
+    return trace[0].getClassName().equals("sun.nio.ch.Iocp");
   }
 
   private static boolean isSwingAccessibilityThread(StackTraceElement[] trace) {
