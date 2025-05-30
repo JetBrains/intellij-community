@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,12 @@ import java.util.List;
 
 public class ControlFlowBuilder {
 
-  private static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
+  /**
+   * @deprecated Use your own logger like {@code Logger.getInstance(MyClass.class)}
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
 
   // Here we store all the instructions
   public List<Instruction> instructions;
