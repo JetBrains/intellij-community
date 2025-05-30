@@ -1679,6 +1679,7 @@
                  description="Replaces Indexing progress with Analyzing during dumb mode"/>
 
     <saveAndSyncHandlerListener implementation="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter" />
+    <experiment.abExperimentOption implementation="com.intellij.ide.util.gotoByName.FuzzyFileSearchExperimentOption"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.platform.backend">

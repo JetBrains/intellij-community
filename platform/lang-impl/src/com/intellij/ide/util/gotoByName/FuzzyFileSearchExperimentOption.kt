@@ -7,8 +7,15 @@ import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
 import com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
-import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
+internal fun isFuzzyFileSearchEnabled(): Boolean {
+  return `is`("search.everywhere.fuzzy.file.search.enabled", false) ||
+         ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
+}
+
+@ApiStatus.Internal
 internal class FuzzyFileSearchExperimentOption : ABExperimentOption {
   override val id: ABExperimentOptionId = ABExperimentOptionId("fuzzyFileSearch")
 
@@ -16,18 +23,10 @@ internal class FuzzyFileSearchExperimentOption : ABExperimentOption {
     return ABExperimentOptionGroupSize(128)
   }
 
-  override fun checkIdeIsSuitable(): Boolean = !PlatformUtils.isRider()
+  override fun checkIdeIsSuitable(): Boolean = true
 
   override fun checkIdeVersionIsSuitable(): Boolean {
     val appInfo = ApplicationInfo.getInstance()
-    return appInfo.isEAP && appInfo.majorVersion == "2025" && appInfo.minorVersion.let { it == "2" || it == "2.0" }
-  }
-
-  companion object {
-    @JvmStatic
-    val isFuzzyFileSearchEnabled: Boolean
-      get() = //(PlatformUtils.isRider() && `is`("search.everywhere.fuzzy.file.search.enabled", false)) ||
-              `is`("search.everywhere.fuzzy.file.search.enabled", false) ||
-              ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
+    return appInfo.isEAP && appInfo.majorVersion == "2025" && appInfo.minorVersionMainPart == "2"
   }
 }

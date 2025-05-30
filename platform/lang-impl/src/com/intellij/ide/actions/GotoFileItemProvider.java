@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.function.Function;
 
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.*;
+import static com.intellij.ide.util.gotoByName.FuzzyFileSearchExperimentOptionKt.isFuzzyFileSearchEnabled;
 
 public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance(GotoFileItemProvider.class);
@@ -89,7 +90,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       // For example, if there are too many results,
       // `ContainerUtil.process(matchedFiles, trackingProcessor)` in `SuffixMatcher.processFiles()` returns false
       // and `processItems == false`
-      if (!processItems && (!FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() || hasSuggestions.get())) {
+      if (!processItems && (!isFuzzyFileSearchEnabled() || hasSuggestions.get())) {
         return false;
       }
 
@@ -99,12 +100,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         // With fuzzy search: The process was interrupt but there are suggestions.
         if (fixedPattern != null &&
             !processItemsForPattern(base, parameters.withCompletePattern(fixedPattern), consumer, indicator, hasSuggestionsFixedPattern) &&
-            (!FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() || hasSuggestionsFixedPattern.get())) {
+            (!isFuzzyFileSearchEnabled() || hasSuggestionsFixedPattern.get())) {
           return false;
         }
       }
 
-      return !FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled() ||
+      return !isFuzzyFileSearchEnabled() ||
              hasSuggestions.get() ||
              hasSuggestionsFixedPattern.get() ||
              processItemsForPatternWithLevenshtein(base, parameters, consumer, indicator);
@@ -289,7 +290,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     processNames(parameters, name -> grouper.processName(name));
 
     DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel, sanitized.substring(0, qualifierEnd));
-    DirectoryConsumer directoryConsumer = new DirectoryConsumer(FuzzyFileSearchExperimentOption.isFuzzyFileSearchEnabled());
+    DirectoryConsumer directoryConsumer = new DirectoryConsumer(isFuzzyFileSearchEnabled());
     while (dirMatcher != null) {
       int index = grouper.index;
       SuffixMatches group = grouper.nextGroup(base);
