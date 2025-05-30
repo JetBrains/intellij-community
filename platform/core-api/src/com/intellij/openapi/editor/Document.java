@@ -192,14 +192,19 @@ public interface Document extends UserDataHolder {
   default void fireReadOnlyModificationAttempt() {
   }
 
+
+  /**
+   * @deprecated Use {@link #addDocumentListener(DocumentListener, Disposable)} instead.
+   */
+  @Deprecated
+  default void addDocumentListener(@NotNull DocumentListener listener) {
+  }
+
   /**
    * Adds a listener for receiving notifications about changes in the document content.
    *
    * @param listener the listener instance.
    */
-  default void addDocumentListener(@NotNull DocumentListener listener) {
-  }
-
   default void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
   }
 
