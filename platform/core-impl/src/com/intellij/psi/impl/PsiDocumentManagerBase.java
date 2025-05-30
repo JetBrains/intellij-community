@@ -57,8 +57,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, Disposable {
-  @ApiStatus.Internal
-  public static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
+  private static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
 
   private boolean isInsideCommitHandler; //accessed from EDT only
