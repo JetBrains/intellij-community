@@ -308,10 +308,7 @@ private class ProjectGroupComparator(private val projectPaths: Set<String>) : Co
 
 private class RemoteRecentProjectAction(val projectId: String, val project: RecentProject) : ActionGroup(), DumbAware, ProjectToolbarWidgetPresentable {
   init {
-    var text = project.displayName
-    if (project.providerName != null) text += " [${project.providerName}]"
-    if (project.branchName != null) text += " [${project.branchName}]"
-    templatePresentation.text = text
+    templatePresentation.text = nameToDisplayAsText
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -353,6 +350,14 @@ private class RemoteRecentProjectAction(val projectId: String, val project: Rece
     get() {
       val status = project.status
       return ProjectStatus(status.isOpened, status.statusText, status.progressText)
+    }
+
+  override val nameToDisplayAsText: @NlsSafe String
+    get() {
+      var text = project.displayName
+      if (project.providerName != null) text += " [${project.providerName}]"
+      if (project.branchName != null) text += " [${project.branchName}]"
+      return text
     }
 }
 

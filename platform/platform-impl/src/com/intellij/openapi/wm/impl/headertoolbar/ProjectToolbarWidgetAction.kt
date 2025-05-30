@@ -460,6 +460,11 @@ interface ProjectToolbarWidgetPresentable {
 
   @get:ApiStatus.Internal
   val status: ProjectStatus? get() = null
+
+  /**
+   * Combined info to be used, when only a single-line-label is applicable.
+   */
+  val nameToDisplayAsText: @NlsSafe String get() = projectNameToDisplay
 }
 
 @ApiStatus.Internal
