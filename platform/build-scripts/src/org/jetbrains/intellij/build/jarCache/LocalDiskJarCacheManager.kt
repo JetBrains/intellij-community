@@ -92,8 +92,7 @@ internal class LocalDiskJarCacheManager(
           return cacheFile
         }
         else {
-          Files.createDirectories(targetFile.parent)
-          Files.createLink(targetFile, cacheFile)
+          createLinkOrCopy(targetFile, cacheFile)
           return targetFile
         }
       }
@@ -144,14 +143,7 @@ private suspend fun produceAndCache(
   }
 
   if (!producer.useCacheAsTargetFile) {
-    Files.createDirectories(targetFile.parent)
-    try {
-      Files.createLink(targetFile, cacheFile)
-    }
-    catch (e: IOException) {
-      throw RuntimeException("Cannot create a hard link from $cacheFile to $targetFile (cacheFile exists: ${Files.exists(cacheFile)}).\n" +
-                             "Hard links must be on the same file system", e)
-    }
+    createLinkOrCopy(targetFile, cacheFile)
   }
 
   val sourceCacheItems = Array(items.size) { index ->
@@ -173,6 +165,36 @@ private suspend fun produceAndCache(
   notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles, producer = producer)
 
   return if (producer.useCacheAsTargetFile) cacheFile else targetFile
+}
+
+private fun areOnSameFileSystem(file1: Path, file2: Path): Boolean {
+  try {
+    val store1 = Files.getFileStore(file1.parent ?: file1)
+    val store2 = Files.getFileStore(file2.parent ?: file2)
+    return store1 == store2
+  }
+  catch (_: IOException) {
+    // If we can't determine the file stores, assume they're different
+    return false
+  }
+}
+
+private fun createLinkOrCopy(targetFile: Path, cacheFile: Path) {
+  Files.createDirectories(targetFile.parent)
+  if (!areOnSameFileSystem(targetFile, cacheFile)) {
+    Files.copy(cacheFile, targetFile)
+    return
+  }
+
+  try {
+    Files.createLink(targetFile, cacheFile)
+  }
+  catch (e: IOException) {
+    throw RuntimeException(
+      "Cannot create a hard link from $cacheFile to $targetFile (cacheFile exists: ${Files.exists(cacheFile)}).\n" +
+      "Hard links must be on the same file system", e
+    )
+  }
 }
 
 private fun longToString(v: Long): String = java.lang.Long.toUnsignedString(v, Character.MAX_RADIX)
