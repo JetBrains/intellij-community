@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.CommonBundle
@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
+import com.intellij.platform.PROJECT_OPENED_BY_PLATFORM_PROCESSOR
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
@@ -228,7 +229,7 @@ object ProjectUtil {
           useDefaultProjectAsTemplate = true,
           runConfigurators = true,
           beforeOpen = {
-            it.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
             options.beforeOpen?.invoke(it) ?: true
           },
         )

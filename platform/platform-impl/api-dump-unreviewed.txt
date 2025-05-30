@@ -11319,7 +11319,6 @@ f:com.intellij.platform.PlatformProjectOpenProcessor
 - com.intellij.platform.CommandLineProjectOpenProcessor
 - sf:Companion:com.intellij.platform.PlatformProjectOpenProcessor$Companion
 - <init>():V
-- sf:attachToProject(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback):Z
 - canOpenProject(com.intellij.openapi.vfs.VirtualFile):Z
 - sf:doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,I,com.intellij.projectImport.ProjectOpenedCallback,java.util.EnumSet):com.intellij.openapi.project.Project
 - doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z):com.intellij.openapi.project.Project
@@ -11330,14 +11329,9 @@ f:com.intellij.platform.PlatformProjectOpenProcessor
 - lookForProjectsInDirectory():Z
 - openProjectAndFile(java.nio.file.Path,Z,com.intellij.ide.impl.OpenProjectTask,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.PlatformProjectOpenProcessor$Companion
-- f:attachToProject(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback):Z
 - f:doOpenProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,I,com.intellij.projectImport.ProjectOpenedCallback,java.util.EnumSet):com.intellij.openapi.project.Project
 - f:getInstance():com.intellij.platform.PlatformProjectOpenProcessor
 - f:getInstanceIfItExists():com.intellij.platform.PlatformProjectOpenProcessor
-- f:getPROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES():com.intellij.openapi.util.Key
-- f:getPROJECT_NEWLY_OPENED():com.intellij.openapi.util.Key
-- f:getPROJECT_OPENED_BY_PLATFORM_PROCESSOR():com.intellij.openapi.util.Key
-- f:isConfiguredByPlatformProcessor(com.intellij.openapi.project.Project):Z
 - f:isNewProject(com.intellij.openapi.project.Project):Z
 - f:isOpenedByPlatformProcessor(com.intellij.openapi.project.Project):Z
 - f:isTempProject(com.intellij.openapi.project.Project):Z

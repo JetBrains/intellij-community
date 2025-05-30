@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -22,10 +21,8 @@ interface ToolWindowFactory : PossiblyDumbAware {
    * @return false to deactivate the factory
    */
   suspend fun isApplicableAsync(project: Project): Boolean {
-    return blockingContext {
-      @Suppress("DEPRECATION")
-      isApplicable(project)
-    }
+    @Suppress("DEPRECATION")
+    return isApplicable(project)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
 import com.intellij.ide.impl.*
@@ -46,6 +46,22 @@ import java.util.concurrent.CancellationException
 private val LOG = logger<PlatformProjectOpenProcessor>()
 private val EP_NAME = ExtensionPointName<DirectoryProjectConfigurator>("com.intellij.directoryProjectConfigurator")
 
+@Internal
+val PROJECT_OPENED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_OPENED_BY_PLATFORM_PROCESSOR")
+private val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
+
+@Internal
+val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES: Key<Boolean> = Key.create("PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES")
+
+internal val PROJECT_NEWLY_OPENED: Key<Boolean> = Key.create("PROJECT_NEWLY_OPENED")
+
+@Internal
+fun isConfiguredByPlatformProcessor(project: Project): Boolean = project.getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
+
+internal fun isLoadedFromCacheButHasNoModules(project: Project): Boolean {
+  return project.getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
+}
+
 class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
   enum class Option {
     FORCE_NEW_FRAME,
@@ -55,23 +71,11 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
   }
 
   companion object {
-    val PROJECT_OPENED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_OPENED_BY_PLATFORM_PROCESSOR")
+    fun isOpenedByPlatformProcessor(project: Project): Boolean = project.getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
 
-    private val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR: Key<Boolean> = Key.create("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
+    fun isNewProject(project: Project): Boolean = project.getUserData(PROJECT_NEWLY_OPENED) == true
 
-    val PROJECT_NEWLY_OPENED: Key<Boolean> = Key.create("PROJECT_NEWLY_OPENED")
-
-    val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES: Key<Boolean> = Key.create("PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES")
-
-    fun Project.isOpenedByPlatformProcessor(): Boolean = getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
-
-    fun Project.isConfiguredByPlatformProcessor(): Boolean = getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
-
-    fun Project.isNewProject(): Boolean = getUserData(PROJECT_NEWLY_OPENED) == true
-
-    fun Project.isTempProject(): Boolean = service<OpenProjectSettingsService>().state.isLocatedInTempDirectory
-
-    internal fun Project.isLoadedFromCacheButHasNoModules(): Boolean = getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
+    fun isTempProject(project: Project): Boolean = project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory
 
     @JvmStatic
     fun getInstance(): PlatformProjectOpenProcessor = EXTENSION_POINT_NAME.findExtensionOrFail(PlatformProjectOpenProcessor::class.java)
@@ -119,7 +123,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       })
       TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
       val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, copy) ?: return null
-      openFileFromCommandLine(project, file, copy.line, copy.column)
+      openFileFromCommandLine(project = project, file = file, line = copy.line, column = copy.column)
       return project
     }
 
@@ -164,7 +168,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    @ApiStatus.Internal
+    @Internal
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       if (Files.isDirectory(file)) {
         val options = runUnderModalProgressIfIsEdt {
@@ -298,17 +302,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
           else if (configurator.isEdtRequired) {
             withContext(Dispatchers.EDT) {
-              blockingContext {
-                SlowOperations.knownIssue("IDEA-319905, EA-808639").use {
-                  configurator.configureProject(project, virtualFile, moduleRef, newProject)
-                }
+              SlowOperations.knownIssue("IDEA-319905, EA-808639").use {
+                configurator.configureProject(project, virtualFile, moduleRef, newProject)
               }
             }
           }
           else {
-            blockingContext {
-              configurator.configureProject(project, virtualFile, moduleRef, newProject)
-            }
+            configurator.configureProject(project, virtualFile, moduleRef, newProject)
           }
         }
         catch (e: ProcessCanceledException) {
@@ -325,8 +325,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return moduleRef.get()
     }
 
-    @JvmStatic
     @RequiresEdt
+    @Internal
     fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
       return runWithModalProgressBlocking(project, "") {
         attachToProjectAsync(projectToClose = project, projectDir = projectDir, callback = callback)
@@ -342,7 +342,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
      *
      * See `OpenProjectTest`.
      */
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     suspend fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
       return OpenProjectTask {
@@ -353,7 +353,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
     }
 
-    @ApiStatus.Internal
+    @Internal
     suspend fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
       runConfigurators = true
       isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
@@ -423,7 +423,9 @@ suspend fun attachToProjectAsync(
     return attachImpl(processor, projectToClose, projectDir, callback)
   }
   for (attachProcessor in ProjectAttachProcessor.EP_NAME.lazySequence()) {
-    if (attachImpl(attachProcessor, projectToClose, projectDir, callback)) return true
+    if (attachImpl(attachProcessor, projectToClose, projectDir, callback)) {
+      return true
+    }
   }
   return false
 }

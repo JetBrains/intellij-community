@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
@@ -67,7 +67,7 @@ private class SetupJavaProjectFromSourcesActivity : ProjectActivity {
       return
     }
 
-    if (!project.isOpenedByPlatformProcessor()) {
+    if (!isOpenedByPlatformProcessor(project)) {
       return
     }
 

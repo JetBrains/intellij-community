@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.project.impl
@@ -70,12 +70,13 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.PROJECT_NEWLY_OPENED
 import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
- import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -105,7 +106,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.coroutineContext
-import kotlin.io.path.Path
 import kotlin.system.measureTimeMillis
 
 @Internal
@@ -882,7 +882,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
 
       val project = instantiateProject(projectStoreBaseDir, projectName, beforeInit)
-      project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, markAsNew)
+      project.putUserData(PROJECT_NEWLY_OPENED, markAsNew)
       val template = templateAsync?.await()
       initProject(file = projectStoreBaseDir,
                   project = project,
@@ -951,7 +951,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   open suspend fun configureWorkspace(project: Project, projectStoreBaseDir: Path, options: OpenProjectTask): Module? {
     if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())
-        || project.isLoadedFromCacheButHasNoModules()) {
+        || isLoadedFromCacheButHasNoModules(project)
+    ) {
       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
         baseDir = projectStoreBaseDir,
         project = project,
