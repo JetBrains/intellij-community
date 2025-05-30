@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "DeprecatedCallableAddReplaceWith", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.util
@@ -185,7 +185,7 @@ object IconLoader {
 
   @JvmStatic
   fun findIcon(path: String, classLoader: ClassLoader): Icon? {
-    return findIconUsingNewImplementation(path, classLoader)
+    return findIconByPath(path = path, classLoader = classLoader, cache = iconCache)
   }
 
   @JvmStatic
@@ -348,11 +348,13 @@ fun findIconUsingNewImplementation(path: String, classLoader: ClassLoader, toolT
 }
 
 @Internal
-fun findIconUsingDeprecatedImplementation(originalPath: String,
-                                          classLoader: ClassLoader,
-                                          aClass: Class<*>?,
-                                          toolTip: Supplier<String?>? = null,
-                                          strict: Boolean = false): Icon? {
+fun findIconUsingDeprecatedImplementation(
+  originalPath: String,
+  classLoader: ClassLoader,
+  aClass: Class<*>?,
+  toolTip: Supplier<String?>? = null,
+  strict: Boolean = false,
+): Icon? {
   var effectiveClassLoader = classLoader
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
   val patchedPath = patchIconPath(originalPath = originalPath, classLoader = effectiveClassLoader)
@@ -424,7 +426,7 @@ internal class LazyIcon(private val producer: Supplier<out Icon>) : CopyableIcon
       IconManager.getInstance().getPlatformIcon(PlatformIcons.Stub)
     }
     this.icon = icon
-    return icon!!
+    return icon
   }
 
   override fun retrieveIcon(): Icon = getOrComputeIcon()
@@ -436,7 +438,7 @@ private val ourDarkReplacer = DarkReplacer(true)
 private val ourLightReplacer = DarkReplacer(false)
 
 // we need an object to propagate the replacer recursively to all parts of a compound icon
-private class DarkReplacer(val dark: Boolean) : IconReplacer {
+private class DarkReplacer(private val dark: Boolean) : IconReplacer {
   override fun replaceIcon(icon: Icon): Icon {
     if (icon is DarkIconProvider) {
       return icon.getDarkIcon(dark)
