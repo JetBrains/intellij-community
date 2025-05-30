@@ -1,7 +1,5 @@
 package com.intellij.cce.visitor
 
-import com.intellij.cce.core.CodeElement
-import com.intellij.cce.core.CodeToken
 import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
 import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
@@ -50,9 +48,8 @@ class JavaChatCodeGenerationVisitorTest : BasePlatformTestCase() {
         INTERNAL_RELEVANT_FILES_PROPERTY to "../../../../../../../src/MyClass.java"
       )
     )
-
-    val actualAdditinalProperties = visitor.getFile().getChildren().map { extractAdditionalProperties(it) }.toSet()
-    assertEquals(expectedAdditionalProperties, actualAdditinalProperties)
+    val actualAdditionalProperties = visitor.getFile().extractAdditionalProperties()
+    assertEquals(expectedAdditionalProperties, actualAdditionalProperties)
   }
 
   private fun prepareFile(): PsiFile {
@@ -80,14 +77,4 @@ class JavaChatCodeGenerationVisitorTest : BasePlatformTestCase() {
     """.trimIndent()
     return myFixture.createPsiFile(code)
   }
-
-  private fun extractAdditionalProperties(codeElement: CodeElement): Map<String, String> {
-    if (codeElement !is CodeToken) {
-      return emptyMap()
-    }
-    return codeElement.properties.additionalPropertyNames().associateWith {
-      codeElement.properties.additionalProperty(it)!!
-    }
-  }
-
 }
