@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
 import com.intellij.openapi.module.Module
@@ -21,6 +21,7 @@ interface DirectoryProjectConfigurator {
     get() = true
 
   /**
+   * Please use [AsyncDirectoryProjectConfigurator] instead.
    * @param isProjectCreatedWithWizard if true, then new project created with wizard, existing folder opened otherwise
    */
   fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean)
