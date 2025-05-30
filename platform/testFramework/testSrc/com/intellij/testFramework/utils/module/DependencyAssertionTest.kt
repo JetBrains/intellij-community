@@ -228,7 +228,7 @@ class DependencyAssertionTest : ModuleAssertionTestCase() {
           DependencyAssertions.assertModuleDependency(module, "library2")
         }
         Assertions.assertThrows(AssertionError::class.java) {
-          DependencyAssertions.assertLibraryDependency(module, "project")
+          DependencyAssertions.assertModuleDependency(module, "project")
         }
 
         DependencyAssertions.assertModuleDependency(module, "project.module1")
@@ -243,7 +243,7 @@ class DependencyAssertionTest : ModuleAssertionTestCase() {
           DependencyAssertions.assertModuleDependency(module, "library2")
         }
         Assertions.assertThrows(AssertionError::class.java) {
-          DependencyAssertions.assertLibraryDependency(module, "project")
+          DependencyAssertions.assertModuleDependency(module, "project")
         }
         Assertions.assertThrows(AssertionError::class.java) {
           DependencyAssertions.assertModuleDependency(module, "project.module1")
@@ -259,7 +259,7 @@ class DependencyAssertionTest : ModuleAssertionTestCase() {
           DependencyAssertions.assertModuleDependency(module, "library2")
         }
         Assertions.assertThrows(AssertionError::class.java) {
-          DependencyAssertions.assertLibraryDependency(module, "project")
+          DependencyAssertions.assertModuleDependency(module, "project")
         }
         Assertions.assertThrows(AssertionError::class.java) {
           DependencyAssertions.assertModuleDependency(module, "project.module1")
