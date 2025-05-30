@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
@@ -38,6 +39,20 @@ fun shortenReferences(
     classShortenStrategy = classShortenStrategy,
     callableShortenStrategy = callableShortenStrategy,
 ).firstNotNullOfOrNull { it.element }
+
+@Suppress("unused")
+@JvmName("shortenReferences")
+@Deprecated(
+    message = "Use shortenReferences instead",
+    replaceWith = ReplaceWith("shortenReferences(element, shortenOptions, classShortenStrategy, callableShortenStrategy)"),
+    level = DeprecationLevel.HIDDEN,
+)
+fun deprecatedShortenReferences(
+    element: KtElement,
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
+): PsiElement? = shortenReferences(element, shortenOptions, classShortenStrategy, callableShortenStrategy)
 
 /**
  * Shortens multiple references at the same time, making sure that references that are already imported will be prioritized over references
@@ -107,6 +122,22 @@ fun shortenReferencesInRange(
 ): List<SmartPsiElementPointer<KtElement>> = allowAnalysisFromWriteActionInEdt(file) {
     collectPossibleReferenceShortenings(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
 }.invokeShortening()
+
+@Suppress("unused")
+@JvmName("shortenReferencesInRange")
+@Deprecated(
+    message = "Use shortenReferencesInRange instead",
+    replaceWith = ReplaceWith("shortenReferencesInRange(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)"),
+    level = DeprecationLevel.HIDDEN,
+)
+fun deprecatedShortenReferencesInRange(
+    file: KtFile,
+    selection: TextRange = file.textRange,
+    shortenOptions: ShortenOptions = ShortenOptions.DEFAULT,
+    classShortenStrategy: (KaClassLikeSymbol) -> ShortenStrategy = ShortenStrategy.defaultClassShortenStrategy,
+    callableShortenStrategy: (KaCallableSymbol) -> ShortenStrategy = ShortenStrategy.defaultCallableShortenStrategy,
+): PsiElement? = shortenReferencesInRange(file, selection, shortenOptions, classShortenStrategy, callableShortenStrategy)
+    .firstNotNullOfOrNull { it.element }
 
 /**
  * Shortens the references specified in [ShortenCommand] and inserts needed imports
