@@ -18,12 +18,12 @@ import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase
 
 internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPluginXmlInspectionBase() {
 
-  private val moduleNameSuffixToRequiredRuntimeDependency = mapOf(
+  private val moduleNameSuffixToRequiredRuntimeDependency = listOf(
     ".frontend" to "intellij.platform.frontend",
     ".backend" to "intellij.platform.backend",
   )
 
-  private val coreModuleNames = moduleNameSuffixToRequiredRuntimeDependency.map { it.value }
+  private val coreModuleNames = moduleNameSuffixToRequiredRuntimeDependency.map { it.second }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     if (element !is IdeaPlugin) return
@@ -31,9 +31,10 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPlugi
     val containingFileName = element.xmlElement?.containingFile?.name ?: return
     if (containingFileName == "plugin.xml") return // do not check in main modules
     if (!containingFileName.startsWith("intellij.")) return // check only intellij modules
-    if (coreModuleNames.any { "$it.xml" == containingFileName }) return
 
     val currentModuleName = containingFileName.removeSuffix(".xml")
+    if (currentModuleName in coreModuleNames) return
+
     for ((moduleNameSuffix, requiredRuntimeDependency) in moduleNameSuffixToRequiredRuntimeDependency) {
       if (currentModuleName.endsWith(moduleNameSuffix)) {
         val dependencies = element.dependencies
