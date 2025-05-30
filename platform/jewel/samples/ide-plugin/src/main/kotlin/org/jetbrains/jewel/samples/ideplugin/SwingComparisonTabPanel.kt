@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
@@ -47,6 +48,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.medium
+import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.EditableListComboBox
@@ -130,6 +132,30 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                 Box {
                     Text(
                         longText,
+                        modifier =
+                            Modifier.width(
+                                with(LocalDensity.current) {
+                                    // Guesstimate how wide this should be ? we can't tell it to be
+                                    // "fill", as it crashes natively
+                                    JewelTheme.defaultTextStyle.fontSize.toDp() * 60
+                                }
+                            ),
+                    )
+                }
+            }
+        }
+
+        row("Long editor text (Swing)") {
+            text(longText, maxLineLength = 100).applyToComponent {
+                font = retrieveEditorColorScheme().getFont(EditorFontType.PLAIN)
+            }
+        }
+        row("Long editor text (Compose)") {
+            compose {
+                Box {
+                    Text(
+                        longText,
+                        style = JewelTheme.editorTextStyle,
                         modifier =
                             Modifier.width(
                                 with(LocalDensity.current) {
