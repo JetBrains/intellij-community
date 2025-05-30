@@ -6504,6 +6504,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("applicabilityRange.kt")
+        public void testApplicabilityRange() throws Exception {
+            runTest("testData/inspectionsLocal/javaMapForEach/applicabilityRange.kt");
+        }
+
         @TestMetadata("destructuringDeclaration.kt")
         public void testDestructuringDeclaration() throws Exception {
             runTest("testData/inspectionsLocal/javaMapForEach/destructuringDeclaration.kt");

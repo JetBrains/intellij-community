@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -22,26 +21,16 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions.Companion.isLiteralValue
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtPostfixExpression
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtReturnExpression
-import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
-import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
 
 class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, CallChainConversion>() {
     override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainConversion): String {
@@ -154,7 +143,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     private fun isAppliedOnMapReceiver(firstCall: KaCallInfo): Boolean {
         val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type
             ?: return false
-        return extensionReceiverType.isSubTypeOfClassId(ClassId.Companion.topLevel(StandardNames.FqNames.map))
+        return extensionReceiverType.isSubtypeOf(StandardClassIds.Map)
     }
 
     context(KaSession)
@@ -162,7 +151,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
         if (!conversion.replacement.startsWith(CallChainConversions.JOIN_TO)) return false
         val lambdaArgSignature = firstCall.lastFunctionalArgumentSignatureOrNull() ?: return false
         val lambdaType = lambdaArgSignature.returnType as? KaFunctionType ?: return false
-        return !lambdaType.returnType.isSubTypeOfClassId(ClassId.Companion.topLevel(StandardNames.FqNames.charSequence.toSafe()))
+        return !lambdaType.returnType.isSubtypeOf(ClassId.Companion.topLevel(StandardNames.FqNames.charSequence.toSafe()))
     }
 
     /**
@@ -209,11 +198,6 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     // endregion
 
     // region AA utilities
-    context(KaSession)
-    private fun KaType.isSubTypeOfClassId(wantedType: ClassId) =
-      this is KaClassType && classId == wantedType ||
-      allSupertypes.any { type -> type is KaClassType && type.classId == wantedType }
-
     context(KaSession)
     private fun KaCallInfo.isCalling(fqName: FqName): Boolean =
         successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.getFqNameIfPackageOrNonLocal() == fqName
