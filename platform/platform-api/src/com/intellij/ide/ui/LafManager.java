@@ -60,6 +60,10 @@ public abstract class LafManager {
 
   public abstract void repaintUI();
 
+  @ApiStatus.Internal
+  public void checkRestart() {
+  }
+
   /**
    * @return if autodetect is supported and enabled
    */

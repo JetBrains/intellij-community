@@ -58,6 +58,7 @@
       "selectionInactiveBackground": "SelectionInactive"
     },
 
+    "Island": 1,
     "Island.arc": 20,
 
     "MainWindow.background": "BackgroundLight",

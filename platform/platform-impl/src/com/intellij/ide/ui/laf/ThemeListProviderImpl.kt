@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.TargetUIType
 import com.intellij.ide.ui.ThemeListProvider
-import com.intellij.openapi.application.impl.islands.IslandsUICustomization
 import com.intellij.openapi.editor.colors.Groups
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
@@ -48,14 +47,11 @@ private class ThemeListProviderImpl : ThemeListProvider {
         else customThemes.add(info)
       }
     }
-
-    if (IslandsUICustomization.isOneIslandEnabled) {
+    else if (ExperimentalUI.isNewUI()) {
       uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.ISLAND).forEach { info ->
         if (!info.isThemeFromPlugin) islandUiThemes.add(info)
         else customThemes.add(info)
       }
-    }
-    if (IslandsUICustomization.isManyIslandEnabled) {
       uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.ISLANDS).forEach { info ->
         if (!info.isThemeFromPlugin) islandsUiThemes.add(info)
         else customThemes.add(info)

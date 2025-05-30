@@ -49,6 +49,11 @@ class UIThemeProvider {
   @JvmField
   var targetUI: TargetUIType = TargetUIType.UNSPECIFIED
 
+  @Internal
+  @Attribute("restartRequired")
+  @JvmField
+  var isRestartRequired: Boolean = false
+
   @Throws(IOException::class)
   @Internal
   fun getThemeJson(pluginDescriptor: PluginDescriptor): ByteArray? {

@@ -54,6 +54,9 @@ interface UIThemeLookAndFeelInfo  {
    */
   val providerClassLoader: ClassLoader
 
+  @Internal
+  fun isRestartRequired(): Boolean = false
+
   /**
    * Installs this theme by applying theme-specific settings to the provided UIDefaults.
    * This includes setting up icon patchers, SVG color patchers, and background images.

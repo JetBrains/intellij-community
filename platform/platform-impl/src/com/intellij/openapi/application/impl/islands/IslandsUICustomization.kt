@@ -1,24 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.plugins.PluginManagerConfigurable
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.laf.UiThemeProviderListManager
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.ui.Divider
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splittable
 import com.intellij.openapi.util.registry.Registry
@@ -40,74 +31,28 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.geom.RoundRectangle2D
-import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JLayeredPane
 import javax.swing.UIManager
 
 internal class IslandsUICustomization : InternalUICustomization() {
-  companion object {
-    val isIslandsAvailable: Boolean
-      get() {
-        return Registry.`is`("idea.islands.enabled", false) && !Registry.`is`("llm.riderNext.enabled", false)
-      }
+  private val isIslandsAvailable = !Registry.`is`("llm.riderNext.enabled", false)
 
-    val isIslandsEnabled: Boolean = isIslandsAvailable && getIslandsType() != "default"
-
-    val isOneIslandEnabled: Boolean = isIslandsAvailable && getIslandsType() == "island"
-
-    val isManyIslandEnabled: Boolean = isIslandsAvailable && getIslandsType() == "islands"
-
-    fun getIslandsType(): String = PropertiesComponent.getInstance().getValue("idea.islands.type", "default")
-
-    fun setIslandsType(type: String) {
-      if (type == getIslandsType()) {
-        return
-      }
-
-      PropertiesComponent.getInstance().setValue("idea.islands.type", type)
-
-      val uiThemeManager = UiThemeProviderListManager.getInstance()
-      val isLight = JBColor.isBright()
-
-      val editorScheme: String
-      var newTheme = when (type) {
-        "island" -> {
-          editorScheme = if (isLight) "Light" else "Island Dark"
-          uiThemeManager.findThemeById(if (isLight) "One Island Light" else "One Island Dark")
-        }
-        "islands" -> {
-          editorScheme = if (isLight) "Light" else "Island Dark"
-          uiThemeManager.findThemeById(if (isLight) "Many Islands Light" else "Many Islands Dark")
-        }
-        else -> {
-          editorScheme = if (isLight) "Light" else "Dark"
-          uiThemeManager.findThemeById(if (isLight) "ExperimentalLight" else "ExperimentalDark")
-        }
-      }
-
-      val lafManager = LafManager.getInstance()
-
-      if (newTheme == null) {
-        newTheme = if (isLight) lafManager.defaultLightLaf else lafManager.defaultDarkLaf
-        lafManager.setCurrentLookAndFeel(newTheme!!, true)
-      }
-      else {
-        lafManager.setCurrentLookAndFeel(newTheme, true)
-      }
-
-      val colorsManager = EditorColorsManager.getInstance()
-      newTheme.installEditorScheme(colorsManager.getScheme(editorScheme) ?: colorsManager.defaultScheme)
-
-      if (PluginManagerConfigurable.showRestartDialog(IdeBundle.message("dialog.title.restart.required"), Function {
-          IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
-                            ApplicationNamesInfo.getInstance().fullProductName)
-        }) == Messages.YES) {
-        ApplicationManagerEx.getApplicationEx().restart(true)
-      }
+  private val isOneIslandEnabled: Boolean
+    get() {
+      return isIslandsAvailable && JBUI.getInt("Island", 0) == 1
     }
-  }
+
+  private val isManyIslandEnabled: Boolean
+    get() {
+      return isIslandsAvailable && JBUI.getInt("Islands", 0) == 1
+    }
+
+  private val isIslandsEnabled: Boolean
+    get() {
+      return isOneIslandEnabled || isManyIslandEnabled
+    }
 
   private val isIslandsGradientEnabled: Boolean = Registry.`is`("idea.islands.gradient.enabled", true)
 
