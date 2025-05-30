@@ -880,7 +880,7 @@ public final class PsiUtil extends PsiUtilCore {
     PsiClass aClass = result.getElement();
     if (aClass == null) return type;
     PsiClassType updatedType = getSubstitutorWithWildcardsCaptured(context, result);
-    return updatedType == null ? type : updatedType;
+    return updatedType == null ? type : updatedType.withNullability(type.getNullability());
   }
 
   /**

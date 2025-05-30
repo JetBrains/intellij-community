@@ -247,4 +247,58 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertEquals("X<java.lang.String>", type.getCanonicalText());
     assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
   }
+
+  public void testVariableTypeByExpressionType() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.Nullable;
+      import org.jetbrains.annotations.NotNull;
+      
+      final class X<T> {
+        static void test(@Nullable String @NotNull [] x) {
+          <caret>x;
+        }
+      }
+      """);
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+    assertEquals("NULLABLE (@Nullable)", type.getDeepComponentType().getNullability().toString());
+    type = GenericsUtil.getVariableTypeByExpressionType(type);
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+    assertEquals("NULLABLE (@Nullable)", type.getDeepComponentType().getNullability().toString());
+  }
+
+  public void testEliminateWildcards() {
+    PsiType type = configureAndGetFieldType("""
+      import org.jetbrains.annotations.Nullable;
+      import org.jetbrains.annotations.NotNull;
+      import java.util.List;
+      
+      final class X<T> {
+        @NotNull List<? extends @Nullable CharSequence> x = List.of();
+      }
+      """);
+    assertEquals("java.util.List<? extends java.lang.CharSequence>", type.getCanonicalText());
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+    assertEquals("NULLABLE (@Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
+    type = GenericsUtil.eliminateWildcards(type);
+    assertEquals("java.util.List<java.lang.CharSequence>", type.getCanonicalText());
+    assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
+    assertEquals("NULLABLE (@Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
+  }
+
+  public void testEliminateWildcardsArray() {
+    PsiType type = configureAndGetFieldType("""
+      import org.jetbrains.annotations.Nullable;
+      import org.jetbrains.annotations.NotNull;
+      
+      final class X<T> {
+        @NotNull String @Nullable [] x = {};
+      }
+      """);
+    assertEquals("NULLABLE (@Nullable)", type.getNullability().toString());
+    assertEquals("NOT_NULL (@NotNull)", type.getDeepComponentType().getNullability().toString());
+    type = GenericsUtil.eliminateWildcards(type);
+    assertEquals("NULLABLE (@Nullable)", type.getNullability().toString());
+    assertEquals("NOT_NULL (@NotNull)", type.getDeepComponentType().getNullability().toString());
+  }
+
 }

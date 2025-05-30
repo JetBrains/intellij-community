@@ -296,7 +296,8 @@ public final class GenericsUtil {
     PsiType deepComponentType = type.getDeepComponentType();
     if (deepComponentType instanceof PsiCapturedWildcardType) {
       type = PsiTypesUtil.createArrayType(((PsiCapturedWildcardType)deepComponentType).getUpperBound(),
-                                          type.getArrayDimensions());
+                                          type.getArrayDimensions())
+        .withNullability(type.getNullability());
     }
     PsiType transformed = type.accept(new PsiTypeVisitor<PsiType>() {
       @Override
@@ -307,7 +308,8 @@ public final class GenericsUtil {
         if (type instanceof PsiWildcardType) {
           type = ((PsiWildcardType)type).getBound();
         }
-        return type != null ? type.createArrayType().annotate(arrayType.getAnnotationProvider()) : arrayType;
+        return type != null ? type.createArrayType()
+          .annotate(arrayType.getAnnotationProvider()).withNullability(arrayType.getNullability()) : arrayType;
       }
 
       @Override
@@ -380,7 +382,8 @@ public final class GenericsUtil {
         PsiManager manager = aClass.getManager();
         PsiType result = JavaPsiFacade.getElementFactory(manager.getProject())
           .createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass))
-          .annotate(TypeAnnotationProvider.Static.create(applicableAnnotations));
+          .annotate(TypeAnnotationProvider.Static.create(applicableAnnotations))
+          .withNullability(classType.getNullability());
         if (toExtend) result = PsiWildcardType.createExtends(manager, result);
         return result;
       }
@@ -445,13 +448,14 @@ public final class GenericsUtil {
 
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
-        type = factory.createType(aClass, substitutor).annotate(classType.getAnnotationProvider());
+        type = factory.createType(aClass, substitutor).annotate(classType.getAnnotationProvider())
+          .withNullability(classType.getNullability());
       }
     }
     else if (type instanceof PsiArrayType) {
       PsiType component = eliminateWildcards(((PsiArrayType)type).getComponentType(), false);
       PsiType newArray = type instanceof PsiEllipsisType ? new PsiEllipsisType(component) : new PsiArrayType(component);
-      return newArray.annotate(type.getAnnotationProvider());
+      return newArray.annotate(type.getAnnotationProvider()).withNullability(type.getNullability());
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();
