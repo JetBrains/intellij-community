@@ -1371,6 +1371,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     getThreadingSupport().setWriteLockReacquisitionListener(app.myLockDispatcherListener);
     getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
     SwingUtilities.invokeLater(() -> {
+      SuvorovProgress.INSTANCE.init(app);
       getThreadingSupport().setLockAcquisitionInterceptor((deferred) -> {
         SuvorovProgress.dispatchEventsUntilComputationCompletes(deferred);
         return Unit.INSTANCE;

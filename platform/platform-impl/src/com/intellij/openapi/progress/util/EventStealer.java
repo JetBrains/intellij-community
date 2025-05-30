@@ -94,30 +94,4 @@ class EventStealer {
       event.dispatch();
     }
   }
-
-  public void dispatchInvocationEventsForDuration(long durationMillis) throws InterruptedException {
-    long initialStamp = System.nanoTime();
-    while (true) {
-      long elapsedSinceStartNanos = System.nanoTime() - initialStamp;
-      long sleep = durationMillis - (elapsedSinceStartNanos / 1_000_000);
-      if (sleep <= 0) return;
-      InvocationEvent event = myInvocationEvents.poll(sleep, TimeUnit.MILLISECONDS);
-      if (event == null || event.toString().contains("DispatchTerminationEvent")) return;
-
-      event.dispatch();
-    }
-  }
-
-  static class DispatchTerminationEvent implements Runnable {
-    public static final DispatchTerminationEvent INSTANCE = new DispatchTerminationEvent();
-
-    @Override
-    public void run() {
-    }
-
-    @Override
-    public String toString() {
-      return "DispatchTerminationEvent";
-    }
-  }
 }

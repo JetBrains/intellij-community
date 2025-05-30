@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.util
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeEventQueue
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Disposer
@@ -13,9 +14,11 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
-import java.awt.EventQueue
+import java.awt.AWTEvent
 import java.awt.KeyboardFocusManager
+import java.awt.event.InputEvent
 import java.awt.event.InvocationEvent
+import java.util.concurrent.LinkedBlockingQueue
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
@@ -41,16 +44,19 @@ import javax.swing.SwingUtilities
 @ApiStatus.Internal
 object SuvorovProgress {
 
+  @Volatile
+  private lateinit var eternalStealer: EternalEventStealer
+
+  fun init(disposable: Disposable) {
+    eternalStealer = EternalEventStealer(disposable)
+  }
+
   @JvmStatic
   fun dispatchEventsUntilComputationCompletes(awaitedValue: Deferred<*>) {
     val showingDelay = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger()
-    val stealer = processInvocationEventsWithoutDialog(awaitedValue, showingDelay)
+    processInvocationEventsWithoutDialog(awaitedValue, showingDelay)
 
     if (awaitedValue.isCompleted) {
-      stealer.dispatchAllExistingEvents()
-      stealer.drainUndispatchedInputEvents().forEach {
-        IdeEventQueue.getInstance().doPostEvent(it, true)
-      }
       return
     }
 
@@ -107,44 +113,14 @@ object SuvorovProgress {
   }
 
   @OptIn(InternalCoroutinesApi::class)
-  private fun processInvocationEventsWithoutDialog(awaitedValue: Deferred<*>, showingDelay: Int): EventStealer {
-    val disposable = Disposer.newDisposable()
-    val stealer = EventStealer(disposable) {}
+  private fun processInvocationEventsWithoutDialog(awaitedValue: Deferred<*>, showingDelay: Int) {
+    eternalStealer.enable()
     try {
-      if (awaitedValue.isCompleted) {
-        return stealer
-      }
-      repostAllEvents()
-      awaitedValue.invokeOnCompletion {
-        // when the awaited value is ready, we need to signal the event dispatcher that it needs to stop waiting
-        EventQueue.invokeLater(EventStealer.DispatchTerminationEvent.INSTANCE)
-      }
-      if (awaitedValue.isCompleted) {
-        return stealer
-      }
-      stealer.dispatchInvocationEventsForDuration(showingDelay.toLong())
+      eternalStealer.dispatchAllEventsForTimeout(showingDelay.toLong(), awaitedValue)
     }
     finally {
-      Disposer.dispose(disposable)
+      eternalStealer.disable()
     }
-    return stealer
-  }
-
-  /**
-   * Protection against race condition: imagine someone posted locking event, and then MarkedRunnable.
-   * locking event will not intercept MarkedRunnable because event stealer is not installed
-   */
-  private fun repostAllEvents() {
-    val queue = IdeEventQueue.getInstance()
-    val events = generateSequence {
-      if (queue.peekEvent() != null) {
-        IdeEventQueue.getInstance().nextEvent
-      }
-      else {
-        null
-      }
-    }.toList()
-    events.forEach { event -> queue.doPostEvent(event, true) }
   }
 
   private fun showSpinningProgress(awaitedValue: Deferred<*>) {
@@ -222,5 +198,114 @@ object SuvorovProgress {
     override fun toString(): String {
       return NAME
     }
+  }
+}
+
+/**
+ * High-performance interceptor of AWT events
+ *
+ * We instantiate this stealer and register it as postEventHook once to avoid complex interaction with Disposer on each entry to SuvorovProgress.
+ * It also uses monitors instead of parks to avoid overhead on thread switches.
+ */
+private class EternalEventStealer(disposable: Disposable) {
+  @Volatile
+  var enabled = false
+
+  val inputEventList = LinkedBlockingQueue<InputEvent>()
+  val invocationEventList = ArrayList<InvocationEvent>(16)
+  init {
+    IdeEventQueue.getInstance().addPostEventListener(
+      { event ->
+        if (!enabled) {
+          return@addPostEventListener false
+        }
+        if (event is InputEvent) {
+          inputEventList.add(event)
+          return@addPostEventListener true
+        } else if (event is InvocationEvent && EventStealer.isUrgentInvocationEvent(event)) {
+          synchronized(this) {
+            invocationEventList.add(event)
+            (this as Object).notifyAll()
+          }
+          return@addPostEventListener true
+        }
+        false
+   }, disposable)
+  }
+
+  fun enable() {
+    enabled = true
+    repostAllEvents()
+  }
+
+  fun dispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {
+    val initialMark = System.nanoTime()
+
+    deferred.invokeOnCompletion {
+      synchronized(this@EternalEventStealer) {
+        (this@EternalEventStealer as Object).notifyAll()
+      }
+    }
+
+    synchronized(this) {
+      while (true) {
+        val currentMark = System.nanoTime()
+        val elapsedSinceStartNanos = currentMark - initialMark
+        val toSleep = timeoutMillis - (elapsedSinceStartNanos / 1_000_000)
+        if (toSleep <= 0) {
+          return
+        }
+        if (deferred.isCompleted) {
+          return
+        }
+        try {
+          (this as Object).wait(toSleep)
+        } catch (_ : InterruptedException) {
+          // we still return locking result regardless of interruption
+          Thread.currentThread().interrupt()
+        }
+        var eventIndex = 0
+        while (eventIndex < invocationEventList.size) {
+          val event = invocationEventList[eventIndex]
+          eventIndex++
+          event.dispatch()
+        }
+        invocationEventList.clear()
+        if (!deferred.isActive) {
+          return
+        }
+      }
+    }
+  }
+
+  fun disable() {
+    enabled = false
+    inputEventList.forEach {
+      IdeEventQueue.getInstance().postEvent(it)
+    }
+    inputEventList.clear()
+    invocationEventList.clear()
+  }
+}
+
+
+/**
+ * Protection against race condition: imagine someone posted an event that wants lock, and then they post [SuvorovProgress.ForcedWriteActionRunnable].
+ * The second event will go into the main event queue because event stealer was not installed, but we need to execute it very quickly.
+ * todo: we might get some performance if we catch [SuvorovProgress.ForcedWriteActionRunnable] in [EternalEventStealer]
+ *  and execute it when [EternalEventStealer] starts dispatching events.
+ *  This way we would avoid iterating over all stored events
+ */
+private fun repostAllEvents() {
+  val queue = IdeEventQueue.getInstance()
+  val events = ArrayList<AWTEvent>()
+  while (true) {
+    queue.peekEvent() ?: break
+    val actualEvent = queue.nextEvent
+    events.add(actualEvent)
+  }
+  var i = 0
+  while (i < events.size) {
+    queue.doPostEvent(events[i++], true)
   }
 }
