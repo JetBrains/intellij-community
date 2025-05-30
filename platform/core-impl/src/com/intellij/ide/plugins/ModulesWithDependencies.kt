@@ -174,7 +174,8 @@ private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
  * Specifies the list of content modules which was recently extracted from the main module of the core plugin and may have external usages.
  * Since such modules were loaded by the core classloader before, it wasn't necessary to specify any dependencies to use classes from them.
  * To avoid breaking compatibility, dependencies on these modules are automatically added to plugins which define dependency on the platform using 
- * `<depends>com.intellij.modules.platform</depends` or `<depends>com.intellij.modules.lang</depends` tags.
+ * `<depends>com.intellij.modules.platform</depends>` or `<depends>com.intellij.modules.lang</depends>` tags.
+ * See [this article](https://youtrack.jetbrains.com/articles/IJPL-A-956#keep-compatibility-with-external-plugins) for more details.
  */
 private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins = listOf(
   "intellij.platform.tasks.impl",
