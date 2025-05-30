@@ -11,18 +11,12 @@ import org.jetbrains.plugins.terminal.util.ShellType
 
 class ShellRuntimeContextProviderReworkedImpl(
   private val project: Project,
-  sessionModel: TerminalSessionModel,
+  private val sessionModel: TerminalSessionModel,
 ) : ShellRuntimeContextProvider {
-  @Volatile
-  private var curDirectory: String = ""
-
-  init {
-    curDirectory = sessionModel.terminalState.value.currentDirectory
-  }
 
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return ShellRuntimeContextReworkedImpl(
-      curDirectory,
+      sessionModel.terminalState.value.currentDirectory,
       typedPrefix,
       ShellType.ZSH.toShellName()
     ).apply {
