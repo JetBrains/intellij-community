@@ -22,6 +22,7 @@ import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCol
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.CoroutineScope
@@ -93,7 +94,9 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
       uiServices.expandProjectTreeView(project)
       withBackgroundProgress(project, PyBundle.message("python.project.model.progress.title.generating"), cancellable = true) {
-        typeSpecificSettings.generateProject(module, baseDir, sdk)
+        typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
+          uiServices.errorSink.emit(it)
+        }
       }
       uiServices.expandProjectTreeView(project)
     }
