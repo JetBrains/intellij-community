@@ -10,5 +10,6 @@
     <applicationService serviceInterface="com.intellij.platform.project.ProjectEntitiesStorage"
                         serviceImplementation="com.intellij.platform.project.backend.BackendProjectEntitiesStorage"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.module.ModuleStateApiProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.OpenFileChooserApiProvider"/>
   </extensions>
 </idea-plugin>
