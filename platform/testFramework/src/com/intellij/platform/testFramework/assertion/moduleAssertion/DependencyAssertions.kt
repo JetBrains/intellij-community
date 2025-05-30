@@ -76,8 +76,7 @@ object DependencyAssertions {
       .find { it.dependencyName == name }
       .let { dependency ->
         Assertions.assertNotNull(dependency, "Cannot find '$name' (${type.simpleName}) dependency in '${module.name}' module")
-        Assertions.assertEquals(name, dependency!!.dependencyName)
-        assertion(dependency)
+        assertion(dependency!!)
       }
   }
 }

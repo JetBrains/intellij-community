@@ -65,8 +65,7 @@ object ModuleAssertions {
       .find { it.name == name }
       .let { module ->
         Assertions.assertNotNull(module, "Cannot find '$name' module")
-        Assertions.assertEquals(name, module!!.name)
-        assertion(module)
+        assertion(module!!)
       }
   }
 }
