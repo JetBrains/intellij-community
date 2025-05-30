@@ -45,7 +45,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspectionTest : JavaCod
   private fun testReportDependency(frontendOrBackend: String) {
     val testedFile = myFixture.addXmlFile("intellij.test.feature.$frontendOrBackend.xml", """
       <idea-plugin>
-        <<error descr="The current module ('intellij.test.feature.$frontendOrBackend') is a .$frontendOrBackend module, but the dependency on 'intellij.platform.$frontendOrBackend' is missing">dependencies</error>>
+        <<error descr="The name of the current module 'intellij.test.feature.$frontendOrBackend' ends with '.$frontendOrBackend', but the dependency on 'intellij.platform.$frontendOrBackend' is missing">dependencies</error>>
           <!-- no dependency -->
         </dependencies>
       </idea-plugin>
@@ -56,7 +56,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspectionTest : JavaCod
 
   private fun testReportDependencyWhenDependenciesElementDoesNotExist(frontendOrBackend: String) {
     val testedFile = myFixture.addXmlFile("intellij.test.feature.$frontendOrBackend.xml", """
-      <<error descr="The current module ('intellij.test.feature.$frontendOrBackend') is a .$frontendOrBackend module, but the dependency on 'intellij.platform.$frontendOrBackend' is missing">idea-plugin</error>>
+      <<error descr="The name of the current module 'intellij.test.feature.$frontendOrBackend' ends with '.$frontendOrBackend', but the dependency on 'intellij.platform.$frontendOrBackend' is missing">idea-plugin</error>>
         <!-- no <dependencies> -->
       </idea-plugin>
       """.trimIndent()
@@ -142,7 +142,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspectionTest : JavaCod
     )
     val testedFile = myFixture.addXmlFile("intellij.test.cyclic.$frontendOrBackend/intellij.test.cyclic.$frontendOrBackend.xml", """
       <idea-plugin>
-        <<error descr="The current module ('intellij.test.cyclic.$frontendOrBackend') is a .$frontendOrBackend module, but the dependency on 'intellij.platform.$frontendOrBackend' is missing">dependencies</error>>
+        <<error descr="The name of the current module 'intellij.test.cyclic.$frontendOrBackend' ends with '.$frontendOrBackend', but the dependency on 'intellij.platform.$frontendOrBackend' is missing">dependencies</error>>
           <module name="intellij.transitive.dependency"/>
         </dependencies>
       </idea-plugin>
