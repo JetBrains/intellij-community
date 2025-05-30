@@ -22,7 +22,6 @@ public final class JavaTypeNullabilityUtil {
    * Computes the class type nullability
    * 
    * @param type type to compute nullability for
-   * @param visited set of visited types, used to avoid infinite recursion
    * @return type nullability
    */
   public static @NotNull TypeNullability getTypeNullability(@NotNull PsiClassType type) {
@@ -53,7 +52,7 @@ public final class JavaTypeNullabilityUtil {
       if (extendTypes.length == 0 && checkContainer) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(typeParameter.getProject());
         // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
-        NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(typeParameter);
+        NullabilityAnnotationInfo typeUseNullability = manager == null ? null : manager.findDefaultTypeUseNullability(typeParameter);
         if (typeUseNullability != null) {
           return typeUseNullability.toTypeNullability().inherited();
         }
@@ -82,8 +81,9 @@ public final class JavaTypeNullabilityUtil {
   public static @NotNull TypeNullability getNullabilityFromAnnotations(@NotNull PsiAnnotation @NotNull [] annotations) {
     for (PsiAnnotation annotation : annotations) {
       String qualifiedName = annotation.getQualifiedName();
-      Optional<Nullability> optionalNullability = NullableNotNullManager.getInstance(annotation.getProject())
-        .getAnnotationNullability(qualifiedName);
+      NullableNotNullManager manager = NullableNotNullManager.getInstance(annotation.getProject());
+      if (manager == null) continue;
+      Optional<Nullability> optionalNullability = manager.getAnnotationNullability(qualifiedName);
       if (optionalNullability.isPresent()) {
         Nullability nullability = optionalNullability.get();
         return new TypeNullability(nullability, new NullabilitySource.ExplicitAnnotation(annotation));
