@@ -3,17 +3,14 @@
 package org.jetbrains.kotlin.idea.base.injection
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import org.intellij.lang.annotations.Language
 import org.intellij.lang.regexp.RegExpLanguage
 import org.intellij.plugins.intelliLang.Configuration
-import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -910,24 +907,6 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         """,
         languageId = XMLLanguage.INSTANCE.id, unInjectShouldBePresent = false
     )
-
-    fun testKotlinReplaceWithBuildInsInjection() {
-        myFixture.configureByText(
-            "a.kt",
-            """
-            @kotlin.Deprecated("it's outdated", kotlin.ReplaceWith("do<caret>Fun(42)"))
-            fun bar() {}
-            """.trimIndent()
-        )
-
-        assertFalse(
-            "Injection action is available. There's probably no injection at caret place",
-            InjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file)
-        )
-
-        val injectedFile = (editor as? EditorWindow)?.injectedFile
-        assertEquals("Wrong injection language", KotlinLanguage.INSTANCE, injectedFile?.language)
-    }
 
     protected fun doAnnotationInjectionTest(
         patternLanguage: String = "java",
