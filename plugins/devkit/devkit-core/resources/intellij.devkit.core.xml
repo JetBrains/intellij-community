@@ -513,7 +513,8 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.CanBeDumbAwareInspection"
                      key="inspection.can.be.dumb.aware.name"/>
 
-    <localInspection language="XML" applyToDialects="false"
+    <localInspection isInternal="true"
+                     language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="true" level="ERROR"
