@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -10,7 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * If a request is not applicable, the listener doesn't call any methods on all the events connected to the request.
  */
-internal abstract class InlineCompletionFilteringEventListener : InlineCompletionEventAdapter {
+@ApiStatus.Internal
+abstract class InlineCompletionFilteringEventListener : InlineCompletionEventAdapter {
 
   private val isApplicable = AtomicBoolean(true)
 
