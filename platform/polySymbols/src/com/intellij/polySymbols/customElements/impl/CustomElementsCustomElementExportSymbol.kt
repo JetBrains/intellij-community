@@ -19,10 +19,10 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val pattern: PolySymbolsPattern,
   override val apiStatus: PolySymbolApiStatus,
 ) : CustomElementsSymbol, StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
-  override val namespace: SymbolNamespace
-    get() = PolySymbol.NAMESPACE_HTML
-  override val kind: SymbolKind
-    get() = PolySymbol.KIND_HTML_ELEMENTS
+
+  override val qualifiedKind: PolySymbolQualifiedKind
+    get() = PolySymbol.HTML_ELEMENTS
+
   override val framework: FrameworkId?
     get() = null
 

@@ -1,18 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.testFramework.query
 
-import com.intellij.util.applyIf
-import com.intellij.polySymbols.testFramework.DebugOutputPrinter
-import com.intellij.polySymbols.PsiSourcedPolySymbol
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
+import com.intellij.polySymbols.PsiSourcedPolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.polySymbols.utils.completeMatch
 import com.intellij.polySymbols.utils.nameSegments
-import java.util.Locale
-import java.util.Stack
+import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.util.applyIf
+import java.util.*
 
 open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
@@ -59,11 +59,11 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
     }
     printObject(topLevel) { level ->
       if (source.pattern != null) {
-        printProperty(level, "matchedName", source.namespace.lowercase(Locale.US) + "/" + source.kind + "/<pattern>")
+        printProperty(level, "matchedName", source.qualifiedKind.toString() + "/<pattern>")
         printProperty(level, "name", source.name)
       }
       else {
-        printProperty(level, "matchedName", source.namespace.lowercase(Locale.US) + "/" + source.kind + "/" + source.name)
+        printProperty(level, "matchedName", source.qualifiedName.toString())
       }
       printProperty(level, "origin", "${source.origin.library}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
       printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
@@ -88,8 +88,9 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
   }
 
 
-  private fun StringBuilder.printSegment(topLevel: Int,
-                                         segment: PolySymbolNameSegment
+  private fun StringBuilder.printSegment(
+    topLevel: Int,
+    segment: PolySymbolNameSegment,
   ): StringBuilder =
     printObject(topLevel) { level ->
       printProperty(level, "name-part", parents.peek().let { if (it.pattern == null) segment.getName(parents.peek()) else "" })

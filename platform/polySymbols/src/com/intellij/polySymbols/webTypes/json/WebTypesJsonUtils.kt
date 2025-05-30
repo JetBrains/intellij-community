@@ -3,19 +3,18 @@ package com.intellij.polySymbols.webTypes.json
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.applyIf
 import com.intellij.polySymbols.*
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_CSS_CLASSES
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_CSS_FUNCTIONS
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_CSS_PARTS
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_CSS_PROPERTIES
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_CSS_PSEUDO_CLASSES
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_CSS_PSEUDO_ELEMENTS
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_HTML_ELEMENTS
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_JS_EVENTS
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_JS_PROPERTIES
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_JS_SYMBOLS
+import com.intellij.polySymbols.PolySymbol.Companion.CSS_CLASSES
+import com.intellij.polySymbols.PolySymbol.Companion.CSS_FUNCTIONS
+import com.intellij.polySymbols.PolySymbol.Companion.CSS_PARTS
+import com.intellij.polySymbols.PolySymbol.Companion.CSS_PROPERTIES
+import com.intellij.polySymbols.PolySymbol.Companion.CSS_PSEUDO_CLASSES
+import com.intellij.polySymbols.PolySymbol.Companion.CSS_PSEUDO_ELEMENTS
+import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
+import com.intellij.polySymbols.PolySymbol.Companion.HTML_ELEMENTS
+import com.intellij.polySymbols.PolySymbol.Companion.JS_EVENTS
+import com.intellij.polySymbols.PolySymbol.Companion.JS_PROPERTIES
+import com.intellij.polySymbols.PolySymbol.Companion.JS_SYMBOLS
 import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_CSS
 import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_HTML
 import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_JS
@@ -26,8 +25,8 @@ import com.intellij.polySymbols.PolySymbol.Companion.PROP_KIND
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_READ_ONLY
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_RUBY_GEMS
 import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_NODE_PACKAGES
+import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_RUBY_GEMS
 import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
@@ -39,14 +38,16 @@ import com.intellij.polySymbols.query.PolySymbolNameConverter
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.utils.NameCaseUtils
 import com.intellij.polySymbols.utils.lastPolySymbol
+import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
 import com.intellij.polySymbols.webTypes.json.NameConversionRulesSingle.NameConverter
+import com.intellij.util.applyIf
 import java.util.*
 import java.util.function.Function
 
-private fun namespaceOf(host: GenericContributionsHost): SymbolNamespace =
+private fun namespaceOf(host: GenericContributionsHost): PolySymbolNamespace =
   when (host) {
     is HtmlContributionsHost -> NAMESPACE_HTML
     is CssContributionsHost -> NAMESPACE_CSS
@@ -54,13 +55,13 @@ private fun namespaceOf(host: GenericContributionsHost): SymbolNamespace =
     else -> throw IllegalArgumentException(host.toString())
   }
 
-internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
+internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<PolySymbolNamespace, PolySymbolKind, List<BaseContribution>>> =
   sequenceOf(css, html)
     .filter { it != null }
     .flatMap { host -> host.collectDirectContributions(framework).mapWith(namespaceOf(host)) }
     .plus(js?.collectDirectContributions() ?: emptySequence())
 
-internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
+internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<PolySymbolNamespace, PolySymbolKind, List<BaseContribution>>> =
   if (this is BaseContribution)
     sequenceOf(this, css, js, html)
       .filter { it != null }
@@ -68,10 +69,10 @@ internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId
   else
     this.collectDirectContributions(framework).mapWith(namespaceOf(this))
 
-private fun Sequence<Pair<SymbolKind, List<BaseContribution>>>.mapWith(namespace: SymbolNamespace): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
+private fun Sequence<Pair<PolySymbolKind, List<BaseContribution>>>.mapWith(namespace: PolySymbolNamespace): Sequence<Triple<PolySymbolNamespace, PolySymbolKind, List<BaseContribution>>> =
   map {
-    if (namespace == NAMESPACE_HTML && it.first == KIND_JS_EVENTS)
-      Triple(NAMESPACE_JS, KIND_JS_EVENTS, it.second)
+    if (namespace == NAMESPACE_HTML && it.first == JS_EVENTS.kind)
+      Triple(JS_EVENTS.namespace, JS_EVENTS.kind, it.second)
     else Triple(namespace, it.first, it.second)
   }
 
@@ -85,19 +86,19 @@ internal const val KIND_HTML_VUE_DIRECTIVES = "vue-directives"
 internal const val KIND_HTML_VUE_DIRECTIVE_ARGUMENT = "argument"
 internal const val KIND_HTML_VUE_DIRECTIVE_MODIFIERS = "modifiers"
 
-private fun GenericContributionsHost.collectDirectContributions(framework: FrameworkId?): Sequence<Pair<SymbolKind, List<BaseContribution>>> =
+private fun GenericContributionsHost.collectDirectContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolKind, List<BaseContribution>>> =
   (when (this) {
     is HtmlContributionsHost -> sequenceOf(
-      Pair(KIND_HTML_ATTRIBUTES, this.attributes),
-      Pair(KIND_HTML_ELEMENTS, this.elements),
-      Pair(KIND_JS_EVENTS, this.events)
+      Pair(HTML_ATTRIBUTES.kind, this.attributes),
+      Pair(HTML_ELEMENTS.kind, this.elements),
+      Pair(JS_EVENTS.kind, this.events)
     ).plus(
       when (this) {
         is Html -> sequenceOf(
-          Pair(if (framework == VUE_FRAMEWORK) KIND_HTML_VUE_LEGACY_COMPONENTS else KIND_HTML_ELEMENTS, this.tags)
+          Pair(if (framework == VUE_FRAMEWORK) KIND_HTML_VUE_LEGACY_COMPONENTS else HTML_ELEMENTS.kind, this.tags)
         )
         is HtmlElement -> sequenceOf(
-          Pair(KIND_JS_EVENTS, this.events)
+          Pair(JS_EVENTS.kind, this.events)
         )
         is HtmlAttribute -> if (this.name.startsWith(VUE_DIRECTIVE_PREFIX) && !this.name.contains(
             ' ') && framework == VUE_FRAMEWORK) {
@@ -113,17 +114,17 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
       }
     )
     is CssContributionsHost -> sequenceOf(
-      Pair(KIND_CSS_CLASSES, this.classes),
-      Pair(KIND_CSS_FUNCTIONS, this.functions),
-      Pair(KIND_CSS_PROPERTIES, this.properties),
-      Pair(KIND_CSS_PSEUDO_CLASSES, this.pseudoClasses),
-      Pair(KIND_CSS_PSEUDO_ELEMENTS, this.pseudoElements),
-      Pair(KIND_CSS_PARTS, this.parts),
+      Pair(CSS_CLASSES.kind, this.classes),
+      Pair(CSS_FUNCTIONS.kind, this.functions),
+      Pair(CSS_PROPERTIES.kind, this.properties),
+      Pair(CSS_PSEUDO_CLASSES.kind, this.pseudoClasses),
+      Pair(CSS_PSEUDO_ELEMENTS.kind, this.pseudoElements),
+      Pair(CSS_PARTS.kind, this.parts),
     )
     is JsContributionsHost -> sequenceOf(
-      Pair(KIND_JS_EVENTS, this.events),
-      Pair(KIND_JS_PROPERTIES, this.properties),
-      Pair(KIND_JS_SYMBOLS, this.symbols),
+      Pair(JS_EVENTS.kind, this.events),
+      Pair(JS_PROPERTIES.kind, this.properties),
+      Pair(JS_SYMBOLS.kind, this.symbols),
     )
     else -> emptySequence()
   })
@@ -131,10 +132,10 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
             .map { (name, list) -> Pair(name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
             .filter { it.second.isNotEmpty() })
 
-private fun JsGlobal.collectDirectContributions(): Sequence<Triple<SymbolNamespace, SymbolKind, List<BaseContribution>>> =
+private fun JsGlobal.collectDirectContributions(): Sequence<Triple<PolySymbolNamespace, PolySymbolKind, List<BaseContribution>>> =
   sequenceOf(
-    Triple(NAMESPACE_JS, KIND_JS_EVENTS, this.events),
-    Triple(NAMESPACE_JS, KIND_JS_SYMBOLS, this.symbols),
+    Triple(NAMESPACE_JS, JS_EVENTS.kind, this.events),
+    Triple(NAMESPACE_JS, JS_SYMBOLS.kind, this.symbols),
   )
     .filter { it.third.isNotEmpty() }
     .plus(additionalProperties.asSequence()
@@ -185,19 +186,23 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedK
       PolySymbolQualifiedKind(it.namespace, it.kind)
     }
 
-internal fun Reference.resolve(name: String,
-                               scope: List<PolySymbolsScope>,
-                               queryExecutor: PolySymbolsQueryExecutor,
-                               virtualSymbols: Boolean = true,
-                               abstractSymbols: Boolean = false): List<PolySymbol> =
+internal fun Reference.resolve(
+  name: String,
+  scope: List<PolySymbolsScope>,
+  queryExecutor: PolySymbolsQueryExecutor,
+  virtualSymbols: Boolean = true,
+  abstractSymbols: Boolean = false,
+): List<PolySymbol> =
   processPolySymbols(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
   }
 
-internal fun Reference.resolve(scope: List<PolySymbolsScope>,
-                               queryExecutor: PolySymbolsQueryExecutor,
-                               virtualSymbols: Boolean = true,
-                               abstractSymbols: Boolean = false): List<PolySymbol> =
+internal fun Reference.resolve(
+  scope: List<PolySymbolsScope>,
+  queryExecutor: PolySymbolsQueryExecutor,
+  virtualSymbols: Boolean = true,
+  abstractSymbols: Boolean = false,
+): List<PolySymbol> =
   processPolySymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
@@ -208,11 +213,13 @@ internal fun Reference.resolve(scope: List<PolySymbolsScope>,
       runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
   }
 
-internal fun Reference.list(scope: List<PolySymbolsScope>,
-                            queryExecutor: PolySymbolsQueryExecutor,
-                            expandPatterns: Boolean,
-                            virtualSymbols: Boolean = true,
-                            abstractSymbols: Boolean = false): List<PolySymbol> =
+internal fun Reference.list(
+  scope: List<PolySymbolsScope>,
+  queryExecutor: PolySymbolsQueryExecutor,
+  expandPatterns: Boolean,
+  virtualSymbols: Boolean = true,
+  abstractSymbols: Boolean = false,
+): List<PolySymbol> =
   processPolySymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
@@ -226,7 +233,7 @@ private fun Reference.processPolySymbols(
   queryExecutor: PolySymbolsQueryExecutor,
   virtualSymbols: Boolean,
   abstractSymbols: Boolean,
-  queryRunner: PolySymbolsQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>
+  queryRunner: PolySymbolsQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>,
 ): List<PolySymbol> {
   ProgressManager.checkCanceled()
   return when (val reference = this.value) {
@@ -257,11 +264,13 @@ private fun Reference.processPolySymbols(
   }
 }
 
-internal fun Reference.codeCompletion(name: String,
-                                      scope: List<PolySymbolsScope>,
-                                      queryExecutor: PolySymbolsQueryExecutor,
-                                      position: Int = 0,
-                                      virtualSymbols: Boolean = true): List<PolySymbolCodeCompletionItem> {
+internal fun Reference.codeCompletion(
+  name: String,
+  scope: List<PolySymbolsScope>,
+  queryExecutor: PolySymbolsQueryExecutor,
+  position: Int = 0,
+  virtualSymbols: Boolean = true,
+): List<PolySymbolCodeCompletionItem> {
   return when (val reference = this.value) {
     is String -> queryExecutor.runCodeCompletionQuery(
       parseWebTypesPath("$reference", scope.lastPolySymbol).withLastSegmentName(name), position,
@@ -482,9 +491,11 @@ internal fun mergeConverters(converters: List<NameConverter>): PolySymbolNameCon
   }
 }
 
-internal fun <T> buildNameConverters(map: Map<String, T>?,
-                                     mapper: (T) -> (PolySymbolNameConverter?),
-                                     addToBuilder: (PolySymbolQualifiedKind, PolySymbolNameConverter) -> Unit) {
+internal fun <T> buildNameConverters(
+  map: Map<String, T>?,
+  mapper: (T) -> (PolySymbolNameConverter?),
+  addToBuilder: (PolySymbolQualifiedKind, PolySymbolNameConverter) -> Unit,
+) {
   for ((key, value) in map?.entries ?: return) {
     val path = key.splitToSequence('/')
                  .filter { it.isNotEmpty() }
@@ -529,12 +540,12 @@ internal fun List<PolySymbolQualifiedName>.withLastSegmentName(name: String) =
   else
     this
 
-internal fun String.asWebTypesSymbolNamespace(): SymbolNamespace? =
+internal fun String.asWebTypesSymbolNamespace(): PolySymbolNamespace? =
   takeIf { it == NAMESPACE_JS || it == NAMESPACE_HTML || it == NAMESPACE_CSS }
 
 private fun parseWebTypesPath(path: List<String>, context: PolySymbol?): List<PolySymbolQualifiedName> {
   var i = 0
-  var prevNamespace: SymbolNamespace = context?.namespace ?: NAMESPACE_HTML
+  var prevNamespace: PolySymbolNamespace = context?.namespace ?: NAMESPACE_HTML
   val result = mutableListOf<PolySymbolQualifiedName>()
   while (i < path.size) {
     var namespace = path[i].asWebTypesSymbolNamespace()
@@ -548,7 +559,7 @@ private fun parseWebTypesPath(path: List<String>, context: PolySymbol?): List<Po
     if (i >= path.size) break
     val kind = path[i++]
     val name = if (i >= path.size) "" else path[i++]
-    result.add(PolySymbolQualifiedName(namespace, kind, name))
+    result.add(PolySymbolQualifiedName(PolySymbolQualifiedKind(namespace, kind), name))
   }
   return result
 }

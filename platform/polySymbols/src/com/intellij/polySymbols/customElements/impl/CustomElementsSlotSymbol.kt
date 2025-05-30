@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.customElements.impl
 
-import com.intellij.polySymbols.SymbolKind
-import com.intellij.polySymbols.SymbolNamespace
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.json.Slot
 
@@ -13,11 +12,8 @@ class CustomElementsSlotSymbol private constructor(
   origin: CustomElementsJsonOrigin,
 ) : CustomElementsContributionSymbol<Slot>(name, slot, origin) {
 
-  override val namespace: SymbolNamespace
-    get() = PolySymbol.NAMESPACE_HTML
-
-  override val kind: SymbolKind
-    get() = PolySymbol.KIND_HTML_SLOTS
+  override val qualifiedKind: PolySymbolQualifiedKind
+    get() = PolySymbol.HTML_SLOTS
 
   companion object {
     fun create(slot: Slot, origin: CustomElementsJsonOrigin): CustomElementsSlotSymbol? {

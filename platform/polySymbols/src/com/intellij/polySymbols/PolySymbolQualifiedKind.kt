@@ -4,10 +4,10 @@ package com.intellij.polySymbols
 import com.intellij.openapi.util.NlsSafe
 
 data class PolySymbolQualifiedKind(
-  val namespace: @NlsSafe SymbolNamespace,
-  val kind: @NlsSafe SymbolKind,
+  val namespace: @NlsSafe PolySymbolNamespace,
+  val kind: @NlsSafe PolySymbolKind,
 ) {
-  fun withName(name: String): PolySymbolQualifiedName = PolySymbolQualifiedName(namespace, kind, name)
+  fun withName(name: String): PolySymbolQualifiedName = PolySymbolQualifiedName(this, name)
 
   override fun toString(): String = "/$namespace/$kind"
 }

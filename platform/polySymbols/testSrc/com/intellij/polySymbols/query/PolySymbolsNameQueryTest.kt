@@ -2,11 +2,11 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
+import com.intellij.util.containers.Stack
 
 class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
@@ -389,19 +389,19 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   fun testNestedPattern1() {
     polySymbolsQueryExecutorFactory.addScope(
       object : PolySymbolsScope {
-        override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                        params: PolySymbolsNameMatchQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<PolySymbol> {
-          return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
+        override fun getMatchingSymbols(
+          qualifiedName: PolySymbolQualifiedName,
+          params: PolySymbolsNameMatchQueryParams,
+          scope: Stack<PolySymbolsScope>,
+        ): List<PolySymbol> {
+          return if (qualifiedName.qualifiedKind == PolySymbol.HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
               override val origin: PolySymbolOrigin
                 get() = object : PolySymbolOrigin {
                   override val framework: FrameworkId get() = "vue"
                 }
-              override val namespace: SymbolNamespace
-                get() = PolySymbol.NAMESPACE_HTML
-              override val kind: SymbolKind
-                get() = PolySymbol.KIND_HTML_ATTRIBUTES
+              override val qualifiedKind: PolySymbolQualifiedKind
+                get() = PolySymbol.HTML_ATTRIBUTES
               override val name: String
                 get() = "bar"
 
@@ -427,11 +427,13 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
     doTest(path, framework, includeVirtual, webTypes = webTypes.toList())
   }
 
-  fun doTest(path: String,
-             framework: String? = null,
-             includeVirtual: Boolean = true,
-             webTypes: List<String> = emptyList(),
-             customElementsManifests: List<String> = emptyList()) {
+  fun doTest(
+    path: String,
+    framework: String? = null,
+    includeVirtual: Boolean = true,
+    webTypes: List<String> = emptyList(),
+    customElementsManifests: List<String> = emptyList(),
+  ) {
     doTest(testPath) {
       registerFiles(framework, webTypes, customElementsManifests)
       val matches = polySymbolsQueryExecutorFactory.create(null)

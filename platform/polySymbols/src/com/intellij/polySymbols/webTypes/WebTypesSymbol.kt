@@ -2,8 +2,8 @@
 package com.intellij.polySymbols.webTypes
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.polySymbols.PsiSourcedPolySymbol
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PsiSourcedPolySymbol
 
 interface WebTypesSymbol : PsiSourcedPolySymbol {
 
@@ -71,7 +71,7 @@ interface WebTypesSymbol : PsiSourcedPolySymbol {
 
   companion object {
     internal val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
-      PolySymbol.KIND_JS_PROPERTIES, PolySymbol.KIND_JS_STRING_LITERALS
+      PolySymbol.JS_PROPERTIES.kind, PolySymbol.JS_STRING_LITERALS.kind
     )
   }
 

@@ -41,7 +41,7 @@ class PolySymbolNameSegmentImpl internal constructor(
   override val symbolKinds: Set<PolySymbolQualifiedKind>
     get() =
       forcedSymbolKinds
-      ?: symbols.asSequence().map { PolySymbolQualifiedKind(it.namespace, it.kind) }.toSet()
+      ?: symbols.asSequence().map { it.qualifiedKind }.toSet()
 
   override fun getName(symbol: PolySymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
@@ -76,8 +76,8 @@ class PolySymbolNameSegmentImpl internal constructor(
   ): PolySymbolNameSegmentImpl =
     PolySymbolNameSegmentImpl(start, end, this.symbols + symbols, problem ?: this.problem,
                               displayName, matchScore, forcedSymbolKinds,
-                             apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
-                             proximity ?: this.explicitProximity, highlightEnd ?: this.highlightingEnd)
+                              apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
+                              proximity ?: this.explicitProximity, highlightEnd ?: this.highlightingEnd)
 
   internal fun canUnwrapSymbols(): Boolean =
     explicitApiStatus == null

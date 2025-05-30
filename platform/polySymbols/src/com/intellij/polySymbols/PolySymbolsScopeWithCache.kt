@@ -5,17 +5,16 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.impl.SearchMap
+import com.intellij.polySymbols.utils.qualifiedName
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.*
-import com.intellij.polySymbols.query.impl.SearchMap
-import com.intellij.polySymbols.utils.qualifiedKind
-import com.intellij.polySymbols.utils.qualifiedName
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -41,7 +40,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
    * Additional discriminator for different scopes on the same `dataHolder`.
    * You can provide `Unit`, which would mean that there is only one scope of particular class.
    */
-  protected val key: K
+  protected val key: K,
 ) : PolySymbolsScope {
 
   /**
@@ -113,9 +112,11 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
       CachedValueProvider.Result.create(map, dependencies.toList())
     }
 
-  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                  params: PolySymbolsNameMatchQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+  override fun getMatchingSymbols(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsNameMatchQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {
@@ -123,9 +124,11 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
     else emptyList()
 
-  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                          params: PolySymbolsListSymbolsQueryParams,
-                          scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+  override fun getSymbols(
+    qualifiedKind: PolySymbolQualifiedKind,
+    params: PolySymbolsListSymbolsQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolsScope> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedKind)) {
@@ -133,9 +136,11 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
     else emptyList()
 
-  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                  params: PolySymbolsCodeCompletionQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+  override fun getCodeCompletions(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsCodeCompletionQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {
@@ -150,8 +155,10 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     private val cache: ConcurrentMap<PolySymbolNamesProvider, CachedValue<PolySymbolsSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
     private var cacheMisses = 0
 
-    fun getOrCreateMap(namesProvider: PolySymbolNamesProvider,
-                       createCachedSearchMap: (namesProvider: PolySymbolNamesProvider) -> CachedValue<PolySymbolsSearchMap>): PolySymbolsSearchMap {
+    fun getOrCreateMap(
+      namesProvider: PolySymbolNamesProvider,
+      createCachedSearchMap: (namesProvider: PolySymbolNamesProvider) -> CachedValue<PolySymbolsSearchMap>,
+    ): PolySymbolsSearchMap {
       if (cacheMisses > 20) {
         // Get rid of old soft keys
         cacheMisses = 0

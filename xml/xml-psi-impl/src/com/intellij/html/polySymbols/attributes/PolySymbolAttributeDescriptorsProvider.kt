@@ -8,16 +8,14 @@ import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbols
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.project.DumbService
-import com.intellij.psi.xml.XmlTag
-import com.intellij.util.asSafely
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.polySymbols.PolySymbol.Companion.NAMESPACE_HTML
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hasOnlyExtensions
+import com.intellij.psi.xml.XmlTag
+import com.intellij.util.asSafely
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlAttributeDescriptorsProvider
 
@@ -51,7 +49,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
         listOf(PolySymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
 
       queryExecutor
-        .runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, attributeName, additionalScope = additionalScope)
+        .runNameMatchQuery(HTML_ATTRIBUTES, attributeName, additionalScope = additionalScope)
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()

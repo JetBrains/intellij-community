@@ -12,11 +12,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiElement
-import com.intellij.psi.createSmartPointer
-import com.intellij.util.asSafely
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
@@ -28,6 +23,11 @@ import com.intellij.polySymbols.patterns.impl.applyIcons
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.query.impl.PolySymbolMatchImpl
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
+import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
+import com.intellij.util.asSafely
+import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.Icon
@@ -55,7 +55,7 @@ fun List<PolySymbol>.asSingleSymbol(force: Boolean = false): PolySymbol? =
     this[0]
   else {
     val first = this[0]
-    if (!force && any { it.namespace != first.namespace || it.kind != first.kind })
+    if (!force && any { it.qualifiedKind != first.qualifiedKind })
       null
     else
       PolySymbolMatch.create(first.name, first.qualifiedKind, first.origin,
@@ -156,8 +156,7 @@ fun PolySymbol.match(
             null
           }
           else {
-            PolySymbolMatch.create(nameToMatch, matchResult.segments,
-                                   namespace, kind, origin)
+            PolySymbolMatch.create(nameToMatch, matchResult.segments, qualifiedKind, origin)
           }
         }
     }
@@ -190,22 +189,23 @@ fun PolySymbol.toCodeCompletionItems(
     }
   }
   ?: params.queryExecutor.namesProvider
-    .getNames(PolySymbolQualifiedName(namespace, kind, this.name), PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
+    .getNames(qualifiedName, PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
 fun PolySymbol.nameMatches(name: String, queryExecutor: PolySymbolsQueryExecutor): Boolean {
-  val queryNames = queryExecutor.namesProvider.getNames(
-    PolySymbolQualifiedName(this.namespace, this.kind, name), PolySymbolNamesProvider.Target.NAMES_QUERY)
-  val symbolNames = queryExecutor.namesProvider.getNames(
-    PolySymbolQualifiedName(this.namespace, this.kind, this.name), PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
+  val queryNames = queryExecutor.namesProvider.getNames(qualifiedKind.withName(name), PolySymbolNamesProvider.Target.NAMES_QUERY)
+  val symbolNames = queryExecutor.namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return queryNames.any { symbolNames.contains(it) }
 }
 
 val PolySymbol.qualifiedName: PolySymbolQualifiedName
-  get() = PolySymbolQualifiedName(namespace, kind, name)
+  get() = qualifiedKind.withName(name)
 
-val PolySymbol.qualifiedKind: PolySymbolQualifiedKind
-  get() = PolySymbolQualifiedKind(namespace, kind)
+val PolySymbol.namespace: PolySymbolNamespace
+  get() = qualifiedKind.namespace
+
+val PolySymbol.kind: PolySymbolKind
+  get() = qualifiedKind.kind
 
 fun PolySymbolNameSegment.getProblemKind(): ProblemKind? =
   when (problem) {

@@ -2,21 +2,17 @@
 package com.intellij.polySymbols.completion.impl
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupElementRenderer
-import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.codeInsight.lookup.*
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.polySymbols.PsiSourcedPolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler
 import com.intellij.polySymbols.impl.scaleToHeight
 import com.intellij.polySymbols.query.PolySymbolDefaultIconProvider
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -223,7 +219,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
     private var icon: Icon? = symbol?.let {
       it.icon
       ?: it.origin.defaultIcon
-      ?: PolySymbolDefaultIconProvider.get(it.namespace, it.kind)
+      ?: PolySymbolDefaultIconProvider.get(it.qualifiedKind)
     }
     private var typeTextStatic: String? = null
     private var typeTextProvider: (() -> String?)? = null

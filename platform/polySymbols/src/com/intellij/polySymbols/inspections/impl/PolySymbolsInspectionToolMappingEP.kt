@@ -5,19 +5,21 @@ import com.intellij.DynamicBundle
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.ClearableLazyValue
-import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.polySymbols.SymbolNamespace
+import com.intellij.polySymbols.PolySymbolNamespace
 import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
+import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
 
 internal class PolySymbolsInspectionToolMappingEP : PluginAware {
 
   companion object {
 
-    fun get(symbolNamespace: SymbolNamespace,
-            symbolKind: String,
-            problemKind: PolySymbolReferenceProblem.ProblemKind): PolySymbolsInspectionToolMappingEP? =
+    fun get(
+      symbolNamespace: PolySymbolNamespace,
+      symbolKind: String,
+      problemKind: PolySymbolReferenceProblem.ProblemKind,
+    ): PolySymbolsInspectionToolMappingEP? =
       map.value[ExtensionKey(symbolNamespace, symbolKind, problemKind)]
 
   }
@@ -25,7 +27,7 @@ internal class PolySymbolsInspectionToolMappingEP : PluginAware {
   @Attribute("symbolNamespace")
   @RequiredElement
   @JvmField
-  var symbolNamespace: SymbolNamespace? = null
+  var symbolNamespace: PolySymbolNamespace? = null
 
   @Attribute("symbolKind")
   @RequiredElement
@@ -74,7 +76,7 @@ internal class PolySymbolsInspectionToolMappingEP : PluginAware {
 }
 
 private data class ExtensionKey(
-  var symbolNamespace: SymbolNamespace,
+  var symbolNamespace: PolySymbolNamespace,
   var symbolKind: String,
   var problemKind: PolySymbolReferenceProblem.ProblemKind,
 )

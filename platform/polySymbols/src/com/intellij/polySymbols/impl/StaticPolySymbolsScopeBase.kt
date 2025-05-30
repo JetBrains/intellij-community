@@ -2,14 +2,14 @@
 package com.intellij.polySymbols.impl
 
 import com.intellij.model.Pointer
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.query.impl.SearchMap
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
@@ -32,49 +32,61 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   final override fun getModificationCount(): Long =
     modCount
 
-  final override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                        params: PolySymbolsNameMatchQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+  final override fun getMatchingSymbols(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsNameMatchQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     getMaps(params).flatMap {
       it.getMatchingSymbols(qualifiedName, params, Stack(scope))
     }.toList()
 
-  final override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                                params: PolySymbolsListSymbolsQueryParams,
-                                scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+  final override fun getSymbols(
+    qualifiedKind: PolySymbolQualifiedKind,
+    params: PolySymbolsListSymbolsQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolsScope> =
     getMaps(params).flatMap {
       it.getSymbols(qualifiedKind, params)
     }.toList()
 
-  final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                        params: PolySymbolsCodeCompletionQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+  final override fun getCodeCompletions(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsCodeCompletionQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolCodeCompletionItem> =
     getMaps(params).flatMap {
       it.getCodeCompletions(qualifiedName, params, Stack(scope))
     }.toList()
 
-  internal fun getMatchingSymbols(contribution: Contribution,
-                                  origin: Origin,
-                                  qualifiedName: PolySymbolQualifiedName,
-                                  params: PolySymbolsNameMatchQueryParams,
-                                  scopeStack: Stack<PolySymbolsScope>): List<PolySymbol> =
+  internal fun getMatchingSymbols(
+    contribution: Contribution,
+    origin: Origin,
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsNameMatchQueryParams,
+    scopeStack: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
       .getMatchingSymbols(qualifiedName, params, scopeStack)
       .toList()
 
-  internal fun getSymbols(contribution: Contribution,
-                          origin: Origin,
-                          qualifiedKind: PolySymbolQualifiedKind,
-                          params: PolySymbolsListSymbolsQueryParams): List<PolySymbolsScope> =
+  internal fun getSymbols(
+    contribution: Contribution,
+    origin: Origin,
+    qualifiedKind: PolySymbolQualifiedKind,
+    params: PolySymbolsListSymbolsQueryParams,
+  ): List<PolySymbolsScope> =
     getMap(params.queryExecutor, contribution, origin)
       .getSymbols(qualifiedKind, params)
       .toList()
 
-  internal fun getCodeCompletions(contribution: Contribution,
-                                  origin: Origin,
-                                  qualifiedName: PolySymbolQualifiedName,
-                                  params: PolySymbolsCodeCompletionQueryParams,
-                                  scopeStack: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+  internal fun getCodeCompletions(
+    contribution: Contribution,
+    origin: Origin,
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsCodeCompletionQueryParams,
+    scopeStack: Stack<PolySymbolsScope>,
+  ): List<PolySymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)
       .getCodeCompletions(qualifiedName, params, scopeStack)
       .toList()
@@ -94,32 +106,42 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
         getMapForRoot(params.queryExecutor, contributions, origin)
       }
 
-  protected abstract fun adaptAllContributions(contribution: Contribution,
-                                               framework: FrameworkId?,
-                                               origin: Origin): Sequence<StaticSymbolContributionAdapter>
+  protected abstract fun adaptAllContributions(
+    contribution: Contribution,
+    framework: FrameworkId?,
+    origin: Origin,
+  ): Sequence<StaticSymbolContributionAdapter>
 
-  protected abstract fun adaptAllRootContributions(root: Root,
-                                                   framework: FrameworkId?,
-                                                   origin: Origin): Sequence<StaticSymbolContributionAdapter>
+  protected abstract fun adaptAllRootContributions(
+    root: Root,
+    framework: FrameworkId?,
+    origin: Origin,
+  ): Sequence<StaticSymbolContributionAdapter>
 
-  private fun getMap(queryExecutor: PolySymbolsQueryExecutor,
-                     contribution: Contribution,
-                     origin: Origin): ContributionSearchMap =
+  private fun getMap(
+    queryExecutor: PolySymbolsQueryExecutor,
+    contribution: Contribution,
+    origin: Origin,
+  ): ContributionSearchMap =
     getOrCreateMap(queryExecutor, contribution) { consumer ->
       adaptAllContributions(contribution, origin.framework, origin).forEach(consumer)
     }
 
 
-  private fun getMapForRoot(queryExecutor: PolySymbolsQueryExecutor,
-                            root: Root,
-                            origin: Origin): ContributionSearchMap =
+  private fun getMapForRoot(
+    queryExecutor: PolySymbolsQueryExecutor,
+    root: Root,
+    origin: Origin,
+  ): ContributionSearchMap =
     getOrCreateMap(queryExecutor, root) { consumer ->
       adaptAllRootContributions(root, origin.framework, origin).forEach(consumer)
     }
 
-  private fun getOrCreateMap(queryExecutor: PolySymbolsQueryExecutor,
-                             key: Any,
-                             mapInitializer: (consumer: (StaticSymbolContributionAdapter) -> Unit) -> Unit): ContributionSearchMap =
+  private fun getOrCreateMap(
+    queryExecutor: PolySymbolsQueryExecutor,
+    key: Any,
+    mapInitializer: (consumer: (StaticSymbolContributionAdapter) -> Unit) -> Unit,
+  ): ContributionSearchMap =
     getNameProvidersCache(queryExecutor.namesProvider).getOrCreateMap(key, mapInitializer)
 
   private fun getNameProvidersCache(namesProvider: PolySymbolNamesProvider): NameProvidersCache {
@@ -159,8 +181,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     roots[root]
 
   interface StaticSymbolContributionAdapter {
-    val namespace: SymbolNamespace
-    val kind: String
+    val qualifiedKind: PolySymbolQualifiedKind
     val name: String
     val pattern: PolySymbolsPattern?
     val framework: FrameworkId?
@@ -173,7 +194,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     : SearchMap<StaticSymbolContributionAdapter>(namesProvider) {
 
     fun add(item: StaticSymbolContributionAdapter) {
-      add(PolySymbolQualifiedName(item.namespace, item.kind, item.name), item.pattern, item)
+      add(PolySymbolQualifiedName(item.qualifiedKind, item.name), item.pattern, item)
     }
 
     override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol> {
@@ -188,8 +209,10 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     private val mapsCache: MutableMap<Any, ContributionSearchMap> = ConcurrentHashMap()
     private var namesProviderTimestamp: Long = -1
 
-    fun getOrCreateMap(key: Any,
-                       mapInitializer: (consumer: (StaticSymbolContributionAdapter) -> Unit) -> Unit): ContributionSearchMap =
+    fun getOrCreateMap(
+      key: Any,
+      mapInitializer: (consumer: (StaticSymbolContributionAdapter) -> Unit) -> Unit,
+    ): ContributionSearchMap =
       mapsCache.getOrPut(key) {
         ContributionSearchMap(namesProvider)
           .also { mapInitializer(it::add) }

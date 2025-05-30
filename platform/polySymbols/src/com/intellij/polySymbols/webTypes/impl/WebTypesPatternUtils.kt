@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.webTypes.impl
 
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.polySymbols.PolySymbolQualifiedKind
@@ -14,8 +13,10 @@ import com.intellij.polySymbols.patterns.impl.*
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.json.*
+import com.intellij.util.containers.Stack
 
 internal fun NamePatternRoot.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolsPattern =
   when (val value = value) {
@@ -46,15 +47,19 @@ internal fun NamePatternTemplate.wrap(defaultDisplayName: String?, origin: WebTy
     else -> throw IllegalArgumentException(value::class.java.name)
   }
 
-private class SequencePatternPatternsProvider(private val list: List<NamePatternTemplate>,
-                                              private val origin: WebTypesJsonOrigin) : () -> List<PolySymbolsPattern> {
+private class SequencePatternPatternsProvider(
+  private val list: List<NamePatternTemplate>,
+  private val origin: WebTypesJsonOrigin,
+) : () -> List<PolySymbolsPattern> {
   override fun invoke(): List<PolySymbolsPattern> =
     list.map { it.wrap(null, origin) }
 }
 
-private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatternDefault,
-                                                   private val defaultDisplayName: String?,
-                                                   private val origin: WebTypesJsonOrigin) : ComplexPatternConfigProvider {
+private class WebTypesComplexPatternConfigProvider(
+  private val pattern: NamePatternDefault,
+  private val defaultDisplayName: String?,
+  private val origin: WebTypesJsonOrigin,
+) : ComplexPatternConfigProvider {
 
   override fun getPatterns(): List<PolySymbolsPattern> =
     pattern.or.asSequence()
@@ -75,8 +80,10 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
   override val isStaticAndRequired: Boolean
     get() = pattern.delegate == null && pattern.items == null && pattern.required != false
 
-  override fun getOptions(queryExecutor: PolySymbolsQueryExecutor,
-                          scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions {
+  override fun getOptions(
+    queryExecutor: PolySymbolsQueryExecutor,
+    scopeStack: Stack<PolySymbolsScope>,
+  ): ComplexPatternOptions {
     val queryParams = PolySymbolsNameMatchQueryParams.create(queryExecutor, true, false)
     val delegate = pattern.delegate?.resolve(scopeStack, queryParams.queryExecutor)?.firstOrNull()
 
@@ -109,12 +116,14 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
 
   private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) : com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver {
     override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
-      setOf(PolySymbolQualifiedKind(delegate.namespace, delegate.kind))
+      setOf(delegate.qualifiedKind)
 
-    override fun codeCompletion(name: String,
-                                position: Int,
-                                scopeStack: Stack<PolySymbolsScope>,
-                                queryExecutor: PolySymbolsQueryExecutor): List<PolySymbolCodeCompletionItem> =
+    override fun codeCompletion(
+      name: String,
+      position: Int,
+      scopeStack: Stack<PolySymbolsScope>,
+      queryExecutor: PolySymbolsQueryExecutor,
+    ): List<PolySymbolCodeCompletionItem> =
       delegate.pattern
         ?.complete(delegate, scopeStack,
                    this, CompletionParameters(name, queryExecutor, position), 0, name.length)
@@ -122,9 +131,11 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
         ?.applyIcons(delegate)
       ?: emptyList()
 
-    override fun listSymbols(scopeStack: Stack<PolySymbolsScope>,
-                             queryExecutor: PolySymbolsQueryExecutor,
-                             expandPatterns: Boolean): List<PolySymbol> =
+    override fun listSymbols(
+      scopeStack: Stack<PolySymbolsScope>,
+      queryExecutor: PolySymbolsQueryExecutor,
+      expandPatterns: Boolean,
+    ): List<PolySymbol> =
       delegate.pattern
         ?.list(delegate, scopeStack, this, ListParameters(queryExecutor, expandPatterns))
         ?.flatMap { listResult ->
@@ -135,7 +146,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
           else {
             val lastContribution = scopeStack.peek() as PolySymbol
             listOf(PolySymbolMatch.create(listResult.name, listResult.segments,
-                                          lastContribution.namespace, SPECIAL_MATCHED_CONTRIB,
+                                          PolySymbolQualifiedKind(lastContribution.qualifiedKind.namespace, SPECIAL_MATCHED_CONTRIB),
                                           lastContribution.origin))
           }
         }
@@ -156,7 +167,7 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
           else {
             val lastContribution = scopeStack.peek() as PolySymbol
             sequenceOf(PolySymbolMatch.create(name, matchResult.segments,
-                                              lastContribution.namespace, SPECIAL_MATCHED_CONTRIB,
+                                              PolySymbolQualifiedKind(lastContribution.namespace, SPECIAL_MATCHED_CONTRIB),
                                               lastContribution.origin))
           }
         }
@@ -171,15 +182,19 @@ private class WebTypesComplexPatternConfigProvider(private val pattern: NamePatt
     override val delegate: PolySymbol?
       get() = null
 
-    override fun codeCompletion(name: String,
-                                position: Int,
-                                scopeStack: Stack<PolySymbolsScope>,
-                                queryExecutor: PolySymbolsQueryExecutor): List<PolySymbolCodeCompletionItem> =
+    override fun codeCompletion(
+      name: String,
+      position: Int,
+      scopeStack: Stack<PolySymbolsScope>,
+      queryExecutor: PolySymbolsQueryExecutor,
+    ): List<PolySymbolCodeCompletionItem> =
       items.flatMap { it.codeCompletion(name, scopeStack, queryExecutor, position) }
 
-    override fun listSymbols(scopeStack: Stack<PolySymbolsScope>,
-                             queryExecutor: PolySymbolsQueryExecutor,
-                             expandPatterns: Boolean): List<PolySymbol> =
+    override fun listSymbols(
+      scopeStack: Stack<PolySymbolsScope>,
+      queryExecutor: PolySymbolsQueryExecutor,
+      expandPatterns: Boolean,
+    ): List<PolySymbol> =
       items.flatMap { it.list(scopeStack, queryExecutor, expandPatterns) }
 
     override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: PolySymbolsQueryExecutor): List<PolySymbol> =

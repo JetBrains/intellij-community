@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.customElements.impl
 
-import com.intellij.polySymbols.SymbolNamespace
+import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.polySymbols.customElements.CustomElementsSymbol
-import com.intellij.polySymbols.customElements.CustomElementsSymbol.Companion.KIND_CEM_MODULES
 import com.intellij.polySymbols.customElements.json.JavaScriptModule
 
 class CustomElementsJavaScriptModuleSymbol private constructor(
@@ -17,16 +16,15 @@ class CustomElementsJavaScriptModuleSymbol private constructor(
   override fun getConstructor(): (String, JavaScriptModule, CustomElementsJsonOrigin, CustomElementsManifestScopeBase) -> CustomElementsContainerSymbolBase<out JavaScriptModule> =
     ::CustomElementsJavaScriptModuleSymbol
 
-  override val namespace: SymbolNamespace
-    get() = CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST
-
-  override val kind: String
-    get() = KIND_CEM_MODULES
+  override val qualifiedKind: PolySymbolQualifiedKind
+    get() = CustomElementsSymbol.CEM_MODULES
 
   companion object {
-    fun create(module: JavaScriptModule,
-               origin: CustomElementsJsonOrigin,
-               rootScope: CustomElementsManifestScopeBase): CustomElementsJavaScriptModuleSymbol? {
+    fun create(
+      module: JavaScriptModule,
+      origin: CustomElementsJsonOrigin,
+      rootScope: CustomElementsManifestScopeBase,
+    ): CustomElementsJavaScriptModuleSymbol? {
       val name = module.path ?: return null
       return CustomElementsJavaScriptModuleSymbol(name, module, origin, rootScope)
     }

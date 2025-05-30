@@ -23,12 +23,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.util.SmartList
-import com.intellij.util.asSafely
-import com.intellij.util.containers.MultiMap
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolNameSegment.MatchProblem
@@ -49,7 +43,12 @@ import com.intellij.polySymbols.search.PolySymbolReferenceHints
 import com.intellij.polySymbols.utils.applyIfNotNull
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.polySymbols.utils.nameSegments
-import com.intellij.polySymbols.utils.qualifiedKind
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.util.SmartList
+import com.intellij.util.asSafely
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.PropertyKey
 import java.util.*
 

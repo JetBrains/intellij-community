@@ -21,13 +21,12 @@ interface PolySymbolMatch : CompositePolySymbol {
     fun create(
       matchedName: String,
       nameSegments: List<PolySymbolNameSegment>,
-      namespace: SymbolNamespace,
-      kind: SymbolKind,
+      qualifiedKind: PolySymbolQualifiedKind,
       origin: PolySymbolOrigin,
       explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,
     ): PolySymbolMatch =
-      PolySymbolMatchImpl.BuilderImpl(matchedName, PolySymbolQualifiedKind(namespace, kind), origin)
+      PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { builder ->
           builder.addNameSegments(nameSegments)
           explicitProximity?.let { builder.explicitProximity(it) }

@@ -3,12 +3,12 @@ package com.intellij.html.polySymbols.attributes.impl
 
 import com.intellij.html.polySymbols.attributes.PolySymbolHtmlAttributeInfo
 import com.intellij.html.polySymbols.attributes.PolySymbolHtmlAttributeValueTypeSupport
-import com.intellij.psi.PsiElement
-import com.intellij.util.ThreeState
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.psi.PsiElement
+import com.intellij.util.ThreeState
 import javax.swing.Icon
 
 internal data class PolySymbolHtmlAttributeInfoImpl(
@@ -22,7 +22,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
   override val icon: Icon?,
   override val required: Boolean,
   override val defaultValue: String?,
-  override val priority: PolySymbol.Priority
+  override val priority: PolySymbol.Priority,
 ) : PolySymbolHtmlAttributeInfo {
 
   override fun withName(name: String): PolySymbolHtmlAttributeInfo =
@@ -58,17 +58,19 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
   override fun withPriority(priority: PolySymbol.Priority): PolySymbolHtmlAttributeInfo =
     copy(priority = priority)
 
-  override fun with(name: String,
-                    symbol: PolySymbol,
-                    acceptsNoValue: Boolean,
-                    acceptsValue: Boolean,
-                    enumValues: List<PolySymbolCodeCompletionItem>?,
-                    strictEnumValues: Boolean,
-                    type: Any?,
-                    icon: Icon?,
-                    required: Boolean,
-                    defaultValue: String?,
-                    priority: PolySymbol.Priority): PolySymbolHtmlAttributeInfo =
+  override fun with(
+    name: String,
+    symbol: PolySymbol,
+    acceptsNoValue: Boolean,
+    acceptsValue: Boolean,
+    enumValues: List<PolySymbolCodeCompletionItem>?,
+    strictEnumValues: Boolean,
+    type: Any?,
+    icon: Icon?,
+    required: Boolean,
+    defaultValue: String?,
+    priority: PolySymbol.Priority,
+  ): PolySymbolHtmlAttributeInfo =
     copy(name = name,
          symbol = symbol,
          acceptsNoValue = acceptsNoValue,
@@ -104,7 +106,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
           PolySymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
           PolySymbolHtmlAttributeValue.Type.ENUM -> {
             val valuesSymbols = queryExecutor.runCodeCompletionQuery(
-              PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, additionalScope = listOf(symbol))
+              PolySymbol.HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, additionalScope = listOf(symbol))
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
           PolySymbolHtmlAttributeValue.Type.SYMBOL -> null
@@ -131,12 +133,13 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
         else if (kind == PolySymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {
             PolySymbolHtmlAttributeValue.Type.ENUM -> {
-              queryExecutor.runCodeCompletionQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTE_VALUES, "", 0,
+              queryExecutor.runCodeCompletionQuery(PolySymbol.HTML_ATTRIBUTE_VALUES, "", 0,
                                                    additionalScope = listOf(symbol))
                 .filter { !it.completeAfterInsert }
             }
             PolySymbolHtmlAttributeValue.Type.COMPLEX,
-            PolySymbolHtmlAttributeValue.Type.OF_MATCH -> typeSupport?.getEnumValues(symbol, langType)
+            PolySymbolHtmlAttributeValue.Type.OF_MATCH,
+              -> typeSupport?.getEnumValues(symbol, langType)
             else -> null
           }
         }

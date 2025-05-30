@@ -5,15 +5,15 @@ package com.intellij.polySymbols.utils
 
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.polySymbols.*
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.query.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.applyIf
 import com.intellij.util.containers.Stack
-import com.intellij.polySymbols.*
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.*
 import java.util.*
 
 abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
@@ -51,7 +51,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
     var result: List<PolySymbol> = emptyList()
     RecursionManager.runInNewContext {
-      result = subQuery.runNameMatchQuery(sourceKind.withName(qualifiedName.name), params.virtualSymbols, params.abstractSymbols, params.strictScope, additionalScope)
+      result = subQuery.runNameMatchQuery(sourceKind, qualifiedName.name, params.virtualSymbols, params.abstractSymbols, params.strictScope, additionalScope)
         .filter { acceptSymbol(it) }
         .map { it.withMatchedKind(qualifiedName.qualifiedKind) }
     }

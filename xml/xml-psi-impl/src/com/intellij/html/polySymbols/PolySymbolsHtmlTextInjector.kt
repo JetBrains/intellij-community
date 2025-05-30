@@ -6,6 +6,10 @@ import com.intellij.lang.LanguageUtil
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
@@ -18,10 +22,6 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
-import com.intellij.polySymbols.utils.asSingleSymbol
 import java.util.*
 
 class PolySymbolsHtmlTextInjector : MultiHostInjector {
@@ -34,7 +34,7 @@ class PolySymbolsHtmlTextInjector : MultiHostInjector {
           CachedValuesManager.getCachedValue(tag) {
             val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
-              queryExecutor.runNameMatchQuery(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, tag.name)
+              queryExecutor.runNameMatchQuery(PolySymbol.HTML_ELEMENTS, tag.name)
                 .getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
@@ -49,8 +49,8 @@ class PolySymbolsHtmlTextInjector : MultiHostInjector {
             val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
               queryExecutor.runNameMatchQuery(listOf(
-                PolySymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ELEMENTS, tag.name),
-                PolySymbolQualifiedName(PolySymbol.NAMESPACE_HTML, PolySymbol.KIND_HTML_ATTRIBUTES, attr.name))
+                PolySymbolQualifiedName(PolySymbol.HTML_ELEMENTS, tag.name),
+                PolySymbolQualifiedName(PolySymbol.HTML_ATTRIBUTES, attr.name))
               ).getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )

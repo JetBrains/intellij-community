@@ -3,11 +3,11 @@ package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.psi.PsiElement
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
+import com.intellij.psi.PsiElement
 
 /**
  * To create a query executor use [PolySymbolsQueryExecutorFactory].
@@ -38,66 +38,61 @@ interface PolySymbolsQueryExecutor : ModificationTracker {
 
   fun createPointer(): Pointer<PolySymbolsQueryExecutor>
 
-  fun runNameMatchQuery(namespace: SymbolNamespace,
-                        kind: SymbolKind,
-                        name: String,
-                        virtualSymbols: Boolean = true,
-                        abstractSymbols: Boolean = false,
-                        strictScope: Boolean = false,
-                        additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbol> =
-    runNameMatchQuery(listOf(PolySymbolQualifiedName(namespace, kind, name)), virtualSymbols, abstractSymbols, strictScope, additionalScope)
+  fun runNameMatchQuery(
+    qualifiedKind: PolySymbolQualifiedKind,
+    name: String,
+    virtualSymbols: Boolean = true,
+    abstractSymbols: Boolean = false,
+    strictScope: Boolean = false,
+    additionalScope: List<PolySymbolsScope> = emptyList(),
+  ): List<PolySymbol> =
+    runNameMatchQuery(listOf(qualifiedKind.withName(name)), virtualSymbols, abstractSymbols, strictScope, additionalScope)
 
-  fun runNameMatchQuery(qualifiedName: PolySymbolQualifiedName,
-                        virtualSymbols: Boolean = true,
-                        abstractSymbols: Boolean = false,
-                        strictScope: Boolean = false,
-                        additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbol> =
-    runNameMatchQuery(listOf(qualifiedName), virtualSymbols, abstractSymbols, strictScope, additionalScope)
+  fun runNameMatchQuery(
+    path: List<PolySymbolQualifiedName>,
+    virtualSymbols: Boolean = true,
+    abstractSymbols: Boolean = false,
+    strictScope: Boolean = false,
+    additionalScope: List<PolySymbolsScope> = emptyList(),
+  ): List<PolySymbol>
 
-  fun runNameMatchQuery(path: List<PolySymbolQualifiedName>,
-                        virtualSymbols: Boolean = true,
-                        abstractSymbols: Boolean = false,
-                        strictScope: Boolean = false,
-                        additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbol>
-
-  fun runListSymbolsQuery(qualifiedKind: PolySymbolQualifiedKind,
-                          expandPatterns: Boolean,
-                          virtualSymbols: Boolean = true,
-                          abstractSymbols: Boolean = false,
-                          strictScope: Boolean = false,
-                          additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbol> =
+  fun runListSymbolsQuery(
+    qualifiedKind: PolySymbolQualifiedKind,
+    expandPatterns: Boolean,
+    virtualSymbols: Boolean = true,
+    abstractSymbols: Boolean = false,
+    strictScope: Boolean = false,
+    additionalScope: List<PolySymbolsScope> = emptyList(),
+  ): List<PolySymbol> =
     runListSymbolsQuery(emptyList(), qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, additionalScope)
 
-  fun runListSymbolsQuery(path: List<PolySymbolQualifiedName>,
-                          qualifiedKind: PolySymbolQualifiedKind,
-                          expandPatterns: Boolean,
-                          virtualSymbols: Boolean = true,
-                          abstractSymbols: Boolean = false,
-                          strictScope: Boolean = false,
-                          additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbol>
+  fun runListSymbolsQuery(
+    path: List<PolySymbolQualifiedName>,
+    qualifiedKind: PolySymbolQualifiedKind,
+    expandPatterns: Boolean,
+    virtualSymbols: Boolean = true,
+    abstractSymbols: Boolean = false,
+    strictScope: Boolean = false,
+    additionalScope: List<PolySymbolsScope> = emptyList(),
+  ): List<PolySymbol>
 
-  fun runCodeCompletionQuery(namespace: SymbolNamespace,
-                             kind: SymbolKind,
-                             name: String,
-                             /** Position to complete at in the last segment of the path **/
-                             position: Int,
-                             virtualSymbols: Boolean = true,
-                             additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbolCodeCompletionItem> =
-    runCodeCompletionQuery(listOf(PolySymbolQualifiedName(namespace, kind, name)), position, virtualSymbols, additionalScope)
-
-  fun runCodeCompletionQuery(qualifiedKind: PolySymbolQualifiedKind,
-                             name: String,
-                             /** Position to complete at in the last segment of the path **/
-                             position: Int,
-                             virtualSymbols: Boolean = true,
-                             additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbolCodeCompletionItem> =
+  fun runCodeCompletionQuery(
+    qualifiedKind: PolySymbolQualifiedKind,
+    name: String,
+    /** Position to complete at in the last segment of the path **/
+    position: Int,
+    virtualSymbols: Boolean = true,
+    additionalScope: List<PolySymbolsScope> = emptyList(),
+  ): List<PolySymbolCodeCompletionItem> =
     runCodeCompletionQuery(listOf(qualifiedKind.withName(name)), position, virtualSymbols, additionalScope)
 
-  fun runCodeCompletionQuery(path: List<PolySymbolQualifiedName>,
-                             /** Position to complete at in the last segment of the path **/
-                             position: Int,
-                             virtualSymbols: Boolean = true,
-                             additionalScope: List<PolySymbolsScope> = emptyList()): List<PolySymbolCodeCompletionItem>
+  fun runCodeCompletionQuery(
+    path: List<PolySymbolQualifiedName>,
+    /** Position to complete at in the last segment of the path **/
+    position: Int,
+    virtualSymbols: Boolean = true,
+    additionalScope: List<PolySymbolsScope> = emptyList(),
+  ): List<PolySymbolCodeCompletionItem>
 
   fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolsQueryExecutor
 

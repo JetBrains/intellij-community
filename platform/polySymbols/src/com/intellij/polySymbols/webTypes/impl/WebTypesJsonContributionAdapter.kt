@@ -6,11 +6,10 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.polySymbols.SymbolKind
-import com.intellij.polySymbols.SymbolNamespace
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbol.Companion.KIND_HTML_ATTRIBUTES
+import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolNamespace
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
@@ -20,36 +19,40 @@ import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.WebTypesScopeBase
 import com.intellij.polySymbols.webTypes.WebTypesSymbolBase
 import com.intellij.polySymbols.webTypes.json.*
+import com.intellij.util.ui.EmptyIcon
 import java.util.*
 import javax.swing.Icon
 
-abstract class WebTypesJsonContributionAdapter private constructor(internal val contribution: BaseContribution,
-                                                                   internal val jsonOrigin: WebTypesJsonOrigin,
-                                                                   internal val cacheHolder: UserDataHolderEx,
-                                                                   internal val rootScope: WebTypesScopeBase,
-                                                                   override val namespace: SymbolNamespace,
-                                                                   override val kind: String) :
+abstract class WebTypesJsonContributionAdapter private constructor(
+  internal val contribution: BaseContribution,
+  internal val jsonOrigin: WebTypesJsonOrigin,
+  internal val cacheHolder: UserDataHolderEx,
+  internal val rootScope: WebTypesScopeBase,
+  override val qualifiedKind: PolySymbolQualifiedKind,
+) :
   StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
 
 
   companion object {
-    fun BaseContribution.wrap(origin: WebTypesJsonOrigin,
-                              rootScope: WebTypesScopeBase,
-                              root: SymbolNamespace,
-                              kind: SymbolKind): WebTypesJsonContributionAdapter =
+    fun BaseContribution.wrap(
+      origin: WebTypesJsonOrigin,
+      rootScope: WebTypesScopeBase,
+      root: PolySymbolNamespace,
+      kind: PolySymbolKind,
+    ): WebTypesJsonContributionAdapter =
       if (pattern != null) {
-        Pattern(this, origin, UserDataHolderBase(), rootScope, root, kind)
+        Pattern(this, origin, UserDataHolderBase(), rootScope, PolySymbolQualifiedKind(root, kind))
       }
       else if ((name != null && name.startsWith(VUE_DIRECTIVE_PREFIX))
                && origin.framework == VUE_FRAMEWORK
-               && kind == KIND_HTML_ATTRIBUTES) {
+               && kind == HTML_ATTRIBUTES.kind) {
         LegacyVueDirective(this, origin, UserDataHolderBase(), rootScope, root)
       }
       else if (name != null && kind == KIND_HTML_VUE_LEGACY_COMPONENTS && this is HtmlElement) {
         LegacyVueComponent(this, origin, UserDataHolderBase(), rootScope, root)
       }
       else {
-        Static(this, origin, UserDataHolderBase(), rootScope, root, kind)
+        Static(this, origin, UserDataHolderBase(), rootScope, PolySymbolQualifiedKind(root, kind))
       }
   }
 
@@ -91,7 +94,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
     ).contains(qualifiedKind)
 
   override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
-    (WebTypesSymbolFactoryEP.get(PolySymbolQualifiedKind(namespace, kind))?.create() ?: WebTypesSymbolBase())
+    (WebTypesSymbolFactoryEP.get(qualifiedKind)?.create() ?: WebTypesSymbolBase())
       .also { it.init(this, queryExecutor) }
 
   abstract fun createPointer(): Pointer<out WebTypesJsonContributionAdapter>
@@ -103,24 +106,24 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
     && other.contribution === contribution
     && other.jsonOrigin === jsonOrigin
     && other.rootScope === rootScope
-    && other.namespace === namespace
-    && other.kind === kind
+    && other.qualifiedKind === qualifiedKind
 
   override fun hashCode(): Int =
-    Objects.hash(contribution, jsonOrigin, rootScope, namespace, kind)
+    Objects.hash(contribution, jsonOrigin, rootScope, qualifiedKind)
 
-  private class Static(contribution: BaseContribution,
-                       context: WebTypesJsonOrigin,
-                       cacheHolder: UserDataHolderEx,
-                       rootScope: WebTypesScopeBase,
-                       namespace: SymbolNamespace,
-                       kind: String) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, namespace, kind) {
+  private class Static(
+    contribution: BaseContribution,
+    context: WebTypesJsonOrigin,
+    cacheHolder: UserDataHolderEx,
+    rootScope: WebTypesScopeBase,
+    qualifiedKind: PolySymbolQualifiedKind,
+  ) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, qualifiedKind) {
 
     override val name: String
       get() = contribution.name ?: "<no-name>"
 
     override fun toString(): String =
-      "$kind/$name <static>"
+      "$qualifiedKind/$name <static>"
 
     override val jsonPattern: NamePatternRoot? get() = null
 
@@ -128,20 +131,20 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
       object : WebTypesJsonContributionAdapterPointer<Static>(this) {
         override fun dereference(): Static? =
           rootScope.dereference()?.let {
-            Static(contribution, jsonContext, cacheHolder, it, namespace, kind)
+            Static(contribution, jsonContext, cacheHolder, it, qualifiedKind)
           }
 
       }
 
   }
 
-  internal class Pattern(contribution: BaseContribution,
-                         context: WebTypesJsonOrigin,
-                         cacheHolder: UserDataHolderEx,
-                         rootScope: WebTypesScopeBase,
-                         namespace: SymbolNamespace,
-                         kind: String)
-    : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, namespace, kind) {
+  internal class Pattern(
+    contribution: BaseContribution,
+    context: WebTypesJsonOrigin,
+    cacheHolder: UserDataHolderEx,
+    rootScope: WebTypesScopeBase,
+    qualifiedKind: PolySymbolQualifiedKind,
+  ) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, qualifiedKind) {
 
     override val jsonPattern: NamePatternRoot?
       get() = contribution.pattern
@@ -149,26 +152,27 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
     override val name: String = "<pattern>"
 
     override fun toString(): String =
-      "$kind/${jsonPattern?.wrap("", jsonOrigin)?.getStaticPrefixes()?.toSet() ?: "[]"}... <pattern>"
+      "$qualifiedKind/${jsonPattern?.wrap("", jsonOrigin)?.getStaticPrefixes()?.toSet() ?: "[]"}... <pattern>"
 
     override fun createPointer(): Pointer<Pattern> =
       object : WebTypesJsonContributionAdapterPointer<Pattern>(this) {
 
         override fun dereference(): Pattern? =
           rootScope.dereference()?.let {
-            Pattern(contribution, jsonContext, cacheHolder, it, namespace, kind)
+            Pattern(contribution, jsonContext, cacheHolder, it, qualifiedKind)
           }
 
       }
 
   }
 
-  private class LegacyVueDirective(contribution: BaseContribution,
-                                   context: WebTypesJsonOrigin,
-                                   cacheHolder: UserDataHolderEx,
-                                   rootScope: WebTypesScopeBase,
-                                   root: SymbolNamespace)
-    : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, root, KIND_HTML_VUE_DIRECTIVES) {
+  private class LegacyVueDirective(
+    contribution: BaseContribution,
+    context: WebTypesJsonOrigin,
+    cacheHolder: UserDataHolderEx,
+    rootScope: WebTypesScopeBase,
+    root: PolySymbolNamespace,
+  ) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, PolySymbolQualifiedKind(root, KIND_HTML_VUE_DIRECTIVES)) {
 
     override val name: String =
       contribution.name.substring(2)
@@ -177,7 +181,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
       get() = name
 
     override fun toString(): String =
-      "$kind/${this.name} <static-legacy>"
+      "$qualifiedKind/${this.name} <static-legacy>"
 
     override val jsonPattern: NamePatternRoot? get() = null
 
@@ -186,18 +190,19 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
 
         override fun dereference(): LegacyVueDirective? =
           rootScope.dereference()?.let {
-            LegacyVueDirective(contribution, jsonContext, cacheHolder, it, namespace)
+            LegacyVueDirective(contribution, jsonContext, cacheHolder, it, qualifiedKind.namespace)
           }
 
       }
   }
 
-  private class LegacyVueComponent(contribution: HtmlElement,
-                                   context: WebTypesJsonOrigin,
-                                   cacheHolder: UserDataHolderEx,
-                                   rootScope: WebTypesScopeBase,
-                                   root: SymbolNamespace)
-    : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, root, KIND_HTML_VUE_COMPONENTS) {
+  private class LegacyVueComponent(
+    contribution: HtmlElement,
+    context: WebTypesJsonOrigin,
+    cacheHolder: UserDataHolderEx,
+    rootScope: WebTypesScopeBase,
+    root: PolySymbolNamespace,
+  ) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, PolySymbolQualifiedKind(root, KIND_HTML_VUE_COMPONENTS)) {
 
     private var _contributionForQuery: GenericContributionsHost? = null
 
@@ -208,7 +213,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
     }
 
     override fun toString(): String =
-      "$kind/$name <legacy static>"
+      "$qualifiedKind/$name <legacy static>"
 
     override val jsonPattern: NamePatternRoot? get() = null
 
@@ -221,7 +226,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
 
         override fun dereference(): LegacyVueComponent? =
           rootScope.dereference()?.let {
-            LegacyVueComponent(contribution as HtmlElement, jsonContext, cacheHolder, it, namespace)
+            LegacyVueComponent(contribution as HtmlElement, jsonContext, cacheHolder, it, qualifiedKind.namespace)
           }
 
       }
@@ -300,8 +305,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
     val jsonContext = wrapper.jsonOrigin
     val cacheHolder = wrapper.cacheHolder
     val rootScope = wrapper.rootScope.createPointer()
-    val namespace = wrapper.namespace
-    val kind = wrapper.kind
+    val qualifiedKind = wrapper.qualifiedKind
 
   }
 }

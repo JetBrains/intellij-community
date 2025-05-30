@@ -2,7 +2,10 @@
 package com.intellij.polySymbols.utils
 
 import com.intellij.model.Pointer
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolOrigin
+import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
 
@@ -16,8 +19,7 @@ import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
  * `mappingPath` will be created.
  */
 class MappedPolySymbol private constructor(
-  override val namespace: SymbolNamespace,
-  override val kind: SymbolKind,
+  override val qualifiedKind: PolySymbolQualifiedKind,
   override val name: String,
   override val origin: PolySymbolOrigin,
   vararg mappingPath: PolySymbolQualifiedName,
@@ -32,9 +34,9 @@ class MappedPolySymbol private constructor(
       name: String,
       origin: PolySymbolOrigin,
       vararg mappingPath: PolySymbolQualifiedName,
-      priority: PolySymbol.Priority? = null
+      priority: PolySymbol.Priority? = null,
     ): MappedPolySymbol =
-      MappedPolySymbol(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *mappingPath, priority = priority)
+      MappedPolySymbol(qualifiedKind, name, origin, *mappingPath, priority = priority)
   }
 
   override val pattern: PolySymbolsPattern =

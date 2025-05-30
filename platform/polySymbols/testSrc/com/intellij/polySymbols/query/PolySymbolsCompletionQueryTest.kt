@@ -4,15 +4,15 @@ package com.intellij.polySymbols.query
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printCodeCompletionItems
-import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
+import com.intellij.util.containers.Stack
 
 class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
@@ -234,10 +234,12 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
       object : PolySymbolsScope {
         override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
 
-        override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                        params: PolySymbolsCodeCompletionQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> {
-          return if (qualifiedName.kind == PolySymbol.KIND_HTML_ATTRIBUTES) {
+        override fun getCodeCompletions(
+          qualifiedName: PolySymbolQualifiedName,
+          params: PolySymbolsCodeCompletionQueryParams,
+          scope: Stack<PolySymbolsScope>,
+        ): List<PolySymbolCodeCompletionItem> {
+          return if (qualifiedName.qualifiedKind == PolySymbol.HTML_ATTRIBUTES) {
             listOf(PolySymbolCodeCompletionItem.create("bar"))
           }
           else emptyList()
@@ -330,6 +332,7 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   fun testCssClassListMultipleClasses3() {
     doTest("css/class-list/foa bar", 4, null, "css-class-list")
   }
+
   fun testCssClassListMultipleClasses4() {
     doTest("css/class-list/foo bar", 3, null, "css-class-list")
   }
@@ -338,11 +341,13 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
     doTest(path, position, framework, webTypes = webTypes.toList())
   }
 
-  private fun doTest(path: String,
-                     position: Int = 0,
-                     framework: String? = null,
-                     webTypes: List<String> = emptyList(),
-                     customElementsManifests: List<String> = emptyList()) {
+  private fun doTest(
+    path: String,
+    position: Int = 0,
+    framework: String? = null,
+    webTypes: List<String> = emptyList(),
+    customElementsManifests: List<String> = emptyList(),
+  ) {
     doTest(testPath) {
       registerFiles(framework, webTypes, customElementsManifests)
       val matches = polySymbolsQueryExecutorFactory.create(null)

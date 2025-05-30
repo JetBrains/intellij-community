@@ -2,9 +2,6 @@
 package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.SmartList
-import com.intellij.util.containers.Stack
-import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
@@ -17,6 +14,9 @@ import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.utils.coalesceWith
 import com.intellij.polySymbols.utils.isCritical
+import com.intellij.util.SmartList
+import com.intellij.util.containers.Stack
+import com.intellij.util.text.CharSequenceSubSequence
 import kotlin.math.max
 import kotlin.math.min
 
@@ -37,14 +37,18 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   override fun isStaticAndRequired(): Boolean =
     configProvider.isStaticAndRequired
 
-  override fun match(owner: PolySymbol?,
-                     scopeStack: Stack<PolySymbolsScope>,
-                     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
-                     params: MatchParameters,
-                     start: Int,
-                     end: Int): List<MatchResult> =
-    process(scopeStack, params.queryExecutor) { patterns, newSymbolsResolver, apiStatus,
-                                                isRequired, priority, proximity, repeats, unique ->
+  override fun match(
+    owner: PolySymbol?,
+    scopeStack: Stack<PolySymbolsScope>,
+    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    params: MatchParameters,
+    start: Int,
+    end: Int,
+  ): List<MatchResult> =
+    process(scopeStack, params.queryExecutor) {
+      patterns, newSymbolsResolver, apiStatus,
+      isRequired, priority, proximity, repeats, unique,
+      ->
       performPatternMatch(params, start, end, patterns, repeats, unique, scopeStack, newSymbolsResolver)
         .let { matchResults ->
           if (!isRequired)
@@ -66,12 +70,16 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         }
     }
 
-  override fun list(owner: PolySymbol?,
-                    scopeStack: Stack<PolySymbolsScope>,
-                    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
-                    params: ListParameters): List<ListResult> =
-    process(scopeStack, params.queryExecutor) { patterns, newSymbolsResolver, apiStatus,
-                                                isRequired, priority, proximity, repeats, _ ->
+  override fun list(
+    owner: PolySymbol?,
+    scopeStack: Stack<PolySymbolsScope>,
+    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    params: ListParameters,
+  ): List<ListResult> =
+    process(scopeStack, params.queryExecutor) {
+      patterns, newSymbolsResolver, apiStatus,
+      isRequired, priority, proximity, repeats, _,
+      ->
       if (repeats)
         if (isRequired)
           emptyList()
@@ -92,14 +100,18 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
     }
 
-  override fun complete(owner: PolySymbol?,
-                        scopeStack: Stack<PolySymbolsScope>,
-                        symbolsResolver: PolySymbolsPatternSymbolsResolver?,
-                        params: CompletionParameters,
-                        start: Int,
-                        end: Int): CompletionResults =
-    process(scopeStack, params.queryExecutor) { patterns, newSymbolsResolver, apiStatus,
-                                                isRequired, priority, proximity, repeats, unique ->
+  override fun complete(
+    owner: PolySymbol?,
+    scopeStack: Stack<PolySymbolsScope>,
+    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    params: CompletionParameters,
+    start: Int,
+    end: Int,
+  ): CompletionResults =
+    process(scopeStack, params.queryExecutor) {
+      patterns, newSymbolsResolver, apiStatus,
+      isRequired, priority, proximity, repeats, unique,
+      ->
       var staticPrefixes: Set<String> = emptySet()
 
       val runs = if (start == end) {
@@ -148,16 +160,20 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       CompletionResults(patternsItems, isRequired)
     }
 
-  private fun <T> process(scopeStack: Stack<PolySymbolsScope>,
-                          queryExecutor: PolySymbolsQueryExecutor,
-                          action: (patterns: List<PolySymbolsPattern>,
-                                   symbolsResolver: PolySymbolsPatternSymbolsResolver?,
-                                   patternApiStatus: PolySymbolApiStatus?,
-                                   patternRequired: Boolean,
-                                   patternPriority: PolySymbol.Priority?,
-                                   patternProximity: Int?,
-                                   patternRepeat: Boolean,
-                                   patternUnique: Boolean) -> T): T {
+  private fun <T> process(
+    scopeStack: Stack<PolySymbolsScope>,
+    queryExecutor: PolySymbolsQueryExecutor,
+    action: (
+      patterns: List<PolySymbolsPattern>,
+      symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+      patternApiStatus: PolySymbolApiStatus?,
+      patternRequired: Boolean,
+      patternPriority: PolySymbol.Priority?,
+      patternProximity: Int?,
+      patternRepeat: Boolean,
+      patternUnique: Boolean,
+    ) -> T,
+  ): T {
     val options = configProvider.getOptions(queryExecutor, scopeStack)
 
     val additionalScope = options.additionalScope
@@ -179,7 +195,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     owner: PolySymbol?,
     apiStatus: PolySymbolApiStatus?,
     priority: PolySymbol.Priority?,
-    proximity: Int?
+    proximity: Int?,
   ): List<T> =
     // We need to filter and select match results separately for each length of the match
     let { matchResults ->
@@ -192,7 +208,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       .flatMap {
         it.selectShortestWithoutProblems()
           .map { matchResult ->
-            if (owner != null && owner.kind != SPECIAL_MATCHED_CONTRIB) {
+            if (owner != null && owner.qualifiedKind.kind != SPECIAL_MATCHED_CONTRIB) {
               matchResult.addOwner(owner)
             }
             else matchResult
@@ -207,14 +223,16 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
         else matchResults
       }
 
-  private fun performPatternMatch(params: MatchParameters,
-                                  start: Int,
-                                  end: Int,
-                                  patterns: List<PolySymbolsPattern>,
-                                  repeats: Boolean,
-                                  unique: Boolean,
-                                  contextStack: Stack<PolySymbolsScope>,
-                                  newSymbolsResolver: PolySymbolsPatternSymbolsResolver?): List<MatchResult> {
+  private fun performPatternMatch(
+    params: MatchParameters,
+    start: Int,
+    end: Int,
+    patterns: List<PolySymbolsPattern>,
+    repeats: Boolean,
+    unique: Boolean,
+    contextStack: Stack<PolySymbolsScope>,
+    newSymbolsResolver: PolySymbolsPatternSymbolsResolver?,
+  ): List<MatchResult> {
     // shortcut
     if (start == end) {
       // This won't work for nested patterns, but at least allow for one level of empty
@@ -238,14 +256,16 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
   }
 
-  private fun repeatingPatternMatch(start: Int,
-                                    end: Int,
-                                    params: MatchParameters,
-                                    staticPrefixes: Set<String>,
-                                    scopeStack: Stack<PolySymbolsScope>,
-                                    patterns: List<PolySymbolsPattern>,
-                                    newSymbolsResolver: PolySymbolsPatternSymbolsResolver?,
-                                    unique: Boolean): SmartList<Pair<Int, List<MatchResult>>> {
+  private fun repeatingPatternMatch(
+    start: Int,
+    end: Int,
+    params: MatchParameters,
+    staticPrefixes: Set<String>,
+    scopeStack: Stack<PolySymbolsScope>,
+    patterns: List<PolySymbolsPattern>,
+    newSymbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    unique: Boolean,
+  ): SmartList<Pair<Int, List<MatchResult>>> {
     val complete = SmartList<Pair<Int, List<MatchResult>>>()
     val toProcess = Stack<Pair<List<MatchResult>, List<CharSequence>>?>(null)
     while (toProcess.isNotEmpty()) {
@@ -375,8 +395,10 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     return result
   }
 
-  private fun buildCompletionResultRuns(matchSegments: List<MatchResult>,
-                                        params: CompletionParameters): List<CompletionResultRun> {
+  private fun buildCompletionResultRuns(
+    matchSegments: List<MatchResult>,
+    params: CompletionParameters,
+  ): List<CompletionResultRun> {
     val completionSegments = matchSegments
       .filter { it.start <= params.position && params.position <= it.end }
 

@@ -6,12 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.createSmartPointer
-import com.intellij.util.applyIf
-import com.intellij.util.asSafely
-import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
@@ -22,6 +16,12 @@ import com.intellij.polySymbols.impl.filterByQueryParams
 import com.intellij.polySymbols.impl.selectBest
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
+import com.intellij.util.applyIf
+import com.intellij.util.asSafely
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.math.max
@@ -167,7 +167,8 @@ class PolySymbolsQueryExecutorImpl(
           keepUnresolvedTopLevelReferences = false
           try {
             scope.getMatchingSymbols(qualifiedName, params, Stack(finalContext))
-          } finally {
+          }
+          finally {
             keepUnresolvedTopLevelReferences = prev
           }
         }
@@ -315,7 +316,8 @@ class PolySymbolsQueryExecutorImpl(
               keepUnresolvedTopLevelReferences = false
               try {
                 it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
-              } finally {
+              }
+              finally {
                 keepUnresolvedTopLevelReferences = prev
               }
             }
@@ -333,10 +335,10 @@ class PolySymbolsQueryExecutorImpl(
     } ?: run {
       thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
                         "Root scope: " + rootScope.map {
-        it.asSafely<PolySymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
+        it.asSafely<PolySymbol>()?.let { symbol -> "${symbol.qualifiedKind}/${symbol.name}" } ?: it
       } + "\n" +
                         "Additional scope: " + additionalScope.map {
-        it.asSafely<PolySymbol>()?.let { symbol -> symbol.kind + "/" + symbol.name } ?: it
+        it.asSafely<PolySymbol>()?.let { symbol -> "${symbol.qualifiedKind}/${symbol.name}" } ?: it
       })
       emptyList()
     }
@@ -381,7 +383,7 @@ class PolySymbolsQueryExecutorImpl(
         return pattern
           .list(this, context, params)
           .map {
-            PolySymbolMatch.create(it.name, it.segments, namespace, kind, origin)
+            PolySymbolMatch.create(it.name, it.segments, qualifiedKind, origin)
           }
       }
       finally {

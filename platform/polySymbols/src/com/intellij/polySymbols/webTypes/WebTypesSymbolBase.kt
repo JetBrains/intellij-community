@@ -3,8 +3,6 @@ package com.intellij.polySymbols.webTypes
 
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.psi.PsiElement
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
@@ -18,8 +16,9 @@ import com.intellij.polySymbols.utils.merge
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.wrap
 import com.intellij.polySymbols.webTypes.json.*
-import com.intellij.polySymbols.webTypes.json.resolve
-import java.util.Objects
+import com.intellij.psi.PsiElement
+import com.intellij.util.containers.Stack
+import java.util.*
 import javax.swing.Icon
 
 open class WebTypesSymbolBase : WebTypesSymbol {
@@ -74,35 +73,38 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     this.queryExecutor = queryExecutor
   }
 
-  final override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                        params: PolySymbolsNameMatchQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+  final override fun getMatchingSymbols(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsNameMatchQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     base.rootScope
       .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
       .toList()
 
-  final override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                                params: PolySymbolsListSymbolsQueryParams,
-                                scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+  final override fun getSymbols(
+    qualifiedKind: PolySymbolQualifiedKind,
+    params: PolySymbolsListSymbolsQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolsScope> =
     base.rootScope
       .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, qualifiedKind, params)
       .toList()
 
-  final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                        params: PolySymbolsCodeCompletionQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+  final override fun getCodeCompletions(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsCodeCompletionQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolCodeCompletionItem> =
     base.rootScope
       .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
       .toList()
 
-  final override val kind: SymbolKind
-    get() = base.kind
+  final override val qualifiedKind: PolySymbolQualifiedKind
+    get() = base.qualifiedKind
 
   final override val origin: PolySymbolOrigin
     get() = base.jsonOrigin
-
-  final override val namespace: SymbolNamespace
-    get() = base.namespace
 
   final override val name: String
     get() = if (base is WebTypesJsonContributionAdapter.Pattern) base.contributionName else base.name
@@ -176,7 +178,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
             ?: (base.contribution as? HtmlAttribute)?.required
             ?: superContributions.firstOrNull()?.required
 
-  final  override val defaultValue: String?
+  final override val defaultValue: String?
     get() = (base.contribution as? GenericContribution)?.default
             ?: (base.contribution as? HtmlAttribute)?.default
             ?: superContributions.firstOrNull()?.defaultValue
@@ -193,7 +195,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     base.isExclusiveFor(qualifiedKind)
-        || superContributions.any { it.isExclusiveFor(qualifiedKind) }
+    || superContributions.any { it.isExclusiveFor(qualifiedKind) }
 
   override fun matchContext(context: PolyContext): Boolean =
     super.matchContext(context) && base.contribution.requiredContext.evaluate(context)

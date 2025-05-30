@@ -3,33 +3,26 @@ package com.intellij.polySymbols.query
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
-import com.intellij.polySymbols.SymbolKind
-import com.intellij.polySymbols.SymbolNamespace
-import com.intellij.polySymbols.PolySymbol
 import javax.swing.Icon
 
 interface PolySymbolDefaultIconProvider {
 
-  fun getDefaultIcon(namespace: SymbolNamespace, kind: SymbolKind): Icon?
+  fun getDefaultIcon(qualifiedKind: PolySymbolQualifiedKind): Icon?
 
   companion object {
 
     private val EP_NAME = ExtensionPointName<PolySymbolDefaultIconProvider>("com.intellij.polySymbols.defaultIconProvider")
 
-    fun get(namespace: SymbolNamespace, kind: SymbolKind): Icon? =
-      EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultIcon(namespace, kind) }
-      ?: when (namespace) {
-        PolySymbol.NAMESPACE_HTML -> when (kind) {
-          PolySymbol.KIND_HTML_ELEMENTS -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Tag)
-          PolySymbol.KIND_HTML_ATTRIBUTES -> AllIcons.Nodes.ObjectTypeAttribute
-          else -> null
-        }
-        PolySymbol.NAMESPACE_JS -> when (kind) {
-          PolySymbol.KIND_JS_PROPERTIES -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property)
-          else -> null
-        }
+    fun get(qualifiedKind: PolySymbolQualifiedKind): Icon? =
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultIcon(qualifiedKind) }
+      ?: when (qualifiedKind) {
+        PolySymbol.HTML_ELEMENTS -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Tag)
+        PolySymbol.HTML_ATTRIBUTES -> AllIcons.Nodes.ObjectTypeAttribute
+        PolySymbol.JS_PROPERTIES -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Property)
         else -> null
       }
   }

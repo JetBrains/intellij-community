@@ -4,17 +4,19 @@ package com.intellij.polySymbols
 import com.intellij.openapi.util.NlsSafe
 
 data class PolySymbolQualifiedName(
-  val namespace: @NlsSafe SymbolNamespace,
-  val kind: @NlsSafe SymbolKind,
+  val qualifiedKind: PolySymbolQualifiedKind,
   val name: @NlsSafe String,
 ) {
-  val qualifiedKind: PolySymbolQualifiedKind = PolySymbolQualifiedKind(namespace, kind)
+
+  val kind: @NlsSafe PolySymbolKind get() = qualifiedKind.kind
+
+  val namespace: @NlsSafe PolySymbolNamespace get() = qualifiedKind.namespace
 
   fun matches(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-    qualifiedKind.kind == kind && qualifiedKind.namespace == namespace
+    this.qualifiedKind == qualifiedKind
 
   fun matches(qualifiedKind: PolySymbolQualifiedKind, vararg qualifiedKinds: PolySymbolQualifiedKind): Boolean =
     sequenceOf(qualifiedKind).plus(qualifiedKinds).any(::matches)
 
-  override fun toString(): String = "/$namespace/$kind/$name"
+  override fun toString(): String = "${qualifiedKind.namespace}/${qualifiedKind.kind}/$name"
 }

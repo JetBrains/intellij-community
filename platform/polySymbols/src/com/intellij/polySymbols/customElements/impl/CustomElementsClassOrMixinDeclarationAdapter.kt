@@ -3,8 +3,6 @@ package com.intellij.polySymbols.customElements.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.psi.PsiElement
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
@@ -19,21 +17,20 @@ import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.psi.PsiElement
+import com.intellij.util.containers.Stack
 
 class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val name: String,
   private val declaration: CustomElementClassOrMixinDeclaration,
   private val origin: CustomElementsJsonOrigin,
-  private val rootScope: CustomElementsManifestScopeBase
+  private val rootScope: CustomElementsManifestScopeBase,
 ) : StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
 
   private val cacheHolder = UserDataHolderBase()
 
-  override val namespace: SymbolNamespace
-    get() = CustomElementsSymbol.NAMESPACE_CUSTOM_ELEMENTS_MANIFEST
-
-  override val kind: String
-    get() = CustomElementsSymbol.KIND_CEM_DECLARATIONS
+  override val qualifiedKind: PolySymbolQualifiedKind
+    get() = CustomElementsSymbol.CEM_DECLARATIONS
 
   override val pattern: PolySymbolsPattern?
     get() = null
@@ -74,14 +71,12 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override val origin: CustomElementsJsonOrigin
       get() = base.origin
 
-    override val namespace: SymbolNamespace
-      get() = base.namespace
-
-    override val kind: SymbolKind
-      get() = base.kind
+    override val qualifiedKind: PolySymbolQualifiedKind
+      get() = base.qualifiedKind
 
     override val name: String
       get() = base.name
+
     override val description: String?
       get() = (base.declaration.description?.takeIf { it.isNotBlank() } ?: base.declaration.summary)
                 ?.let { origin.renderDescription(it) }
@@ -109,32 +104,40 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
       }
     }
 
-    override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                    params: PolySymbolsNameMatchQueryParams,
-                                    scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+    override fun getMatchingSymbols(
+      qualifiedName: PolySymbolQualifiedName,
+      params: PolySymbolsNameMatchQueryParams,
+      scope: Stack<PolySymbolsScope>,
+    ): List<PolySymbol> =
       base.rootScope
         .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()
 
-    override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                            params: PolySymbolsListSymbolsQueryParams,
-                            scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+    override fun getSymbols(
+      qualifiedKind: PolySymbolQualifiedKind,
+      params: PolySymbolsListSymbolsQueryParams,
+      scope: Stack<PolySymbolsScope>,
+    ): List<PolySymbolsScope> =
       base.rootScope
         .getSymbols(base.declaration, this.origin, qualifiedKind, params)
         .toList()
 
-    override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                    params: PolySymbolsCodeCompletionQueryParams,
-                                    scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+    override fun getCodeCompletions(
+      qualifiedName: PolySymbolQualifiedName,
+      params: PolySymbolsCodeCompletionQueryParams,
+      scope: Stack<PolySymbolsScope>,
+    ): List<PolySymbolCodeCompletionItem> =
       base.rootScope
         .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, scope)
         .toList()
   }
 
   companion object {
-    fun create(declaration: CustomElementClassOrMixinDeclaration,
-               origin: CustomElementsJsonOrigin,
-               rootScope: CustomElementsManifestScopeBase): CustomElementsClassOrMixinDeclarationAdapter? {
+    fun create(
+      declaration: CustomElementClassOrMixinDeclaration,
+      origin: CustomElementsJsonOrigin,
+      rootScope: CustomElementsManifestScopeBase,
+    ): CustomElementsClassOrMixinDeclarationAdapter? {
       val name = declaration.name
       if (name == null) {
         return null

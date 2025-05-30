@@ -11,12 +11,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValue
-import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.symbol.RenameableSymbol
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
@@ -28,8 +22,16 @@ import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
+import com.intellij.polySymbols.utils.kind
 import com.intellij.polySymbols.utils.matchedNameOrName
+import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.CachedValue
+import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.refactoring.rename.symbol.RenameableSymbol
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
@@ -60,16 +62,10 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
   val origin: PolySymbolOrigin
 
   /**
-   * Describes which language or concept the symbol belongs to.
-   */
-  val namespace: @NlsSafe SymbolNamespace
-
-  /**
-   * Describes which group of symbols within the particular language
+   * Describes which group of symbols (kind) within the particular language
    * or concept (namespace) the symbol belongs to.
-   * The kind should be plural in form, e.g. "attributes".
    */
-  val kind: @NlsSafe SymbolKind
+  val qualifiedKind: PolySymbolQualifiedKind
 
   /**
    * The name of the symbol. If the symbol does not have a pattern, the name will be used as-is for matching.
@@ -352,40 +348,23 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
     const val NAMESPACE_CSS: String = "css"
     const val NAMESPACE_JS: String = "js"
 
-    const val KIND_HTML_ELEMENTS: String = "elements"
-    const val KIND_HTML_ATTRIBUTES: String = "attributes"
-    const val KIND_HTML_ATTRIBUTE_VALUES: String = "values"
-    const val KIND_HTML_SLOTS: String = "slots"
+    val HTML_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, "elements")
+    val HTML_ATTRIBUTES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, "attributes")
+    val HTML_ATTRIBUTE_VALUES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, "values")
+    val HTML_SLOTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, "slots")
 
-    const val KIND_CSS_PROPERTIES: String = "properties"
-    const val KIND_CSS_PSEUDO_ELEMENTS: String = "pseudo-elements"
-    const val KIND_CSS_PSEUDO_CLASSES: String = "pseudo-classes"
-    const val KIND_CSS_FUNCTIONS: String = "functions"
-    const val KIND_CSS_CLASSES: String = "classes"
-    const val KIND_CSS_PARTS: String = "parts"
+    val CSS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "properties")
+    val CSS_PSEUDO_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "pseudo-elements")
+    val CSS_PSEUDO_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "pseudo-classes")
+    val CSS_FUNCTIONS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "functions")
+    val CSS_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "classes")
+    val CSS_PARTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "parts")
 
-    const val KIND_JS_EVENTS: String = "events"
-    const val KIND_JS_PROPERTIES: String = "properties"
-    const val KIND_JS_SYMBOLS: String = "symbols"
-    const val KIND_JS_STRING_LITERALS: String = "string-literals"
-
-    val HTML_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ELEMENTS)
-    val HTML_ATTRIBUTES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES)
-    val HTML_ATTRIBUTE_VALUES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTE_VALUES)
-    val HTML_SLOTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_SLOTS)
-
-    val CSS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PROPERTIES)
-    val CSS_PSEUDO_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_ELEMENTS)
-    val CSS_PSEUDO_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_CLASSES)
-    val CSS_FUNCTIONS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_FUNCTIONS)
-    val CSS_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_CLASSES)
-    val CSS_PARTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PARTS)
-
-    val JS_EVENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
-    val JS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
+    val JS_EVENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "events")
+    val JS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "properties")
     val JS_KEYWORDS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "keywords")
-    val JS_SYMBOLS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
-    val JS_STRING_LITERALS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
+    val JS_SYMBOLS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "symbols")
+    val JS_STRING_LITERALS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "string-literals")
 
     /**
      * Supported by `html/elements` and `html/attributes` symbols,

@@ -6,9 +6,6 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.psi.PsiElement
-import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
@@ -20,6 +17,9 @@ import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.refactoring.impl.PolySymbolDelegatedRenameTargetImpl
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.search.impl.PolySymbolDelegatedSearchTargetImpl
+import com.intellij.psi.PsiElement
+import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.util.containers.Stack
 import javax.swing.Icon
 
 abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol {
@@ -28,10 +28,8 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
     get() = delegate.psiContext
   override val origin: PolySymbolOrigin
     get() = delegate.origin
-  override val namespace: SymbolNamespace
-    get() = delegate.namespace
-  override val kind: SymbolKind
-    get() = delegate.kind
+  override val qualifiedKind: PolySymbolQualifiedKind
+    get() = delegate.qualifiedKind
 
   override fun getModificationCount(): Long =
     delegate.modificationCount
@@ -82,20 +80,26 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()
 
-  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                  params: PolySymbolsNameMatchQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+  override fun getMatchingSymbols(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsNameMatchQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     delegate.getMatchingSymbols(qualifiedName, params, scope)
 
 
-  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                          params: PolySymbolsListSymbolsQueryParams,
-                          scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+  override fun getSymbols(
+    qualifiedKind: PolySymbolQualifiedKind,
+    params: PolySymbolsListSymbolsQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolsScope> =
     delegate.getSymbols(qualifiedKind, params, scope)
 
-  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                  params: PolySymbolsCodeCompletionQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+  override fun getCodeCompletions(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsCodeCompletionQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolCodeCompletionItem> =
     delegate.getCodeCompletions(qualifiedName, params, scope)
 
   override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
