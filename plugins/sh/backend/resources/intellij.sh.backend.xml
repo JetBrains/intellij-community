@@ -5,12 +5,11 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.sh.codeInsight.ShFunctionReferenceSupport"
-                        serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendFunctionReferenceSupport"/>
-    <applicationService serviceInterface="com.intellij.sh.codeInsight.ShIncludeCommandReferenceSupport"
-                        serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendIncludeCommandReferenceSupport"/>
+    <applicationService serviceInterface="com.intellij.sh.codeInsight.ShPsiReferenceSupport"
+                        serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport"
+                        client="local"/>
 
-    <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.codeInsight.ShFindUsagesProvider"/>
+    <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShFindUsagesProvider"/>
     <targetElementEvaluator language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShTargetElementEvaluator"/>
   </extensions>
 

@@ -10,5 +10,8 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.sh.codeInsight.ShPsiReferenceSupport"
+                        serviceImplementation="com.intellij.sh.frontend.codeInsight.ShFrontendPsiReferenceSupport"
+                        client="frontend"/>
   </extensions>
 </idea-plugin>
