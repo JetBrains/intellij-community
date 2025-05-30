@@ -6,10 +6,12 @@ import fleet.fastutil.ints.IntOpenHashSet
 import fleet.fastutil.ints.isNotEmpty
 import fleet.fastutil.ints.mapNotNull
 
-data class CreateEntity(val eid: EID,
-                        val entityTypeEid: EID,
-                        val attributes: List<Pair<Attribute<*>, Any>>,
-                        override val seed: TX) : Instruction {
+data class CreateEntity(
+  val eid: EID,
+  val entityTypeEid: EID,
+  val attributes: List<Pair<Attribute<*>, Any>>,
+  override val seed: TX,
+) : Instruction {
 
   override fun DbContext<Q>.expand(): InstructionExpansion = InstructionExpansion(
     buildList {
@@ -34,8 +36,10 @@ data class CreateEntity(val eid: EID,
   )
 }
 
-data class AtomicComposite(val instructions: List<Instruction>,
-                           override val seed: Long) : Instruction {
+data class AtomicComposite(
+  val instructions: List<Instruction>,
+  override val seed: Long,
+) : Instruction {
   override fun DbContext<Q>.expand(): InstructionExpansion = run {
     val expansions = instructions.map { it.run { expand() } }
     InstructionExpansion(expansions.flatMap(InstructionExpansion::ops),
@@ -55,8 +59,10 @@ data class EffectInstruction(val effect: DbContext<Mut>.() -> Unit) : Instructio
  * i.e. Entities which we load from disk, or get from the internet could not have EntityType loaded, however
  * we are still able to store and modify them
  * */
-data class ReifyEntities(val entityTypeEID: EID,
-                         override val seed: TX) : Instruction {
+data class ReifyEntities(
+  val entityTypeEID: EID,
+  override val seed: TX,
+) : Instruction {
   override fun DbContext<Q>.expand(): InstructionExpansion = InstructionExpansion(buildList {
     @Suppress("UNCHECKED_CAST")
     getOne(entityTypeEID, Entity.EntityObject.attr as Attribute<Entity>)?.let { et ->
@@ -69,10 +75,12 @@ data class ReifyEntities(val entityTypeEID: EID,
   })
 }
 
-data class Add<V : Any>(val eid: EID,
-                        val attribute: Attribute<V>,
-                        val value: V,
-                        override val seed: Long) : Instruction {
+data class Add<V : Any>(
+  val eid: EID,
+  val attribute: Attribute<V>,
+  val value: V,
+  override val seed: Long,
+) : Instruction {
   override fun DbContext<Q>.expand(): InstructionExpansion = run {
     impl.assertEntityExists(eid, attribute, null)
     if (attribute.schema.isRef) {
@@ -82,18 +90,22 @@ data class Add<V : Any>(val eid: EID,
   }
 }
 
-data class Remove<V : Any>(val eid: EID,
-                           val attribute: Attribute<V>,
-                           val value: V,
-                           override val seed: Long) : Instruction {
+data class Remove<V : Any>(
+  val eid: EID,
+  val attribute: Attribute<V>,
+  val value: V,
+  override val seed: Long,
+) : Instruction {
 
   override fun DbContext<Q>.expand(): InstructionExpansion =
     InstructionExpansion(listOf(Op.Retract(eid, attribute, value)))
 }
 
-data class RetractAttribute(val eid: EID,
-                            val attribute: Attribute<*>,
-                            override val seed: Long) : Instruction {
+data class RetractAttribute(
+  val eid: EID,
+  val attribute: Attribute<*>,
+  override val seed: Long,
+) : Instruction {
 
   override fun DbContext<Q>.expand(): InstructionExpansion =
     InstructionExpansion(buildList {
@@ -106,8 +118,10 @@ data class RetractAttribute(val eid: EID,
     })
 }
 
-data class RetractEntityInPartition(val eid: EID,
-                                    override val seed: Long) : Instruction {
+data class RetractEntityInPartition(
+  val eid: EID,
+  override val seed: Long,
+) : Instruction {
 
   override fun DbContext<Q>.expand(): InstructionExpansion {
     val res = ArrayList<Op>()
