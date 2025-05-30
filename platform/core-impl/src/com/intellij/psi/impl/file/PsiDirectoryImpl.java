@@ -62,6 +62,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     myFile = file;
   }
 
+  public PsiDirectoryImpl(@NotNull PsiManagerImpl manager, @NotNull VirtualFile file) {
+    myManager = manager;
+    myFile = file;
+  }
+
   @Override
   public @NotNull VirtualFile getVirtualFile() {
     return myFile;

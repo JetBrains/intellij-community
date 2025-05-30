@@ -2396,6 +2396,7 @@ c:com.intellij.psi.impl.file.PsiBinaryFileImpl
 - com.intellij.psi.impl.PsiFileEx
 - java.lang.Cloneable
 - <init>(com.intellij.psi.impl.PsiManagerEx,com.intellij.psi.FileViewProvider):V
+- <init>(com.intellij.psi.impl.PsiManagerImpl,com.intellij.psi.FileViewProvider):V
 - accept(com.intellij.psi.PsiElementVisitor):V
 - add(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - addAfter(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
@@ -2455,6 +2456,7 @@ c:com.intellij.psi.impl.file.PsiDirectoryImpl
 - com.intellij.openapi.ui.Queryable
 - com.intellij.psi.PsiDirectory
 - <init>(com.intellij.psi.impl.PsiManagerEx,com.intellij.openapi.vfs.VirtualFile):V
+- <init>(com.intellij.psi.impl.PsiManagerImpl,com.intellij.openapi.vfs.VirtualFile):V
 - accept(com.intellij.psi.PsiElementVisitor):V
 - add(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - addAfter(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement

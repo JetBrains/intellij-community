@@ -34,6 +34,11 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     myManager = manager;
   }
 
+  public PsiBinaryFileImpl(@NotNull PsiManagerImpl manager, @NotNull FileViewProvider viewProvider) {
+    myViewProvider = (AbstractFileViewProvider)viewProvider;
+    myManager = manager;
+  }
+
   @Override
   public @NotNull VirtualFile getVirtualFile() {
     return myViewProvider.getVirtualFile();
