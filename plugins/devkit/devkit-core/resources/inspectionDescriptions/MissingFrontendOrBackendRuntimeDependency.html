@@ -2,10 +2,15 @@
 <body>
 Reports missing <code>intellij.platform.frontend</code> or <code>intellij.platform.backend</code> runtime dependencies in module descriptors (XML).
 <p>Remote Development introduced marker modules for modules that are intended to be loaded in frontend or backend mode:</p>
-  <ul>
+<ul>
   <li><code>intellij.platform.frontend</code></li>
   <li><code>intellij.platform.backend</code></li>
-  </ul>
+</ul>
+<p>
+  If such a dependency is not specified, the IDE will load modules unrelated to the current mode, for example,
+  in frontend mode, it will load backend modules.
+  This will affect performance and may lead to errors.
+</p>
 <p>The inspection is based on frontend/backend module naming convention (<code>*.frontend</code>/<code>*.backend</code>).</p>
 <!-- tooltip end -->
 <p><small>New in 2025.2</small>
