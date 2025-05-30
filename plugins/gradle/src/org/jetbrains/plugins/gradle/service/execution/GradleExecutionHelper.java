@@ -125,8 +125,34 @@ public final class GradleExecutionHelper {
     GradleExecutionSettings effectiveSettings = new GradleExecutionSettings(settings);
     effectiveSettings.setTasks(ContainerUtil.concat(effectiveSettings.getTasks(), tasksAndArguments));
     CancellationToken cancellationToken = GradleConnector.newCancellationTokenSource().token();
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, cancellationToken, effectiveSettings);
-    prepareForExecution(operation, cancellationToken, id, effectiveSettings, listener, buildEnvironment);
+    GradleExecutionContextImpl context = new GradleExecutionContextImpl("", id, effectiveSettings, listener, cancellationToken);
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, context);
+    context.setBuildEnvironment(buildEnvironment);
+    prepareForExecution(operation, context);
+  }
+
+  /**
+   * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead.
+   * The {@link BuildEnvironment} model will be automatically provided to {@link GradleExecutionContext}.
+   */
+  @Deprecated
+  public static @NotNull BuildEnvironment getBuildEnvironment(
+    @NotNull ProjectConnection connection,
+    @NotNull ExternalSystemTaskId taskId,
+    @NotNull ExternalSystemTaskNotificationListener listener,
+    @Nullable CancellationToken cancellationToken,
+    @Nullable GradleExecutionSettings settings
+  ) {
+    GradleExecutionSettings effectiveSettings = ObjectUtils.notNull(settings, () ->
+      new GradleExecutionSettings()
+    );
+    CancellationToken effectiveCancellationToken = ObjectUtils.notNull(cancellationToken, () ->
+      GradleConnector.newCancellationTokenSource().token()
+    );
+    GradleExecutionContextImpl context = new GradleExecutionContextImpl(
+      "", taskId, effectiveSettings, listener, effectiveCancellationToken
+    );
+    return getBuildEnvironment(connection, context);
   }
 
   /**
@@ -216,24 +242,11 @@ public final class GradleExecutionHelper {
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionContext context
   ) {
-    prepareForExecution(
-      operation,
-      context.getCancellationToken(), context.getTaskId(), context.getSettings(), context.getListener(), context.getBuildEnvironment()
-    );
-  }
+    var id = context.getTaskId();
+    var settings = context.getSettings();
+    var listener = context.getListener();
+    var buildEnvironment = context.getBuildEnvironment();
 
-  /**
-   * @deprecated use the {@link GradleExecutionHelper#prepareForExecution} function with {@link GradleExecutionContext} instead
-   */
-  @Deprecated
-  public static void prepareForExecution(
-    @NotNull LongRunningOperation operation,
-    @NotNull CancellationToken cancellationToken,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull BuildEnvironment buildEnvironment
-  ) {
     clearSystemProperties(operation);
 
     applyIdeaParameters(settings);
@@ -252,7 +265,7 @@ public final class GradleExecutionHelper {
 
     setupStandardIO(operation, settings, id, listener);
 
-    operation.withCancellationToken(cancellationToken);
+    operation.withCancellationToken(context.getCancellationToken());
 
     GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
       proc.prepareForExecution(id, operation, settings, buildEnvironment);
@@ -487,26 +500,12 @@ public final class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
-  private static @NotNull BuildEnvironment getBuildEnvironment(
-    @NotNull ProjectConnection connection,
-    @NotNull GradleExecutionContext context
-  ) {
-    return getBuildEnvironment(
-      connection, context.getTaskId(), context.getListener(), context.getCancellationToken(), context.getSettings()
-    );
-  }
-
   /**
-   * @deprecated use the {@link GradleExecutionHelper#execute} function with {@link GradleExecutionContext} instead.
-   * The {@link BuildEnvironment} model will be automatically provided to {@link GradleExecutionContext}.
+   * Visible for {@link com.android.tools.idea.gradle.project.build.invoker.GradleTasksExecutorImpl}.
    */
-  @Deprecated
   public static @NotNull BuildEnvironment getBuildEnvironment(
     @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId taskId,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @Nullable CancellationToken cancellationToken,
-    @Nullable GradleExecutionSettings settings
+    @NotNull GradleExecutionContext context
   ) {
     Span span = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GetBuildEnvironment")
@@ -514,13 +513,15 @@ public final class GradleExecutionHelper {
     try (Scope ignore = span.makeCurrent()) {
       BuildEnvironment buildEnvironment;
       try {
+        ExternalSystemTaskId taskId = context.getTaskId();
+        ExternalSystemTaskNotificationListener listener = context.getListener();
+
         ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
-        if (cancellationToken != null) {
-          modelBuilder.withCancellationToken(cancellationToken);
-        }
-        if (settings != null) {
-          setupJavaHome(modelBuilder, settings, taskId);
-        }
+
+        modelBuilder.withCancellationToken(context.getCancellationToken());
+
+        setupJavaHome(modelBuilder, context.getSettings(), taskId);
+
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.
         GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
