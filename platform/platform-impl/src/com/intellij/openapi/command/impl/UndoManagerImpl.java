@@ -284,17 +284,22 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
+  protected boolean isTransparentSupported() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  protected boolean isConfirmationSupported() {
+    return true;
+  }
+
+  @ApiStatus.Internal
   protected boolean isCompactSupported() {
     return true;
   }
 
   @ApiStatus.Internal
   protected boolean isGlobalSplitSupported() {
-    return true;
-  }
-
-  @ApiStatus.Internal
-  protected boolean isConfirmationSupported() {
     return true;
   }
 

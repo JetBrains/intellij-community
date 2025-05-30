@@ -44,9 +44,10 @@ final class UndoClientState implements Disposable {
   private final @NotNull UndoRedoStacksHolder redoStacksHolder;
 
   private final @NotNull UndoSpy undoSpy;
+  private final boolean isTransparentSupported;
+  private final boolean isConfirmationSupported;
   private final boolean isCompactSupported;
   private final boolean isGlobalSplitSupported;
-  private final boolean isConfirmationSupported;
 
   // yet it is not a client state but shared one defined by undo manager
   private final @NotNull SharedAdjustableUndoableActionsHolder adjustableUndoableActionsHolder;
@@ -73,9 +74,10 @@ final class UndoClientState implements Disposable {
   private UndoClientState(@NotNull UndoManagerImpl undoManager, @NotNull ClientId clientId) {
     this.project = undoManager.getProject();
     this.undoSpy = undoManager.getUndoSpy();
+    this.isTransparentSupported = undoManager.isTransparentSupported();
+    this.isConfirmationSupported = undoManager.isConfirmationSupported();
     this.isCompactSupported = undoManager.isCompactSupported();
     this.isGlobalSplitSupported = undoManager.isGlobalSplitSupported();
-    this.isConfirmationSupported = undoManager.isConfirmationSupported();
     this.clientId = clientId;
     this.adjustableUndoableActionsHolder = undoManager.getAdjustableUndoableActionsHolder();
     this.sharedUndoStacksHolder = undoManager.getSharedUndoStacksHolder();
@@ -176,7 +178,7 @@ final class UndoClientState implements Disposable {
     undoSpy.commandStarted(commandProject, undoConfirmationPolicy);
     if (!isInsideCommand()) {
       boolean isTransparent = CommandProcessor.getInstance().isUndoTransparentActionInProgress();
-      currentCommandMerger = new CommandMerger(project, isTransparent);
+      currentCommandMerger = new CommandMerger(project, isTransparent && isTransparentSupported);
       if (commandProject != null) {
         currentProject = commandProject;
       }

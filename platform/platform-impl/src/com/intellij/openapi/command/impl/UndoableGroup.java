@@ -28,7 +28,7 @@ final class UndoableGroup implements Dumpable {
   private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
   private final @Nullable Project project;
-  private final @Command String commandName;
+  private final @Nullable @Command String commandName;
   private final @NotNull List<? extends UndoableAction> actions;
   private final @NotNull UndoConfirmationPolicy confirmationPolicy;
   private final int commandTimestamp;
@@ -43,7 +43,7 @@ final class UndoableGroup implements Dumpable {
 
   UndoableGroup(
     @Nullable Project project,
-    @Command String commandName,
+    @Nullable @Command String commandName,
     @NotNull List<? extends UndoableAction> actions,
     @NotNull UndoConfirmationPolicy confirmationPolicy,
     @NotNull UndoRedoStacksHolder stacksHolder,
