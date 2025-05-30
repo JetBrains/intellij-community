@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -15,10 +15,12 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 @Internal
-fun findIconByPath(@NonNls path: String,
-                   classLoader: ClassLoader,
-                   cache: Cache<Pair<String, ClassLoader?>, CachedImageIcon>?,
-                   toolTip: Supplier<String?>? = null): Icon? {
+fun findIconByPath(
+  @NonNls path: String,
+  classLoader: ClassLoader,
+  cache: Cache<Pair<String, ClassLoader?>, CachedImageIcon>?,
+  toolTip: Supplier<String?>? = null,
+): Icon? {
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
 
   val icon: Icon? = if (isReflectivePath(path)) {
@@ -104,7 +106,7 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
 
   override fun patch(transform: IconTransform): ImageDataLoader? {
     val isOriginal = original == null
-    return doPatch(originalLoader = (if (isOriginal) this else original)!!, transform = transform, isOriginal = isOriginal)
+    return doPatch(originalLoader = if (isOriginal) this else original, transform = transform, isOriginal = isOriginal)
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean {

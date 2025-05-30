@@ -178,11 +178,6 @@ object IconLoader {
     }
   }
 
-  @Internal
-  fun findUserIconByPath(file: Path): com.intellij.ui.icons.CachedImageIcon {
-    return iconCache.get(Pair(file.toString(), null)) { CachedImageIcon(file = file) }
-  }
-
   @JvmStatic
   fun findIcon(path: String, classLoader: ClassLoader): Icon? {
     return findIconByPath(path = path, classLoader = classLoader, cache = iconCache)
@@ -340,6 +335,11 @@ object IconLoader {
     loader = loader,
     toolTip = null,
   )
+}
+
+@Internal
+fun findUserIconByPath(file: Path): CachedImageIcon {
+  return iconCache.get(Pair(file.toString(), null)) { CachedImageIcon(file = file) }
 }
 
 @Internal

@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.*
@@ -28,7 +27,6 @@ import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
@@ -43,12 +41,11 @@ private inline fun Logger.debug(project: Project, lazyMessage: (project: String)
   }
 }
 
-@ApiStatus.Internal
-class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
+internal class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
   @Volatile
   private var isInitialized = false
 
-  private val pendingLayout = AtomicReference<DesktopLayout?>()
+  private val pendingLayout = AtomicReference<DesktopLayout>()
   private val pendingTasks = ConcurrentLinkedQueue<Runnable>()
 
   fun addToPendingTasksIfNotInitialized(task: Runnable): Boolean {
@@ -91,9 +88,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
         while (true) {
           val runnable = pendingTasks.poll() ?: break
           withContext(Dispatchers.EDT) {
-            blockingContext {
-              runnable.run()
-            }
+            runnable.run()
           }
         }
       }
@@ -110,9 +105,11 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     }
   }
 
-  private suspend fun createAndLayoutToolWindows(manager: ToolWindowManagerImpl,
-                                                 tasks: List<RegisterToolWindowTaskData>,
-                                                 reopeningEditorJob: Job) {
+  private suspend fun createAndLayoutToolWindows(
+    manager: ToolWindowManagerImpl,
+    tasks: List<RegisterToolWindowTaskData>,
+    reopeningEditorJob: Job,
+  ) {
     val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
       .getExtensionPoint<RegisterToolWindowTaskProvider>("com.intellij.registerToolWindowTaskProvider")
 
@@ -138,14 +135,17 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       span("toolwindow creating") {
         // Register all tool windows for the default tool window pane.
         // If there are any tool windows for other panes, we'll register them after the reopening editors job has created the panes.
-        val entries = registerToolWindows(tasks = list,
-                                          manager = manager,
-                                          layout = layout,
-                                          shouldRegister = { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID })
+        val entries = registerToolWindows(
+          tasks = list,
+          manager = manager,
+          layout = layout,
+          shouldRegister = { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID },
+        )
         for (toolWindowPane in manager.getToolWindowPanes()) {
-          toolWindowPane.buttonManager.initMoreButton(project)
-          toolWindowPane.buttonManager.updateResizeState(null)
-          toolWindowPane.buttonManager.revalidateNotEmptyStripes()
+          val buttonManager = toolWindowPane.buttonManager
+          buttonManager.initMoreButton(project)
+          buttonManager.updateResizeState(null)
+          buttonManager.revalidateNotEmptyStripes()
           toolWindowPane.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, manager.createNotInHierarchyIterable(toolWindowPane.paneId))
         }
 
@@ -161,10 +161,12 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       reopeningEditorJob.join()
       postEntryProcessing(withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         span("secondary frames toolwindow creation") {
-          registerToolWindows(tasks = list,
-                              manager = manager,
-                              layout = manager.getLayout(),
-                              shouldRegister = { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID })
+          registerToolWindows(
+            tasks = list,
+            manager = manager,
+            layout = manager.getLayout(),
+            shouldRegister = { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID },
+          )
         }
       }, suffix = " (secondary)")
     }
@@ -185,7 +187,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       }
     }
 
-    // Ensure that the shortcuts of the actions registered above are included in tooltips.
+    // ensure that the shortcuts of the actions registered above are included in tooltips
     span("stripeButton.updatePresentation executing$suffix") {
       withContext(Dispatchers.EDT) {
         for (result in entries) {
@@ -219,10 +221,12 @@ internal data class RegisterToolWindowResult(
   @JvmField val postTask: (() -> Unit)?
 )
 
-private fun registerToolWindows(tasks: List<PreparedRegisterToolWindowTask>,
-                                manager: ToolWindowManagerImpl,
-                                layout: DesktopLayout,
-                                shouldRegister: (String) -> Boolean): List<RegisterToolWindowResult> {
+private fun registerToolWindows(
+  tasks: List<PreparedRegisterToolWindowTask>,
+  manager: ToolWindowManagerImpl,
+  layout: DesktopLayout,
+  shouldRegister: (String) -> Boolean,
+): List<RegisterToolWindowResult> {
   val entries = ArrayList<RegisterToolWindowResult>(tasks.size)
   for (task in tasks) {
     try {
@@ -230,10 +234,12 @@ private fun registerToolWindows(tasks: List<PreparedRegisterToolWindowTask>,
       if (shouldRegister(paneId)) {
         // https://youtrack.jetbrains.com/issue/IDEA-335869/Tool-window-stripes-are-not-shown-for-detached-IDE-window-after-IDE-restart
         // we must compute button manager when pane is available
-        entries.add(manager.registerToolWindow(preparedTask = task,
-                                               buttonManager = manager.getToolWindowPane(task.paneId).buttonManager,
-                                               layout = layout,
-                                               ensureToolWindowActionRegistered = false))
+        entries.add(manager.registerToolWindow(
+          preparedTask = task,
+          buttonManager = manager.getToolWindowPane(task.paneId).buttonManager,
+          layout = layout,
+          ensureToolWindowActionRegistered = false,
+        ))
       }
     }
     catch (e: CancellationException) {
@@ -246,9 +252,11 @@ private fun registerToolWindows(tasks: List<PreparedRegisterToolWindowTask>,
   return entries
 }
 
-private suspend fun addExtraTasks(tasks: List<RegisterToolWindowTaskData>,
-                                  project: Project,
-                                  ep: ExtensionPointImpl<RegisterToolWindowTaskProvider>): List<RegisterToolWindowTaskData> {
+private suspend fun addExtraTasks(
+  tasks: List<RegisterToolWindowTaskData>,
+  project: Project,
+  ep: ExtensionPointImpl<RegisterToolWindowTaskProvider>,
+): List<RegisterToolWindowTaskData> {
   if (ep.size() == 0) {
     return tasks
   }
