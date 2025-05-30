@@ -11,20 +11,16 @@ import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
 @OptIn(ExperimentalJewelApi::class)
 private class ComposePanelProvider : MarkdownHtmlPanelProvider() {
-  override fun createHtmlPanel(): MarkdownHtmlPanel {
-    return MarkdownComposePanel()
-  }
+  override fun createHtmlPanel(): MarkdownHtmlPanel = MarkdownComposePanel()
 
-  override fun createHtmlPanel(project: Project, virtualFile: VirtualFile): MarkdownHtmlPanel {
-    return MarkdownComposePanel(project, virtualFile)
-  }
+  override fun createHtmlPanel(project: Project, virtualFile: VirtualFile): MarkdownHtmlPanel = MarkdownComposePanel(project, virtualFile)
 
-  override fun isAvailable(): AvailabilityInfo {
+  override fun isAvailable(): AvailabilityInfo =
     if (Registry.`is`("markdown.experimental.use.compose.for.preview", false) && !AppMode.isRemoteDevHost()) {
-      return AvailabilityInfo.AVAILABLE
+      AvailabilityInfo.AVAILABLE
+    } else {
+      AvailabilityInfo.UNAVAILABLE
     }
-    return AvailabilityInfo.UNAVAILABLE
-  }
 
   override fun getProviderInfo() = ProviderInfo("Compose-based", ComposePanelProvider::class.java.name)
 }
