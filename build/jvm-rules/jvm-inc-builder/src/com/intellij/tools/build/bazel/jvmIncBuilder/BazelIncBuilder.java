@@ -285,7 +285,7 @@ public class BazelIncBuilder {
         }
         StorageManager.backupDependencies(context, deletedPaths, presentPaths);
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         context.report(Message.create(null, e));
       }
     }

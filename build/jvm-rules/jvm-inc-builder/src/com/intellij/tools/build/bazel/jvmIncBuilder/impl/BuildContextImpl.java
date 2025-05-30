@@ -19,6 +19,7 @@ import static org.jetbrains.jps.util.Iterators.map;
 public class BuildContextImpl implements BuildContext {
   private final String myTargetName;
   private final Map<CLFlags, List<String>> myFlags;
+  private final boolean myAllowWarnings;
   private final Path myBaseDir;
   private final PathSourceMapper myPathMapper;
   private final Appendable myMessageSink;
@@ -36,6 +37,7 @@ public class BuildContextImpl implements BuildContext {
   public BuildContextImpl(Path baseDir, Iterable<String> inputs, Iterable<byte[]> inputDigests, Map<CLFlags, List<String>> flags, Appendable messageSink) {
     myFlags = Map.copyOf(flags);
     myTargetName = CLFlags.TARGET_LABEL.getMandatoryScalarValue(flags);
+    myAllowWarnings = !"off".equals(CLFlags.WARN.getOptionalScalarValue(flags));
     myBaseDir = baseDir;
     myPathMapper = new PathSourceMapper(
       relPath -> {
@@ -146,7 +148,18 @@ public class BuildContextImpl implements BuildContext {
     // for now, only options available in the flags map can be specified in the build configuration
     List<String> options = new ArrayList<>();
     options.add("-g"); // todo: for now hardcoded
-    options.add("-nowarn");
+
+    String warn = CLFlags.WARN.getOptionalScalarValue(flags);
+    if ("off".equals(warn)) {
+      options.add("-nowarn");
+    }
+    else if ("error".equals(warn)) {
+      options.add("-werror");
+    }
+    else if (warn != null) {
+      throw new IllegalArgumentException("unsupported javac warning option: " + warn);
+    }
+    
     options.add("-encoding");
     options.add("UTF-8");
 
@@ -246,6 +259,9 @@ public class BuildContextImpl implements BuildContext {
   @Override
   public void report(Message msg) {
     try {
+      if (!myAllowWarnings && msg.getKind() == Message.Kind.WARNING) {
+        return;
+      }
       if (msg.getSource() != null) {
         myMessageSink.append(msg.getSource().getName()).append(": ");
       }

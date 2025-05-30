@@ -220,18 +220,6 @@ public class StorageManager implements CloseableExt {
     List<URL> platformCp = jrt != null? List.of(jrt) : List.of();
     final List<URL> urls = new ArrayList<>();
     for (Path path : map(myContext.getBinaryDependencies().getElements(), myContext.getPathMapper()::toPath)) {
-      
-      // try to substitute ".abi.jar" dependency with the corresponding output dependency, so that instrumenters can resolve against real bytecode
-      // this is necessary for the forms instrumenter that needs to load classes from classpath
-      String fName = path.getFileName().toString();
-      if (fName.endsWith(DataPaths.ABI_JAR_SUFFIX)) {
-        String outputJarName = fName.substring(0, fName.length() - DataPaths.ABI_JAR_SUFFIX.length()) + ".jar";
-        Path libOutputPath = path.resolveSibling(outputJarName);
-        if (Files.exists(libOutputPath)) {
-          path = libOutputPath;
-        }
-      }
-
       urls.add(path.toUri().toURL());
     }
     return new InstrumentationClassFinder(platformCp.toArray(URL[]::new), urls.toArray(URL[]::new)) {
