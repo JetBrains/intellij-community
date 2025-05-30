@@ -157,6 +157,8 @@ public final @NonNls class PyNames {
 
   public static final String AWAITABLE = "Awaitable";
   public static final String ASYNC_ITERABLE = "AsyncIterable";
+  public static final String ABSTRACT_CONTEXT_MANAGER = "AbstractContextManager";
+  public static final String ABSTRACT_ASYNC_CONTEXT_MANAGER = "AbstractAsyncContextManager";
 
   public static final String ABC_NUMBER = "Number";
   public static final String ABC_COMPLEX = "Complex";

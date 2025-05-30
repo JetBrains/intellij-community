@@ -29,6 +29,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-72232
+  public void testWithItemNonContextManager() {
+    doTest();
+  }
+
   // PY-10660
   public void testStructUnpackPy3() {
     doMultiFileTest();

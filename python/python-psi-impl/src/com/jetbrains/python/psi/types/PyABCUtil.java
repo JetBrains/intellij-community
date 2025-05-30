@@ -97,6 +97,12 @@ public final class PyABCUtil {
     if (PyNames.AWAITABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.DUNDER_AWAIT, inherited, context);
     }
+    if (PyNames.ABSTRACT_CONTEXT_MANAGER.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.ENTER, inherited, context) && hasMethod(subClass, PyNames.EXIT, inherited, context);
+    }
+    if (PyNames.ABSTRACT_ASYNC_CONTEXT_MANAGER.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.AENTER, inherited, context) && hasMethod(subClass, PyNames.AEXIT, inherited, context);
+    }
     return false;
   }
 

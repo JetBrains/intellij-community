@@ -98,6 +98,13 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyWithStatement(@NotNull PyWithStatement node) {
+      for (PyWithItem withItem : node.getWithItems()) {
+        checkContextManagerValue(withItem.getExpression(), node.isAsync());
+      }
+    }
+
+    @Override
     public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
       ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFunction function) {
@@ -398,6 +405,22 @@ public class PyTypeCheckerInspection extends PyInspection {
           final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
 
           String qualifiedName = "collections." + iterableClassName;
+          registerProblem(iteratedValue, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", qualifiedName, typeName));
+        }
+      }
+    }
+
+    private void checkContextManagerValue(@Nullable PyExpression iteratedValue, boolean isAsync) {
+      if (iteratedValue != null) {
+        final PyType type = myTypeEvalContext.getType(iteratedValue);
+        final String contextManagerClassName = isAsync ? PyNames.ABSTRACT_ASYNC_CONTEXT_MANAGER : PyNames.ABSTRACT_CONTEXT_MANAGER;
+
+        if (type != null &&
+            !PyTypeChecker.isUnknown(type, myTypeEvalContext) &&
+            !PyABCUtil.isSubtype(type, contextManagerClassName, myTypeEvalContext)) {
+          final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
+
+          String qualifiedName = "contextlib." + contextManagerClassName;
           registerProblem(iteratedValue, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", qualifiedName, typeName));
         }
       }
