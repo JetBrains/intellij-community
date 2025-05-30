@@ -5,6 +5,7 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 
 @Rpc
+@Deprecated("use fleet.rpc.core.RemoteResource")
 interface RemoteObject : RemoteApi<Unit> {
   /**
    * This method is called by the client on a proxy provided so the server could free any related resources

@@ -2,7 +2,6 @@
 package fleet.rpc.core
 
 import fleet.rpc.RemoteApi
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CopyableThrowable
 
 /**
