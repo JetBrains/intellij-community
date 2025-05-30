@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.toolWindow
@@ -304,18 +304,20 @@ private fun beanToTask(
   bean: ToolWindowEP,
   plugin: PluginDescriptor,
   factory: ToolWindowFactory,
-) = RegisterToolWindowTaskData(
-  id = bean.id,
-  icon = findIconFromBean(bean = bean, factory = factory, pluginDescriptor = plugin),
-  anchor = getToolWindowAnchor(factory, bean),
-  sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
-  canCloseContent = bean.canCloseContents,
-  canWorkInDumbMode = DumbService.isDumbAware(factory),
-  shouldBeAvailable = factory.shouldBeAvailable(project),
-  contentFactory = factory,
-  stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
-  pluginDescriptor = plugin,
-)
+): RegisterToolWindowTaskData {
+  return RegisterToolWindowTaskData(
+    id = bean.id,
+    icon = findIconFromBean(bean = bean, factory = factory, pluginDescriptor = plugin),
+    anchor = getToolWindowAnchor(factory, bean),
+    sideTool = bean.secondary || (@Suppress("DEPRECATION") bean.side),
+    canCloseContent = bean.canCloseContents,
+    canWorkInDumbMode = DumbService.isDumbAware(factory),
+    shouldBeAvailable = factory.shouldBeAvailable(project),
+    contentFactory = factory,
+    stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin),
+    pluginDescriptor = plugin,
+  )
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal suspend fun computeToolWindowBeans(project: Project): List<RegisterToolWindowTaskData> {
