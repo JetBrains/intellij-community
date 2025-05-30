@@ -7,6 +7,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-ui",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
     "//jps/model-api:model",

@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />

@@ -53,6 +53,7 @@ jvm_library(
   associates = [":inspect"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "@lib//:junit4",

@@ -31,6 +31,7 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-build-common-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" scope="TEST" />

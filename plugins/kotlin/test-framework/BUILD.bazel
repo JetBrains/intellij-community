@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/idea-ui:ui",
     "@lib//:test_n_g",
+    "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

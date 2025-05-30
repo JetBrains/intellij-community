@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-kotlin-build-common-tests",
     "@lib//:guava",
+    "//platform/core-ui",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/util/test-generator-api:test-generator-api_test_lib",

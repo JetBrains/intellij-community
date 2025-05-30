@@ -63,6 +63,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = [":repository-search"],
   deps = [
+    "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/core-impl",
     "//platform/lang-api:lang",

@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",
     "//platform/structuralsearch:structuralSearch",
     "//platform/testFramework",

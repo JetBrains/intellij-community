@@ -91,7 +91,6 @@ jvm_library(
     "@lib//:junit5-provided",
     "@lib//:junit5Params-provided",
     "//libraries/junit4",
-    "//platform/core-ui",
     "//platform/execution-impl",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",

@@ -57,6 +57,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/sh/core",
     "//spellchecker",

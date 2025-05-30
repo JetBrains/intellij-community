@@ -16,6 +16,7 @@ jvm_library(
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

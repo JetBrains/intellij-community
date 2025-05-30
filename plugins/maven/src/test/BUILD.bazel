@@ -20,6 +20,7 @@ jvm_library(
   deps = [
     "//plugins/maven",
     "//plugins/maven/testFramework",
+    "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-impl:externalSystem-impl",
     "//jps/model-api:model",

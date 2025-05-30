@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-build-common-tests",
     "@lib//:guava",
     "//platform/core-api:core",
+    "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",

@@ -57,6 +57,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:gson",
     "@lib//:kotlinc-analysis-api",
+    "//platform/core-ui",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/plugin",
