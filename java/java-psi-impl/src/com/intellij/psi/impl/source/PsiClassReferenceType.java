@@ -109,7 +109,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @Override
   public @NotNull TypeNullability getNullability() {
-    return JavaTypeNullabilityUtil.getTypeNullability(this, null);
+    return JavaTypeNullabilityUtil.getTypeNullability(this);
   }
 
   @Override

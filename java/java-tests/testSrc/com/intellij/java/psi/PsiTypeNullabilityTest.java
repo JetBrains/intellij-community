@@ -336,4 +336,19 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
                  ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0].getReturnType().getNullability().toString());
     assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
   }
+  
+  public void testLocalTopLevelIgnoreContainer() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.NotNullByDefault;
+
+      @NotNullByDefault
+      final class X {
+        static void test() {
+          String s = "";
+          <caret>s;
+    """);
+    assertEquals("java.lang.String", type.getCanonicalText());
+    assertEquals("UNKNOWN (NONE)", type.getNullability().toString());
+  }
 }
