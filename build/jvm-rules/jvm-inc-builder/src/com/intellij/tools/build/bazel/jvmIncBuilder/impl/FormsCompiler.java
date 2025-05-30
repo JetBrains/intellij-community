@@ -17,12 +17,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.NodeSourcePathMapper;
+import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.util.SystemInfo;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,6 +76,7 @@ public class FormsCompiler implements CompilerRunner {
         toInstrument.put(form, jvmClassName + CLASS_FILE_EXTENSION);
       }
     }
+
     for (NodeSource form : modifiedForms) {
       if (!toInstrument.containsKey(form)) {
         String boundClass = binding.getBoundClass(form);
@@ -85,9 +90,21 @@ public class FormsCompiler implements CompilerRunner {
       }
     }
 
+    AbiJarBuilder abiOut = myStorageManager.getAbiOutputBuilder();
+    if (abiOut != null) {
+      // put form content to abi-out so that it can be later found in the classpath when searching for nested forms
+      NodeSourcePathMapper pathMapper = myContext.getPathMapper();
+      for (NodeSource form : modifiedForms) {
+        Path formPath = pathMapper.toPath(form);
+        try (InputStream in = Files.newInputStream(formPath)) {
+          abiOut.putEntry(getFormOutputPath(formPath.getFileName().toString()), RW.readAllBytes(in));
+        }
+      }
+    }
+
     for (Map.Entry<NodeSource, String> entry : toInstrument.entrySet()) {
       if (nestedLoader == null) {
-        nestedLoader = new MyNestedFormLoader(binding.getAllForms(), myContext, out);
+        nestedLoader = new MyNestedFormLoader(binding.getAllForms(), myContext, myStorageManager.getInstrumentationClassFinder(), out);
       }
       instrumentForm(entry.getKey(), entry.getValue(), nestedLoader);
     }
@@ -123,47 +140,77 @@ public class FormsCompiler implements CompilerRunner {
     }
   }
 
+  private static String getFormOutputPath(String formFileName) {
+    // such naming may lead to a conflict between equally named form files,
+    // so this implementation makes sure there are no name clashes within the same build target
+    return "META-INF/forms/" + formFileName;
+  }
+
   // example
   //     <nested-form id="22f17" form-file="com/jetbrains/php/composer/ComposerExecutionForm.form" binding="myExecutionForm" custom-create="true" default-binding="true">
   private static class MyNestedFormLoader implements NestedFormLoader {
     private final Iterable<NodeSource> myAllForms;
     private final BuildContext myContext;
+    private final @NotNull InstrumentationClassFinder myClassFinder;
     private final OutputSink myOutSink;
     private final Map<String, LwRootContainer> myCache = new HashMap<>();
 
-    MyNestedFormLoader(Iterable<NodeSource> allForms, BuildContext context, OutputSink outSink) {
+    MyNestedFormLoader(Iterable<NodeSource> allForms, BuildContext context, @NotNull InstrumentationClassFinder classFinder, OutputSink outSink) {
       myAllForms = allForms;
       myContext = context;
+      myClassFinder = classFinder;
       myOutSink = outSink;
     }
 
     @Override
-    public LwRootContainer loadForm(String formFileName) throws Exception {
-      LwRootContainer cached = myCache.get(formFileName);
+    public LwRootContainer loadForm(String formRelPath) throws Exception {
+      LwRootContainer cached = myCache.get(formRelPath);
       if (cached != null) {
         return cached;
       }
 
-      List<Path> found = findNestedForms(formFileName.replace('\\', '/'));
+      List<Path> found = findNestedForms(formRelPath);
       if (found.size() == 1) {
         Path nested = found.iterator().next();
-        try (BufferedInputStream stream = new BufferedInputStream(Files.newInputStream(nested))) {
-          final LwRootContainer container = Utils.getRootContainer(stream, null);
-          myCache.put(formFileName, container);
-          return container;
+        try (InputStream stream = new BufferedInputStream(Files.newInputStream(nested))) {
+          return loadLwRootContainer(formRelPath, stream);
         }
       }
 
       if (found.isEmpty()) {
-        throw new Exception("Cannot find nested form file " + formFileName);
+        int idx = formRelPath.lastIndexOf('/');
+        String formName = idx >= 0? formRelPath.substring(idx + 1) : formRelPath;
+        try (InputStream fromLibraries = myClassFinder.getResourceAsStream(getFormOutputPath(formName))) {
+          return loadLwRootContainer(formRelPath, fromLibraries);
+        }
+        catch (IOException ignored) {
+        }
+
+        throw new Exception("Cannot find nested form file " + formRelPath);
       }
       else {
-        throw new Exception("Multiple nested forms match \"" + formFileName + "\": " + found);
+        throw new Exception("Multiple nested forms match \"" + formRelPath + "\": " + found);
       }
+    }
+
+    public @NotNull LwRootContainer loadLwRootContainer(String formRelPath, InputStream stream) throws Exception {
+      final LwRootContainer container = Utils.getRootContainer(stream, null);
+      myCache.put(formRelPath, container);
+      return container;
     }
 
     private List<Path> findNestedForms(String relPath) {
       List<Path> found = new ArrayList<>(1);
+      for (String matchPath : nestedPathCandidates(relPath)) {
+        collectPaths(matchPath, found);
+        if (!found.isEmpty()) {
+          break;
+        }
+      }
+      return found;
+    }
+
+    private void collectPaths(String relPath, List<Path> acc) {
       for (NodeSource src : myAllForms) {
         String candidate = src.toString();
         int startOffset = candidate.length() - relPath.length();
@@ -174,11 +221,10 @@ public class FormsCompiler implements CompilerRunner {
         ) {
           Path path = myContext.getPathMapper().toPath(src);
           if (Files.exists(path)) {
-            found.add(path);
+            acc.add(path);
           }
         }
       }
-      return found;
     }
 
     @Override
@@ -236,6 +282,16 @@ public class FormsCompiler implements CompilerRunner {
     return recurse(className.replace('.', '/'), clsName -> {
       final int pos = clsName.lastIndexOf('/');
       return pos < 0 ? List.of() : List.of(clsName.substring(0, pos) + '$' + clsName.substring(pos + 1));
+    }, true);
+  }
+
+  private static Iterable<String> nestedPathCandidates(String relPath) {
+    // Relative paths to nested forms are stored using the source root's package prefix (if it is available).
+    // Because there are no directories corresponding to the package prefix on disk,
+    // this part of the relative path should be ignored when searching for nested form files
+    return recurse(relPath, p -> {
+      final int pos = p.indexOf('/');
+      return pos < 0 ? List.of() : List.of(p.substring(pos + 1));
     }, true);
   }
 

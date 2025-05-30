@@ -6,19 +6,13 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink
 import com.intellij.util.PathUtilRt
 import org.jetbrains.kotlin.load.kotlin.LibraryContainerAwareVirtualFile
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
-import java.nio.file.FileSystem
-import java.nio.file.LinkOption
-import java.nio.file.Path
-import java.nio.file.WatchEvent
-import java.nio.file.WatchKey
-import java.nio.file.WatchService
+import java.nio.file.*
 import java.util.Collection
 
 /*
