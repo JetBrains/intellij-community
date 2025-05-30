@@ -130,7 +130,7 @@ class PluginDependenciesValidator private constructor(
       val moduleDependenciesAtRuntime =
         sourceDescriptors
           .asSequence()
-          .map { it.classLoader }
+          .mapNotNull { it.pluginClassLoader }
           .flatMap { sequenceOf(it) + ((it as? PluginClassLoader)?.getAllParentsClassLoaders() ?: emptyArray()).asSequence() }
           .flatMap { (it as UrlClassLoader).files.asSequence() }
           .mapTo(HashSet()) { getModuleName(it) }
