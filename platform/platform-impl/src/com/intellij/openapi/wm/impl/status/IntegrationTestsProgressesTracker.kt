@@ -33,12 +33,12 @@ internal object IntegrationTestsProgressesTracker {
       val now = System.currentTimeMillis()
       val was = timestamps.replace(indicatorModel, now)
       if (isUnnoticeableUnnamedProgress(oldTextValue, was, now)) return
-      val message = createMessage(was, now, oldTextValue, "changed message")
+      val message = createMessage(was, now, oldTextValue, indicatorModel.visibleInStatusBar, "changed message")
       sendMessage(message)
     }
   }
 
-  private fun createMessage(was: Long?, now: Long, text: String, action: String): String {
+  private fun createMessage(was: Long?, now: Long, text: String, visibleInStatusBar: Boolean, action: String): String {
     val longer = when {
       was == null -> "unknown"
       was + 3000 < now -> "true"
@@ -46,7 +46,9 @@ internal object IntegrationTestsProgressesTracker {
     }
     val timeInMillis = if (was == null) "?" else (now - was).toString()
     return "Progress Indicator Test Stats:\n" +
-           "v2\n" + "$action\n" +
+           "v2\n" +
+           (if (visibleInStatusBar) "Primary" else "Secondary") + "\n" +
+           "$action\n" +
            "longer than 3 seconds: $longer\n" +
            "time: $timeInMillis ms\n" +
            "message: " + text.ifBlank { "<empty>" }
@@ -64,7 +66,7 @@ internal object IntegrationTestsProgressesTracker {
       val was = timestamps.remove(indicatorModel)
       val title = getTitle(indicatorModel)
       if (isUnnoticeableUnnamedProgress(title, was, now)) return
-      sendMessage(createMessage(was, now, title, "stopped"))
+      sendMessage(createMessage(was, now, title, indicatorModel.visibleInStatusBar, "stopped"))
     }
   }
 
