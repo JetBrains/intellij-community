@@ -3,10 +3,9 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
@@ -107,14 +106,7 @@ public final class DirectClassInheritorsSearch extends ExtensibleQueryFactory<Ps
 
   public static @NotNull Query<PsiClass> search(@NotNull PsiClass aClass) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(aClass));
-    PsiFile file = aClass.getContainingFile();
-    if (file != null) {
-      VirtualFile vFile = file.getVirtualFile();
-      if (vFile != null && !scope.contains(vFile)) {
-        // include file scope to properly support scratch files
-        scope = scope.union(GlobalSearchScope.fileScope(file));
-      }
-    }
+    scope = GlobalSearchScopeUtil.includeContainingFile(scope, aClass);
     return search(aClass, scope);
   }
 

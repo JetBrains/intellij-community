@@ -75,4 +75,23 @@ public final class GlobalSearchScopeUtil {
       result.add(scope);
     }
   }
+
+  /**
+   * Modifies the scope if necessary to include the file of the given element.
+   * This is useful to properly support search in scratch files.
+   * 
+   * @param scope scope to update
+   * @param element element whose file should be included in the scope
+   * @return the corrected scope. Returns the original scope if it already includes the file of the element.
+   */
+  public static GlobalSearchScope includeContainingFile(@NotNull GlobalSearchScope scope, @NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file != null) {
+      VirtualFile vFile = file.getVirtualFile();
+      if (vFile != null && !scope.contains(vFile)) {
+        return scope.union(GlobalSearchScope.fileScope(file));
+      }
+    }
+    return scope;
+  }
 }
