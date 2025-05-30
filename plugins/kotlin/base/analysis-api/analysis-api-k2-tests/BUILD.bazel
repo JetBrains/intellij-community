@@ -1,6 +1,12 @@
 ### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+)
 
 java_library(
   name = "kotlin-base-analysis-analysis-api-k2-tests",
@@ -11,6 +17,7 @@ jvm_library(
   name = "kotlin-base-analysis-analysis-api-k2-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/indexing-api:indexing",
@@ -28,6 +35,9 @@ jvm_library(
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
 
