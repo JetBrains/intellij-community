@@ -20,6 +20,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.DirSource
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.InMemoryContentSource
@@ -840,6 +841,19 @@ internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().
     fs.getPathMatcher("glob:classpath.index"),
     fs.getPathMatcher("glob:module-info.class"),
   )
+}
+
+suspend fun moduleOutputAsSource(context: CompilationContext, module: JpsModule, excludes: List<PathMatcher> = commonModuleExcludes): Source {
+  val moduleOutput = context.getModuleOutputDir(module)
+  check(Files.exists(moduleOutput)) {
+    "${module.name} module output directory doesn't exist: $moduleOutput"
+  }
+  return if (moduleOutput.toString().endsWith(".jar")) {
+    ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+  }
+  else {
+    DirSource(dir = moduleOutput, excludes = excludes)
+  }
 }
 
 fun createModuleSourcesNamesFilter(excludes: List<PathMatcher>): (String) -> Boolean = { name ->
