@@ -61,3 +61,7 @@ fun ObjectAssert<out IdeaPluginDescriptorImpl>.hasExactlyExtensionPointsNames(va
     .asList()
     .containsExactly(*names)
 }
+
+internal fun IdeaPluginDescriptorImpl.loadClassInsideSelf(fqn: String): Class<*> {
+  return (classLoader as PluginClassLoader).loadClassInsideSelf(fqn) ?: error("Class '$fqn' not found in $this")
+}

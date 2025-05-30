@@ -10,7 +10,6 @@ import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.ide.plugins.testPluginSrc.ExclusionClassLoader
 import com.intellij.ide.plugins.testPluginSrc.bar.BarService
 import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
 import com.intellij.ide.startup.impl.StartupManagerImpl
@@ -438,19 +437,16 @@ class DynamicPluginsTest {
       includePackageClassFiles<BarService>()
     }.buildMainJar(barJar)
 
-    val filteredCore = ExclusionClassLoader(this::class.java.classLoader) {
-      !it.startsWith(BarService::class.java.`package`.name) && !it.startsWith(FooBarService::class.java.`package`.name)
-    }
     val fooDescriptor = loadAndInitDescriptorInTest(fooJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
     try {
-      assertThat(DynamicPlugins.loadPluginInTest(fooDescriptor, filteredCore)).isTrue()
+      assertThat(DynamicPlugins.loadPlugin(fooDescriptor)).isTrue()
       val barDescriptor = loadAndInitDescriptorInTest(barJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
       try {
         // FIXME perhaps it should return false to indicate that restart is needed to load more stuff
-        assertThat(DynamicPlugins.loadPluginInTest(barDescriptor, filteredCore)).isTrue()
-        val barService = application.getService(barDescriptor.pluginClassLoader!!.loadClass(BarService::class.qualifiedName)) as PluginTestHandle
+        assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
+        val barService = application.getService(barDescriptor.loadClassInsideSelf(BarService::class.qualifiedName!!)) as PluginTestHandle
         barService.test()
-        val fooBarClass = fooDescriptor.pluginClassLoader!!.loadClass(FooBarService::class.qualifiedName) // loaded because packed into the same jar with the main descriptor
+        val fooBarClass = fooDescriptor.loadClassInsideSelf(FooBarService::class.qualifiedName!!) // loaded because packed into the same jar with the main descriptor
         assertThat(application.getService(fooBarClass)).isNull()
         assertThat(fooDescriptor.dependencies.first().subDescriptor!!.isMarkedForLoading).isFalse
         assertThat(fooDescriptor.dependencies.first().subDescriptor!!.pluginClassLoader).isNull()
