@@ -664,7 +664,12 @@
     <extensionPoint name="usagePresentationProvider"
                     interface="com.intellij.find.impl.UsagePresentationProvider"
                     dynamic="true"/>
-    <extensionPoint name="uiPluginManagerController" interface="com.intellij.ide.plugins.newui.UiPluginManagerController" dynamic="true"/>
+    <extensionPoint name="uiPluginManagerController"
+                    interface="com.intellij.ide.plugins.newui.UiPluginManagerController"
+                    dynamic="true"/>
+    <extensionPoint name="pluginManagerCustomizer"
+                    interface="com.intellij.ide.plugins.newui.PluginManagerCustomizer"
+                    dynamic="true"/>
     <extensionPoint name="managedCacheFactory" interface="com.intellij.util.io.cache.ManagedCacheFactory" dynamic="true" />
   </extensionPoints>
 </idea-plugin>

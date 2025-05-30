@@ -45,5 +45,10 @@ class InstallOptionButton @JvmOverloads constructor(
     }
   }
 
+  override fun setEnabled(b: Boolean) {
+    super.setEnabled(b)
+    action?.isEnabled = b
+  }
+
   override fun getComponent(): JComponent = this
 }

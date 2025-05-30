@@ -129,6 +129,7 @@ public final class PluginManagerConfigurable
   private final CountIcon myCountIcon = new CountIcon();
 
   private final PluginModelFacade myPluginModelFacade;
+  private final PluginManagerCustomizer myPluginManagerCustomizer;
 
   private PluginUpdatesService myPluginUpdatesService;
 
@@ -161,6 +162,8 @@ public final class PluginManagerConfigurable
 
   public PluginManagerConfigurable() {
     myPluginModelFacade = new PluginModelFacade(new MyPluginModel(null));
+    List<PluginManagerCustomizer> list = PluginManagerCustomizer.EP_NAME.getExtensionList();
+    myPluginManagerCustomizer = list.isEmpty()? null : list.get(0);
   }
 
   @Override
@@ -435,7 +438,7 @@ public final class PluginManagerConfigurable
 
       @Override
       protected @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
-        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade, searchListener, true);
+        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade, searchListener, true, myPluginManagerCustomizer);
         myPluginModelFacade.getModel().addDetailPanel(detailPanel);
         return detailPanel;
       }
@@ -978,7 +981,7 @@ public final class PluginManagerConfigurable
 
       @Override
       protected @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener) {
-        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade, searchListener, false);
+        PluginDetailsPageComponent detailPanel = new PluginDetailsPageComponent(myPluginModelFacade, searchListener, false, myPluginManagerCustomizer);
         myPluginModelFacade.getModel().addDetailPanel(detailPanel);
         return detailPanel;
       }

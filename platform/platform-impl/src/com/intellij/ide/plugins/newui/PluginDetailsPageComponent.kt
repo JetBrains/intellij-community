@@ -79,6 +79,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val pluginModel: PluginModelFacade,
   private val searchListener: LinkListener<Any>,
   private val isMarketplace: Boolean,
+  private val pluginManagerCustomizer: PluginManagerCustomizer? = null,
 ) : MultiPanel() {
   @Suppress("OPT_IN_USAGE")
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(2)
@@ -93,6 +94,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var panel: OpaquePanel? = null
   private var iconLabel: JLabel? = null
   private val nameComponent = createNameComponent()
+  private val additionalTextLabel = JLabel()
   private var nameAndButtons: BaselinePanel? = null
   private var restartButton: JButton? = null
   private var installButton: PluginInstallButton? = null
@@ -298,7 +300,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     suggestedFeatures = SuggestedComponent()
     topPanel.add(suggestedFeatures, VerticalLayout.FILL_HORIZONTAL)
 
-    nameAndButtons!!.add(JBLabel().setCopyable(true).also { myVersion1 = it })
+    additionalTextLabel.foreground = ListPluginComponent.GRAY_COLOR
+    additionalTextLabel.isVisible = false
+
+    val versionLabel = JBLabel().setCopyable(true).also { myVersion1 = it }
+    val versionPanel = VersionPanel(versionLabel)
+    versionPanel.add(versionLabel)
+    versionPanel.add(additionalTextLabel)
+    nameAndButtons!!.add(versionPanel)
 
     createButtons()
     nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else updateButton)!!)
@@ -454,6 +463,26 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         bottomScrollPane!!.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
       }
     }
+  }
+
+  private fun customizeInstallButton() {
+    if (isMarketplace) {
+      val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
+      val customizationModel = pluginManagerCustomizer?.getInstallButonCustomizationModel(pluginModel, plugin!!, modalityState) ?: return
+      (installButton as? InstallOptionButton)?.setOptions(customizationModel.additionalActions)
+    }
+  }
+
+  private fun updateAdditionalText() {
+    additionalTextLabel.isVisible = !isMarketplace
+    if (isMarketplace) {
+      return
+    }
+    val additionalText = pluginManagerCustomizer?.getAdditionalTitleText(plugin!!)
+    if (additionalText != null) {
+      additionalTextLabel.text = additionalText
+    }
+    additionalTextLabel.isVisible = additionalText != null
   }
 
   private fun createTabs(parent: JPanel) {
@@ -768,6 +797,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, plugin!!.pluginId)
+    customizeInstallButton()
+    updateAdditionalText()
   }
 
   private enum class EmptyState {
