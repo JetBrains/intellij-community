@@ -107,6 +107,12 @@ enum class WorkspaceFileKind {
   CONTENT,
 
   /**
+   * Describe files that are in the workspace but should not be indexed. These files are usually in a directory that the user has opened,
+   * but before the project is imported by any build system. They can be edited.
+   */
+  CONTENT_NON_INDEXABLE,
+
+  /**
    * Subset of [CONTENT] which is used to identify test files. 
    * Files of this kind constitute 'Project Test Files' scope in UI.
    * This kind corresponds to [com.intellij.openapi.roots.FileIndex.isInTestSourceContent] method in the old API.
@@ -137,13 +143,7 @@ enum class WorkspaceFileKind {
    *
    * This kind corresponds to files from [com.intellij.util.indexing.IndexableSetContributor] in the old API.
    */
-  CUSTOM,
-
-  /**
-   * Describe files that are in the workspace but should not be indexed. These files are usually in a directory that the user has opened,
-   * but before the project is imported by any build system. They can be edited.
-   */
-  CONTENT_NON_INDEXABLE;
+  CUSTOM;
   
   val isContent: Boolean
     get() = this == CONTENT || this == TEST_CONTENT || this == CONTENT_NON_INDEXABLE
