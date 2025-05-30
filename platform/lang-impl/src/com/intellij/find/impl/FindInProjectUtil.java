@@ -49,7 +49,6 @@ import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nls;
@@ -58,8 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -111,19 +108,17 @@ public final class FindInProjectUtil {
     if (directoryName == null) {
       VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (virtualFile != null) {
-        Path filePath = Path.of(virtualFile.getPath());
-        if (Files.isDirectory(filePath)) {
+        if (virtualFile.isDirectory()) {
           directoryName = virtualFile.getPresentableUrl();
         }
         else {
-          Path parentPath = filePath.getParent();
-          if (parentPath != null && Files.isDirectory(parentPath)) {
-            String presentablePath = PathUtil.toPresentableUrl(parentPath.toString());
+          VirtualFile parent = virtualFile.getParent();
+          if (parent != null && parent.isDirectory()) {
             if (editor == null) {
-              directoryName = presentablePath;
+              directoryName = parent.getPresentableUrl();
             }
             else if (project != null) {
-              FindInProjectSettings.getInstance(project).addDirectory(presentablePath);
+              FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
             }
           }
         }
