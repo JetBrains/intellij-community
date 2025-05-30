@@ -28,7 +28,7 @@ enum class ToolWindowProperty {
 
 @ApiStatus.Internal
 interface RegisterToolWindowTaskProvider {
-  fun getTasks(project: Project): Collection<ToolWindowEP>
+  suspend fun getTasks(project: Project): Collection<ToolWindowEP>
 }
 
 // Adding or removing items? Don't forget to increment the version in ToolWindowEventLogGroup.GROUP

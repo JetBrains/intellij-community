@@ -3,6 +3,10 @@ package com.intellij.facet.impl.ui
 
 import com.intellij.facet.*
 import com.intellij.facet.ui.FacetDependentToolWindow
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
@@ -10,27 +14,32 @@ import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.toolWindow.RegisterToolWindowTaskProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
-internal class FacetDependentToolWindowManager : RegisterToolWindowTaskProvider {
-  override fun getTasks(project: Project): Collection<ToolWindowEP> {
-    val facetDependentToolWindows: List<FacetDependentToolWindow> = FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList
+private class FacetDependentToolWindowManager : RegisterToolWindowTaskProvider {
+  override suspend fun getTasks(project: Project): Collection<ToolWindowEP> {
+    val facetDependentToolWindows = FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList
     if (facetDependentToolWindows.isEmpty()) {
       return emptyList()
     }
 
-    val result = ArrayList<ToolWindowEP>()
-    val projectFacetManager = ProjectFacetManager.getInstance(project)
-    l@ for (extension in facetDependentToolWindows) {
-      for (type in extension.getFacetTypes()) {
-        if (projectFacetManager.hasFacets(type.getId())) {
-          result.add(extension)
-          continue@l
+    return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      val result = ArrayList<ToolWindowEP>()
+      // in EDT - not clear is it safe to load not in EDT (preserve old behaviour)
+      val projectFacetManager = project.serviceAsync<ProjectFacetManager>()
+      l@ for (extension in facetDependentToolWindows) {
+        for (type in extension.getFacetTypes()) {
+          if (projectFacetManager.hasFacets(type.getId())) {
+            result.add(extension)
+            continue@l
+          }
         }
       }
-    }
 
-    projectOpened(project)
-    return result
+      projectOpened(project)
+      result
+    }
   }
 }
 

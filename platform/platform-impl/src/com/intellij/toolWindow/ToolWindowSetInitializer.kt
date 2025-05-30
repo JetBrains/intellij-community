@@ -283,7 +283,7 @@ private suspend fun addExtraTasks(
       continue
     }
 
-    for (bean in withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) { provider.getTasks(project) }) {
+    for (bean in provider.getTasks(project)) {
       beanToTask(project = project, bean = bean, plugin = bean.pluginDescriptor)?.let(result::add)
     }
   }
