@@ -58,6 +58,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-6729
+  public void testYieldFromNonIterable() {
+    doTest();
+  }
+
   // PY-18275
   public void testStrFormatPy3() {
     doTest();

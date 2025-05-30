@@ -135,6 +135,11 @@ public class PyTypeCheckerInspection extends PyInspection {
       ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (!(owner instanceof PyFunction function)) return;
 
+      final PyExpression yieldExpr = node.getExpression();
+      if (yieldExpr != null && node.isDelegating()) {
+        checkIteratedValue(yieldExpr, false);
+      }
+
       final PyAnnotation annotation = function.getAnnotation();
       final String typeCommentAnnotation = function.getTypeCommentAnnotation();
       if (annotation == null && typeCommentAnnotation == null) return;
@@ -159,8 +164,6 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyType expectedSendType = generatorDesc.sendType();
 
       final PyType thisYieldType = node.getYieldType(myTypeEvalContext);
-
-      final PyExpression yieldExpr = node.getExpression();
 
       if (!PyTypeChecker.match(expectedYieldType, thisYieldType, myTypeEvalContext)) {
         String expectedName = PythonDocumentationProvider.getVerboseTypeName(expectedYieldType, myTypeEvalContext);
