@@ -6,11 +6,9 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
-import com.intellij.util.text.DateFormatUtil.formatTimeWithSeconds
 import kotlinx.coroutines.*
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -95,7 +93,8 @@ private fun Path.getDumpFile(
 ): Path {
   val fileName = buildString {
     append(filePrefix)
-    val time = formatTimeWithSeconds(Clock.System.now().toEpochMilliseconds())
+    val elapsedMs = System.nanoTime() / 1_000_000L
+    val time = "${elapsedMs}ms"
     append("-$time")
     if (counter != null) {
       append("-$counter")
