@@ -465,7 +465,7 @@ class RecentProjectFilteringTree(
                            projectPath = item.projectPath,
                            branchName = item.branchName,
                            providerPath = item.providerPath,
-                           tooltip = null,
+                           tooltip = item.projectPath,
                            projectIcon = projectIcon,
                            isProjectValid = isProjectValid,
                            providerIcon = item.providerIcon)
