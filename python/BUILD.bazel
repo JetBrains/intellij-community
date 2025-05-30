@@ -458,12 +458,6 @@ jvm_resources(
 
 jvm_resources(
   name = "python-helpers_resources_1",
-  files = glob(["helpers/pydev/**/*"]),
-  strip_prefix = "helpers/pydev"
-)
-
-jvm_resources(
-  name = "python-helpers_resources_2",
   files = glob(["helpers/third_party/thriftpy/**/*"]),
   strip_prefix = "helpers/third_party/thriftpy"
 )
@@ -474,7 +468,6 @@ java_library(
   runtime_deps = [
     ":python-helpers_resources",
     ":python-helpers_resources_1",
-    ":python-helpers_resources_2",
   ]
 )
 ### auto-generated section `build intellij.python.helpers` end
