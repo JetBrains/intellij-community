@@ -158,6 +158,14 @@ LEADING_TOKEN_MARKDOWN="///"
         return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
       }
 
+      [/] {
+        yybegin(COMMENT_DATA);
+        if(myMarkdownMode) {
+          return JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH;
+        }
+        return JavaDocSyntaxTokenType.DOC_COMMENT_DATA;
+      }
+
       \[ {
         yybegin(COMMENT_DATA);
         if(myMarkdownMode) {

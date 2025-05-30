@@ -221,6 +221,7 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testReferenceLinkMarkdown10() { doTest(true); }
   public void testReferenceLinkMarkdown11() { doTest(true); }
   public void testReferenceLinkMarkdown12() { doTest(true); }
+  public void testReferenceLinkMarkdown13() { doTest(true); }
 
   public void testMarkdownWithDocCommentBeforeMarkdown() {
     setLanguageLevel(LanguageLevel.JDK_21);
