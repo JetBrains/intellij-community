@@ -75,11 +75,10 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
     g.paint = rightGradientTexture
     g.fillRect(leftWidth, 0, rightWidth, height)
 
-    if (ClientSystemInfo.isMac()) {
-      alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
+    alignTxToInt(g, null, false, true, PaintUtil.RoundingMode.FLOOR)
 
-      g.paint = GradientPaint(0f, 0f, Gray.TRANSPARENT, 0f, height.toFloat(), mainColor)
-      g.fillRect(0, 0, totalWidth, height)
-    }
+    val startColor = if (ClientSystemInfo.isMac()) Gray.TRANSPARENT else ColorUtil.toAlpha(mainColor, 0)
+    g.paint = GradientPaint(0f, 0f, startColor, 0f, height.toFloat(), mainColor)
+    g.fillRect(0, 0, totalWidth, height)
   }
 }
