@@ -31,7 +31,7 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
     this(componentType, provider, JavaTypeNullabilityUtil.getNullabilityFromAnnotations(provider.getAnnotations()));
   }
 
-  private PsiArrayType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider, @NotNull TypeNullability nullability) {
+  PsiArrayType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider, @NotNull TypeNullability nullability) {
     super(provider);
     myComponentType = componentType;
     myNullability = nullability;
