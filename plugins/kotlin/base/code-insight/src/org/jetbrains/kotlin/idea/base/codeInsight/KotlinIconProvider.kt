@@ -83,7 +83,10 @@ object KotlinIconProvider {
     }
 
     private fun getVisibilityIcon(symbol: KaSymbol): Icon? {
-        val visibility = (symbol as? KaDeclarationSymbol)?.visibility ?: return null
+        val visibility =
+            (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty
+                ?: (symbol as? KaDeclarationSymbol)?.visibility
+                ?: return null
         val id = when (visibility) {
             KaSymbolVisibility.PUBLIC -> PlatformIcons.Public
             KaSymbolVisibility.PROTECTED -> PlatformIcons.Protected

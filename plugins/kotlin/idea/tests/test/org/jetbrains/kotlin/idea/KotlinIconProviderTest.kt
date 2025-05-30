@@ -59,6 +59,13 @@ class KotlinIconProviderTest: KotlinLightCodeInsightFixtureTestCase() {
         createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/expui/suspendDeclaration.svg", "Public")
     }
 
+    fun testPrivateConstructorParameter() {
+        val fileBody = """
+            class Foo(private val n<caret>ame: String)
+        """.trimIndent()
+        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/field_value.svg", "Private")
+    }
+
     fun testJavaBase() {
         val aClass = myFixture.addClass("public class BaseJavaClass {}")
         myFixture.addFileToProject("foo.kt", "class Foo : BaseJavaClass() {}")

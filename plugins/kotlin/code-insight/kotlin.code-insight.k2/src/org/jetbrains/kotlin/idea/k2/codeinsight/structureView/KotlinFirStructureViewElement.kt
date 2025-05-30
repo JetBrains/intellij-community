@@ -12,9 +12,12 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
@@ -66,6 +69,7 @@ class KotlinFirStructureViewElement(
     override fun getIcon(open: Boolean): Icon? = kotlinPresentation.getIcon(open)
     override fun getPresentableText(): String? = kotlinPresentation.presentableText
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     @TestOnly
     override fun putInfo(info: MutableMap<in String, in String?>) {
         // Sanity check for API consistency
@@ -74,6 +78,9 @@ class KotlinFirStructureViewElement(
 
         info["text"] = presentableText
         info["location"] = locationString
+        allowAnalysisOnEdt {
+            info["visibility"] = visibility.name ?: "none"
+        }
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
@@ -132,7 +139,9 @@ class KotlinFirStructureViewElement(
     }
 
     class Visibility(symbol: KaSymbol?) {
-        private val visibility: KaSymbolVisibility? = (symbol as? KaDeclarationSymbol)?.visibility
+        private val visibility: KaSymbolVisibility? =
+            (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty?.visibility
+                ?: (symbol as? KaDeclarationSymbol)?.visibility
 
         val isPublic: Boolean
             get() = visibility == KaSymbolVisibility.PUBLIC
@@ -145,6 +154,9 @@ class KotlinFirStructureViewElement(
               KaSymbolVisibility.PRIVATE -> 4
               else -> null
             }
+
+        val name: String?
+            get() = visibility?.name
     }
 }
 

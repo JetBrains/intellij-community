@@ -1,0 +1,8 @@
+-Simple.kt visibility=none
+ -Test visibility=PUBLIC
+  constructor Test(String, Integer) visibility=PUBLIC
+  foo(): Int visibility=PROTECTED
+  number: Integer visibility=PRIVATE
+  other(): Unit visibility=PUBLIC
+  some: Int visibility=PRIVATE
+  str: String visibility=PUBLIC
