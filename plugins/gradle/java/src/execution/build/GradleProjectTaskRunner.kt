@@ -140,7 +140,7 @@ class GradleProjectTaskRunner : ProjectTaskRunner() {
 
   private suspend fun createTaskOutputFile(project: Project): EelPath? {
     try {
-      val eel = project.getEelDescriptor().upgrade()
+      val eel = project.getEelDescriptor().toEelApi()
       return eel.fs.createTemporaryFile()
         .prefix("output")
         .suffix(".paths")
