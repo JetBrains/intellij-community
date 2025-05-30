@@ -26,11 +26,16 @@
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/252/find-all-model-252.jar
       find-ec-model-experimental:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/252/find-ec-model-252.jar
+- name: lib/modules/intellij.searchEverywhereMl.typos.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.typos
+    libraries:
+      ai.grazie.spell.gec.engine.local.jvm:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0/gec-spell-engine-local-jvm-0.jar
 - name: lib/searchEverywhereMl.jar
   modules:
   - name: intellij.searchEverywhereMl
   contentModules:
-  - name: intellij.searchEverywhereMl.typos
   - name: intellij.searchEverywhereMl.ranking.ext
   - name: intellij.searchEverywhereMl.ranking.java
   - name: intellij.searchEverywhereMl.ranking.yaml

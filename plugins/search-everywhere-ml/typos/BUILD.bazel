@@ -24,6 +24,8 @@ jvm_library(
     "//platform/statistics",
     "//plugins/search-everywhere-ml",
     "@lib//:fastutil-min",
+    "//platform/ml-impl",
+    "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
   ],
   runtime_deps = [":typos_resources"]
 )
@@ -52,6 +54,9 @@ jvm_library(
     "//plugins/search-everywhere-ml",
     "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
     "@lib//:fastutil-min",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "@lib//:search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
   ],
   runtime_deps = [":typos_resources"]
 )

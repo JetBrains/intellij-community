@@ -8632,6 +8632,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
+  jar = "@gec-spell-engine-local-jvm-0_4_60_http//file",
+  source_jar = "@gec-spell-engine-local-jvm-0_4_60-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "settings_repository-eclipse-jgit-ssh-apache",
   jar = "@org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http//file",
   source_jar = "@org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-sources_http//file",
