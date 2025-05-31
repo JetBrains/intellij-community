@@ -895,11 +895,7 @@ class InternalDecoratorImpl internal constructor(
     val rectangle = bounds
     super.reshape(x, y, w, h)
     val topLevelDecorator = findTopLevelDecorator(this)
-    if (topLevelDecorator == null || !topLevelDecorator.isShowing) {
-      putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null)
-      putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, null)
-    }
-    else {
+    if (topLevelDecorator != null && topLevelDecorator.isShowing) { // topLevelDecorator != null means that this is not a top level one.
       val hideLabel: Any? = if (SwingUtilities.convertPoint(this, x, y, topLevelDecorator) == Point()) null else "true"
       putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideLabel)
       val topScreenLocation = topLevelDecorator.locationOnScreen
