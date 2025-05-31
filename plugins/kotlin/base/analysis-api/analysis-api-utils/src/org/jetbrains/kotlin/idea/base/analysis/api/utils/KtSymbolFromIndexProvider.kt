@@ -33,11 +33,8 @@ import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
 
 class KtSymbolFromIndexProvider(
-    private val file: KtFile,
+    private val file: KtFile?,
 ) {
-
-    private val project: Project
-        get() = file.project
 
     private fun keyFilter(nameFilter: (Name) -> Boolean): (String) -> Boolean = { name ->
         val name = name.substringAfterLast('.')
@@ -77,10 +74,10 @@ class KtSymbolFromIndexProvider(
         val resolveExtensionScope = resolveExtensionScopeWithTopLevelDeclarations
 
         return getClassLikeSymbols(
-            classDeclarations = KotlinClassShortNameIndex.getAllElements(name.asString(), project, scope) {
+            classDeclarations = KotlinClassShortNameIndex.getAllElements(name.asString(), useSiteModule.project, scope) {
                 it.isAcceptable(psiFilter)
             },
-            typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(name.asString(), project, scope) {
+            typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(name.asString(), useSiteModule.project, scope) {
                 it.isAcceptable(psiFilter)
             },
             declarationsFromExtension = resolveExtensionScope.classifiers(name).filterIsInstance<KaClassLikeSymbol>(),
@@ -98,10 +95,10 @@ class KtSymbolFromIndexProvider(
         val resolveExtensionScope = resolveExtensionScopeWithTopLevelDeclarations
 
         return getClassLikeSymbols(
-            classDeclarations = KotlinFullClassNameIndex.getAllElements(project, scope, keyFilter) {
+            classDeclarations = KotlinFullClassNameIndex.getAllElements(useSiteModule.project, scope, keyFilter) {
                 it.isAcceptable(psiFilter)
             },
-            typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(project, scope, keyFilter) {
+            typeAliasDeclarations = KotlinTypeAliasShortNameIndex.getAllElements(useSiteModule.project, scope, keyFilter) {
                 it.isAcceptable(psiFilter)
             },
             declarationsFromExtension = resolveExtensionScope.classifiers(nameFilter).filterIsInstance<KaClassLikeSymbol>(),
@@ -129,7 +126,7 @@ class KtSymbolFromIndexProvider(
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (KtObjectDeclaration) -> Boolean = { true },
     ): Sequence<KaClassSymbol> = KotlinSubclassObjectNameIndex.getAllElements<KtObjectDeclaration>(
-        project,
+        useSiteModule.project,
         scope,
         keyFilter = keyFilter(nameFilter),
     ) { it.isAcceptable(psiFilter) }
@@ -141,7 +138,7 @@ class KtSymbolFromIndexProvider(
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (KtEnumEntry) -> Boolean = { true },
     ): Sequence<KaEnumEntrySymbol> = KotlinFullClassNameIndex.getAllElements<KtEnumEntry>(
-        project = project,
+        project = useSiteModule.project,
         scope = scope,
         keyFilter = keyFilter(nameFilter),
     ) { it.isAcceptable(psiFilter) }
@@ -154,7 +151,7 @@ class KtSymbolFromIndexProvider(
         psiFilter: (KtEnumEntry) -> Boolean = { true },
     ): Sequence<KaEnumEntrySymbol> = KotlinClassShortNameIndex.getAllElements(
         key = name.asString(),
-        project = project,
+        project = useSiteModule.project,
         scope = scope,
     ) { it is KtEnumEntry && it.isAcceptable(psiFilter) }
         .map { (it as KtEnumEntry).symbol }
@@ -168,7 +165,7 @@ class KtSymbolFromIndexProvider(
         val names = buildSet {
             val processor = createNamesProcessor(nameFilter)
 
-            nonKotlinNamesCaches.forEach {
+            getNonKotlinNamesCaches(useSiteModule.project).forEach {
                 it.processAllClassNames(processor, scope, null)
             }
         }
@@ -185,7 +182,7 @@ class KtSymbolFromIndexProvider(
     ): Sequence<KaNamedClassSymbol> {
         val nameString = name.asString()
 
-        return nonKotlinNamesCaches.flatMap { cache ->
+        return getNonKotlinNamesCaches(useSiteModule.project).flatMap { cache ->
             cache.getClassesByName(nameString, scope).asSequence()
         }.filter { it.isAcceptable(psiFilter) }
             .mapNotNull { it.namedClassSymbol }
@@ -202,7 +199,7 @@ class KtSymbolFromIndexProvider(
         KotlinPropertyShortNameIndex,
     ).flatMap { index ->
         index.getAllElements<KtCallableDeclaration>(
-            project = project,
+            project = useSiteModule.project,
             scope = scope,
             keyFilter = keyFilter(nameFilter),
         ) { declaration ->
@@ -231,7 +228,7 @@ class KtSymbolFromIndexProvider(
 
         helper.processElements(
             key = name.asString(),
-            project = project,
+            project = useSiteModule.project,
             scope = scope,
             processor = processor,
         )
@@ -250,7 +247,7 @@ class KtSymbolFromIndexProvider(
         val names = buildSet {
             val processor = createNamesProcessor(nameFilter)
 
-            nonKotlinNamesCaches.forEach {
+            getNonKotlinNamesCaches(useSiteModule.project).forEach {
                 it.processAllFieldNames(processor, scope, null)
             }
         }
@@ -264,7 +261,7 @@ class KtSymbolFromIndexProvider(
         name: Name,
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (PsiMethod) -> Boolean = { true },
-    ): Sequence<KaCallableSymbol> = nonKotlinNamesCaches.flatMap {
+    ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
         it.getMethodsByName(name.asString(), scope).asSequence()
     }.filter { it.isAcceptable(psiFilter) }
         .mapNotNull { it.callableSymbol }
@@ -274,7 +271,7 @@ class KtSymbolFromIndexProvider(
         name: Name,
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (PsiField) -> Boolean = { true },
-    ): Sequence<KaCallableSymbol> = nonKotlinNamesCaches.flatMap {
+    ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
         it.getFieldsByName(name.asString(), scope).asSequence()
     }.filter { it.isAcceptable(psiFilter) }
         .mapNotNull { it.callableSymbol }
@@ -299,7 +296,7 @@ class KtSymbolFromIndexProvider(
         }
 
         helper.processAllElements(
-            project = project,
+            project = useSiteModule.project,
             scope = scope,
             filter = keyFilter(nameFilter),
             processor = processor,
@@ -330,7 +327,7 @@ class KtSymbolFromIndexProvider(
         }
 
         helper.processAllElements(
-            project = project,
+            project = useSiteModule.project,
             scope = scope,
             filter = keyFilter(nameFilter),
             processor = processor,
@@ -350,7 +347,7 @@ class KtSymbolFromIndexProvider(
         psiFilter: (KtCallableDeclaration) -> Boolean = { true },
     ): Sequence<KaCallableSymbol> {
         val receiverTypeNames = findAllNamesForTypes(
-            project = project,
+            project = useSiteModule.project,
             types = receiverTypes,
             scope = scope,
             builtinTypes = builtinTypes,
@@ -365,7 +362,7 @@ class KtSymbolFromIndexProvider(
                 ).flatMap { indexHelper ->
                     val key = KotlinExtensionsByReceiverTypeStubIndexHelper.Companion.Key(receiverTypeName, name)
 
-                    indexHelper.getAllElements(key.key, project, scope) { declaration ->
+                    indexHelper.getAllElements(key.key, useSiteModule.project, scope) { declaration ->
                                 declaration.isAcceptable(psiFilter)
                     }
                 }
@@ -387,7 +384,7 @@ class KtSymbolFromIndexProvider(
         psiFilter: (KtCallableDeclaration) -> Boolean = { true },
     ): Sequence<KaCallableSymbol> {
         val receiverTypeNames = findAllNamesForTypes(
-            project = project,
+            project = useSiteModule.project,
             types = receiverTypes,
             scope = scope,
             builtinTypes = builtinTypes,
@@ -404,7 +401,7 @@ class KtSymbolFromIndexProvider(
             KotlinTopLevelExtensionsByReceiverTypeIndex,
             KotlinExtensionsInObjectsByReceiverTypeIndex,
         ).flatMap { index ->
-            index.getAllElements(project, scope, keyFilter) { declaration: KtCallableDeclaration ->
+            index.getAllElements(useSiteModule.project, scope, keyFilter) { declaration: KtCallableDeclaration ->
                 declaration.isAcceptable(psiFilter)
             }
         }.map { it.symbol }
@@ -428,11 +425,12 @@ class KtSymbolFromIndexProvider(
         }
     }
 
-    private inline val nonKotlinNamesCaches: Sequence<PsiShortNamesCache>
-        get() = PsiShortNamesCache.EP_NAME // PsiShortNamesCache should have been a project-level EP
-            .getPoint(project) // could have been ::lazySequence in this case
-            .let { it as ExtensionPointImpl<PsiShortNamesCache> }
-            .filterNot { it::class.java.name == "org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache" }
+
+    private fun getNonKotlinNamesCaches(project: Project): Sequence<PsiShortNamesCache> = PsiShortNamesCache.EP_NAME // PsiShortNamesCache should have been a project-level EP
+        .getPoint(project) // could have been ::lazySequence in this case
+        .let { it as ExtensionPointImpl<PsiShortNamesCache> }
+        .filterNot { it::class.java.name == "org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache" }
+
 }
 
 private fun findAllNamesForTypes(
