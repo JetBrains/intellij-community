@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage
 
 import com.intellij.ide.util.DirectoryChooserUtil
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
@@ -110,7 +111,9 @@ object CreateClassUtil {
             }
         }
 
-        if (classKind != ClassKind.ENUM_ENTRY && applicableParents.find { it is PsiPackage } == null) {
+        if (classKind != ClassKind.ENUM_ENTRY
+            && editor !is EditorWindow
+            && applicableParents.find { it is PsiPackage } == null) {
             applicableParents += SeparateFileWrapper(PsiManager.getInstance(project))
         }
 
