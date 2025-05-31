@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.CleanableStorage;
@@ -93,15 +93,19 @@ public interface PersistentFSRecordsStorage extends IPersistentFSRecordsStorage,
 
   /**
    * Additional bit-flags
-   * Values are from {@linkplain PersistentFSHeaders} FLAGS_XXX constants
+   * Values are from {@linkplain PersistentFSHeaders.Flags} FLAGS_XXX constants
    */
   int getFlags() throws IOException;
+
+  default boolean getFlag(int flagMask) throws IOException {
+    return (getFlags() & flagMask) != 0;
+  }
 
   /**
    * flags values are from {@linkplain PersistentFSHeaders} FLAGS_XXX constants
    *
-   * @return true if flags actually changed, or false if current flags are the same as were attempted to set (i.e.
-   * current flags already contain all flagsToAdd and do not contain none of flagsToRemove)
+   * @return true if flags actually changed, or false if current flags are the same as were attempted to set
+   * (i.e. current flags already contain all of flagsToAdd and none of flagsToRemove)
    */
   boolean updateFlags(int flagsToAdd,
                       int flagsToRemove) throws IOException;

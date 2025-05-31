@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.ExceptionUtil;
@@ -622,7 +622,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
   @Test
   public void flags_RestoredAfterReopen() throws IOException {
-    int flags = PersistentFSHeaders.FLAGS_DEFRAGMENTATION_REQUESTED;
+    int flags = PersistentFSHeaders.Flags.FLAGS_DEFRAGMENTATION_REQUESTED;
 
     //set the flag:
     storage.updateFlags(/*flagsToAdd: */ flags, /*flagsToRemove: */ 0);

@@ -45,6 +45,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.notification.NotificationType.ERROR;
 import static com.intellij.notification.NotificationType.INFORMATION;
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.Flags.FLAGS_DEFRAGMENTATION_REQUESTED;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexes;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -282,8 +283,8 @@ public final class PersistentFSConnection {
 
   @VisibleForTesting
   public static void scheduleVFSRebuild(@NotNull Path corruptionMarkerFile,
-                                 @Nullable String message,
-                                 @Nullable Throwable errorCause) {
+                                        @Nullable String message,
+                                        @Nullable Throwable errorCause) {
     VFSCorruptedException corruptedException = new VFSCorruptedException(
       message == null ? "(No specific reason of corruption was given)" : message,
       errorCause
@@ -316,7 +317,7 @@ public final class PersistentFSConnection {
 
   @VisibleForTesting
   public void scheduleVFSRebuild(@Nullable String message,
-                          @Nullable Throwable errorCause) {
+                                 @Nullable Throwable errorCause) {
     scheduleVFSRebuild(persistentFSPaths.getCorruptionMarkerFile(), message, errorCause);
   }
 
@@ -326,8 +327,8 @@ public final class PersistentFSConnection {
    * 'rebuild VFS because it is corrupted', but 'defragment VFS because it may contain al lot of garbage' -- this is why there is
    * no 'message' nor 'errorCause' parameters.
    */
-  void scheduleDefragmentation() throws IOException {
-    records.updateFlags(/*flagsToAdd: */ PersistentFSHeaders.FLAGS_DEFRAGMENTATION_REQUESTED, /*flagsToRemove: */ 0);
+  public void scheduleDefragmentation() throws IOException {
+    records.updateFlags(/*flagsToAdd: */ FLAGS_DEFRAGMENTATION_REQUESTED, /*flagsToRemove: */ 0);
   }
 
 
@@ -405,7 +406,7 @@ public final class PersistentFSConnection {
             connection.force();
           }
           catch (AlreadyDisposedException | RejectedExecutionException e) {
-            LOG.warn("Stop flushing: pool is shutting down or whole application is closing", e);
+            LOG.warn("Stop flushing: pool is shutting down or whole application is closing", new Exception(e));
             scheduledFuture.cancel(false);
           }
           catch (Throwable t) {

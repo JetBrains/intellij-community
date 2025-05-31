@@ -47,6 +47,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.Flags.FLAGS_DEFRAGMENTATION_REQUESTED;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
 import static com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory.IfNotPageAligned.EXPAND_FILE;
@@ -349,7 +350,7 @@ public final class PersistentFSLoader {
     if (errorsAccumulated > 0) {
       addProblem(HAS_ERRORS_IN_PREVIOUS_SESSION, "VFS accumulated " + errorsAccumulated + " errors in last session");
     }
-    if ((recordsStorage.getFlags() & PersistentFSHeaders.FLAGS_DEFRAGMENTATION_REQUESTED) != 0) {
+    if (recordsStorage.getFlag(FLAGS_DEFRAGMENTATION_REQUESTED)) {
       addProblem(DEFRAGMENTATION_REQUESTED, "VFS defragmentation requested");
     }
 
