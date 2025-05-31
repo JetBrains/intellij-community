@@ -1846,6 +1846,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-pt",
+  jar = "@language-pt-6_5_0_12_http//file",
+  source_jar = "@language-pt-6_5_0_12-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-ru",
   jar = "@language-ru-6_5_0_12_http//file",
   source_jar = "@language-ru-6_5_0_12-sources_http//file",
@@ -1858,6 +1865,12 @@ java_library(
     ":languagetool-core-6_5_0_12_http_import",
     ":openregex-1_1_1_http_import",
   ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "grazie-tests-org-languagetool-portuguese-pos-dict",
+  jar = "@portuguese-pos-dict-1_2_0_http//file",
   visibility = ["//visibility:public"]
 )
 

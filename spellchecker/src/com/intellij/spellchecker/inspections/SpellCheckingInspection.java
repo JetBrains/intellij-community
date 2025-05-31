@@ -11,26 +11,27 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class SpellCheckingInspection extends LocalInspectionTool implements DumbAware {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
@@ -244,7 +245,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         return;
       }
 
-      if (myManager.hasProblem(word)) {
+      if (hasProblem(word)) {
         //Use tokenizer to generate accurate range in element (e.g. in case of escape sequences in element)
         SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, myElement.getLanguage());
 
@@ -262,6 +263,41 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
           addBatchDescriptor(myElement, range, word, myHolder);
         }
       }
+    }
+
+    private boolean hasProblem(String word) {
+      if (!myManager.hasProblem(word)) {
+        return false;
+      }
+      Language language = myElement.getLanguage();
+      SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, language);
+      if (strategy == null || !strategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Code))) {
+        return true;
+      }
+
+      Project project = myElement.getProject();
+      return SpellCheckerManager.getInstance(project).getSuggestions(word)
+        .stream()
+        .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
+        .map(suggestion -> Normalizer.normalize(suggestion, Normalizer.Form.NFC))
+        .map(suggestion -> replaceNonAsciiCharacters(suggestion))
+        .noneMatch(suggestion -> suggestion.equalsIgnoreCase(word));
+    }
+
+    private String replaceNonAsciiCharacters(String suggestion) {
+      if (IOUtil.isAscii(suggestion)) {
+        return suggestion;
+      }
+      //ü→ue, ö→oe, ä→ae, ß→ss
+      return suggestion
+        .replaceAll("ü", "ue")
+        .replaceAll("ö", "oe")
+        .replaceAll("ä", "ae")
+        .replaceAll("ß", "ss")
+        .replaceAll("Ü", "Ue")
+        .replaceAll("Ö", "Oe")
+        .replaceAll("Ä", "Ae")
+        .replaceAll("ẞ", "SS");
     }
   }
 

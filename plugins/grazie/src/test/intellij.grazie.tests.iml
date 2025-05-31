@@ -147,6 +147,40 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.jetbrains.intellij.deps.languagetool:language-pt" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.languagetool:language-pt:6.5.0.12">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.5.0.12/language-pt-6.5.0.12.jar">
+              <sha256sum>67214a254d22fc788289e5fe3bbc4524ef849ab8de2da9665c804f6d1801061c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.5.0.12/language-pt-6.5.0.12.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-pt/6.5.0.12/language-pt-6.5.0.12-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="TEST">
+      <library name="org.languagetool:portuguese-pos-dict" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:portuguese-pos-dict:1.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0.jar">
+              <sha256sum>fe8da88bb31b6372855741fbd81ee1c7477b4f8a0624d3dafd20ee23e184650e</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />

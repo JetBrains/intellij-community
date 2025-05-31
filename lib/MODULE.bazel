@@ -2386,6 +2386,20 @@ http_file(
 )
 
 http_file(
+  name = "language-pt-6_5_0_12_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-pt/6.5.0.12/language-pt-6.5.0.12.jar",
+  sha256 = "67214a254d22fc788289e5fe3bbc4524ef849ab8de2da9665c804f6d1801061c",
+  downloaded_file_path = "language-pt-6.5.0.12.jar"
+)
+
+http_file(
+  name = "language-pt-6_5_0_12-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-pt/6.5.0.12/language-pt-6.5.0.12-sources.jar",
+  sha256 = "9a5951e514df636e0cb579876a0a5d1b38080f32f151e42c5f9f1201769e66e3",
+  downloaded_file_path = "language-pt-6.5.0.12-sources.jar"
+)
+
+http_file(
   name = "language-ru-6_5_0_12_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ru/6.5.0.12/language-ru-6.5.0.12.jar",
   sha256 = "41ae74c748ee15fdc90ea9536575490850b8d044b39d92f85e2d30072ca0cb8c",
@@ -2397,6 +2411,13 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ru/6.5.0.12/language-ru-6.5.0.12-sources.jar",
   sha256 = "d192904aaaf1367375a12512dcee6d77b0bbd0aea44d0f9b49eb38ecaa59765d",
   downloaded_file_path = "language-ru-6.5.0.12-sources.jar"
+)
+
+http_file(
+  name = "portuguese-pos-dict-1_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0.jar",
+  sha256 = "fe8da88bb31b6372855741fbd81ee1c7477b4f8a0624d3dafd20ee23e184650e",
+  downloaded_file_path = "portuguese-pos-dict-1.2.0.jar"
 )
 
 http_file(

@@ -29,6 +29,8 @@ jvm_library(
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-ru",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-de",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-it",
+    "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-pt",
+    "@lib//:grazie-tests-org-languagetool-portuguese-pos-dict",
     "@lib//:stream_ex",
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",

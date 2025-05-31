@@ -28,7 +28,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     val inspectionTools by lazy {
       arrayOf<LocalInspectionTool>(GrazieInspection(), SpellCheckingInspection())
     }
-    val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN)
+    val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN, Lang.RUSSIAN, Lang.ITALIAN, Lang.PORTUGAL_PORTUGUESE)
     val enabledRules = setOf("LanguageTool.EN.COMMA_WHICH", "LanguageTool.EN.UPPERCASE_SENTENCE_START")
   }
 
