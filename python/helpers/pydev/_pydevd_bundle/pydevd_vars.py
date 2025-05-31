@@ -829,7 +829,7 @@ def array_data_to_xml(rows, cols, get_row, format):
 
 def slice_to_xml(slice, rows, cols, format, type, bounds):
     return '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-           (slice, rows, cols, quote(format), type, quote(str(bounds[1])), quote(str(bounds[0])))
+           (quote(slice), rows, cols, quote(format), type, quote(str(bounds[1])), quote(str(bounds[0])))
 
 
 def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
