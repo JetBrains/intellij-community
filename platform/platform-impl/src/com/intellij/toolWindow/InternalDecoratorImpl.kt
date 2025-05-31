@@ -894,12 +894,12 @@ class InternalDecoratorImpl internal constructor(
   override fun reshape(x: Int, y: Int, w: Int, h: Int) {
     val rectangle = bounds
     super.reshape(x, y, w, h)
-    val topLevelDecorator = findTopLevelDecorator(this)
+    val topLevelDecorator = findTopLevelDecorator(header)
     if (topLevelDecorator == null || !topLevelDecorator.isShowing) {
       putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null)
       putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, null)
     }
-    else {
+    else if (topLevelDecorator != this) {
       val hideLabel: Any? = if (SwingUtilities.convertPoint(this, x, y, topLevelDecorator) == Point()) null else "true"
       putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideLabel)
       val topScreenLocation = topLevelDecorator.locationOnScreen
