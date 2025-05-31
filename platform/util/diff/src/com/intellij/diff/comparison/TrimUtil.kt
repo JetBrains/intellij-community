@@ -6,7 +6,6 @@ package com.intellij.diff.comparison
 
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import com.intellij.openapi.util.text.Strings.isWhiteSpace
 import java.util.*
 
 fun isPunctuation(c: Char): Boolean {
@@ -27,7 +26,7 @@ fun isAlpha(c: Int): Boolean {
 }
 
 fun isWhiteSpaceCodePoint(c: Int): Boolean {
-  return c < 128 && isWhiteSpace(c.toChar())
+  return c < 128 && c.toChar().isSpaceEnterOrTab()
 }
 
 fun isContinuousScript(c: Int): Boolean {
@@ -47,7 +46,7 @@ fun isContinuousScript(c: Int): Boolean {
 
 fun trim(text: CharSequence, start: Int, end: Int): com.intellij.util.IntPair {
   return trim(start, end,
-              { index -> isWhiteSpace(text[index]) })
+              { index -> text[index].isSpaceEnterOrTab() })
 }
 
 fun trim(start: Int, end: Int, ignored: BitSet): com.intellij.util.IntPair {
@@ -57,28 +56,28 @@ fun trim(start: Int, end: Int, ignored: BitSet): com.intellij.util.IntPair {
 
 fun trimStart(text: CharSequence, start: Int, end: Int): Int {
   return trimStart(start, end,
-                   { index -> isWhiteSpace(text[index]) })
+                   { index -> text[index].isSpaceEnterOrTab() })
 }
 
 fun trimEnd(text: CharSequence, start: Int, end: Int): Int {
   return trimEnd(start, end,
-                 { index -> isWhiteSpace(text[index]) })
+                 { index -> text[index].isSpaceEnterOrTab() })
 }
 
 
 fun trim(text1: CharSequence, text2: CharSequence,
          start1: Int, start2: Int, end1: Int, end2: Int): Range {
   return trim(start1, start2, end1, end2,
-              { index -> isWhiteSpace(text1[index]) },
-              { index -> isWhiteSpace(text2[index]) })
+              { index -> text1[index].isSpaceEnterOrTab() },
+              { index -> text2[index].isSpaceEnterOrTab() })
 }
 
 fun trim(text1: CharSequence, text2: CharSequence, text3: CharSequence,
          start1: Int, start2: Int, start3: Int, end1: Int, end2: Int, end3: Int): MergeRange {
   return trim(start1, start2, start3, end1, end2, end3,
-              { index -> isWhiteSpace(text1[index]) },
-              { index -> isWhiteSpace(text2[index]) },
-              { index -> isWhiteSpace(text3[index]) })
+              { index -> text1[index].isSpaceEnterOrTab() },
+              { index -> text2[index].isSpaceEnterOrTab() },
+              { index -> text3[index].isSpaceEnterOrTab() })
 }
 
 
@@ -132,7 +131,7 @@ fun expandWhitespaces(text1: CharSequence, text2: CharSequence,
                       start1: Int, start2: Int, end1: Int, end2: Int): Range {
   return expandIgnored(start1, start2, end1, end2,
                        { index1, index2 -> text1[index1] == text2[index2] },
-                       { index -> isWhiteSpace(text1[index]) })
+                       { index -> text1[index].isSpaceEnterOrTab() })
 }
 
 
@@ -140,7 +139,7 @@ fun expandWhitespacesForward(text1: CharSequence, text2: CharSequence,
                              start1: Int, start2: Int, end1: Int, end2: Int): Int {
   return expandIgnoredForward(start1, start2, end1, end2,
                               { index1, index2 -> text1[index1] == text2[index2] },
-                              { index -> isWhiteSpace(text1[index]) })
+                              { index -> text1[index].isSpaceEnterOrTab() })
 }
 
 
@@ -148,7 +147,7 @@ fun expandWhitespacesBackward(text1: CharSequence, text2: CharSequence,
                               start1: Int, start2: Int, end1: Int, end2: Int): Int {
   return expandIgnoredBackward(start1, start2, end1, end2,
                                { index1, index2 -> text1[index1] == text2[index2] },
-                               { index -> isWhiteSpace(text1[index]) })
+                               { index -> text1[index].isSpaceEnterOrTab() })
 }
 
 
@@ -157,7 +156,7 @@ fun expandWhitespaces(text1: CharSequence, text2: CharSequence, text3: CharSeque
   return expandIgnored(start1, start2, start3, end1, end2, end3,
                        { index1, index2 -> text1[index1] == text2[index2] },
                        { index1, index3 -> text1[index1] == text3[index3] },
-                       { index -> isWhiteSpace(text1[index]) })
+                       { index -> text1[index].isSpaceEnterOrTab() })
 }
 
 fun expandWhitespacesForward(text1: CharSequence, text2: CharSequence, text3: CharSequence,
@@ -165,7 +164,7 @@ fun expandWhitespacesForward(text1: CharSequence, text2: CharSequence, text3: Ch
   return expandIgnoredForward(start1, start2, start3, end1, end2, end3,
                               { index1, index2 -> text1[index1] == text2[index2] },
                               { index1, index3 -> text1[index1] == text3[index3] },
-                              { index -> isWhiteSpace(text1[index]) })
+                              { index -> text1[index].isSpaceEnterOrTab() })
 }
 
 fun expandWhitespacesBackward(text1: CharSequence, text2: CharSequence, text3: CharSequence,
@@ -173,7 +172,7 @@ fun expandWhitespacesBackward(text1: CharSequence, text2: CharSequence, text3: C
   return expandIgnoredBackward(start1, start2, start3, end1, end2, end3,
                                { index1, index2 -> text1[index1] == text2[index2] },
                                { index1, index3 -> text1[index1] == text3[index3] },
-                               { index -> isWhiteSpace(text1[index]) })
+                               { index -> text1[index].isSpaceEnterOrTab() })
 }
 
 
@@ -592,3 +591,6 @@ private inline fun trimExpandBackward(start1: Int, start2: Int, end1: Int, end2:
 
   return com.intellij.util.IntPair(end1, end2)
 }
+
+// from Strings.isWhiteSpace
+internal fun Char.isSpaceEnterOrTab(): Boolean = this == '\n' || this == '\t' || this == ' '

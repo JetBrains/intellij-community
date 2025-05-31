@@ -18,7 +18,6 @@ import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.IntPair
 import com.intellij.util.text.MergingCharSequence
 import org.jetbrains.annotations.ApiStatus
@@ -356,7 +355,7 @@ object ByWordRt {
             if (ch == '\n') {
               break
             }
-            if (!Strings.isWhiteSpace(ch)) break@outer
+            if (!ch.isSpaceEnterOrTab()) break@outer
             index++
           }
           if (index == end) break@outer
@@ -383,7 +382,7 @@ object ByWordRt {
             if (ch == '\n') {
               break
             }
-            if (!Strings.isWhiteSpace(ch)) break@outer
+            if (!ch.isSpaceEnterOrTab()) break@outer
             index--
           }
           if (index < start) break@outer
@@ -550,13 +549,13 @@ object ByWordRt {
     var start = start
     if (start < 0) return false
     if (start == text.length) return false
-    if (!Strings.isWhiteSpace(text[start])) return false
+    if (!text[start].isSpaceEnterOrTab()) return false
 
     start--
     while (start >= 0) {
       val c = text[start]
       if (c == '\n') return true
-      if (!Strings.isWhiteSpace(c)) return false
+      if (!c.isSpaceEnterOrTab()) return false
       start--
     }
     return true
@@ -566,12 +565,12 @@ object ByWordRt {
     var end = end
     if (end < 0) return false
     if (end == text.length) return false
-    if (!Strings.isWhiteSpace(text[end])) return false
+    if (!text[end].isSpaceEnterOrTab()) return false
 
     while (end < text.length) {
       val c = text[end]
       if (c == '\n') return true
-      if (!Strings.isWhiteSpace(c)) return false
+      if (!c.isSpaceEnterOrTab()) return false
       end++
     }
     return true

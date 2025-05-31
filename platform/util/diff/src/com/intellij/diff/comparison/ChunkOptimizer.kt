@@ -7,7 +7,6 @@ import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.Side.Companion.fromLeft
-import com.intellij.openapi.util.text.Strings
 
 internal abstract class ChunkOptimizer<T>(
   protected val myData1: List<T>,
@@ -156,7 +155,7 @@ internal abstract class ChunkOptimizer<T>(
         val offset2 = word2.offset1
 
         for (i in offset1..<offset2) {
-          if (Strings.isWhiteSpace(text[i])) return true
+          if (text[i].isSpaceEnterOrTab()) return true
         }
         return false
       }

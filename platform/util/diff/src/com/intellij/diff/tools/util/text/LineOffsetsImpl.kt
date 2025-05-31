@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.text
 
-import com.intellij.openapi.util.text.Strings
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntList
 import java.util.*
@@ -50,7 +49,7 @@ class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, over
 
       var index = 0
       while (true) {
-        val lineEnd = Strings.indexOf(text, '\n', index)
+        val lineEnd = text.indexOf('\n', index)
         if (lineEnd != -1) {
           ends.add(lineEnd)
           index = lineEnd + 1
