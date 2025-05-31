@@ -1,6 +1,6 @@
 // WITH_COROUTINES
 // PROBLEM: Suspicious implicit 'CoroutineScope' receiver access in suspending context
-// FIX: none
+// FIX: Add explicit labeled receiver
 package test
 
 import kotlinx.coroutines.CoroutineScope

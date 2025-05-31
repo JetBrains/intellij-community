@@ -9,10 +9,10 @@ private suspend fun suspendWrapper(action: suspend () -> Unit) {
     action()
 }
 
-fun CoroutineScope.doStuff() {}
+fun <T : CoroutineScope> T.doGenericStuff() {}
 
 suspend fun CoroutineScope.test() {
     suspendWrapper {
-        <caret>doStuff()
+        this@test.doGenericStuff()
     }
 }

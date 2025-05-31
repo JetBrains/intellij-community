@@ -6,6 +6,8 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -19,16 +21,23 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.hasSuspendModifier
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
-internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() : KotlinApplicableInspectionBase<KtExpression, Unit>() {
+internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
+    KotlinApplicableInspectionBase<KtExpression, SuspiciousImplicitCoroutineScopeReceiverAccessInspection.Context>() {
+    
+    class Context(val receiverLabelName: Name)
+
     @JvmField
     var detectCoroutineScopeSubtypes: Boolean = false
 
@@ -54,7 +63,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() : Kotl
         return qualifiedExpression == null
     }
 
-    override fun KaSession.prepareContext(element: KtExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtExpression): Context? {
         // Resolve the call to check if it's a CoroutineScope function
         val resolvedCall = element.resolveToCall()?.let { callInfo ->
             when (element) {
@@ -88,7 +97,10 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() : Kotl
         // Check if there are any suspend lambdas between the call PSI and the implicit ContextReceiver symbol PSI
         if (!hasSuspendFunctionsInPath(element, receiverOwnerSymbol)) return null
 
-        return Unit
+        // Get the name for the label based on the type of receiverOwnerSymbol
+        val receiverLabelName = receiverOwnerSymbol.findLabelName() ?: return null
+
+        return Context(receiverLabelName)
     }
 
     context(KaSession) 
@@ -144,9 +156,35 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() : Kotl
         return false
     }
 
+    private fun KaDeclarationSymbol.findLabelName(): Name? =
+        when (val psi = psi) {
+            is KtFunctionLiteral -> {
+                val (labelName, _) = psi.findLabelAndCall()
+
+                labelName
+            }
+
+            is KtNamedDeclaration -> psi.nameAsName
+
+            else -> null
+        }
+
+    private class AddExplicitLabeledReceiverFix(private val context: Context) : KotlinModCommandQuickFix<KtExpression>() {
+        override fun getFamilyName(): String = KotlinBundle.message("inspection.suspicious.implicit.coroutine.scope.receiver.add.explicit.receiver.fix.text")
+        override fun applyFix(
+            project: Project,
+            element: KtExpression,
+            updater: ModPsiUpdater
+        ) {
+            val expressionWithExplicitReceiver =
+                KtPsiFactory(project).createExpression("this@${context.receiverLabelName}.${element.text}")
+            element.replace(expressionWithExplicitReceiver)
+        }
+    }
+
     override fun InspectionManager.createProblemDescriptor(
         element: KtExpression,
-        context: Unit,
+        context: Context,
         rangeInElement: TextRange?,
         onTheFly: Boolean
     ): ProblemDescriptor {
@@ -156,7 +194,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() : Kotl
             /* descriptionTemplate = */ KotlinBundle.message("inspection.suspicious.implicit.coroutine.scope.receiver.description"),
             /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             /* onTheFly = */ onTheFly,
-            /* ...fixes = */
+            /* fixes = */ AddExplicitLabeledReceiverFix(context),
         )
     }
 }

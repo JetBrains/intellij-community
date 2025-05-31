@@ -13,6 +13,6 @@ fun CoroutineScope.doStuff() {}
 
 suspend fun CoroutineScope.test() {
     suspendWrapper {
-        <caret>doStuff()
+        this@test.doStuff()
     }
 }

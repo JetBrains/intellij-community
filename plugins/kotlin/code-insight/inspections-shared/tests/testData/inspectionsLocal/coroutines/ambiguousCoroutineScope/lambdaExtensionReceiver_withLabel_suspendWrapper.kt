@@ -4,6 +4,7 @@
 package test
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 
 private suspend fun suspendWrapper(action: suspend () -> Unit) {
     action()
@@ -11,8 +12,10 @@ private suspend fun suspendWrapper(action: suspend () -> Unit) {
 
 fun CoroutineScope.doStuff() {}
 
-suspend fun CoroutineScope.test() {
-    suspendWrapper {
-        <caret>doStuff()
+suspend fun test() {
+    coroutineScope customLabel@{
+        suspendWrapper {
+            <caret>doStuff()
+        }
     }
 }

@@ -1247,6 +1247,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             public void testLambdaExtensionReceiver_suspendWrapper_explicitThis() throws Exception {
                 runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/lambdaExtensionReceiver_suspendWrapper_explicitThis.kt");
             }
+
+            @TestMetadata("lambdaExtensionReceiver_withLabel_suspendWrapper.kt")
+            public void testLambdaExtensionReceiver_withLabel_suspendWrapper() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/lambdaExtensionReceiver_withLabel_suspendWrapper.kt");
+            }
         }
     }
 
