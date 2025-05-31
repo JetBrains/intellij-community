@@ -58,7 +58,10 @@ public class JavaAbiFilter implements ZipOutputBuilder {
   private byte @Nullable [] filterAbiJarContent(String entryName, byte[] content) {
     if (content == null || !entryName.endsWith(".class")) {
       if (entryName.endsWith(".java")) {
-        return null;  // do not save AP-produced sources in abi jar
+        // do not save annotation processors (AP)-produced sources in abi jar
+        // AP generate sources that we must store somewhere during the compilation to give them back to javac, if it needs them.
+        // Eventually those sources are deleted from the output. With this check the JavaAbiFilter filter ensures that no sources get into the ABI output.
+        return null;
       }
       return content; // no instrumentation, if the entry is not a class file, or the class finder is not specified
     }

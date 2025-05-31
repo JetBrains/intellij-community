@@ -8,7 +8,10 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoade
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumenterClassWriter;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.*;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputFile;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
@@ -179,7 +182,7 @@ public class BazelIncBuilder {
             if (!srcSnapshotDelta.isRecompileAll()) {
               // delete outputs corresponding to deleted or recompiled sources
               for (CompilerRunner compiler : roundCompilers) {
-                cleanOutputsForCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), compiler, outSink);
+                cleanOutputsForCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), compiler, storageManager.getCompositeOutputBuilder());
               }
             }
 
@@ -258,7 +261,7 @@ public class BazelIncBuilder {
 
   private static void runInstrumenters(OutputSinkImpl outSink, StorageManager storageManager, List<BytecodeInstrumenter> instrumenters, DiagnosticSink diagnostic) throws IOException {
     for (OutputOrigin.Kind originKind : OutputOrigin.Kind.values()) {
-      for (String generatedFile : outSink.getOutputPaths(originKind, OutputFile.Kind.bytecode)) {
+      for (String generatedFile : outSink.getGeneratedOutputPaths(originKind, OutputFile.Kind.bytecode)) {
         boolean changes = false;
         byte[] content = null;
         ClassReader reader = null;
@@ -339,20 +342,20 @@ public class BazelIncBuilder {
     return srcSnapshotDelta.isRecompileAll() || srcSnapshotDelta.getChangedPercent() > RECOMPILE_CHANGED_RATIO_PERCENT;
   }
 
-  private static void cleanOutputsForCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, CompilerRunner compiler, OutputSink outSink) {
+  private static void cleanOutputsForCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, CompilerRunner compiler, ZipOutputBuilder outBuilder) {
     // separately logging deleted outputs for 'deleted' and 'modified' sources to adjust for existing test data
     Collection<String> cleanedOutputsOfDeletedSources = deleteCompilerOutputs(
-      depGraph, filter(snapshotDelta.getDeleted(), compiler::canCompile), outSink, new ArrayList<>()
+      depGraph, filter(snapshotDelta.getDeleted(), compiler::canCompile), outBuilder, new ArrayList<>()
     );
     logDeletedPaths(context, cleanedOutputsOfDeletedSources);
 
     Collection<String> cleanedOutputsOfModifiedSources = deleteCompilerOutputs(
-      depGraph, filter(snapshotDelta.getModified(), compiler::canCompile), outSink, new ArrayList<>()
+      depGraph, filter(snapshotDelta.getModified(), compiler::canCompile), outBuilder, new ArrayList<>()
     );
     if (!cleanedOutputsOfDeletedSources.isEmpty() || !cleanedOutputsOfModifiedSources.isEmpty()) {
       // delete additional paths only if there are any changes in the output caused by changes in sources
       for (String toDelete : compiler.getOutputPathsToDelete()) {
-        if (outSink.deletePath(toDelete)) {
+        if (outBuilder.deleteEntry(toDelete)) {
           cleanedOutputsOfModifiedSources.add(toDelete);
         }
       }
@@ -361,11 +364,11 @@ public class BazelIncBuilder {
   }
 
   private static Collection<String> deleteCompilerOutputs(
-    DependencyGraph depGraph, Iterable<@NotNull NodeSource> sourcesToCompile, OutputSink outSink, Collection<String> deletedPathsAcc
+    DependencyGraph depGraph, Iterable<@NotNull NodeSource> sourcesToCompile, ZipOutputBuilder outBuilder, Collection<String> deletedPathsAcc
   ) {
     for (Node<?, ?> node : filter(flat(map(sourcesToCompile, depGraph::getNodes)), n -> n instanceof JVMClassNode)) {
       String outputPath = ((JVMClassNode<?, ?>) node).getOutFilePath();
-      if (outSink.deletePath(outputPath)) {
+      if (outBuilder.deleteEntry(outputPath)) {
         deletedPathsAcc.add(outputPath);
       }
     }

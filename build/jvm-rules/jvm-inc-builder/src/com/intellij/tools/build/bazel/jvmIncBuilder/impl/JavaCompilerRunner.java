@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
-import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
@@ -41,12 +40,14 @@ public class JavaCompilerRunner implements CompilerRunner {
 
   private final BuildContext myContext;
   private final List<String> myOptions;
+  private final StorageManager myStorageManager;
   private final ModulePath myModulePath;
   private final Iterable<File> myClassPath;
 
   public JavaCompilerRunner(BuildContext context, StorageManager storageManager) {
     myContext = context;
     myOptions = getFilteredOptions(context);
+    myStorageManager = storageManager;
     NodeSourcePathMapper pathMapper = context.getPathMapper();
 
     Collection<File> classpath = collect(map(context.getBinaryDependencies().getElements(), ns -> pathMapper.toPath(ns).toFile()), new ArrayList<>()); 
@@ -96,8 +97,7 @@ public class JavaCompilerRunner implements CompilerRunner {
   @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnosticSink, OutputSink outSink) throws Exception {
     NodeSourcePathMapper pathMapper = myContext.getPathMapper();
-    SourcesFilteringOutputSink srcFilteringSink = new SourcesFilteringOutputSink(outSink);
-    OutputCollector outCollector = new OutputCollector(this, pathMapper, diagnosticSink, srcFilteringSink);
+    OutputCollector outCollector = new OutputCollector(this, pathMapper, diagnosticSink, outSink);
     JavacCompilerTool javacTool = new JavacCompilerTool();
     // set non-null output, pointing to a non-existent dir. Need this to enable JavacFileManager creating OutputFileObjects
     Map<File, Set<File>> outputDir = Map.of(myContext.getDataDir().resolve("__temp__").toFile(), Set.of());
@@ -126,8 +126,9 @@ public class JavaCompilerRunner implements CompilerRunner {
       return compileOk ? ExitCode.OK : ExitCode.ERROR;
     }
     finally {
-      for (String generatedSourcesPath : srcFilteringSink.getGeneratedSourcesPaths()) {
-        outSink.deletePath(generatedSourcesPath); // for now, remove generated sources from the resulting artifact
+      ZipOutputBuilder outputBuilder = myStorageManager.getCompositeOutputBuilder();
+      for (String generatedSourcesPath : outSink.getGeneratedOutputPaths(OutputOrigin.Kind.java, OutputFile.Kind.source)) {
+        outputBuilder.deleteEntry(generatedSourcesPath); // for now, remove generated sources from the resulting artifact
       }
     }
   }
@@ -359,74 +360,4 @@ public class JavaCompilerRunner implements CompilerRunner {
     return options;
   }
 
-  private static final class SourcesFilteringOutputSink implements OutputSink {
-    private final OutputSink myDelegate;
-    private final Set<String> myGeneratedSourcesPaths = new HashSet<>();
-
-    SourcesFilteringOutputSink(OutputSink delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public void addFile(OutputFile outFile, OutputOrigin origin) {
-      if (outFile.getKind() == OutputFile.Kind.source) {
-        myGeneratedSourcesPaths.add(outFile.getPath());
-      }
-      myDelegate.addFile(outFile, origin);
-    }
-    
-    public Iterable<String> getGeneratedSourcesPaths() {
-      return myGeneratedSourcesPaths;
-    }
-
-    @Override
-    public boolean deletePath(String path) {
-      return myDelegate.deletePath(path);
-    }
-
-    @Override
-    public Iterable<String> list(String packageName, boolean recurse) {
-      return myDelegate.list(packageName, recurse);
-    }
-
-    @Override
-    public Iterable<String> listFiles(String packageName, boolean recurse) {
-      return myDelegate.listFiles(packageName, recurse);
-    }
-
-    @Override
-    public byte @Nullable [] getFileContent(String path) {
-      return myDelegate.getFileContent(path);
-    }
-
-    @Override
-    public void registerImports(String className, Collection<String> classImports, Collection<String> staticImports) {
-      myDelegate.registerImports(className, classImports, staticImports);
-    }
-
-    @Override
-    public void registerConstantReferences(String className, Collection<ConstantRef> cRefs) {
-      myDelegate.registerConstantReferences(className, cRefs);
-    }
-
-    @Override
-    public void registerUsage(String className, Usage usage) {
-      myDelegate.registerUsage(className, usage);
-    }
-
-    @Override
-    public void registerUsage(NodeSource source, Usage usage) {
-      myDelegate.registerUsage(source, usage);
-    }
-
-    @Override
-    public Iterable<NodeWithSources> getNodes() {
-      return myDelegate.getNodes();
-    }
-
-    @Override
-    public Iterable<String> getOutputPaths(OutputOrigin.Kind originKind, OutputFile.Kind outputKind) {
-      return myDelegate.getOutputPaths(originKind, outputKind);
-    }
-  }
 }

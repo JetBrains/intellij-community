@@ -22,7 +22,6 @@ import java.util.*;
 public class OutputSinkImpl implements OutputSink {
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   private final ZipOutputBuilder myOut;
-  private final ZipOutputBuilder myComposite;
   private @Nullable final ZipOutputBuilder myAbiOut;
   private @Nullable final ZipOutputBuilder myJavaAbiOut;
   private final Map<OutputOrigin.Kind, Map<OutputFile.Kind, Set<String>>> myOutputsIndex = new EnumMap<>(OutputOrigin.Kind.class);
@@ -38,7 +37,6 @@ public class OutputSinkImpl implements OutputSink {
 
   public OutputSinkImpl(StorageManager sm) throws IOException {
     myOut = sm.getOutputBuilder();
-    myComposite = sm.getCompositeOutputBuilder();
     myAbiOut = sm.getAbiOutputBuilder();
     myJavaAbiOut = myAbiOut != null? new JavaAbiFilter(myAbiOut, sm.getInstrumentationClassFinder()) : null;
   }
@@ -50,13 +48,8 @@ public class OutputSinkImpl implements OutputSink {
   }
 
   @Override
-  public Iterable<String> getOutputPaths(OutputOrigin.Kind originKind, OutputFile.Kind outputKind) {
+  public Iterable<String> getGeneratedOutputPaths(OutputOrigin.Kind originKind, OutputFile.Kind outputKind) {
     return getOutputs(originKind, outputKind);
-  }
-
-  @Override
-  public boolean deletePath(String path) {
-    return myComposite.deleteEntry(path);
   }
 
   @Override

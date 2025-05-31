@@ -341,8 +341,17 @@ public class KotlinCompilerRunner implements CompilerRunner {
     arguments.setSkipPrereleaseCheck(true);
     arguments.setAllowUnstableDependencies(true);
     arguments.setDisableStandardScript(true);
-    arguments.setApiVersion("2.1");     // todo: find a way to configure this in input parameters
-    arguments.setLanguageVersion("2.1"); // todo: find a way to configure this in input parameters
+    if (arguments.getLanguageVersion() == null && arguments.getApiVersion() == null) {
+      // defaults
+      arguments.setApiVersion("2.2");     // todo: find a way to configure this in input parameters
+      arguments.setLanguageVersion("2.2"); // todo: find a way to configure this in input parameters
+    }
+    else if (arguments.getLanguageVersion() == null) {
+      arguments.setLanguageVersion(arguments.getApiVersion());
+    }
+    else if (arguments.getApiVersion() == null) {
+      arguments.setApiVersion(arguments.getLanguageVersion());
+    }
     arguments.setAllowKotlinPackage(CLFlags.ALLOW_KOTLIN_PACKAGE.isFlagSet(flags));
     arguments.setWhenGuards(CLFlags.WHEN_GUARDS.isFlagSet(flags));
     arguments.setLambdas(CLFlags.LAMBDAS.getOptionalScalarValue(flags));

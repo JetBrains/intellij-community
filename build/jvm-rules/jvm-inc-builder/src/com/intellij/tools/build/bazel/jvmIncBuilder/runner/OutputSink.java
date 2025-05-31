@@ -20,7 +20,5 @@ public interface OutputSink extends OutputExplorer, CompilerDataSink{
 
   void addFile(OutputFile outFile, OutputOrigin origin);
 
-  Iterable<String> getOutputPaths(OutputOrigin.Kind originKind, OutputFile.Kind outputKind);
-
-  boolean deletePath(String path);
+  Iterable<String> getGeneratedOutputPaths(OutputOrigin.Kind originKind, OutputFile.Kind outputKind);
 }
