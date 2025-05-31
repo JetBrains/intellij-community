@@ -7,8 +7,11 @@ import com.intellij.database.run.ui.FloatingPagingManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 import static com.intellij.database.datagrid.GridUtil.hidePageActions;
 
@@ -36,16 +39,6 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
     boolean enabled = dataGrid.isReady() && isEnabled(dataGrid.getDataHookup().getPageModel());
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(isVisible(e, dataGrid) && (enabled || !ActionPlaces.EDITOR_POPUP.equals(e.getPlace())));
-  }
-
-  protected static void additionalUpdateVisibilityCheck(@NotNull AnActionEvent e) {
-    DataGrid dataGrid = e.getData(DatabaseDataKeys.DATA_GRID_KEY);
-    if (dataGrid == null) return;
-    GridPagingModel<GridRow, GridColumn> pageModel = dataGrid.getDataHookup().getPageModel();
-
-    if (pageModel.getPageSize() == GridPagingModel.UNLIMITED_PAGE_SIZE || (long)pageModel.getPageSize() >= pageModel.getTotalRowCount()) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
   }
 
   protected boolean isVisible(@NotNull AnActionEvent e, DataGrid dataGrid) {
@@ -82,15 +75,53 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
       loader.reloadCurrentPage(source);
     }
   }
-
-  public static class First extends PageAction {
-
+  
+  public static abstract class NavigationAction extends PageAction {
+    private static final Logger LOG = Logger.getInstance(NavigationAction.class);
+    
+    private static void traceIfEnabled(Supplier<String> messageSupplier) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(messageSupplier.get());
+      }
+    }
+    
     @Override
     public void update(@NotNull AnActionEvent e) {
+      traceIfEnabled(
+        () -> "Updating " + this.getClass().getSimpleName() + ": " +
+              "visible: " + e.getPresentation().isVisible() + ", " +
+              "enabled: " + e.getPresentation().isEnabled() + ", ");
       super.update(e);
+      traceIfEnabled(
+        () -> "Updated " + this.getClass().getSimpleName() + " (super called): " +
+              "visible: " + e.getPresentation().isVisible() + ", " +
+              "enabled: " + e.getPresentation().isEnabled() + ", ");
       additionalUpdateVisibilityCheck(e);
       FloatingPagingManager.adjustAction(e);
     }
+
+    private static void additionalUpdateVisibilityCheck(@NotNull AnActionEvent e) {
+      DataGrid dataGrid = e.getData(DatabaseDataKeys.DATA_GRID_KEY);
+      if (dataGrid == null) return;
+      GridPagingModel<GridRow, GridColumn> pageModel = dataGrid.getDataHookup().getPageModel();
+
+      final int pageSize = pageModel.getPageSize();
+      traceIfEnabled(() -> "Page size: " + pageSize);
+
+      if (pageSize == GridPagingModel.UNLIMITED_PAGE_SIZE) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      final long totalRowCount = pageModel.getTotalRowCount();
+      traceIfEnabled(() -> "Total rows: " + totalRowCount);
+      if ((long)pageSize >= totalRowCount) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+    }
+  }
+
+  public static class First extends NavigationAction {
 
     @Override
     protected boolean isEnabled(GridPagingModel<GridRow, GridColumn> pageModel) {
@@ -103,14 +134,7 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
     }
   }
 
-  public static class Last extends PageAction {
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      additionalUpdateVisibilityCheck(e);
-      FloatingPagingManager.adjustAction(e);
-    }
+  public static class Last extends NavigationAction {
 
     @Override
     protected boolean isEnabled(GridPagingModel<GridRow, GridColumn> pageModel) {
@@ -123,14 +147,7 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
     }
   }
 
-  public static class Next extends PageAction {
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      additionalUpdateVisibilityCheck(e);
-      FloatingPagingManager.adjustAction(e);
-    }
+  public static class Next extends NavigationAction {
 
     @Override
     protected boolean isEnabled(GridPagingModel<GridRow, GridColumn> pageModel) {
@@ -143,14 +160,7 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
     }
   }
 
-  public static class Previous extends PageAction {
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      additionalUpdateVisibilityCheck(e);
-      FloatingPagingManager.adjustAction(e);
-    }
+  public static class Previous extends NavigationAction {
 
     @Override
     protected boolean isEnabled(GridPagingModel<GridRow, GridColumn> pageModel) {
