@@ -605,6 +605,8 @@ com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
 com.intellij.ide.structureView.newStructureView.TreeActionsOwner
 - a:isActionActive(java.lang.String):Z
 - a:setActionActive(java.lang.String,Z):V
+f:com.intellij.ide.util.EditorHelper
+- s:openInMaybeInjectedEditor(com.intellij.psi.PsiElement):com.intellij.openapi.editor.Editor
 com.intellij.ide.util.PsiElementRenderingInfo
 - s:getComparator(com.intellij.ide.util.PsiElementRenderingInfo):java.util.Comparator
 - getContainerText(com.intellij.psi.PsiElement):java.lang.String

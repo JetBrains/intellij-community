@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,14 @@ public final class EditorHelper {
   public static Editor openInEditor(@NotNull PsiElement element) {
     FileEditor editor = openInEditor(element, true);
     return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
+  }
+
+  public static @Nullable Editor openInMaybeInjectedEditor(@NotNull PsiElement element) {
+    Editor editor = openInEditor(element);
+    if (editor == null) return null;
+
+    PsiFile file = element.getContainingFile();
+    return InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, file);
   }
 
   public static @Nullable FileEditor openInEditor(@NotNull PsiElement element, boolean switchToText) {
