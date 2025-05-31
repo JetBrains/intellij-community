@@ -152,7 +152,13 @@ public final class PyRequirementParser {
   private static final @NotNull String REQUIREMENT_OPTIONS_GROUP = "options";
 
   private static final @NotNull String REQUIREMENT_OPTIONS_REGEXP =
-    "(?<" + REQUIREMENT_OPTIONS_GROUP + ">(" + LINE_WS_REGEXP + "+(--global-option|--install-option)=\"[^\"]*\")+)?";
+    "(?<" +
+    REQUIREMENT_OPTIONS_GROUP +
+    ">(" +
+    LINE_WS_REGEXP +
+    "+(--global-option|--install-option)=\"[^\"]*\"|" +
+    LINE_WS_REGEXP +
+    "+--hash=[^\\s]+)+)?";
 
   private static final @NotNull String REQUIREMENT_GROUP = "requirement";
 

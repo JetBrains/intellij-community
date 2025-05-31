@@ -2433,6 +2433,30 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(singletonList(requirement), PyRequirementParser.fromText(name + " \\\n--install-option=\"option\" # comment"));
   }
 
+  // HASH OPTIONS
+  // Test for parsing requirements with hash options
+  public void testRequirementWithHash() {
+    doTest("certifi", "2018.4.16", "certifi==2018.4.16 --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7");
+    doTest("certifi", "2018.4.16",
+           "certifi==2018.4.16 --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7 --hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0");
+  }
+
+  // Test for parsing requirements with hash options from text (including line continuation)
+  public void testRequirementWithHashFromText() {
+    final List<PyRequirement> requirements = PyRequirementParser.fromText(
+      "certifi==2018.4.16 \\\n    --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7 \\\n    --hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0");
+    assertFalse(requirements.isEmpty());
+
+    final PyRequirement requirement = requirements.get(0);
+    assertNotNull(requirement);
+    assertEquals("certifi", requirement.getName());
+    assertEquals("2018.4.16", requirement.getVersionSpecs().get(0).getVersion());
+
+    final List<String> installOptions = requirement.getInstallOptions();
+    assertTrue(installOptions.contains("--hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7"));
+    assertTrue(installOptions.contains("--hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0"));
+  }
+
   // ENV MARKERS
   // TODO: https://www.python.org/dev/peps/pep-0426/#environment-markers, https://www.python.org/dev/peps/pep-0508/#environment-markers
 
