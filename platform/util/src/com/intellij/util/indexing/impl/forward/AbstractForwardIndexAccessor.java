@@ -43,7 +43,7 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
     }
 
     if (myDataTypeExternalizer instanceof ToByteArraySequenceExternalizer) {
-      ToByteArraySequenceExternalizer<DataType> externalizer = (ToByteArraySequenceExternalizer<DataType>)data;
+      ToByteArraySequenceExternalizer<DataType> externalizer = (ToByteArraySequenceExternalizer<DataType>)myDataTypeExternalizer;
       return externalizer.save(data);
     }
     else {

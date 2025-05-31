@@ -53,6 +53,22 @@ class IdEntryMapExternalizerTest {
       externalizersAreEquivalent(defaultMapImpl, defaultMapExternalizer, optimizedMapExternalizer);
     }
   }
+
+
+  @Test
+  void generatedMapsSerializeIdentically_ByBothSaveMethodsOfOptimizedExternalizer() throws IOException {
+    IdEntryToScopeMapImpl[] generatedMaps = generateMaps().toArray(IdEntryToScopeMapImpl[]::new);
+    for (IdEntryToScopeMapImpl generatedMap : generatedMaps) {
+
+      byte[] directSave = optimizedMapExternalizer.save(generatedMap).toBytes();
+      byte[] safeViaDataOutput = serializeToBytes(generatedMap, optimizedMapExternalizer);
+      assertThat("optimizedExternalizer: binary format must be the same for .save(Map) and .save(DataOutput)",
+                 directSave,
+                 equalTo(safeViaDataOutput));
+    }
+  }
+
+
   // ================================================ infra ================================================================ //
 
   private static Stream<IdEntryToScopeMapImpl> generateMaps() {

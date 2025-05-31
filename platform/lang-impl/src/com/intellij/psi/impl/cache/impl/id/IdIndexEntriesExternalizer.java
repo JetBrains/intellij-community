@@ -28,9 +28,9 @@ final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<Id
   }
 
   /** BEWARE: idHashes is _modified_ (sorted) during the method call */
-  static void save(@NotNull DataOutput out,
-                   int[] idHashes,
-                   int size) throws IOException {
+  private static void save(@NotNull DataOutput out,
+                           int[] idHashes,
+                           int size) throws IOException {
     Arrays.sort(idHashes, 0, size);
     DataInputOutputUtil.writeINT(out, size);
     int prev = 0;
@@ -46,8 +46,8 @@ final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<Id
     //TODO RC: create implementation of List<IdIndexEntry> that stores int[] inside
     ArrayList<IdIndexEntry> entries = new ArrayList<>(length);
     int prev = 0;
-    while(length-- > 0) {
-      final int l = (int)(DataInputOutputUtil.readLONG(in) + prev);
+    while (length-- > 0) {
+      int l = (int)(DataInputOutputUtil.readLONG(in) + prev);
       entries.add(new IdIndexEntry(l));
       prev = l;
     }

@@ -1,14 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
+import com.intellij.openapi.util.ThreadLocalCachedIntArray;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.RepresentableAsByteArraySequence;
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import it.unimi.dsi.fastutil.HashCommon;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.IntBinaryOperator;
@@ -17,7 +25,8 @@ import java.util.function.IntBinaryOperator;
  * Implementation of {@link IdEntryToScopeMap}, uses {@link Int2IntMap} under the hood
  */
 @ApiStatus.Internal
-public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> implements IdEntryToScopeMap {
+public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> implements IdEntryToScopeMap,
+                                                                                         RepresentableAsByteArraySequence {
 
   //TODO RC: since occurence mask is really a byte, Int2ByteOpenHashMap will be even more optimal
   private final @NotNull Int2IntOpenHashMapWithFastMergeInt idHashToScopeMask;
@@ -144,7 +153,103 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
   public void updateMask(int hash,
                          int occurrenceMask) {
     idHashToScopeMask.mergeInt(hash, occurrenceMask, (prev, cur) -> prev | cur);
+
+    if (serializedData != null) {
+      serializedData = null;
+    }
   }
+
+  /**
+   * Cached serialized form of the map -- allows calculating the serialized form early on, and avoid
+   * doing it, during index update, under the lock
+   */
+  private transient ByteArraySequence serializedData = null;
+
+  ByteArraySequence ensureSerializedDataCached() {
+    if (serializedData == null) {
+      UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream();
+      try (DataOutputStream dos = new DataOutputStream(stream)) {
+        writeTo(this, dos);
+      }
+      catch (IOException e) {
+        //ideally, byte[]-based output stream should never throw IOException -- but the serialization code
+        // _could_ throw it, so we wrap it in UncheckedIOException
+        throw new UncheckedIOException(e);
+      }
+      serializedData = stream.toByteArraySequence();
+    }
+
+    return serializedData;
+  }
+
+  @Override
+  public @NotNull ByteArraySequence asByteArraySequence() {
+    return ensureSerializedDataCached();
+  }
+
+  public void writeTo(@NotNull DataOutput out) throws IOException {
+    ensureSerializedDataCached();
+
+    out.write(
+      serializedData.getInternalBuffer(),
+      serializedData.getOffset(),
+      serializedData.getLength()
+    );
+  }
+
+  private static final ThreadLocalCachedIntArray intsArrayPool = new ThreadLocalCachedIntArray();
+
+  private static void writeTo(@NotNull IdEntryToScopeMap idToScopeMap,
+                              @NotNull DataOutput out) throws IOException {
+    int size = idToScopeMap.size();
+    DataInputOutputUtil.writeINT(out, size);
+
+    if (size == 0) {
+      return;
+    }
+
+    //Store Map[IdHash -> ScopeMask] as inverted Map[ScopeMask -> List[IdHashes]] because sorted List[IdHashes] could
+    // be stored with diff-compression, which is significant space reduction especially with long lists
+    // (resulting binary format is fully compatible with that default InputMapExternalizer produces)
+
+    Int2ObjectMap<IntSet> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
+    idToScopeMap.forEach((idHash, scopeMask) -> {
+      scopeMaskToHashes.computeIfAbsent(scopeMask, __ -> new IntOpenHashSet()).add(idHash);
+      return true;
+    });
+
+    //MAYBE RC: use IntArrayList() instead of IntOpenHashSet() -- we sort the resulting set anyway, so we could
+    //          very well skip duplicates after the sort, in O(N)
+    for (int scopeMask : scopeMaskToHashes.keySet()) {
+      out.writeByte(scopeMask & UsageSearchContext.ANY);
+
+      IntSet idHashes = scopeMaskToHashes.get(scopeMask);
+      int hashesCount = idHashes.size();
+      if (hashesCount == 0) {
+        throw new IllegalStateException("hashesCount(scope: " + scopeMask + ")(=" + hashesCount + ") must be > 0");
+      }
+
+      int[] buffer = intsArrayPool.getBuffer(hashesCount);
+      idHashes.toArray(buffer);
+      save(out, buffer, hashesCount);
+    }
+  }
+
+  /** BEWARE: idHashes is _modified_ (sorted) during the method call */
+  private static void save(DataOutput out,
+                           int[] idHashes,
+                           int size) throws IOException {
+    //copied from IdIndexEntriesExternalizer --
+    //TODO RC: extract common method into DataInputOutputUtil.writeDiffCompressed()
+    Arrays.sort(idHashes, 0, size);
+    DataInputOutputUtil.writeINT(out, size);
+    int prev = 0;
+    for (int i = 0; i < size; ++i) {
+      DataInputOutputUtil.writeLONG(out, (long)idHashes[i] - prev);
+      prev = idHashes[i];
+    }
+  }
+
 
   /**
    * We use {@link Int2IntMap#mergeInt(int, int, IntBinaryOperator)} a lot in this class, but its implementation
@@ -169,7 +274,7 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
         if (containsNullKey) {
           int oldValue = this.value[n];
           int newValue = remappingFunction.applyAsInt(oldValue, value);
-          if(newValue == oldValue){
+          if (newValue == oldValue) {
             return oldValue;
           }
           this.value[n] = newValue;
@@ -191,7 +296,7 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
         else if (key == currKey) {
           int oldValue = this.value[pos];
           int newValue = remappingFunction.applyAsInt(oldValue, value);
-          if(newValue == oldValue){
+          if (newValue == oldValue) {
             return oldValue;
           }
           this.value[pos] = newValue;
