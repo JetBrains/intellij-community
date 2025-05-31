@@ -50,8 +50,6 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
 
     private val cache = ConcurrentHashMap<Int, Painter>()
 
-    private val contextClassLoaders = classLoaders.toList()
-
     private val documentBuilderFactory =
         DocumentBuilderFactory.newDefaultInstance().apply { setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true) }
 
@@ -77,7 +75,7 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
 
         val cacheKey = scope.acceptedHints.hashCode() * 31 + LocalDensity.current.hashCode()
 
-        if (cache[cacheKey] != null) {
+        if (cache.containsKey(cacheKey)) {
             logger.trace("Cache hit for $basePath (accepted hints: ${scope.acceptedHints.joinToString()})")
         }
 
@@ -126,7 +124,7 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
     private fun resolveResource(scope: Scope): Pair<Scope, URL>? {
         val normalized = scope.path.removePrefix("/")
 
-        for (classLoader in contextClassLoaders) {
+        for (classLoader in classLoaders) {
             val url = classLoader.getResource(normalized)
             if (url != null) {
                 logger.trace("Found resource: '$normalized'")
@@ -258,10 +256,7 @@ internal fun Document.writeToString(): String {
 }
 
 @Composable
-public fun rememberResourcePainterProvider(
-    iconKey: IconKey,
-    iconClass: Class<*> = iconKey::class.java,
-): PainterProvider {
+public fun rememberResourcePainterProvider(iconKey: IconKey, iconClass: Class<*> = iconKey.iconClass): PainterProvider {
     val isNewUi = LocalNewUiChecker.current.isNewUi()
     return remember(iconKey, iconClass.classLoader, isNewUi) {
         ResourcePainterProvider(iconKey.path(isNewUi), iconClass.classLoader)
