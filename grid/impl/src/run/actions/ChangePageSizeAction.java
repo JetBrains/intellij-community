@@ -4,6 +4,7 @@ import com.intellij.database.DataGridBundle;
 import com.intellij.database.DatabaseDataKeys;
 import com.intellij.database.datagrid.*;
 import com.intellij.database.run.ui.DataGridRequestPlace;
+import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -45,6 +46,7 @@ public class ChangePageSizeAction extends DumbAwareAction {
   public static void setPageSizeAndReload(int pageSize, @NotNull DataGrid grid) {
     GridPagingModel<GridRow, GridColumn> pageModel = grid.getDataHookup().getPageModel();
     pageModel.setPageSize(pageSize);
+    ActivityTracker.getInstance().inc();
 
     GridLoader loader = grid.getDataHookup().getLoader();
     GridRequestSource source = new GridRequestSource(new DataGridRequestPlace(grid));
