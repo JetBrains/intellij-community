@@ -145,13 +145,15 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testRuntimeCatchMayChangeSemantic1(){
-    assertThrows(RefactoringErrorHintException::class.java, JavaRefactoringBundle.message("extract.method.error.many.exits")) {
+    assertThrows(RefactoringErrorHintException::class.java,
+                 JavaRefactoringBundle.message("extract.method.error.exception")) {
       doTest()
     }
   }
 
   fun testRuntimeCatchMayChangeSemantic2(){
-    assertThrows(RefactoringErrorHintException::class.java, JavaRefactoringBundle.message("extract.method.error.many.exits")) {
+    assertThrows(RefactoringErrorHintException::class.java,
+                 JavaRefactoringBundle.message("extract.method.error.exception")) {
       doTest()
     }
   }
@@ -189,7 +191,8 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testDisabledOnSwitchRules(){
-    assertThrows(RefactoringErrorHintException::class.java, RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression")) {
+    assertThrows(RefactoringErrorHintException::class.java,
+                 RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression")) {
       doTest()
     }
   }
@@ -634,7 +637,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
     ApplicationManager.getApplication().replaceService(HintManager::class.java, manager, testRootDisposable)
     block.invoke()
-    if (message != null) throw throw RefactoringErrorHintException(message)
+    if (message != null) throw RefactoringErrorHintException(message)
   }
 
   private fun startRefactoring(editor: Editor): TemplateState {
