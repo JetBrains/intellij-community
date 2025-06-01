@@ -239,15 +239,8 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
   private static void save(DataOutput out,
                            int[] idHashes,
                            int size) throws IOException {
-    //copied from IdIndexEntriesExternalizer --
-    //TODO RC: extract common method into DataInputOutputUtil.writeDiffCompressed()
     Arrays.sort(idHashes, 0, size);
-    DataInputOutputUtil.writeINT(out, size);
-    int prev = 0;
-    for (int i = 0; i < size; ++i) {
-      DataInputOutputUtil.writeLONG(out, (long)idHashes[i] - prev);
-      prev = idHashes[i];
-    }
+    DataInputOutputUtil.writeDiffCompressed(out, idHashes, size);
   }
 
 

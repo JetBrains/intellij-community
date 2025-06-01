@@ -124,15 +124,10 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
             buffer[ptr++] = i;
           }
         }
+
         Arrays.sort(buffer, 0, numberOfValues);
 
-        DataInputOutputUtil.writeINT(out, numberOfValues);
-        int prev = 0;
-        for (ptr = 0; ptr < numberOfValues; ++ptr) {
-          int cur = buffer[ptr];
-          DataInputOutputUtil.writeLONG(out, (long)cur - prev);
-          prev = cur;
-        }
+        DataInputOutputUtil.writeDiffCompressed(out, buffer, numberOfValues);
       }
 
       @Override

@@ -32,16 +32,12 @@ final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<Id
                            int[] idHashes,
                            int size) throws IOException {
     Arrays.sort(idHashes, 0, size);
-    DataInputOutputUtil.writeINT(out, size);
-    int prev = 0;
-    for (int i = 0; i < size; ++i) {
-      DataInputOutputUtil.writeLONG(out, (long)idHashes[i] - prev);
-      prev = idHashes[i];
-    }
+    DataInputOutputUtil.writeDiffCompressed(out, idHashes, size);
   }
 
   @Override
   public Collection<IdIndexEntry> read(@NotNull DataInput in) throws IOException {
+    //decode diff-compressed array (see DataInputOutputUtil.writeDiffCompressed() for a format):
     int length = DataInputOutputUtil.readINT(in);
     //TODO RC: create implementation of List<IdIndexEntry> that stores int[] inside
     ArrayList<IdIndexEntry> entries = new ArrayList<>(length);

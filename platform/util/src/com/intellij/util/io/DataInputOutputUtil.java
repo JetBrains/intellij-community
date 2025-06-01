@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.ThrowableConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,7 +152,9 @@ public final class DataInputOutputUtil {
    * Writes the given (possibly null) element to the output using the given procedure to write the element if it's not null.
    * Should be coupled with {@link #readNullable}
    */
-  public static <T> void writeNullable(@NotNull DataOutput out, @Nullable T value, @NotNull ThrowableConsumer<? super T, ? extends IOException> writeValue)
+  public static <T> void writeNullable(@NotNull DataOutput out,
+                                       @Nullable T value,
+                                       @NotNull ThrowableConsumer<? super T, ? extends IOException> writeValue)
     throws IOException {
     out.writeBoolean(value != null);
     if (value != null) writeValue.consume(value);
@@ -161,7 +164,9 @@ public final class DataInputOutputUtil {
    * Reads an element from the stream, using the given function to read it when a not-null element is expected, or returns null otherwise.
    * Should be coupled with {@link #writeNullable}
    */
-  public static @Nullable <T> T readNullable(@NotNull DataInput in, @NotNull ThrowableComputable<? extends T, ? extends IOException> readValue) throws IOException {
+  public static @Nullable <T> T readNullable(@NotNull DataInput in,
+                                             @NotNull ThrowableComputable<? extends T, ? extends IOException> readValue)
+    throws IOException {
     return in.readBoolean() ? readValue.compute() : null;
   }
 
@@ -174,5 +179,27 @@ public final class DataInputOutputUtil {
                                   @NotNull Collection<? extends T> collection,
                                   @NotNull ThrowableConsumer<T, IOException> writeElement) throws IOException {
     DataInputOutputUtilRt.writeSeq(out, collection, writeElement);
+  }
+
+  /**
+   * Method writes an array of integers in diff-compressed form, i.e. each element is written as difference from previous one.
+   * Size of array (=length) is written first.
+   * Values are written as varint (see {@link #writeLONG(DataOutput, long)} and {@link #writeINT(DataOutput, int)} methods),
+   * which saves space by compressing smaller values. If values in the array are +/- sorted, the diffs are typically quite
+   * small, and savings are quite significant.
+   *
+   * BEWARE: the array is NOT sorted inside the method -- if you want maximum compression, sort the array before calling this method.
+   */
+  @ApiStatus.Internal
+  public static void writeDiffCompressed(@NotNull DataOutput out,
+                                         int[] arrayPreferrablySorted,
+                                         int length) throws IOException {
+    writeINT(out, length);
+    int previousItem = 0;
+    for (int i = 0; i < length; ++i) {
+      int currentItem = arrayPreferrablySorted[i];
+      writeLONG(out, (long)currentItem - previousItem);
+      previousItem = currentItem;
+    }
   }
 }

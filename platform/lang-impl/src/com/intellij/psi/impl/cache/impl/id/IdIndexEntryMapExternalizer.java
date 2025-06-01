@@ -76,7 +76,7 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
     while (((InputStream)in).available() > 0) {
       int occurenceMask = in.readByte();
 
-      //copied from IdIndexEntriesExternalizer
+      //decode diff-compressed array (see DataInputOutputUtil.writeDiffCompressed() for a format):
       int hashesCount = DataInputOutputUtil.readINT(in);
       if (hashesCount <= 0) {
         throw new IOException("hashesCount: " + hashesCount + " must be >0");
