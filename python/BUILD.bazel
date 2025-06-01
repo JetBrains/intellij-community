@@ -173,6 +173,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
@@ -350,6 +351,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = ["//python:python-community-impl"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
     "//platform/indexing-api:indexing",

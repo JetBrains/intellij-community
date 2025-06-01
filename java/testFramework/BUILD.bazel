@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "//java/testFramework/shared",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

@@ -44,7 +44,6 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
   ],
   exports = [
-    "//platform/analysis-api:analysis",
     "//platform/core-impl",
     "//platform/projectModel-impl",
   ],

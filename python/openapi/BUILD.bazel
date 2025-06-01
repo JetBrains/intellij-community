@@ -28,7 +28,6 @@ jvm_library(
   ],
   exports = [
     "//python/python-psi-api:psi",
-    "//platform/analysis-api:analysis",
     "//platform/platform-util-io:ide-util-io",
   ],
   runtime_deps = [":community_resources"]

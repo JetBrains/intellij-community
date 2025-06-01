@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-assignment-compiler-plugin",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/scripting",

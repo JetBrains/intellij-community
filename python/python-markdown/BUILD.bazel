@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//plugins/markdown/core:markdown",
     "//platform/lang-impl",
     "//python/python-psi-impl:psi-impl",
@@ -32,6 +33,7 @@ jvm_library(
   associates = [":markdown"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//plugins/markdown/core:markdown",
     "//platform/lang-impl",
     "//plugins/markdown/plugin:plugin-main",

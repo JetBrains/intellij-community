@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:guava",
+    "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//platform/core-impl",
     "//platform/ide-core",

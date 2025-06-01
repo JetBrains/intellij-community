@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/structuralsearch:structuralSearch",
     "//platform/lang-api:lang",
     "//plugins/groovy",
@@ -30,6 +31,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":structuralSearch"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/structuralsearch:structuralSearch",
     "//platform/lang-api:lang",
     "//plugins/groovy",

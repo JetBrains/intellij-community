@@ -26,6 +26,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="kotlin.completion.impl.k2" />
     <orderEntry type="module" module-name="kotlin.highlighting.k2" />
     <orderEntry type="module" module-name="intellij.platform.util" />

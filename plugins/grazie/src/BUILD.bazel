@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "@lib//:commons-logging",
+    "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
     "@lib//:commons-text",
     "//platform/editor-ui-api:editor-ui",

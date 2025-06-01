@@ -27,6 +27,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//platform/indexing-api:indexing",
     "//platform/refactoring",
     "//platform/usageView",

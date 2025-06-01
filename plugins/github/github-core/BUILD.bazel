@@ -25,6 +25,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/credential-store",
     "//platform/lvcs-api:lvcs",
     "//platform/vcs-api:vcs",
@@ -86,6 +87,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":vcs-github"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/credential-store",
     "//platform/lvcs-api:lvcs",
     "//platform/vcs-api:vcs",

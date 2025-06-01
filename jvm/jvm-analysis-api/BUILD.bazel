@@ -18,7 +18,6 @@ jvm_library(
   exports = [
     "//uast/uast-common:uast",
     "//java/java-psi-api:psi",
-    "//platform/analysis-api:analysis",
     "//uast/uast-common-ide:ide",
   ]
 )

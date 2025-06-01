@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:kotlinc-low-level-api-fir",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",

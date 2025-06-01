@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.gradle.common" exported="" />
     <orderEntry type="module" module-name="intellij.java.coverage" />
     <orderEntry type="module" module-name="intellij.gradle.jps" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />

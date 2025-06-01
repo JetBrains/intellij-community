@@ -20,6 +20,7 @@ jvm_library(
   associates = ["//plugins/devkit/devkit-core:core"],
   deps = [
     "@lib//:jetbrains-annotations",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

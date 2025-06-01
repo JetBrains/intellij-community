@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.markdown.frontmatter" />
     <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" />
     <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.markdown.images" />
     <orderEntry type="module" module-name="intellij.markdown.model" />

@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" scope="TEST" name="jmh-core" level="project" />
     <orderEntry type="library" scope="TEST" name="jmh-generator-annprocess" level="project" />

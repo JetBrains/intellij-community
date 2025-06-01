@@ -22,6 +22,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2",
     "//platform/util",

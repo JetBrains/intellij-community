@@ -25,6 +25,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
@@ -74,6 +75,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "testApi/**/*.kt", "testApi/**/*.java"], allow_empty = True),
   associates = [":vcs-gitlab"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",

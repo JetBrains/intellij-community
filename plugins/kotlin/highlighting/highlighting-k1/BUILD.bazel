@@ -23,6 +23,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",

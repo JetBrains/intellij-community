@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//jvm/jvm-analysis-impl:analysis-impl",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
     "//platform/refactoring",

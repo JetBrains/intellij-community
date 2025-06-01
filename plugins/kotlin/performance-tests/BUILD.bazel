@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",

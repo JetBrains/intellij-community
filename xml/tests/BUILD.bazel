@@ -20,6 +20,7 @@ jvm_library(
   associates = ["//xml/impl"],
   deps = [
     "@lib//:junit4",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

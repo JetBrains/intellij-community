@@ -25,6 +25,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//jps/model-api:model",
     "//platform/lvcs-api:lvcs",
     "//platform/util/jdom",

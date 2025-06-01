@@ -19,6 +19,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/**/*"]),
   associates = ["//java/java-impl:impl"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
     "//platform/indexing-api:indexing",

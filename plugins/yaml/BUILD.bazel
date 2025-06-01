@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",
@@ -40,6 +41,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":yaml"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",

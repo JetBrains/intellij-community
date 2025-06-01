@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//xml/impl",
     "@lib//:xml-xmlbeans-_xml_beans",
     "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",
@@ -35,6 +36,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":xmlbeans"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//xml/impl",
     "@lib//:xml-xmlbeans-_xml_beans",
     "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",

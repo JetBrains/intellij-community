@@ -24,6 +24,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:gson",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
@@ -50,6 +51,7 @@ jvm_library(
   associates = [":visualization"],
   deps = [
     "@lib//:gson",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

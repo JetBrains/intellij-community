@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:junit4",
     "//java/testFramework",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/i18n",
     "//platform/testFramework",

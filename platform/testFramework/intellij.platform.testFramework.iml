@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" exported="" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />

@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/indices",

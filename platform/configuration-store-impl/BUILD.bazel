@@ -72,6 +72,7 @@ jvm_library(
   associates = ["//platform/configuration-store-impl:configurationStore-impl"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//platform/ide-core/plugins",
     "@lib//:assert_j",
     "//jps/model-api:model",

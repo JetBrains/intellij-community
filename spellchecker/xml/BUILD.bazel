@@ -18,6 +18,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//xml/impl",
     "//platform/util",
+    "//platform/analysis-api:analysis",
     "//platform/core-impl",
   ],
   runtime_deps = [":xml_resources"]

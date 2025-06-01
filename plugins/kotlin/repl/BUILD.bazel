@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-jvm",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/util",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/plugin",

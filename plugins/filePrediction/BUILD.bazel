@@ -20,6 +20,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
@@ -48,6 +49,7 @@ jvm_library(
   associates = [":filePrediction"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",

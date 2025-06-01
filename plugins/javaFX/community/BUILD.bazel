@@ -20,6 +20,7 @@ jvm_library(
   deps = [
     "//plugins/javaFX",
     "//plugins/javaFX:javaFX_test_lib",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

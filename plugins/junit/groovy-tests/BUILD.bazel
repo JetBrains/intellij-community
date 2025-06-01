@@ -10,6 +10,7 @@ jvm_library(
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
     "//java/testFramework",
+    "//platform/analysis-api:analysis",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",

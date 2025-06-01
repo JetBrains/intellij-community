@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/frontend-independent",
     "//plugins/java-i18n",
     "//plugins/properties/properties-psi-impl:backend-psi",

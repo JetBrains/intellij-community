@@ -30,6 +30,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":k2"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",

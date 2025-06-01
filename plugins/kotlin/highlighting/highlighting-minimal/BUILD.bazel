@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/editor-ui-api:editor-ui",

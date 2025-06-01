@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//java/openapi:java",
     "@lib//ant/lib:ant-antlr",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "//java/compiler/impl",
@@ -61,6 +62,7 @@ jvm_library(
     "//java/testFramework",
     "@lib//:junit4",
     "@lib//ant/lib:ant-antlr",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "//java/compiler/impl",

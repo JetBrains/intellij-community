@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/frontend-agnostic",

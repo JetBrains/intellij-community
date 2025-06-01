@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/ide-features-trainer:featuresTrainer",
     "//java/java-features-trainer:featuresTrainer",
     "//java/java-psi-api:psi",
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-impl",

@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/code-insight/inspections-k2:kotlin-code-insight-inspections-k2",
     "//java/debugger/impl",
     "@lib//:kotlinc-kotlin-compiler-common",

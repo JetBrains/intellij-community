@@ -21,6 +21,7 @@
     <orderEntry type="library" scope="TEST" name="testcontainers-junit-jupiter" level="project" />
     <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.testcontainers" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />

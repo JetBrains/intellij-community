@@ -41,6 +41,7 @@
     <orderEntry type="library" name="kotlin-gradle-plugin-idea" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Gradle" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />

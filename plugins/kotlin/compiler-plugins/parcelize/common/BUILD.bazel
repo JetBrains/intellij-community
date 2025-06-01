@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:kotlinc-parcelize-compiler-plugin",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/project-structure",

@@ -12,6 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
     "@lib//:kotlin-test",

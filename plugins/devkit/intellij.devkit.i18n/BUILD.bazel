@@ -20,6 +20,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/ide-core-impl",
     "//plugins/properties/properties-psi-api:psi",
@@ -43,6 +44,7 @@ jvm_library(
   associates = [":i18n"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/ide-core-impl",
     "//jps/model-api:model",

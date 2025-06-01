@@ -15,6 +15,7 @@
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="commons-logging" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="library" name="commons-text" level="project" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />

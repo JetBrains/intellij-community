@@ -38,7 +38,6 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
-    "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/execution",
   ],

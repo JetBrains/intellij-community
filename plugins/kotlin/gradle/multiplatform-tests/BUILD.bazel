@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "@lib//:junit4",
     "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/plugin",

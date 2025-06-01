@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
     "//plugins/kotlin/jvm/shared",
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",

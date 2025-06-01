@@ -29,6 +29,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":vcs-gitlab-yaml"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
     "//plugins/yaml/backend",

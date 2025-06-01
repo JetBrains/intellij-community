@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:asm",
     "@lib//:jb-jdi",
+    "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/frontend-agnostic",
