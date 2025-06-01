@@ -71,7 +71,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public static final Key<String> CREATION_TRACE = Key.create("CREATION_TRACE");
   public static final boolean ourTraceStubAstBinding = "true".equals(System.getProperty("trace.stub.ast.binding", "false"));
   private volatile SubstrateRef mySubstrateRef;
-  private final IElementType myElementType;
+  private final @NotNull IElementType myElementType;
 
   public StubBasedPsiElementBase(@NotNull T stub, @NotNull IStubElementType<?,?> nodeType) {
     mySubstrateRef = new SubstrateRef.StubRef(stub);
