@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IconProvider
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Iconable
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinIcons.*
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -135,25 +137,28 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
             is KtFile, is KtLightClassForFacade -> FILE
             is KtScript -> (parent as? KtFile)?.scriptIcon()
             is KtLightClass -> navigationElement.getBaseIcon()
-            is KtNamedFunction -> when {
-                receiverTypeReference != null ->
-                    if (KtPsiUtil.isAbstract(this)) ABSTRACT_EXTENSION_FUNCTION else EXTENSION_FUNCTION
-                getStrictParentOfType<KtNamedDeclaration>() is KtClass ->
-                    if (KtPsiUtil.isAbstract(this)) {
-                        PlatformIcons.ABSTRACT_METHOD_ICON
-                    } else {
-                        if (this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) {
-                            SUSPEND_METHOD
+            is KtNamedFunction -> {
+                val suspend =
+                    // TODO: suspend icon is still under consideration by the design/dev team
+                    (isUnitTestMode() || ApplicationManager.getApplication().isInternal) &&
+                            this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true
+                when {
+                    receiverTypeReference != null ->
+                        if (KtPsiUtil.isAbstract(this)) ABSTRACT_EXTENSION_FUNCTION else EXTENSION_FUNCTION
+
+                    getStrictParentOfType<KtNamedDeclaration>() is KtClass ->
+                        if (KtPsiUtil.isAbstract(this)) {
+                            PlatformIcons.ABSTRACT_METHOD_ICON
                         } else {
-                            IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
+                            if (suspend) {
+                                SUSPEND_METHOD
+                            } else {
+                                IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
+                            }
                         }
-                    }
-                else ->
-                    if (this.modifierList?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true) {
-                        SUSPEND_FUNCTION
-                    } else {
-                        FUNCTION
-                    }
+                    else ->
+                        if (suspend) SUSPEND_FUNCTION else FUNCTION
+                }
             }
             is KtConstructor<*> -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method)
             is KtLightMethod -> when(val u = unwrapped) {
