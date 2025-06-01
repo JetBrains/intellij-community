@@ -54,6 +54,7 @@ import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -376,7 +377,7 @@ object K2UnusedSymbolUtil {
         useScope: SearchScope
     ): Boolean {
         val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
-        if (symbol !is KaNamedFunctionSymbol || !symbol.annotations.contains(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
+        if (symbol !is KaNamedFunctionSymbol || !symbol.annotations.contains(JvmStandardClassIds.Annotations.JvmName)) {
             val symbolPointer = symbol?.createPointer()
             if (declaration is KtSecondaryConstructor &&
                 declarationContainingClass != null &&
@@ -399,7 +400,8 @@ object K2UnusedSymbolUtil {
                     val lightMethodsUsed = lightMethods.any { method ->
                         isTooManyOccurrencesToCheck(method, declaration, project) || !MethodReferencesSearch.search(method)
                             .forEach(Processor {
-                                checkReference(it.element, declaration, originalDeclaration)
+                                val checkReference = checkReference(it.element, declaration, originalDeclaration)
+                                checkReference
                             })
                     }
                     if (lightMethodsUsed) return true
