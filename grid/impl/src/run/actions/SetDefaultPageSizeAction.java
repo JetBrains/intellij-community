@@ -11,6 +11,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.database.run.actions.ChangePageSizeUtilKt.setPageSizeAndReload;
+
 public class SetDefaultPageSizeAction extends DumbAwareAction {
 
   public SetDefaultPageSizeAction() {
@@ -55,7 +57,7 @@ public class SetDefaultPageSizeAction extends DumbAwareAction {
       protected void doOKAction() {
         super.doOKAction();
         GridHelper helper = GridHelper.get(grid);
-        int pageSize = myForm.getPageSize();
+        int pageSize = getMyForm().getPageSize();
         if (GridUtilCore.isPageSizeUnlimited(pageSize)) {
           helper.setLimitDefaultPageSize(false);
         }
@@ -63,7 +65,7 @@ public class SetDefaultPageSizeAction extends DumbAwareAction {
           helper.setLimitDefaultPageSize(true);
           helper.setDefaultPageSize(pageSize);
         }
-        ChangePageSizeAction.setPageSizeAndReload(pageSize, grid);
+        setPageSizeAndReload(pageSize, grid);
       }
     }.show();
   }

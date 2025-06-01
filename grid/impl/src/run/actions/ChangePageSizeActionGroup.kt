@@ -1,273 +1,222 @@
-package com.intellij.database.run.actions;
+package com.intellij.database.run.actions
 
-import com.intellij.database.DataGridBundle;
-import com.intellij.database.DatabaseDataKeys;
-import com.intellij.database.datagrid.*;
-import com.intellij.database.run.ui.FloatingPagingManager;
-import com.intellij.database.settings.DataGridSettings;
-import com.intellij.database.util.DataGridUIUtil;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.roots.ui.configuration.actions.AlignedIconWithTextAction;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.database.DataGridBundle
+import com.intellij.database.DatabaseDataKeys
+import com.intellij.database.datagrid.*
+import com.intellij.database.run.ui.FloatingPagingManager
+import com.intellij.database.run.ui.FloatingPagingManager.Companion.adjustAction
+import com.intellij.database.settings.DataGridSettings
+import com.intellij.database.util.DataGridUIUtil
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.containers.ContainerUtil
+import java.awt.Component
+import java.util.*
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+private val DEFAULT_PAGE_SIZES = mutableListOf(10, 100, 500, 1000)
+private val PAGE_SIZE_KEY = Key<Int?>("DATA_GRID_PAGE_SIZE_KEY")
+private val SHOW_COUNT_ALL_ACTION_KEY = Key<Boolean?>("DATA_GRID_SHOW_COUNT_ALL_ACTION_KEY")
 
-import static com.intellij.database.datagrid.GridPagingModel.UNLIMITED_PAGE_SIZE;
-import static com.intellij.database.datagrid.GridPagingModel.UNSET_PAGE_SIZE;
-import static com.intellij.database.datagrid.GridUtil.getSettings;
-import static com.intellij.database.datagrid.GridUtil.hidePageActions;
-
-public class ChangePageSizeActionGroup extends DefaultActionGroup implements CustomComponentAction, DumbAware {
-  private static final List<Integer> DEFAULT_PAGE_SIZES = Arrays.asList(10, 100, 500, 1000);
-  private static final Key<Integer> PAGE_SIZE_KEY = new Key<>("DATA_GRID_PAGE_SIZE_KEY");
-  private static final Key<Boolean> SHOW_COUNT_ALL_ACTION_KEY = new Key<>("DATA_GRID_SHOW_COUNT_ALL_ACTION_KEY");
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
-  public ChangePageSizeActionGroup() {
-    setPopup(true);
-    setActions(DEFAULT_PAGE_SIZES, false);
+  init {
+    isPopup = true
+    setActions(DEFAULT_PAGE_SIZES, false)
   }
 
-  private void setActions(List<Integer> sizes, boolean isSinglePage) {
-    removeAll();
+  private fun setActions(sizes: MutableList<Int>, isSinglePage: Boolean) {
+    removeAll()
 
     if (isSinglePage) {
-      add(new MyCountRowsAction());
+      add(MyCountRowsAction())
     }
 
-    addSeparator(DataGridBundle.message("separator.page.size"));
+    addSeparator(DataGridBundle.message("separator.page.size"))
 
-    for (Integer pageSize : sizes) {
-      add(new ChangePageSizeAction(pageSize));
+    for (pageSize in sizes) {
+      add(ChangePageSizeAction(pageSize))
     }
-    add(new ChangePageSizeAction(UNLIMITED_PAGE_SIZE));
-    add(new SetCustomPageSizeAction());
-    add(new Separator());
-    add(new SetDefaultPageSizeAction());
+    add(ChangePageSizeAction(GridPagingModel.UNLIMITED_PAGE_SIZE))
+    add(SetCustomPageSizeAction())
+    add(Separator())
+    add(SetDefaultPageSizeAction())
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    DataGrid grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY);
-    if (grid == null || grid.getDataHookup() instanceof DocumentDataHookUp) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
+  override fun update(e: AnActionEvent) {
+    val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
+    if (grid == null || grid.getDataHookup() is DocumentDataHookUp) {
+      e.presentation.setEnabledAndVisible(false)
+      return
     }
 
-    if (grid.getDataHookup().getPageModel() instanceof NestedTableGridPagingModel<GridRow, GridColumn> nestedPageModel &&
-        nestedPageModel.isStatic()) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
+    if ((grid.getDataHookup().getPageModel() as? NestedTableGridPagingModel<GridRow?, GridColumn?>)?.isStatic == true) {
+      e.presentation.setEnabledAndVisible(false)
+      return
     }
 
-    if (FloatingPagingManager.adjustAction(e) == FloatingPagingManager.AdjustmentResult.HIDDEN) {
-      return;
+    if (adjustAction(e) == FloatingPagingManager.AdjustmentResult.HIDDEN) {
+      return
     }
 
-    ChangePageSizeActionState state = getActionState(grid);
-    if (hidePageActions(grid, e.getPlace())) {
-      e.getPresentation().setVisible(false);
+    val state = getActionState(grid)
+    if (GridUtil.hidePageActions(grid, e.place)) {
+      e.presentation.setVisible(false)
     }
     else {
-      e.getPresentation().setVisible(true);
-      updatePresentation(state, e.getPresentation(), getSettings(grid));
+      e.presentation.setVisible(true)
+      updatePresentation(state, e.presentation, GridUtil.getSettings(grid))
     }
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Component component = e.getPresentation().getClientProperty(COMPONENT_KEY);
-    JBPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(), null, true, null);
+  override fun actionPerformed(e: AnActionEvent) {
+    val component: Component? = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
+    val popup: JBPopup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.dataContext, null, true, null)
     if (component == null) {
-      DataGridUIUtil.showPopup(popup, null, e);
-      return;
+      DataGridUIUtil.showPopup(popup, null, e)
+      return
     }
-    popup.showUnderneathOf(component);
+    popup.showUnderneathOf(component)
   }
 
-  static @NotNull String format(long num) {
-    return String.format("%,d", num);
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return createCustomComponentForResultViewToolbar(this, presentation, place)
   }
 
-  @Override
-  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return createCustomComponentForResultViewToolbar(this, presentation, place);
-  }
+  private fun updatePresentation(state: ChangePageSizeActionState, presentation: Presentation, settings: DataGridSettings?) {
+    val oldState = getActionState(presentation)
+    if (oldState == state) return
 
-  public static @NotNull JComponent createCustomComponentForResultViewToolbar(@NotNull AnAction action,
-                                                                              @NotNull Presentation presentation,
-                                                                              @NotNull String place) {
-    ActionButtonWithText c = new ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-      @Override
-      public Insets getInsets() {
-        return new JBInsets(0, 0, 0, 0);
-      }
-    };
-    return AlignedIconWithTextAction.align(c);
-  }
+    presentation.setText(state.text)
+    presentation.setDescription(state.description)
+    presentation.setEnabled(state.enabled)
+    presentation.putClientProperty<Int?>(PAGE_SIZE_KEY, state.pageSize)
+    presentation.putClientProperty<Boolean?>(SHOW_COUNT_ALL_ACTION_KEY, state.showCountAllAction)
 
-  private void updatePresentation(ChangePageSizeActionState state, Presentation presentation, @Nullable DataGridSettings settings) {
-    ChangePageSizeActionState oldState = getActionState(presentation);
-    if (oldState.equals(state)) return;
-
-    presentation.setText(state.text);
-    presentation.setDescription(state.description);
-    presentation.setEnabled(state.enabled);
-    presentation.putClientProperty(PAGE_SIZE_KEY, state.pageSize);
-    presentation.putClientProperty(SHOW_COUNT_ALL_ACTION_KEY, state.showCountAllAction);
-
-    JComponent component = presentation.getClientProperty(COMPONENT_KEY);
+    val component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
     if (component != null) {
-      component.setToolTipText(state.tooltip);
-      component.repaint();
+      component.setToolTipText(state.tooltip)
+      component.repaint()
     }
 
 
-    List<Integer> pageSizes = new ArrayList<>(DEFAULT_PAGE_SIZES);
-    pageSizes.add(GridUtilCore.getPageSize(settings));
+    val pageSizes: MutableList<Int> = ArrayList<Int>(DEFAULT_PAGE_SIZES)
+    pageSizes.add(GridUtilCore.getPageSize(settings))
     if (state.pageSize > 0) {
-      pageSizes.add(state.pageSize * 2);
-      int halfSize = state.pageSize / 2;
-      if (halfSize > 0) pageSizes.add(halfSize);
-      ContainerUtil.removeAll(pageSizes, state.pageSize);
+      pageSizes.add(state.pageSize * 2)
+      val halfSize = state.pageSize / 2
+      if (halfSize > 0) pageSizes.add(halfSize)
+      ContainerUtil.removeAll(pageSizes, state.pageSize)
     }
-    ContainerUtil.removeDuplicates(pageSizes);
-    ContainerUtil.sort(pageSizes);
-    setActions(pageSizes, state.showCountAllAction);
+    ContainerUtil.removeDuplicates(pageSizes)
+    ContainerUtil.sort(pageSizes)
+    setActions(pageSizes, state.showCountAllAction)
   }
 
-  private static @NotNull ChangePageSizeActionState getActionState(@NotNull Presentation presentation) {
-    JComponent component = presentation.getClientProperty(COMPONENT_KEY);
+}
 
-    String text = presentation.getText();
-    String description = presentation.getDescription();
-    String tooltip = component != null ? component.getToolTipText() : null;
-    boolean loading = presentation.isEnabled();
-    Integer pageSize = presentation.getClientProperty(PAGE_SIZE_KEY);
-    if (pageSize == null) pageSize = UNSET_PAGE_SIZE;
-    Boolean showCountAllAction = presentation.getClientProperty(SHOW_COUNT_ALL_ACTION_KEY);
-    if (showCountAllAction == null) showCountAllAction = false;
+private fun getActionState(presentation: Presentation): ChangePageSizeActionState {
+  val component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
 
-    return new ChangePageSizeActionState(text, description, tooltip, loading, pageSize, showCountAllAction);
+  val text = presentation.text
+  val description = presentation.description
+  val tooltip = component?.toolTipText
+  val loading = presentation.isEnabled
+  var pageSize = presentation.getClientProperty<Int?>(PAGE_SIZE_KEY)
+  if (pageSize == null) pageSize = GridPagingModel.UNSET_PAGE_SIZE
+  var showCountAllAction = presentation.getClientProperty<Boolean?>(SHOW_COUNT_ALL_ACTION_KEY)
+  if (showCountAllAction == null) showCountAllAction = false
+
+  return ChangePageSizeActionState(text, description, tooltip, loading, pageSize, showCountAllAction)
+}
+
+private fun getActionState(grid: DataGrid): ChangePageSizeActionState {
+  val pageModel = grid.getDataHookup().getPageModel()
+
+  val pageStartIdx = pageModel.getPageStart()
+  val pageEndIdx = pageModel.getPageEnd()
+  val totalRowCount = pageModel.getTotalRowCount()
+
+  val rowsWereDeleted = totalRowCount < pageEndIdx
+  val isSinglePage = pageModel.isFirstPage() && pageModel.isLastPage() && !rowsWereDeleted
+  val text = if (isSinglePage) (format(totalRowCount) +
+                                " " +
+                                (if (totalRowCount == 1L)
+                                  DataGridBundle.message("action.Console.TableResult.ChangePageSize.row")
+                                else
+                                  DataGridBundle.message("action.Console.TableResult.ChangePageSize.rows")))
+  else if (pageEndIdx == 0)
+    "0 " + DataGridBundle.message("action.Console.TableResult.ChangePageSize.rows")
+  else
+    format(pageStartIdx.toLong()) + "-" + format(pageEndIdx.toLong())
+
+  val querying = grid.getDataHookup().getBusyCount() > 0
+  val enabled = !querying && grid.isReady()
+
+  var description = DataGridBundle.message("group.Console.TableResult.ChangePageSize.description")
+  var tooltip = DataGridBundle.message("group.Console.TableResult.ChangePageSize.description")
+  if (!enabled) {
+    val unavailableText = if (querying) DataGridBundle.message("action.Console.TableResult.ChangePageSize.querying") else ""
+    description = unavailableText
+    tooltip = unavailableText
   }
 
-  private static @NotNull ChangePageSizeActionState getActionState(@NotNull DataGrid grid) {
-    GridPagingModel<GridRow, GridColumn> pageModel = grid.getDataHookup().getPageModel();
+  val showCountRowsAction = isSinglePage && pageModel.isTotalRowCountUpdateable() && !querying && grid.isReady()
+  return ChangePageSizeActionState(text, description, tooltip, enabled, pageModel.getPageSize(), showCountRowsAction)
+}
 
-    int pageStartIdx = pageModel.getPageStart();
-    int pageEndIdx = pageModel.getPageEnd();
-    long totalRowCount = pageModel.getTotalRowCount();
+private fun updateIsTotalRowCountUpdateable(grid: DataGrid) {
+  grid.getDataHookup().getLoader().updateIsTotalRowCountUpdateable()
+}
 
-    boolean rowsWereDeleted = totalRowCount < pageEndIdx;
-    boolean isSinglePage = pageModel.isFirstPage() && pageModel.isLastPage() && !rowsWereDeleted;
-    String text = isSinglePage ?
-                  format(totalRowCount) +
-                  " " +
-                  (totalRowCount == 1
-                   ? DataGridBundle.message("action.Console.TableResult.ChangePageSize.row")
-                   : DataGridBundle.message("action.Console.TableResult.ChangePageSize.rows")) :
-                  pageEndIdx == 0
-                  ? "0 " + DataGridBundle.message("action.Console.TableResult.ChangePageSize.rows")
-                  : format(pageStartIdx) + "-" + format(pageEndIdx);
-
-    boolean querying = grid.getDataHookup().getBusyCount() > 0;
-    boolean enabled = !querying && grid.isReady();
-
-    String description = DataGridBundle.message("group.Console.TableResult.ChangePageSize.description");
-    String tooltip = DataGridBundle.message("group.Console.TableResult.ChangePageSize.description");
-    if (!enabled) {
-      String unavailableText = querying ? DataGridBundle.message("action.Console.TableResult.ChangePageSize.querying") : "";
-      description = unavailableText;
-      tooltip = unavailableText;
-    }
-
-    boolean showCountRowsAction = isSinglePage && pageModel.isTotalRowCountUpdateable() && !querying && grid.isReady();
-    return new ChangePageSizeActionState(text, description, tooltip, enabled, pageModel.getPageSize(), showCountRowsAction);
+private class ChangePageSizeActionState(
+  val text: @NlsActions.ActionText String?,
+  val description: @NlsActions.ActionDescription String?,
+  val tooltip: @NlsContexts.Tooltip String?,
+  val enabled: Boolean,
+  val pageSize: Int,
+  val showCountAllAction: Boolean,
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || javaClass != other.javaClass) return false
+    val state = other as ChangePageSizeActionState
+    return enabled == state.enabled && pageSize == state.pageSize &&
+           text == state.text &&
+           description == state.description &&
+           tooltip == state.tooltip
   }
 
-  private static void updateIsTotalRowCountUpdateable(@NotNull DataGrid grid) {
-    grid.getDataHookup().getLoader().updateIsTotalRowCountUpdateable();
+  override fun hashCode(): Int {
+    return Objects.hash(text, description, tooltip, enabled, pageSize)
   }
+}
 
-  private static class ChangePageSizeActionState {
-    final @NlsActions.ActionText String text;
-    final @NlsActions.ActionDescription String description;
-    final @NlsContexts.Tooltip String tooltip;
-    final boolean enabled;
-    final int pageSize;
-    final boolean showCountAllAction;
-
-    ChangePageSizeActionState(@NlsActions.ActionText String text,
-                              @NlsActions.ActionDescription String description,
-                              @NlsContexts.Tooltip String tooltip,
-                              boolean enabled,
-                              int pageSize,
-                              boolean showCountAllAction) {
-      this.text = text;
-      this.description = description;
-      this.tooltip = tooltip;
-      this.enabled = enabled;
-      this.pageSize = pageSize;
-      this.showCountAllAction = showCountAllAction;
+private class MyCountRowsAction : DumbAwareAction(
+  DataGridBundle.message("action.CountRows.text"),
+  DataGridBundle.message("action.CountRows.description"),
+  null
+) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
+    if (grid == null) {
+      e.presentation.setEnabledAndVisible(false)
+      return
     }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      ChangePageSizeActionState state = (ChangePageSizeActionState)o;
-      return enabled == state.enabled &&
-             pageSize == state.pageSize &&
-             Objects.equals(text, state.text) &&
-             Objects.equals(description, state.description) &&
-             Objects.equals(tooltip, state.tooltip);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(text, description, tooltip, enabled, pageSize);
-    }
-  }
-
-  private static class MyCountRowsAction extends DumbAwareAction {
-
-    MyCountRowsAction() {
-      super(DataGridBundle.message("action.CountRows.text"), DataGridBundle.message("action.CountRows.description"), null);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      DataGrid grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY);
-      if (grid == null) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-      updateIsTotalRowCountUpdateable(grid);
-      GridPagingModel<GridRow, GridColumn> pageModel = grid.getDataHookup().getPageModel();
-      if (!pageModel.isTotalRowCountUpdateable()) return;
-      CountRowsAction.countRows(grid);
-      updateIsTotalRowCountUpdateable(grid);
-    }
+    updateIsTotalRowCountUpdateable(grid)
+    val pageModel = grid.getDataHookup().getPageModel()
+    if (!pageModel.isTotalRowCountUpdateable()) return
+    CountRowsAction.countRows(grid)
+    updateIsTotalRowCountUpdateable(grid)
   }
 }

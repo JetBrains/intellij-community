@@ -1,126 +1,105 @@
-package com.intellij.database.run.actions;
+package com.intellij.database.run.actions
 
-import com.intellij.database.DataGridBundle;
-import com.intellij.database.DatabaseDataKeys;
-import com.intellij.database.datagrid.*;
-import com.intellij.database.run.ui.CustomPageSizeForm;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.database.DataGridBundle
+import com.intellij.database.DatabaseDataKeys
+import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.datagrid.GridUtilCore
+import com.intellij.database.run.ui.CustomPageSizeForm
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-
-import static com.intellij.database.run.actions.ChangePageSizeAction.setPageSizeAndReload;
-
-public final class SetCustomPageSizeAction extends DumbAwareAction {
-  public SetCustomPageSizeAction() {
-    super(ApplicationBundle.messagePointer("custom.option"), ApplicationBundle.messagePointer("custom.option.description"), (Icon)null);
+class SetCustomPageSizeAction : DumbAwareAction(ApplicationBundle.messagePointer("custom.option"), ApplicationBundle.messagePointer("custom.option.description"), null as Icon?) {
+  override fun update(e: AnActionEvent) {
+    val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
+    e.presentation.setEnabledAndVisible(grid != null)
   }
 
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    DataGrid grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY);
-    e.getPresentation().setEnabledAndVisible(grid != null);
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.BGT;
-  }
+  override fun actionPerformed(e: AnActionEvent) {
+    val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
+    if (grid == null) return
+    val pageModel = grid.getDataHookup().getPageModel()
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    DataGrid grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY);
-    if (grid == null) return;
-    GridPagingModel<GridRow, GridColumn> pageModel = grid.getDataHookup().getPageModel();
-
-    new SetPageSizeDialogWrapper(getEventProject(e)) {
-      @Override
-      protected int getPageSize() {
-        boolean unlimited = GridUtilCore.isPageSizeUnlimited(pageModel.getPageSize());
-        return unlimited ? GridUtilCore.getPageSize(GridUtil.getSettings(grid)) : pageModel.getPageSize();
+    object : SetPageSizeDialogWrapper(getEventProject(e)) {
+      override val pageSize: Int get() {
+        val unlimited = GridUtilCore.isPageSizeUnlimited(pageModel.getPageSize())
+        return if (unlimited) GridUtilCore.getPageSize(GridUtil.getSettings(grid)) else pageModel.getPageSize()
       }
 
-      @Override
-      protected boolean isLimitPageSize() {
-        return !GridUtilCore.isPageSizeUnlimited(pageModel.getPageSize());
+      override val isLimitPageSize: Boolean get() {
+        return !GridUtilCore.isPageSizeUnlimited(pageModel.getPageSize())
       }
 
-      @Override
-      protected void doOKAction() {
-        super.doOKAction();
-        setPageSizeAndReload(myForm.getPageSize(), grid);
+      override fun doOKAction() {
+        super.doOKAction()
+        setPageSizeAndReload(myForm.getPageSize(), grid)
       }
-    }.show();
+    }.show()
   }
 
-  public abstract static class SetPageSizeDialogWrapper extends DialogWrapper {
-    protected final CustomPageSizeForm myForm = new CustomPageSizeForm();
+  abstract class SetPageSizeDialogWrapper(project: Project?) : DialogWrapper(project) {
+    protected val myForm: CustomPageSizeForm = CustomPageSizeForm()
 
-    public SetPageSizeDialogWrapper(@Nullable Project project) {
-      super(project);
+    init {
+      title = DataGridBundle.message("dialog.title.change.page.size")
+      initListeners()
 
-      setTitle(DataGridBundle.message("dialog.title.change.page.size"));
-      initListeners();
-
-      init();
+      init()
     }
 
-    @Override
-    public @Nullable JComponent getPreferredFocusedComponent() {
-      return myForm.getResultPageSizeTextField();
+    override fun getPreferredFocusedComponent(): JComponent? {
+      return myForm.resultPageSizeTextField
     }
 
-    private void initListeners() {
-      myForm.getResultPageSizeTextField().getDocument().addDocumentListener(new DocumentListener() {
-        @Override
-        public void insertUpdate(DocumentEvent e) {
-          updateOk();
+    private fun initListeners() {
+      myForm.resultPageSizeTextField.document.addDocumentListener(object : DocumentListener {
+        override fun insertUpdate(e: DocumentEvent?) {
+          updateOk()
         }
 
-        @Override
-        public void removeUpdate(DocumentEvent e) {
-          updateOk();
+        override fun removeUpdate(e: DocumentEvent?) {
+          updateOk()
         }
 
-        @Override
-        public void changedUpdate(DocumentEvent e) {
-          updateOk();
+        override fun changedUpdate(e: DocumentEvent?) {
+          updateOk()
         }
-      });
+      })
     }
 
-    private void updateOk() {
-      getOKAction().setEnabled(isOKActionEnabled());
+    private fun updateOk() {
+      okAction.isEnabled = isOKActionEnabled
     }
 
-    @Override
-    public boolean isOKActionEnabled() {
+    override fun isOKActionEnabled(): Boolean {
       try {
-        myForm.getResultPageSizeTextField().validateContent();
-        return true;
+        myForm.resultPageSizeTextField.validateContent()
+        return true
       }
-      catch (ConfigurationException ignored) {
-        return false;
+      catch (_: ConfigurationException) {
+        return false
       }
     }
 
-    protected abstract int getPageSize();
+    protected abstract val pageSize: Int
 
-    protected abstract boolean isLimitPageSize();
+    protected abstract val isLimitPageSize: Boolean
 
-    @Override
-    protected @NotNull JComponent createCenterPanel() {
-      myForm.reset(isLimitPageSize(), getPageSize());
-      return myForm.getPanel();
+    override fun createCenterPanel(): JComponent {
+      myForm.reset(this.isLimitPageSize, this.pageSize)
+      return myForm.panel
     }
   }
 }
