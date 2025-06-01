@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.filtering.Matcher
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -225,11 +224,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                                  PsiPointerInlayActionNavigationHandler.HANDLER_ID
                              )
                          })
-                    if (Registry.`is`("kotlin.k2.equals.in.parameter.names.inlay.hints", true)) {
-                        text(" =")
-                    } else {
-                        text(":")
-                    }
+                    text(" =")
                 }
             }
         }

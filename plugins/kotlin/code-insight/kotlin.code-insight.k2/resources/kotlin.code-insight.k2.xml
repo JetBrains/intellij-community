@@ -253,11 +253,6 @@
               descriptionKey="inlay.kotlin.parameters.hints.compiled"/>
     </codeInsight.declarativeInlayProvider>
 
-    <registryKey key="kotlin.k2.equals.in.parameter.names.inlay.hints"
-                 description="Use equals instead of colon in inlay hints for parameter names"
-                 defaultValue="true"
-                 restartRequired="false"/>
-
     <codeInsight.declarativeInlayProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtCallChainHintsProvider"
