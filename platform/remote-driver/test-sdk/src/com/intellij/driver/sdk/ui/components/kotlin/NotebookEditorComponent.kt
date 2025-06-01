@@ -17,6 +17,7 @@ import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -103,10 +104,14 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     cell.click()
   }
 
-  fun typeInCell(cellSelector: CellSelector, text: String) {
+  fun typeInCell(
+    cellSelector: CellSelector,
+    text: String,
+    delayBetweenChars: Duration = 50.milliseconds,
+  ) {
     clickOnCell(cellSelector)
     keyboard {
-      typeText(text)
+      typeText(text, delayBetweenChars.inWholeMilliseconds)
     }
   }
 
