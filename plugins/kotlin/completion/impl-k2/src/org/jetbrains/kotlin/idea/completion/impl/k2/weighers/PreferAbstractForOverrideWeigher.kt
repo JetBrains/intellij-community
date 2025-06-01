@@ -12,19 +12,18 @@ internal object PreferAbstractForOverrideWeigher {
     private const val WEIGHER_ID = "kotlin.preferAbstractForOverride"
 
     private enum class Weight {
-        ABSTRACT_OVERRIDE,
-        OPEN_OVERRIDE,
-        NO_OVERRIDE,
+        NOT_IMPLEMENTED,
+        IMPLEMENTED,
     }
 
     context(KaSession)
     fun addWeight(element: OverridesCompletionLookupElementDecorator) {
-        element.overrideType = if (element.isImplemented) Weight.ABSTRACT_OVERRIDE else Weight.OPEN_OVERRIDE
+        element.overrideType = if (element.isImplemented) Weight.NOT_IMPLEMENTED else Weight.IMPLEMENTED
     }
 
     private var LookupElement.overrideType by UserDataProperty(Key<Weight>("KOTLIN_COMPLETION_OVERRIDE_TYPE"))
 
     object Weigher : LookupElementWeigher(WEIGHER_ID) {
-        override fun weigh(element: LookupElement): Comparable<*> = element.overrideType ?: Weight.NO_OVERRIDE
+        override fun weigh(element: LookupElement): Comparable<*> = element.overrideType ?: Weight.IMPLEMENTED
     }
 }
