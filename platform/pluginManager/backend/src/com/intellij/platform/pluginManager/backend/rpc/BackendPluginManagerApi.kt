@@ -85,8 +85,8 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginInstallationState(pluginId)
   }
 
-  override suspend fun getCustomRepoPlugins(): List<PluginUiModel> {
-    return DefaultUiPluginManagerController.getCustomRepoPlugins()
+  override suspend fun getCustomRepoPlugins(): List<PluginDto> {
+    return DefaultUiPluginManagerController.getCustomRepoPlugins().map { PluginDto.fromModel(it) }
   }
 
   override suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
