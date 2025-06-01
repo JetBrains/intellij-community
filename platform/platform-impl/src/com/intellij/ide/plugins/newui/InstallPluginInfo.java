@@ -2,8 +2,6 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.TaskInfo;

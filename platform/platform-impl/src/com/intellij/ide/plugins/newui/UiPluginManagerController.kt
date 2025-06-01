@@ -25,6 +25,7 @@ import javax.swing.JComponent
  */
 @ApiStatus.Internal
 interface UiPluginManagerController {
+  fun getTarget(): PluginSource
   fun getPlugins(): List<PluginUiModel>
   fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
   fun getInstalledPlugins(): List<PluginUiModel>

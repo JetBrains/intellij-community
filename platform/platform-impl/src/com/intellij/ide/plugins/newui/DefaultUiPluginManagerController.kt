@@ -44,28 +44,30 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   private val LOG = Logger.getInstance(DefaultUiPluginManagerController::class.java)
   private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
 
+  override fun getTarget(): PluginSource = PluginSource.LOCAL
+
   override fun getPlugins(): List<PluginUiModel> {
-    return PluginManagerCore.plugins.map { PluginUiModelAdapter(it) }
+    return PluginManagerCore.plugins.map { PluginUiModelAdapter(it).withSource() }
   }
 
   override fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
-    return PluginManager.getVisiblePlugins(showImplementationDetails).map { PluginUiModelAdapter(it) }.toList()
+    return PluginManager.getVisiblePlugins(showImplementationDetails).map { PluginUiModelAdapter(it) }.toList().withSource()
   }
 
   override fun getInstalledPlugins(): List<PluginUiModel> {
-    return InstalledPluginsState.getInstance().installedPlugins.map { PluginUiModelAdapter(it) }
+    return InstalledPluginsState.getInstance().installedPlugins.map { PluginUiModelAdapter(it) }.withSource()
   }
 
   override fun getUpdates(): List<PluginUiModel> {
-    return PluginUpdatesService.getUpdates()?.map { PluginUiModelAdapter(it) } ?: emptyList()
+    return PluginUpdatesService.getUpdates()?.map { PluginUiModelAdapter(it) }?.withSource() ?: emptyList()
   }
 
   override fun getPlugin(id: PluginId): PluginUiModel? {
-    return PluginManagerCore.getPlugin(id)?.let { PluginUiModelAdapter(it) }
+    return PluginManagerCore.getPlugin(id)?.let { PluginUiModelAdapter(it) }?.withSource()
   }
 
   override fun findPlugin(pluginId: PluginId): PluginUiModel? {
-    return buildPluginIdMap()[pluginId]?.let { PluginUiModelAdapter(it) }
+    return buildPluginIdMap()[pluginId]?.let { PluginUiModelAdapter(it) }?.withSource()
   }
 
   override fun isPluginDisabled(pluginId: PluginId): Boolean {
@@ -87,7 +89,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override fun getCustomRepoPlugins(): List<PluginUiModel> {
-    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList()
+    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList().withSource()
   }
 
   override fun findPluginNames(pluginIds: List<PluginId>): List<String> {
@@ -922,5 +924,15 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
 
     return result
+  }
+
+  private fun List<PluginUiModel>.withSource(): List<PluginUiModel> {
+    forEach { it.source = PluginSource.LOCAL }
+    return this
+  }
+
+  private fun PluginUiModel.withSource(): PluginUiModel {
+    source = PluginSource.LOCAL
+    return this
   }
 }

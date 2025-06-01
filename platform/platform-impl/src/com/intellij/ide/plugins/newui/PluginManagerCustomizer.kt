@@ -16,7 +16,7 @@ interface PluginManagerCustomizer {
   ): OptionsButonCustomizationModel?
 
   @Nls
-  fun getAdditionalTitleText(pluginModel: PluginUiModel): String
+  fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
   companion object {
     @JvmField

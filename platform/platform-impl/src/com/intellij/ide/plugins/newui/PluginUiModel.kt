@@ -62,7 +62,7 @@ interface PluginUiModel {
   @get:NlsSafe
   val displayCategory: String?
 
-  var source: PluginSource
+  var source: PluginSource?
 
   @get:NlsSafe
   var forumUrl: String?
@@ -231,4 +231,13 @@ fun PluginUiModel.presentableDate(): String? {
 @ApiStatus.Internal
 fun PluginUiModel.getTrialPeriodByProductCode(code: String): Int? {
   return customTrialPeriods?.getOrDefault(code, defaultTrialPeriod!!)
+}
+
+fun PluginUiModel.addInstalledSource(pluginSource: PluginSource) {
+  if (source == null || source == pluginSource) {
+    source = pluginSource
+  }
+  else {
+    this.source = PluginSource.BOTH
+  }
 }

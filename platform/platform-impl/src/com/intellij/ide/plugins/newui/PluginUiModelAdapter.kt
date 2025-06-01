@@ -79,7 +79,7 @@ class PluginUiModelAdapter(
         pluginDescriptor.forumUrl = value
       }
     }
-  override var source: PluginSource = PluginSource.LOCAL
+  override var source: PluginSource? = null
   override var licenseUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.licenseUrl else null
     set(value) {

@@ -797,8 +797,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, plugin!!.pluginId)
-    customizeInstallButton()
-    updateAdditionalText()
+    applyCustomization()
   }
 
   private enum class EmptyState {
@@ -1326,6 +1325,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     doLayout()
     revalidate()
     repaint()
+    applyCustomization()
+  }
+
+  fun applyCustomization() {
+    if (plugin == null) return
+    customizeInstallButton()
+    updateAdditionalText()
   }
 
   fun hideProgress(success: Boolean, restartRequired: Boolean) {

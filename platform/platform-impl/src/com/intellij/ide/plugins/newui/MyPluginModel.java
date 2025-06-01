@@ -272,8 +272,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
       else if (controller.allowLoadUnloadSynchronously(descriptor.getPluginId())) {
         allowInstallWithoutRestart.set(controller.uninstallDynamicPlugin(parentComponent,
-                                                                              descriptor.getPluginId(),
-                                                                              true));
+                                                                         descriptor.getPluginId(),
+                                                                         true));
       }
       else {
         performUninstall(descriptor);
@@ -312,14 +312,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                                                                needRestart);
 
           controller.performInstallOperation(installPluginRequest,
-                                                  parentComponent,
-                                                  modalityState,
-                                                  indicator,
-                                                  MyPluginModel.this,
-                                                  result -> {
-                                                    applyInstallResult(result, info);
-                                                    return null;
-                                                  });
+                                             parentComponent,
+                                             modalityState,
+                                             indicator,
+                                             MyPluginModel.this,
+                                             result -> {
+                                               applyInstallResult(result, info);
+                                               return null;
+                                             });
         }
 
         private void applyInstallResult(InstallPluginResult result, InstallPluginInfo info) {
@@ -327,6 +327,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
             info.setInstalledModel(result.getInstalledDescriptor());
           }
           disableById(result.getPluginsToDisable());
+          if (result.getSuccess()) {
+            PluginUiModelKt.addInstalledSource(descriptor, controller.getTarget());
+          }
           info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired());
         }
 
