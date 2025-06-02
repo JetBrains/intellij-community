@@ -362,24 +362,35 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
 }
 
 fun KtExpression.isPure(): Boolean {
-    val expr = safeDeparenthesize()
-    if (expr is KtSimpleNameExpression) {
-        val target = expr.mainReference.resolve()
-        return when {
-            target is KtProperty && (target.isLocal || target.initializer != null && !target.isVar) -> {
-                true
-            }
+    when (val expr = safeDeparenthesize()) {
+        is KtSimpleNameExpression -> {
+            return when (val target = expr.mainReference.resolve()) {
+              is KtProperty if (target.isLocal || target.initializer != null && !target.isVar) -> {
+                  true
+              }
 
-            target is KtParameter && !(target.isPropertyParameter() && target.isMutable) -> {
-                true
-            }
+                is KtParameter if !(target.isPropertyParameter() && target.isMutable) -> {
+                    true
+                }
 
-            else -> false
+                else -> false
+            }
         }
-    } else if (expr is KtQualifiedExpression) {
-        return expr.receiverExpression.isPure() && expr.selectorExpression?.isPure() != false
+
+        is KtQualifiedExpression -> {
+            return expr.receiverExpression.isPure() && expr.selectorExpression?.isPure() != false
+        }
+
+        is KtConstantExpression -> {
+            return true
+        }
+
+        is KtStringTemplateExpression -> {
+            return expr.entries.all { it is KtLiteralStringTemplateEntry }
+        }
+
+        else -> return false
     }
-    return false
 }
 
 fun KtExpression.convertToIfNotNullExpression(

@@ -14546,6 +14546,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTakeChainCall.kt");
             }
 
+            @TestMetadata("replaceWithTakeChainCallString.kt")
+            public void testReplaceWithTakeChainCallString() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTakeChainCallString.kt");
+            }
+
             @TestMetadata("replaceWithTakeNotAvailable.kt")
             public void testReplaceWithTakeNotAvailable() throws Exception {
                 runTest("testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTakeNotAvailable.kt");
