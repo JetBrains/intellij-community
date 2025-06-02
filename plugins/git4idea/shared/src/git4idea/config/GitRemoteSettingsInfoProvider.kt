@@ -9,4 +9,14 @@ internal class GitRemoteSettingsInfoProvider : RemoteSettingInfoProvider {
 
   override fun getRemoteSettingsInfo(): Map<String, RemoteSettingInfo> =
     mapOf(gitSettingsKeyNoDots to RemoteSettingInfo(RemoteSettingInfo.Direction.OnlyFromBackend))
+
+  override fun getPluginIdMapping(endpoint: RemoteSettingInfo.Endpoint) = when (endpoint) {
+    RemoteSettingInfo.Endpoint.Backend -> mapOf("$GIT_BACKEND_PLUGIN.$gitSettingsKeyNoDots" to GIT_FRONTEND_PLUGIN)
+    else -> mapOf("$GIT_FRONTEND_PLUGIN.$gitSettingsKeyNoDots" to GIT_BACKEND_PLUGIN)
+  }
+
+  companion object {
+    private const val GIT_BACKEND_PLUGIN = "Git4Idea"
+    private const val GIT_FRONTEND_PLUGIN = "com.intellij.jetbrains.client.git"
+  }
 }
