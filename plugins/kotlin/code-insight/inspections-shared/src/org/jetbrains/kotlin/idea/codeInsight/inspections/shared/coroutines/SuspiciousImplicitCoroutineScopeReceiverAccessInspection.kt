@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -25,7 +26,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
@@ -131,16 +134,13 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
                     continue
                 }
 
+                // Check if the matching parameter's return type is a suspend type
+                val (functionSymbol, argumentSymbol) = getCallExpressionSymbol(current) ?: continue
                 // Resolve the outer call of the lambda
-                val callExpressionSymbol = getCallExpressionSymbol(current)
-                if (callExpressionSymbol != null) {
-                    // Check if the matching parameter's return type is a suspend type
-                    val (_, argumentSymbol) = callExpressionSymbol
-                    val parameterType = argumentSymbol.returnType
+                val parameterType = argumentSymbol.returnType
 
-                    if (parameterType.isSuspendFunctionType) {
-                        return true
-                    }
+                if (parameterType.isSuspendFunctionType && !isAllowedSuspendingFunction(functionSymbol)) {
+                    return true
                 }
             }
             
@@ -155,6 +155,17 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
 
         return false
     }
+
+    /**
+     * Checks if [functionSymbol] is considered to be safe to use implicit `CoroutineScope` receiver.
+     */
+    private fun isAllowedSuspendingFunction(functionSymbol: KaFunctionSymbol): Boolean =
+        when (functionSymbol.callableId) {
+            SELECT_BUILDER_INVOKE_ID,
+            SELECT_BUILDER_ON_TIMEOUT_ID -> true
+
+            else -> false
+        }
 
     private fun KaDeclarationSymbol.findLabelName(): Name? =
         when (val psi = psi) {
@@ -200,3 +211,11 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
 }
 
 private val COROUTINE_SCOPE_CLASS_ID: ClassId = ClassId.fromString("kotlinx/coroutines/CoroutineScope")
+
+private val SELECTS_PACKAGE: FqName = FqName("kotlinx.coroutines.selects")
+
+private val SELECT_BUILDER_CLASS_ID: ClassId = ClassId(SELECTS_PACKAGE, Name.identifier("SelectBuilder"))
+
+private val SELECT_BUILDER_INVOKE_ID: CallableId = CallableId(SELECT_BUILDER_CLASS_ID, Name.identifier("invoke"))
+
+private val SELECT_BUILDER_ON_TIMEOUT_ID: CallableId = CallableId(SELECTS_PACKAGE, Name.identifier("onTimeout"))

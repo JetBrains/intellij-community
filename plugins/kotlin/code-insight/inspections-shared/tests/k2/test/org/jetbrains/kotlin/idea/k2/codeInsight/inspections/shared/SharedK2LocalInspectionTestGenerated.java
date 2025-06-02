@@ -1252,6 +1252,26 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             public void testLambdaExtensionReceiver_withLabel_suspendWrapper() throws Exception {
                 runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/lambdaExtensionReceiver_withLabel_suspendWrapper.kt");
             }
+
+            @TestMetadata("selectExpression.kt")
+            public void testSelectExpression() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/selectExpression.kt");
+            }
+
+            @TestMetadata("selectExpression_onAwait.kt")
+            public void testSelectExpression_onAwait() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/selectExpression_onAwait.kt");
+            }
+
+            @TestMetadata("selectExpression_onAwait_suspendWrapper.kt")
+            public void testSelectExpression_onAwait_suspendWrapper() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/selectExpression_onAwait_suspendWrapper.kt");
+            }
+
+            @TestMetadata("selectExpression_onTimeout.kt")
+            public void testSelectExpression_onTimeout() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/selectExpression_onTimeout.kt");
+            }
         }
     }
 
