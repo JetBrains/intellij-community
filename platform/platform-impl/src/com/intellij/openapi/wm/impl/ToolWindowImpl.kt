@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl
@@ -823,22 +823,6 @@ internal class ToolWindowImpl(
     }
   }
 
-  private inner class ResizeActionGroup : DefaultActionGroup(
-    ActionsBundle.groupText("ResizeToolWindowGroup"),
-    ActionManager.getInstance().let { actionManager ->
-      listOf(
-        actionManager.getAction("ResizeToolWindowLeft"),
-        actionManager.getAction("ResizeToolWindowRight"),
-        actionManager.getAction("ResizeToolWindowUp"),
-        actionManager.getAction("ResizeToolWindowDown"),
-        actionManager.getAction("MaximizeToolWindow")
-      )
-    }) {
-    init {
-      isPopup = true
-    }
-  }
-
   private inner class RemoveStripeButtonAction :
     AnAction(ActionsBundle.messagePointer("action.RemoveStripeButton.text"),
              ActionsBundle.messagePointer("action.RemoveStripeButton.description")), DumbAware, FusAwareAction {
@@ -906,6 +890,22 @@ internal class ToolWindowImpl(
     SwingUtilities.invokeLater {
       isAboutToReceiveFocus = false
     }
+  }
+}
+
+private class ResizeActionGroup : DefaultActionGroup(
+  ActionsBundle.groupText("ResizeToolWindowGroup"),
+  ActionManager.getInstance().let { actionManager ->
+    listOf(
+      actionManager.getAction("ResizeToolWindowLeft"),
+      actionManager.getAction("ResizeToolWindowRight"),
+      actionManager.getAction("ResizeToolWindowUp"),
+      actionManager.getAction("ResizeToolWindowDown"),
+      actionManager.getAction("MaximizeToolWindow")
+    )
+  }) {
+  init {
+    isPopup = true
   }
 }
 

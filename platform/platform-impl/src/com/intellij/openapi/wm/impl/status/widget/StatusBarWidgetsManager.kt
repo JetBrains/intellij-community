@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.openapi.wm.impl.status.widget
 
 import com.intellij.diagnostic.PluginException
@@ -47,7 +49,8 @@ class StatusBarWidgetsManager(
       get() = this@StatusBarWidgetsManager.project
 
     override val currentFileEditor: StateFlow<FileEditor?> by lazy {
-      flow { val manager = project.serviceAsync<FileEditorManager>()
+      flow {
+        val manager = project.serviceAsync<FileEditorManager>()
         emitAll(manager.selectedEditorFlow)
       }.stateIn(parentScope, started = SharingStarted.Eagerly, initialValue = null)
     }
@@ -79,7 +82,8 @@ class StatusBarWidgetsManager(
 
     synchronized(widgetFactories) {
       if (widgetFactories.containsKey(factory)) {
-        return  // this widget is already enabled
+        // this widget is already enabled
+        return
       }
 
       val order = StatusBarWidgetFactory.EP_NAME.filterableLazySequence().firstOrNull { it.id == factory.id }?.order
@@ -89,8 +93,8 @@ class StatusBarWidgetsManager(
       }
 
       val widget = createWidget(factory, dataContext, parentScope)
-      widgetFactories[factory] = widget
-      widgetIdMap[widget.ID()] = factory
+      widgetFactories.put(factory, widget)
+      widgetIdMap.put(widget.ID(), factory)
       parentScope.launch(Dispatchers.EDT) {
         when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
           is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
@@ -106,16 +110,17 @@ class StatusBarWidgetsManager(
     }
   }
 
-  fun wasWidgetCreated(factoryId: String): Boolean =
-    synchronized(widgetFactories) {
+  fun wasWidgetCreated(factoryId: String): Boolean {
+    return synchronized(widgetFactories) {
       widgetFactories.keys.any { it.id.equals(factoryId, ignoreCase = true) }
     }
+  }
 
   override fun dispose() {
     parentScope.cancel()
   }
 
-  fun findWidgetFactory(widgetId: String): StatusBarWidgetFactory? = widgetIdMap[widgetId]
+  fun findWidgetFactory(widgetId: String): StatusBarWidgetFactory? = widgetIdMap.get(widgetId)
 
   fun getWidgetFactories(): Set<StatusBarWidgetFactory> {
     val isLightEditProject = LightEdit.owns(project)
@@ -140,8 +145,9 @@ class StatusBarWidgetsManager(
     }
   }
 
-  fun canBeEnabledOnStatusBar(factory: StatusBarWidgetFactory, statusBar: StatusBar): Boolean =
-    factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
+  fun canBeEnabledOnStatusBar(factory: StatusBarWidgetFactory, statusBar: StatusBar): Boolean {
+    return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
+  }
 
   internal fun init(frame: IdeFrame): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
@@ -208,9 +214,9 @@ class StatusBarWidgetsManager(
           }
 
           ApplicationManager.getApplication().invokeLater({
-            updateWidget(extension)
-            incModificationCount()
-          }, project.disposed)
+                                                            updateWidget(extension)
+                                                            incModificationCount()
+                                                          }, project.disposed)
         }
       }
 
@@ -225,27 +231,32 @@ class StatusBarWidgetsManager(
 
     return widgets
   }
+}
 
-  private fun createWidget(
-    factory: StatusBarWidgetFactory,
-    dataContext: WidgetPresentationDataContext,
-    parentScope: CoroutineScope,
-  ): StatusBarWidget =
-    if (factory !is WidgetPresentationFactory) factory.createWidget(dataContext.project, parentScope)
-    else object : StatusBarWidget, CustomStatusBarWidget {
-      private val scope = lazy { parentScope.childScope(name = "${factory.id}-widget-scope") }
+private fun createWidget(
+  factory: StatusBarWidgetFactory,
+  dataContext: WidgetPresentationDataContext,
+  parentScope: CoroutineScope,
+): StatusBarWidget {
+  if (factory !is WidgetPresentationFactory) {
+    return factory.createWidget(dataContext.project, parentScope)
+  }
 
-      override fun ID(): String = factory.id
+  return object : StatusBarWidget, CustomStatusBarWidget {
+    private val scope = lazy { parentScope.childScope(name = "${factory.id}-widget-scope") }
 
-      override fun getComponent(): JComponent {
-        val scope = scope.value
-        return createComponentByWidgetPresentation(factory.createPresentation(dataContext, scope), dataContext.project, scope)
-      }
+    override fun ID(): String = factory.id
 
-      override fun dispose() {
-        if (scope.isInitialized()) {
-          scope.value.cancel()
-        }
+    override fun getComponent(): JComponent {
+      val scope = scope.value
+      return createComponentByWidgetPresentation(factory.createPresentation(dataContext, scope), dataContext.project, scope)
+    }
+
+    override fun dispose() {
+      if (scope.isInitialized()) {
+        scope.value.cancel()
       }
     }
+  }
 }
+
