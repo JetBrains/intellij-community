@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -35,7 +36,16 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
   public PropertyImpl(final PropertyStub stub, final IElementType nodeType) {
     super(stub, nodeType);
   }
-  
+
+  /**
+   * @deprecated use {@link #PropertyImpl(PropertyStub, IElementType)}
+   */
+  @SuppressWarnings("rawtypes")
+  @Deprecated
+  public PropertyImpl(final PropertyStub stub, final IStubElementType nodeType) {
+    this(stub, (IElementType)nodeType);
+  }
+
   @Override
   public IElementType getIElementType() {
     return getElementTypeImpl();
