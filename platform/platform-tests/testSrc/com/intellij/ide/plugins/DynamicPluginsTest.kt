@@ -10,7 +10,10 @@ import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.actions.ContextHelpAction
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.testPluginSrc.bar.BarAction
 import com.intellij.ide.plugins.testPluginSrc.bar.BarService
+import com.intellij.ide.plugins.testPluginSrc.foo.FooAction
+import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarAction
 import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
@@ -479,6 +482,43 @@ class DynamicPluginsTest {
     }
     finally {
       unloadAndUninstallPlugin(fooDescriptor)
+    }
+  }
+
+  @Test
+  fun `separate content module jar unloading`() {
+    val fooDir = pluginsDir.resolve("foo")
+    val barJar = pluginsDir.resolve("bar.jar")
+    plugin("foo") {
+      content {
+        module("foo.bar") {
+          isSeparateJar = true
+          dependencies {
+            plugin("bar")
+          }
+          action<FooBarAction>()
+          includePackageClassFiles<FooBarAction>()
+        }
+      }
+      action<FooAction>()
+      includePackageClassFiles<FooAction>()
+    }.buildDir(fooDir)
+    plugin("bar") {
+      action<BarAction>()
+      includePackageClassFiles<BarAction>()
+    }.buildMainJar(barJar)
+
+    val bar = loadDescriptorInTest(barJar)
+    val foo = loadDescriptorInTest(fooDir)
+    try {
+      val fooBar = foo.contentModules.first()
+      assertThat(DynamicPlugins.loadPlugins(listOf(foo, bar), null)).isTrue
+      assertThat(fooBar.pluginClassLoader).isNotNull()
+      assertThat(DynamicPlugins.unloadPlugins(listOf(bar), null)).isTrue
+      assertThat(fooBar.pluginClassLoader).isNull()
+    }
+    finally {
+      assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null))
     }
   }
 
