@@ -33,7 +33,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
 
   private static final FileBasedIndex.InputFilter INPUT_FILES_FILTER = new IdIndexFilter();
 
-  private final KeyDescriptor<IdIndexEntry> myKeyDescriptor = new InlineKeyDescriptor<>() {
+  private static final KeyDescriptor<IdIndexEntry> KEY_DESCRIPTOR = new InlineKeyDescriptor<>() {
     @Override
     public IdIndexEntry fromInt(int n) {
       return new IdIndexEntry(n);
@@ -45,9 +45,26 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
     }
   };
 
+  private static final DataExternalizer<Integer> VALUE_EXTERNALIZER = new DataExternalizer<>() {
+    @Override
+    public void save(@NotNull DataOutput out, Integer value) throws IOException {
+      out.write(value.intValue() & UsageSearchContext.ANY);
+    }
+
+    @Override
+    public Integer read(@NotNull DataInput in) throws IOException {
+      return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
+    }
+  };
+
   @Override
   public int getVersion() {
     return 21 + IdIndexEntry.getUsedHashAlgorithmVersion();
+  }
+
+  @Override
+  public @NotNull ID<IdIndexEntry,Integer> getName() {
+    return NAME;
   }
 
   @Override
@@ -56,13 +73,8 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   }
 
   @Override
-  public int getCacheSize() {
-    return 64 * super.getCacheSize();
-  }
-
-  @Override
-  public @NotNull ID<IdIndexEntry,Integer> getName() {
-    return NAME;
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return INPUT_FILES_FILTER;
   }
 
   @Override
@@ -103,28 +115,18 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   }
 
   @Override
-  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
-    return new DataExternalizer<>() {
-      @Override
-      public void save(@NotNull DataOutput out, Integer value) throws IOException {
-        out.write(value.intValue() & UsageSearchContext.ANY);
-      }
-
-      @Override
-      public Integer read(@NotNull DataInput in) throws IOException {
-        return Integer.valueOf(in.readByte() & UsageSearchContext.ANY);
-      }
-    };
-  }
-
-  @Override
   public @NotNull KeyDescriptor<IdIndexEntry> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return KEY_DESCRIPTOR;
   }
 
   @Override
-  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return INPUT_FILES_FILTER;
+  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
+    return VALUE_EXTERNALIZER;
+  }
+
+  @Override
+  public int getCacheSize() {
+    return 64 * super.getCacheSize();
   }
 
   @Override
