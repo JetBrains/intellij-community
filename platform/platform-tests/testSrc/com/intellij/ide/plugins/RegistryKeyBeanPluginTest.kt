@@ -15,7 +15,7 @@ import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
 import com.intellij.platform.testFramework.plugins.extensions
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.*
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.Ksuid
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldBeNull
@@ -30,12 +30,18 @@ import kotlin.test.assertTrue
 
 @RunsInEdt
 class RegistryKeyBeanPluginTest {
+  // FIXME in-memory fs does not work, NonShareableJavaZipFilePool wants .toFile()
+  //@Rule
+  //@JvmField
+  //val inMemoryFs = InMemoryFsRule()
+  // private val rootPath get() = inMemoryFs.fs.getPath("/")
 
   @Rule
   @JvmField
-  val inMemoryFs = InMemoryFsRule()
-  private val rootPath
-    get() = inMemoryFs.fs.getPath("/")
+  val tempDir: TempDirectory = TempDirectory()
+
+  private val rootPath get() = tempDir.rootPath
+  private val pluginsDir get() = rootPath.resolve("plugins")
 
   @Rule
   @JvmField

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.IndexingTestUtil
 import org.assertj.core.api.Assertions.assertThat
-import java.nio.file.Files
 import java.nio.file.Path
 
 internal val StubBuildNumber: BuildNumber get() = BuildNumber.fromString("2042.42")!!
@@ -44,7 +43,7 @@ fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Di
       dependsIntellijModulesLang()
       extensions(extensionTag, ns)
     },
-    path = FileUtil.createTempDirectory("test", "test", true).toPath(),
+    pluginsDir = FileUtil.createTempDirectory("test", "test", true).toPath(),
   ).also {
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
@@ -52,11 +51,11 @@ fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Di
 
 fun loadPluginWithText(
   pluginSpec: PluginSpec,
-  path: Path,
+  pluginsDir: Path,
 ): Disposable {
   val descriptor = loadDescriptorInTest(
     pluginSpec = pluginSpec,
-    rootPath = path,
+    pluginsDir = pluginsDir,
   )
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   try {
@@ -77,13 +76,10 @@ fun loadPluginWithText(
 
 fun loadDescriptorInTest(
   pluginSpec: PluginSpec,
-  rootPath: Path,
-  useTempDir: Boolean = false,
+  pluginsDir: Path
 ): PluginMainDescriptor {
-  val path = if (useTempDir) Files.createTempDirectory(rootPath, null) else rootPath
-  val pluginDirectory = path.resolve("plugins")
-  pluginSpec.buildDir(pluginDirectory)
-  return loadDescriptorInTest(fileOrDir = pluginDirectory)
+  val path = pluginSpec.buildDistribution(pluginsDir)
+  return loadDescriptorInTest(fileOrDir = path)
 }
 
 fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
