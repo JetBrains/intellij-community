@@ -22,7 +22,6 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 import java.util.*
 import java.util.function.Function
-import kotlin.io.path.exists
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEventsTestHelper = MavenEventsTestHelper()
@@ -263,7 +262,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
         }
       })
     updateAllProjects()
-    assertEquals(setOf("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl"), changeLog)
+    assertEquals(setOf("modified m1", "created Maven: junit:junit:4.0", "created LibraryPropertiesEntityImpl", "created LibraryMavenCoordinateEntityImpl"), changeLog)
   }
 
   @Test

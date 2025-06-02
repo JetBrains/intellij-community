@@ -153,7 +153,6 @@
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
     <externalIconProvider key="MAVEN" implementationClass="org.jetbrains.idea.maven.ui.MavenIconProvider"/>
     <externalSystemKeymapProvider implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
-    <externalSystemCoordinateContributor implementation="org.jetbrains.idea.maven.importing.MavenCoordinateContributor"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
