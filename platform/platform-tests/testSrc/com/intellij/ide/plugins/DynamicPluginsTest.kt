@@ -52,7 +52,6 @@ import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
@@ -80,16 +79,18 @@ class DynamicPluginsTest {
   @JvmField
   val projectRule = ProjectRule()
 
-  @Rule
-  @JvmField
-  val inMemoryFs = InMemoryFsRule()
+  // FIXME in-memory fs does not work, NonShareableJavaZipFilePool wants .toFile()
+  //@Rule
+  //@JvmField
+  //val inMemoryFs = InMemoryFsRule()
+  // private val rootPath get() = inMemoryFs.fs.getPath("/")
 
   @Rule
   @JvmField
   val tempDir: TempDirectory = TempDirectory()
 
-  private val rootPath get() = inMemoryFs.fs.getPath("/")
-  private val pluginsPath get() = rootPath.resolve("plugin")
+  private val rootPath get() = tempDir.rootPath
+  private val pluginsPath get() = rootPath.resolve("plugins")
 
   @Rule
   @JvmField
@@ -444,11 +445,10 @@ class DynamicPluginsTest {
     }
   }
 
-  // FIXME in-memory fs does not work, NonShareableJavaZipFilePool wants .toFile()
   @Test
   fun `optional plugin dependency loading`() {
-    val fooJar = tempDir.root.toPath().resolve("foo.jar")
-    val barJar = tempDir.root.toPath().resolve("bar.jar")
+    val fooJar = pluginsPath.resolve("foo.jar")
+    val barJar = pluginsPath.resolve("bar.jar")
     plugin("foo") {
       depends("bar", "bar.xml") {
         appService<FooBarService>()

@@ -81,7 +81,7 @@ fun loadDescriptorInTest(
   useTempDir: Boolean = false,
 ): PluginMainDescriptor {
   val path = if (useTempDir) Files.createTempDirectory(rootPath, null) else rootPath
-  val pluginDirectory = path.resolve("plugin")
+  val pluginDirectory = path.resolve("plugins")
   pluginSpec.buildDir(pluginDirectory)
   return loadDescriptorInTest(fileOrDir = pluginDirectory)
 }
