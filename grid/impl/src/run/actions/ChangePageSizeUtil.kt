@@ -4,7 +4,6 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridRequestSource
 import com.intellij.database.datagrid.GridUtilCore
 import com.intellij.database.run.ui.DataGridRequestPlace
-import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
@@ -34,11 +33,13 @@ fun createCustomComponentForResultViewToolbar(
 }
 
 fun setPageSizeAndReload(pageSize: Int, grid: DataGrid) {
+  trace {
+    "Setting page size of grid $grid to $pageSize"
+  }
   val pageModel = grid.getDataHookup().getPageModel()
   pageModel.setPageSize(pageSize)
-  ActivityTracker.getInstance().inc()
   trace {
-    "Setting page size of grid $grid to $pageSize (page model: $pageModel)"
+    "Page size of grid $grid was set to $pageSize (page model: $pageModel)"
   }
 
   val loader = grid.getDataHookup().getLoader()
