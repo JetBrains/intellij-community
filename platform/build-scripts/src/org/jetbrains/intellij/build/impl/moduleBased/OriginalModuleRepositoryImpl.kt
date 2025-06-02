@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.moduleBased
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
@@ -56,7 +56,6 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
   }
 
   override suspend fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules {
-    val repository = context.getOriginalModuleRepository().repository
     val productModulesStream = readProductModulesFile(context, rootModuleName)
                                ?: error("Cannot read product-modules.xml file from $rootModuleName")
     val resolver = object : ResourceFileResolver {
