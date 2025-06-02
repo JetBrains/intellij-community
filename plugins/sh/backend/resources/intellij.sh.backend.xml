@@ -6,8 +6,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.sh.codeInsight.ShPsiReferenceSupport"
-                        serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport"
-                        client="local"/>
+                        serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport" />
 
     <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShFindUsagesProvider"/>
     <targetElementEvaluator language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShTargetElementEvaluator"/>
