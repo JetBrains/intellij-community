@@ -1119,9 +1119,6 @@ private fun getFastTrackMaxTime(useFastTrack: Boolean,
                                 checkLastFailedFastTrackTime: Boolean,
                                 checkMainMenuOrToolbarFirstTime: Boolean): Int {
   if (!useFastTrack) return 0
-  if (!service<ActionUpdaterInterceptor>().allowsFastUpdate(CommonDataKeys.PROJECT.getData(context), group, place)) {
-    return 0
-  }
   val mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime &&
                                    (ActionPlaces.MAIN_MENU == place || (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR == place))
   if (mainMenuOrToolbarFirstTime) return 1000 // one second to fully update the main menu or toolbar for the first time
