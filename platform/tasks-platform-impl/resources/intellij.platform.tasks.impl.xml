@@ -1,4 +1,5 @@
 <idea-plugin>
+  <module value="com.intellij.modules.tasks"/>
   <dependencies>
     <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.vcs.impl"/>
