@@ -6,7 +6,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
+import java.util.Set;
+
 public interface BytecodeInstrumenter extends Runner{
+  
+  Set<OutputOrigin.Kind> getSupportedOrigins();
   /**
    * @return null, if instrumentation did not happen, otherwise an instrumented content
    */

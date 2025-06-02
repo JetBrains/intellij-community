@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputFile;
 import org.jetbrains.annotations.NotNull;
 
-public class OutputFileImpl implements OutputSink.OutputFile {
+public class OutputFileImpl implements OutputFile {
   private static final byte[] EMPTY_CONTENT = new byte[0];
   private final String myPath;
   private final Kind myKind;

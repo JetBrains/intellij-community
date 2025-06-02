@@ -90,7 +90,7 @@ public class FormsCompiler implements CompilerRunner {
       }
     }
 
-    AbiJarBuilder abiOut = myStorageManager.getAbiOutputBuilder();
+    ZipOutputBuilder abiOut = myStorageManager.getAbiOutputBuilder();
     if (abiOut != null) {
       // put form content to abi-out so that it can be later found in the classpath when searching for nested forms
       NodeSourcePathMapper pathMapper = myContext.getPathMapper();
@@ -124,7 +124,7 @@ public class FormsCompiler implements CompilerRunner {
       final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, nestedLoader, false, useDynamicBundles , classWriter);
       final byte[] instrumented = codeGenerator.patchClass(classReader);
       if (instrumented != null) {
-        myStorageManager.getCompositeOutputBuilder().putEntry(jvmClassEntryPath, instrumented);
+        myStorageManager.getOutputBuilder().putEntry(jvmClassEntryPath, instrumented);
       }
       for (final FormErrorInfo warning : codeGenerator.getWarnings()) {
         myContext.report(Message.create(this, Message.Kind.WARNING, warning.getErrorMessage(), formPath.toString()));

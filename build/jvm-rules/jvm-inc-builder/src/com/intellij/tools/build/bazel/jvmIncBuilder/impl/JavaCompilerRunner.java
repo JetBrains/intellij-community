@@ -2,10 +2,7 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.*;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerDataSink;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputExplorer;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,10 +156,10 @@ public class JavaCompilerRunner implements CompilerRunner {
 
     @Override
     public void save(@NotNull OutputFileObject javacOutput) {
-      OutputSink.OutputFile.Kind kind =
-        javacOutput.getKind() == JavaFileObject.Kind.CLASS? OutputSink.OutputFile.Kind.bytecode:
-        javacOutput.getKind() == JavaFileObject.Kind.SOURCE? OutputSink.OutputFile.Kind.source :
-        OutputSink.OutputFile.Kind.other;
+      OutputFile.Kind kind =
+        javacOutput.getKind() == JavaFileObject.Kind.CLASS? OutputFile.Kind.bytecode:
+        javacOutput.getKind() == JavaFileObject.Kind.SOURCE? OutputFile.Kind.source :
+        OutputFile.Kind.other;
       
       byte[] bytes;
       BinaryContent binContent = javacOutput.getContent();
@@ -176,7 +173,7 @@ public class JavaCompilerRunner implements CompilerRunner {
 
       myOutSink.addFile(
         new OutputFileImpl(javacOutput.getRelativePath(), kind, bytes, javacOutput.isGenerated()),
-        collect(map(javacOutput.getSourceFiles(), myPathMapper::toNodeSource), new ArrayList<>())
+        OutputOrigin.create(OutputOrigin.Kind.java, collect(map(javacOutput.getSourceFiles(), myPathMapper::toNodeSource), new ArrayList<>()))
       );
     }
     @Override
@@ -371,11 +368,11 @@ public class JavaCompilerRunner implements CompilerRunner {
     }
 
     @Override
-    public void addFile(OutputFile outFile, Iterable<NodeSource> originSources) {
+    public void addFile(OutputFile outFile, OutputOrigin origin) {
       if (outFile.getKind() == OutputFile.Kind.source) {
         myGeneratedSourcesPaths.add(outFile.getPath());
       }
-      myDelegate.addFile(outFile, originSources);
+      myDelegate.addFile(outFile, origin);
     }
     
     public Iterable<String> getGeneratedSourcesPaths() {
@@ -425,6 +422,11 @@ public class JavaCompilerRunner implements CompilerRunner {
     @Override
     public Iterable<NodeWithSources> getNodes() {
       return myDelegate.getNodes();
+    }
+
+    @Override
+    public Iterable<String> getOutputPaths(OutputOrigin.Kind originKind, OutputFile.Kind outputKind) {
+      return myDelegate.getOutputPaths(originKind, outputKind);
     }
   }
 }

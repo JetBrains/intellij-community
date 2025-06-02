@@ -16,7 +16,6 @@ public class JavaAbiClassFilter extends ClassVisitor {
   public static final String MODULE_INFO_CLASS_NAME = "module-info";
   private boolean isAbiClass;
   private boolean allowPackageLocalMethods;
-  private boolean isKotlinClass;
   private Set<String> myExcludedClasses = new HashSet<>();
   private List<FieldNode> myFields = new ArrayList<>();
   private List<MethodNode> myMethods = new ArrayList<>();
@@ -33,9 +32,6 @@ public class JavaAbiClassFilter extends ClassVisitor {
     reader.accept(
       abiVisitor, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG
     );
-    if (abiVisitor.isKotlinClass) {
-      return classBytes; // kotlin bytecode is managed separately
-    }
     return abiVisitor.isAbiClass? writer.toByteArray() : null;
   }
 
@@ -58,16 +54,8 @@ public class JavaAbiClassFilter extends ClassVisitor {
   }
 
   @Override
-  public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-    if ("Lkotlin/Metadata;".equals(desc)) {
-      isKotlinClass = true;
-    }
-    return super.visitAnnotation(desc, visible);
-  }
-
-  @Override
   public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-    if (!isKotlinClass && isAbiVisible(access)) {
+    if (isAbiVisible(access)) {
       FieldNode field = new FieldNode(Opcodes.API_VERSION, access, name, descriptor, signature, value);
       myFields.add(field);
       return field;
@@ -77,7 +65,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-    if (!isKotlinClass && (isAbiVisible(access) || (allowPackageLocalMethods && isPackageLocal(access)))) {
+    if (isAbiVisible(access) || (allowPackageLocalMethods && isPackageLocal(access))) {
       MethodNode method = new AbiMethod(access, name, descriptor, signature, exceptions);
       myMethods.add(method);
       return method;
@@ -87,15 +75,13 @@ public class JavaAbiClassFilter extends ClassVisitor {
 
   @Override
   public void visitEnd() {
-    if (!isKotlinClass) {
-      Collections.sort(myFields, Comparator.comparing(f -> f.name));
-      for (FieldNode field : myFields) {
-        field.accept(cv);
-      }
-      Collections.sort(myMethods, Comparator.comparing(m -> m.name));
-      for (MethodNode method : myMethods) {
-        method.accept(cv);
-      }
+    Collections.sort(myFields, Comparator.comparing(f -> f.name));
+    for (FieldNode field : myFields) {
+      field.accept(cv);
+    }
+    Collections.sort(myMethods, Comparator.comparing(m -> m.name));
+    for (MethodNode method : myMethods) {
+      method.accept(cv);
     }
     super.visitEnd();
   }
@@ -117,7 +103,7 @@ public class JavaAbiClassFilter extends ClassVisitor {
   @Override
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
     // innerName == null for anonymous classes
-    if (!isKotlinClass && isAbiVisible(access) && innerName != null && !myExcludedClasses.contains(name)) {
+    if (isAbiVisible(access) && innerName != null && !myExcludedClasses.contains(name)) {
       super.visitInnerClass(name, outerName, innerName, access);
     }
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.AbiJarBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuilder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
@@ -31,7 +30,7 @@ public class StorageManager implements CloseableExt {
   private final BuildContext myContext;
   private GraphConfiguration myGraphConfig;
   private ZipOutputBuilderImpl myOutputBuilder;
-  private AbiJarBuilder myAbiOutputBuilder;
+  private ZipOutputBuilderImpl myAbiOutputBuilder;
   private CompositeZipOutputBuilder myComposite;
   private InstrumentationClassFinder myInstrumentationClassFinder;
   private FormBinding myFormBinding;
@@ -101,6 +100,10 @@ public class StorageManager implements CloseableExt {
     return binding;
   }
 
+  public BuildContext getContext() {
+    return myContext;
+  }
+
   @NotNull
   public GraphConfiguration getGraphConfiguration() throws IOException {
     GraphConfiguration config = myGraphConfig;
@@ -125,13 +128,13 @@ public class StorageManager implements CloseableExt {
   }
 
   @Nullable
-  public AbiJarBuilder getAbiOutputBuilder() throws IOException {
-    AbiJarBuilder builder = myAbiOutputBuilder;
+  public ZipOutputBuilderImpl getAbiOutputBuilder() throws IOException {
+    ZipOutputBuilderImpl builder = myAbiOutputBuilder;
     if (builder == null) {
       Path abiOutputPath = myContext.getAbiOutputZip();
       if (abiOutputPath != null) {
         Path previousAbiOutput = DataPaths.getJarBackupStoreFile(myContext, abiOutputPath);
-        myAbiOutputBuilder = builder = new AbiJarBuilder(createOffHeapMap(abiOutputPath.getFileName().toString()), previousAbiOutput, abiOutputPath, getInstrumentationClassFinder());
+        myAbiOutputBuilder = builder = new ZipOutputBuilderImpl(createOffHeapMap(abiOutputPath.getFileName().toString()), previousAbiOutput, abiOutputPath);
       }
     }
     return builder;

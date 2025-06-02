@@ -5,13 +5,16 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoader;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputSink;
+import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
+import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
+import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumenterClassWriter;
+import com.intellij.tools.build.bazel.jvmIncBuilder.runner.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.util.Pair;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -143,7 +146,7 @@ public class BazelIncBuilder {
           }
 
           diagnostic = isInitialRound? new PostponedDiagnosticSink() : context; // for initial round postpone error reporting
-          OutputSinkImpl outSink = new OutputSinkImpl(diagnostic, storageManager, instrumenters);
+          OutputSinkImpl outSink = new OutputSinkImpl(storageManager);
 
           if (isInitialRound) {
             if (!srcSnapshotDelta.isRecompileAll()) {
@@ -199,6 +202,10 @@ public class BazelIncBuilder {
             }
           }
 
+          if (!diagnostic.hasErrors()) {
+            runInstrumenters(outSink, storageManager, instrumenters, diagnostic);
+          }
+
           NodeSourceSnapshotDelta nextSnapshotDelta = graphUpdater.updateAfterCompilation(
             storageManager.getGraph(), srcSnapshotDelta, createGraphDelta(storageManager.getGraph(), srcSnapshotDelta, outSink), diagnostic.hasErrors()
           );
@@ -246,6 +253,43 @@ public class BazelIncBuilder {
     }
     finally {
       saveBuildState(context, srcSnapshotDelta, modifiedLibraries, deletedLibraries);
+    }
+  }
+
+  private static void runInstrumenters(OutputSinkImpl outSink, StorageManager storageManager, List<BytecodeInstrumenter> instrumenters, DiagnosticSink diagnostic) throws IOException {
+    for (OutputOrigin.Kind originKind : OutputOrigin.Kind.values()) {
+      for (String generatedFile : outSink.getOutputPaths(originKind, OutputFile.Kind.bytecode)) {
+        boolean changes = false;
+        byte[] content = null;
+        ClassReader reader = null;
+        for (BytecodeInstrumenter instrumenter : filter(instrumenters, inst -> inst.getSupportedOrigins().contains(originKind))) {
+          if (content == null) {
+            content = outSink.getFileContent(generatedFile);
+          }
+          try {
+            if (reader == null) {
+              reader = new FailSafeClassReader(content);
+            }
+            InstrumentationClassFinder classFinder = storageManager.getInstrumentationClassFinder();
+            int version = InstrumenterClassWriter.getClassFileVersion(reader);
+            ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), classFinder);
+            final byte[] instrumented = instrumenter.instrument(generatedFile, reader, writer, classFinder);
+            if (instrumented != null) {
+              changes = true;
+              content = instrumented;
+              classFinder.cleanCachedData(reader.getClassName());
+              reader = null;
+            }
+          }
+          catch (Exception e) {
+            diagnostic.report(Message.create(instrumenter, Message.Kind.ERROR, e.getMessage(), generatedFile));
+            break;
+          }
+        }
+        if (changes && !diagnostic.hasErrors()) {
+          storageManager.getOutputBuilder().putEntry(generatedFile, content);
+        }
+      }
     }
   }
 
