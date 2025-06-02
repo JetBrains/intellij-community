@@ -12,7 +12,10 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ListModel
@@ -135,7 +138,7 @@ object ComponentListPanelFactory {
    */
   fun <T : Any> createVertical(
     parentCs: CoroutineScope,
-    items: StateFlow<List<T>>,
+    items: Flow<List<T>>,
     panelInitializer: JPanel.() -> Unit = {},
     gap: Int = 0,
     componentFactory: CoroutineScope.(T) -> JComponent,
@@ -151,7 +154,7 @@ object ComponentListPanelFactory {
    * @param T must implement proper equals/hashCode
    */
   fun <T : Any> createVertical(
-    items: StateFlow<List<T>>,
+    items: Flow<List<T>>,
     gap: Int = 0,
     componentFactory: CoroutineScope.(T) -> JComponent,
   ): JPanel {
@@ -169,7 +172,7 @@ object ComponentListPanelFactory {
    */
   fun <T : Any> createHorizontal(
     parentCs: CoroutineScope,
-    items: StateFlow<List<T>>,
+    items: Flow<List<T>>,
     panelInitializer: JPanel.() -> Unit = {},
     gap: Int = 0,
     componentFactory: CoroutineScope.(T) -> JComponent,
@@ -181,7 +184,7 @@ object ComponentListPanelFactory {
     return panel
   }
 
-  private suspend fun <T : Any> JPanel.showItems(items: StateFlow<List<T>>, componentFactory: CoroutineScope.(T) -> JComponent): Nothing {
+  private suspend fun <T : Any> JPanel.showItems(items: Flow<List<T>>, componentFactory: CoroutineScope.(T) -> JComponent): Nothing {
     coroutineScope {
       val cs = this
       fun addComponent(idx: Int, item: T) {
@@ -199,7 +202,8 @@ object ComponentListPanelFactory {
         remove(idx)
       }
 
-      items.changesFlow().collect { changes ->
+      val itemsState = items as? StateFlow ?: items.stateIn(this, SharingStarted.Eagerly, emptyList())
+      itemsState.changesFlow().collect { changes ->
         // apply changes. changesFlow should already order them in an applicable way
         for (change in changes) {
           when (change) {
