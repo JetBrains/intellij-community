@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiableModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,6 +78,11 @@ public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsPr
   @Override
   public ModalityState getModalityStateForQuestionDialogs() {
     return ModalityState.defaultModalityState();
+  }
+
+  @Override
+  public @NotNull MutableEntityStorage getActualStorageBuilder() {
+    return MutableEntityStorage.create();
   }
 
   @Override

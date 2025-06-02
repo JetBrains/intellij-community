@@ -213,7 +213,8 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
     super.dispose();
   }
 
-  public MutableEntityStorage getActualStorageBuilder() {
+  @Override
+  public @NotNull MutableEntityStorage getActualStorageBuilder() {
     if (diff != null) return diff;
     VersionedEntityStorage storage = ((WorkspaceModelInternal)WorkspaceModel.getInstance(myProject)).getEntityStorage();
     LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
