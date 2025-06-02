@@ -6,7 +6,6 @@ import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -30,7 +29,11 @@ class KotlinIdeDefaultImportProvider {
 
     fun computeDefaultAndExcludedImports(contextFile: KtFile): Pair<List<ImportPath>, List<FqName>> {
         val analyzerServices = contextFile.platform.findAnalyzerServices(contextFile.project)
-        val allDefaultImports = analyzerServices.getDefaultImports(includeLowPriorityImports = true)
+        val allDefaultImports = analyzerServices.getDefaultImports(includeLowPriorityImports = true).toMutableList()
+
+        if (PseudoCommonSourceSetUtils.inPseudoCommonSourceSet(contextFile)) {
+            allDefaultImports.removeAll(PseudoCommonSourceSetUtils.PLATFORM_SPECIFIC_IMPORTS)
+        }
 
         val scriptExtraImports = contextFile.takeIf { it.isScript() }?.let { ktFile ->
             val scriptDependencies = ScriptConfigurationsProvider.getInstance(ktFile.project)
