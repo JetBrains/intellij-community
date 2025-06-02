@@ -133,21 +133,34 @@ public /* sealed */ interface NullabilitySource {
     private final @NotNull PsiAnnotation myAnnotation;
 
     public ContainerAnnotation(@NotNull PsiAnnotation annotation) {
-      PsiModifierList owner = (PsiModifierList)requireNonNull(annotation.getOwner(), "Annotation has no owner");
-      PsiModifierListOwner parent = (PsiModifierListOwner)requireNonNull(owner.getParent(), "Modifier list has no parent");
-      if (parent.getModifierList() != owner) {
-        throw new IllegalStateException("Modifier list parent is incorrect");
-      }
       myAnnotation = annotation;
+      container(); // validate
     }
 
     public @NotNull PsiModifierListOwner container() {
-      PsiModifierList owner = (PsiModifierList)requireNonNull(myAnnotation.getOwner());
-      PsiModifierListOwner parent = (PsiModifierListOwner)requireNonNull(owner.getParent());
-      if (parent.getModifierList() != owner) {
-        throw new IllegalStateException("Modifier list parent is incorrect");
+      PsiModifierList modifierList = (PsiModifierList)requireNonNull(myAnnotation.getOwner(), "Annotation has no owner");
+      PsiElement owner = requireNonNull(modifierList.getParent(), "Modifier list has no parent");
+      if (owner instanceof PsiModifierListOwner) {
+        PsiModifierListOwner member = (PsiModifierListOwner)owner;
+        if (member.getModifierList() != modifierList) {
+          throw new IllegalStateException("Modifier list parent is incorrect");
+        }
+        return member;
       }
-      return parent;
+      else if (owner instanceof PsiPackageStatement) {
+        PsiPackageStatement packageStatement = (PsiPackageStatement)owner;
+        if (packageStatement.getAnnotationList() != modifierList) {
+          throw new IllegalStateException("Modifier list parent is incorrect");
+        }
+        PsiElement targetPackage = packageStatement.getPackageReference().resolve();
+        if (!(targetPackage instanceof PsiPackage)) {
+          throw new IllegalStateException("Package reference is not resolved");
+        }
+        return (PsiPackage)targetPackage;
+      }
+      else {
+        throw new IllegalStateException("Unsupported modifier list parent: " + owner.getClass().getName());
+      }
     }
 
     public @NotNull PsiAnnotation annotation() {

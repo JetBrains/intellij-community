@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullabilitySource;
-import com.intellij.codeInsight.TypeNullability;
+import com.intellij.codeInsight.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -350,5 +348,15 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     """);
     assertEquals("java.lang.String", type.getCanonicalText());
     assertEquals("UNKNOWN (NONE)", type.getNullability().toString());
+  }
+  
+  public void testPackageNullabilityInfoToTypeNullability() {
+    myFixture.addFileToProject("foo/package-info.java", "@org.jetbrains.annotations.NotNullByDefault package foo;");
+    PsiFile clsFile = myFixture.addFileToProject("foo/A.java", "package foo; class A {}"); 
+    PsiElement context = ((PsiJavaFile)clsFile).getClasses()[0];
+    NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(getProject()).findDefaultTypeUseNullability(context);
+    assertNotNull(info);
+    TypeNullability typeNullability = info.toTypeNullability();
+    assertEquals("NOT_NULL (@NotNullByDefault on package foo)", typeNullability.toString());
   }
 }
