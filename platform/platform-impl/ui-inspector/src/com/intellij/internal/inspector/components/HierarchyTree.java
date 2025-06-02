@@ -368,7 +368,6 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
   private static final class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
     private final Component myInitialSelection;
     private final List<IconWithErrorCount> myAccessibilityAuditIcons = new ArrayList<>();
-    private int myIconsWidth;
     private String myToolTipText = "";
 
     ComponentTreeCellRenderer(Component initialSelection) {
@@ -515,61 +514,43 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
 
     @Override
     public String getToolTipText(MouseEvent event) {
-      if (event.getX() >= getPreferredSize().width - myIconsWidth && event.getX() <= getPreferredSize().width) {
-        return myToolTipText;
-      }
-      return super.getToolTipText(event);
+      return myToolTipText;
     }
 
     @Override
     public void paint(Graphics g) {
       super.paint(g);
-      myIconsWidth = 0;
       if (myAccessibilityAuditIcons.isEmpty()) {
         return;
       }
 
       GraphicsUtil.setupAntialiasing(g);
 
-      int componentHeight = getSize().height;
       int iconX = getPreferredSize().width;
       int iconSpacing = getIconTextGap() * 2;
       FontMetrics fontMetrics = g.getFontMetrics();
-      int textHeight = fontMetrics.getHeight();
 
       g.setColor(UIUtil.getTreeForeground());
 
       for (IconWithErrorCount entry : myAccessibilityAuditIcons) {
         Icon icon = entry.getIcon();
-        int errorCount = entry.getErrorCount();
-        int iconHeight = icon.getIconHeight();
-        int iconY = (componentHeight - iconHeight) / 2;
+        int iconY = (getHeight() - icon.getIconHeight()) / 2;
 
         icon.paintIcon(this, g, iconX, iconY);
 
-        if (errorCount != 0) {
+        if (entry.getErrorCount() != 0) {
           int textX = iconX + icon.getIconWidth() + iconSpacing;
-          int textY = (componentHeight - textHeight) / 2 + fontMetrics.getAscent();
-          g.drawString(String.valueOf(errorCount), textX, textY);
 
-          iconX = textX + fontMetrics.stringWidth(String.valueOf(errorCount)) + iconSpacing;
-        }
-        else {
+          int textY = (getHeight() + fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
+
+          String countStr = String.valueOf(entry.getErrorCount());
+          g.drawString(countStr, textX, textY);
+
+          iconX = textX + fontMetrics.stringWidth(countStr) + iconSpacing;
+        } else {
           iconX += icon.getIconWidth() + iconSpacing;
         }
-        myIconsWidth += icon.getIconWidth() + iconSpacing;
       }
-    }
-
-    @Override
-    public @NotNull Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      return new Dimension(size.width + myIconsWidth, size.height);
-    }
-
-    @Override
-    public @NotNull Dimension getSize() {
-      return getPreferredSize();
     }
   }
 

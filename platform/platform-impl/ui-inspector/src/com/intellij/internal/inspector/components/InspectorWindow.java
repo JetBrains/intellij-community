@@ -540,7 +540,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private final class ShowAccessibilityIssuesAction extends MyTextAction {
+  private final class ShowAccessibilityIssuesAction extends MyTextAction implements Toggleable {
     private final boolean isAccessibilityAuditEnabled = Registry.is("ui.inspector.accessibility.audit", false);
     public static final String SHOW_ACCESSIBILITY_ISSUES_KEY = "ui.inspector.show.accessibility.issues.key";
     private boolean showAccessibilityIssues;
@@ -560,7 +560,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) { e.getPresentation().setEnabledAndVisible(isAccessibilityAuditEnabled); }
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(isAccessibilityAuditEnabled);
+      Toggleable.setSelected(e.getPresentation(), showAccessibilityIssues);
+    }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.BGT; }

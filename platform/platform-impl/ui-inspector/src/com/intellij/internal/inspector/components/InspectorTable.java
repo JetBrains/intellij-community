@@ -488,12 +488,10 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
 
               JTextArea textArea = new JTextArea(failedInspection.getDescription());
               textArea.setEditable(false);
-
               textArea.setLineWrap(true);
               textArea.setWrapStyleWord(true);
               textArea.setBorder(null);
               textArea.setMinimumSize(JBUI.size(200, 100));
-
               inspectionPanel.add(textArea, BorderLayout.CENTER);
               myTabs.addTab(inspectionName, inspectionPanel);
             }
