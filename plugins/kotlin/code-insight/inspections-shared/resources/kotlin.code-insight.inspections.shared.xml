@@ -20,6 +20,16 @@
                      cleanupTool="true"
                      key="inspection.sort.modifiers.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.MoveVariableDeclarationIntoWhenInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="variable.declaration.could.be.moved.into.when" bundle="messages.KotlinBundle"/>
+
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AmbiguousNonLocalJumpInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"

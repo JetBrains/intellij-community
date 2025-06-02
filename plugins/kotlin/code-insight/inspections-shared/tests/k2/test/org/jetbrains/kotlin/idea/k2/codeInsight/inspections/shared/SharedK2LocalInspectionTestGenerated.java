@@ -1551,6 +1551,190 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen")
+    public static class MoveVariableDeclarationIntoWhen extends AbstractSharedK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("hasBreak.kt")
+        public void testHasBreak() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/hasBreak.kt");
+        }
+
+        @TestMetadata("hasContinue.kt")
+        public void testHasContinue() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/hasContinue.kt");
+        }
+
+        @TestMetadata("hasReturn.kt")
+        public void testHasReturn() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/hasReturn.kt");
+        }
+
+        @TestMetadata("hasReturn2.kt")
+        public void testHasReturn2() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/hasReturn2.kt");
+        }
+
+        @TestMetadata("hasThrow.kt")
+        public void testHasThrow() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/hasThrow.kt");
+        }
+
+        @TestMetadata("hasThrow2.kt")
+        public void testHasThrow2() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/hasThrow2.kt");
+        }
+
+        @TestMetadata("inBinaryExpression.kt")
+        public void testInBinaryExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/inBinaryExpression.kt");
+        }
+
+        @TestMetadata("inProperty.kt")
+        public void testInProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/inProperty.kt");
+        }
+
+        @TestMetadata("inReturnExpression.kt")
+        public void testInReturnExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/inReturnExpression.kt");
+        }
+
+        @TestMetadata("inUnaryAndProperty.kt")
+        public void testInUnaryAndProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/inUnaryAndProperty.kt");
+        }
+
+        @TestMetadata("longProperty.kt")
+        public void testLongProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/longProperty.kt");
+        }
+
+        @TestMetadata("longProperty2.kt")
+        public void testLongProperty2() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/longProperty2.kt");
+        }
+
+        @TestMetadata("multiLineWithOneLineInitializer.kt")
+        public void testMultiLineWithOneLineInitializer() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/multiLineWithOneLineInitializer.kt");
+        }
+
+        @TestMetadata("notApplicableElvis.kt")
+        public void testNotApplicableElvis() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableElvis.kt");
+        }
+
+        @TestMetadata("notApplicableIf.kt")
+        public void testNotApplicableIf() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableIf.kt");
+        }
+
+        @TestMetadata("notApplicableIf2.kt")
+        public void testNotApplicableIf2() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableIf2.kt");
+        }
+
+        @TestMetadata("notApplicableInBinaryExpression.kt")
+        public void testNotApplicableInBinaryExpression() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableInBinaryExpression.kt");
+        }
+
+        @TestMetadata("notApplicableLambda.kt")
+        public void testNotApplicableLambda() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableLambda.kt");
+        }
+
+        @TestMetadata("notApplicableMultiLineWithOneLineInitializer.kt")
+        public void testNotApplicableMultiLineWithOneLineInitializer() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableMultiLineWithOneLineInitializer.kt");
+        }
+
+        @TestMetadata("notApplicableMultyLine.kt")
+        public void testNotApplicableMultyLine() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableMultyLine.kt");
+        }
+
+        @TestMetadata("notApplicableOtherName.kt")
+        public void testNotApplicableOtherName() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableOtherName.kt");
+        }
+
+        @TestMetadata("notApplicableSideEffect.kt")
+        public void testNotApplicableSideEffect() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableSideEffect.kt");
+        }
+
+        @TestMetadata("notApplicableTry.kt")
+        public void testNotApplicableTry() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableTry.kt");
+        }
+
+        @TestMetadata("notApplicableUsedInOtherScope.kt")
+        public void testNotApplicableUsedInOtherScope() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableUsedInOtherScope.kt");
+        }
+
+        @TestMetadata("notApplicableVar.kt")
+        public void testNotApplicableVar() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableVar.kt");
+        }
+
+        @TestMetadata("notApplicableWhen.kt")
+        public void testNotApplicableWhen() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/notApplicableWhen.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/simple.kt");
+        }
+
+        @TestMetadata("withBlockComment.kt")
+        public void testWithBlockComment() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withBlockComment.kt");
+        }
+
+        @TestMetadata("withComment.kt")
+        public void testWithComment() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment.kt");
+        }
+
+        @TestMetadata("withComment2.kt")
+        public void testWithComment2() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment2.kt");
+        }
+
+        @TestMetadata("withComment3.kt")
+        public void testWithComment3() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment3.kt");
+        }
+
+        @TestMetadata("withComment4.kt")
+        public void testWithComment4() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withComment4.kt");
+        }
+
+        @TestMetadata("withDocComment.kt")
+        public void testWithDocComment() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withDocComment.kt");
+        }
+
+        @TestMetadata("withNewLine.kt")
+        public void testWithNewLine() throws Exception {
+            runTest("../testData/inspectionsLocal/moveVariableDeclarationIntoWhen/withNewLine.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/objectLiteralToLambda")
     public static class ObjectLiteralToLambda extends AbstractSharedK2LocalInspectionTest {
         @java.lang.Override
