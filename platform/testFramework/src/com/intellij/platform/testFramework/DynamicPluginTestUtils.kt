@@ -7,6 +7,8 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.testFramework.plugins.PluginSpec
+import com.intellij.platform.testFramework.plugins.buildDir
 import com.intellij.testFramework.IndexingTestUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
@@ -112,6 +114,21 @@ fun loadAndInitDescriptorInTest(
   val pluginDirectory = path.resolve("plugin")
   pluginBuilder.build(pluginDirectory)
 
+  return loadAndInitDescriptorInTest(
+    dir = pluginDirectory,
+    disabledPlugins = disabledPlugins,
+  )
+}
+
+fun loadAndInitDescriptorInTest(
+  pluginSpec: PluginSpec,
+  rootPath: Path,
+  disabledPlugins: Set<String> = emptySet(),
+  useTempDir: Boolean = false,
+): IdeaPluginDescriptorImpl {
+  val path = if (useTempDir) Files.createTempDirectory(rootPath, null) else rootPath
+  val pluginDirectory = path.resolve("plugin")
+  pluginSpec.buildDir(pluginDirectory)
   return loadAndInitDescriptorInTest(
     dir = pluginDirectory,
     disabledPlugins = disabledPlugins,
