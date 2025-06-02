@@ -16,6 +16,7 @@
     <plugin id="com.intellij.modules.xml"/>
     <plugin id="com.intellij.modules.java-capable"/>
     <module name="intellij.platform.vcs.impl.lang"/>
+    <module name="intellij.xml.dom.impl"/>
   </dependencies>
 
   <depends optional="true" config-file="java-copyright.xml">com.intellij.copyright</depends>

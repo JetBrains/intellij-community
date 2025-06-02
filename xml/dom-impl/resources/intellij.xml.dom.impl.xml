@@ -1,8 +1,10 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
   <extensionPoints>
-    <extensionPoint name="dom.fileDescription"
-                    interface="com.intellij.util.xml.DomFileDescription"
-                    dynamic="true"/>
     <extensionPoint name="dom.fileMetaData"
                     beanClass="com.intellij.util.xml.impl.DomFileMetaData"
                     dynamic="true">
@@ -26,27 +28,7 @@
       <with attribute="domClass" implements="com.intellij.util.xml.DomElement"/>
       <with attribute="extenderClass" implements="com.intellij.util.xml.reflect.DomExtender"/>
     </extensionPoint>
-
-    <extensionPoint name="dom.customAnnotationChecker"
-                    interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"
-                    dynamic="true"/>
-
-    <extensionPoint name="dom.uiControlsProvider"
-                    interface="com.intellij.util.Consumer"/>
-
-    <extensionPoint name="moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider" dynamic="true"/>
-    <extensionPoint name="dom.gotoSuper" interface="com.intellij.util.xml.DomElementNavigationProvider" dynamic="true"/>
   </extensionPoints>
-
-  <actions resource-bundle="messages.XmlDomBundle">
-    <group id="DomCollectionControl">
-      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
-        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
-      </action>
-      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" use-shortcut-of="EditSource"/>
-      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" use-shortcut-of="$Delete"/>
-    </group>
-  </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.gotoSuper language="XML" implementationClass="com.intellij.codeInsight.navigation.DomGotoSuperHandler"/>
@@ -69,8 +51,6 @@
 
     <applicationService serviceInterface="com.intellij.util.xml.ConverterManager"
                         serviceImplementation="com.intellij.util.xml.impl.ConverterManagerImpl"/>
-
-    <projectService serviceImplementation="com.intellij.util.xml.ui.CommittableUtil"/>
 
     <projectService serviceInterface="com.intellij.util.xml.highlighting.DomElementAnnotationsManager"
                     serviceImplementation="com.intellij.util.xml.highlighting.DomElementAnnotationsManagerImpl"/>
@@ -104,7 +84,6 @@
     <iconProvider implementation="com.intellij.util.xml.impl.DefaultDomTargetIconProvider" id="domDefault" order="last"/>
     <iconProvider implementation="com.intellij.util.xml.DomFileIconProvider" id="domFileDefault" order="last"/>
 
-    <patterns.patternClass className="com.intellij.patterns.DomPatterns" alias="dom"/>
     <xmlStructureViewBuilderProvider implementation="com.intellij.util.xml.structure.DomStructureViewBuilderProvider" order="last"/>
   </extensions>
 </idea-plugin>

@@ -25,7 +25,6 @@
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
     <module name="intellij.platform.warmup"/>
-    <module name="intellij.relaxng"/>
     <module name="intellij.settingsSync.core"/>
     <module name="intellij.spellchecker.xml"/>
     <module name="intellij.emojipicker"/>
@@ -34,5 +33,6 @@
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>
   <xi:include href="/META-INF/vcs-modules.xml"/>
+  <xi:include href="/META-INF/xml-modules.xml"/>
 
 </idea-plugin>
