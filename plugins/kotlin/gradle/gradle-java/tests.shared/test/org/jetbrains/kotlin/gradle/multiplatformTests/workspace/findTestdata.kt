@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.workspace
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -14,28 +15,24 @@ internal fun KotlinMppTestsContext.findMostSpecificExistingFileOrNewDefault(
 ) = findMostSpecificExistingFileOrNewDefault(
     checkerClassifier = checkerClassifier,
     testDataDir = testDataDirectory,
-    kgpVersion = kgpVersion,
-    gradleClassifier = gradleVersion.version,
-    agpClassifier = agpVersion,
+    kotlinTestProperties = testProperties,
     testConfiguration = testConfiguration
 )
 
 internal fun findMostSpecificExistingFileOrNewDefault(
     checkerClassifier: String,
     testDataDir: File,
-    kgpVersion: KotlinToolingVersion,
-    gradleClassifier: String,
-    agpClassifier: String?,
+    kotlinTestProperties: KotlinTestProperties,
     testConfiguration: TestConfiguration
 ): File {
-    val kotlinClassifier = with(kgpVersion) { "$major.$minor.$patch" }
+    val kotlinClassifier = with(kotlinTestProperties.kotlinGradlePluginVersion) { "$major.$minor.$patch" }
     val testClassifier = testConfiguration.getConfiguration(GeneralWorkspaceChecks).testClassifier
     return findMostSpecificExistingFileOrNewDefault(
         checkerClassifier,
         testDataDir,
         kotlinClassifier,
-        gradleClassifier,
-        agpClassifier,
+        kotlinTestProperties.gradleVersion.version,
+        kotlinTestProperties.agpVersion,
         testClassifier
     )
 }
@@ -44,7 +41,7 @@ internal fun findMostSpecificExistingFileOrNewDefault(
     checkerClassifier: String,
     testDataDir: File,
     kotlinClassifier: String,
-    gradleClassifier: String,
+    gradleClassifier: String?,
     agpClassifier: String?,
     testClassifier: String?
 ): File {

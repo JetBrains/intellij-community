@@ -11,10 +11,6 @@ import org.junit.runner.Description
 import java.io.File
 
 interface KotlinMppTestsContext {
-    val gradleVersion: GradleVersion
-    val kgpVersion: KotlinToolingVersion
-    val agpVersion: String
-
     val description: Description
 
     /**
@@ -38,13 +34,15 @@ interface KotlinMppTestsContext {
     val testFeatures: List<TestFeature<*>>
 
     val enabledFeatures: List<TestFeature<*>>
+
+    val testProperties: KotlinTestProperties
 }
 
 class KotlinMppTestsContextImpl(
     override val testFeatures: List<TestFeature<*>>
 ) : KotlinMppTestsContext {
     override val testConfiguration: TestConfiguration = TestConfiguration()
-    val testProperties: KotlinTestProperties = KotlinTestProperties.construct(testConfiguration)
+    override val testProperties: KotlinTestProperties = KotlinTestProperties.construct(testConfiguration)
 
     override lateinit var description: Description
     override lateinit var testProjectRoot: File
@@ -53,15 +51,6 @@ class KotlinMppTestsContextImpl(
 
     var mutableCodeInsightTestFixture: CodeInsightTestFixture? = null
     override val codeInsightTestFixture: CodeInsightTestFixture get() = mutableCodeInsightTestFixture!!
-
-    override val gradleVersion: GradleVersion
-        get() = testProperties.gradleVersion
-
-    override val kgpVersion: KotlinToolingVersion
-        get() = testProperties.kotlinGradlePluginVersion
-
-    override val agpVersion: String
-        get() = testProperties.agpVersion
 
     override val testDataDirectory: File by lazy { computeTestDataDirectory(description) }
 

@@ -125,10 +125,10 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     // Two properties below are needed solely for compatibility with PluginTargetVersionsRule;
     // please, use context.testPropertiesService if you need those versions in your code
     final override val gradleVersion: String
-        get() = context.gradleVersion.version
+        get() = context.testProperties.gradleVersion.version
 
     final override val kotlinPluginVersion: KotlinToolingVersion
-        get() = context.kgpVersion
+        get() = context.testProperties.kotlinGradlePluginVersion
 
     // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
     open val allowOnNonMac: Boolean = false
@@ -202,7 +202,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             // Hack: usually this is set-up by JUnit's Parametrized magic, but
             // our tests source versions from `kotlinTestPropertiesService`, not from
             // @Parametrized
-            (this as GradleImportingTestCase).gradleVersion = context.gradleVersion.version
+            (this as GradleImportingTestCase).gradleVersion = context.testProperties.gradleVersion.version
             super.setUp()
         }
 
