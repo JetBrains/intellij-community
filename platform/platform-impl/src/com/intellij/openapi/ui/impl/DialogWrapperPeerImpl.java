@@ -469,7 +469,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       AccessToken ignore2 = lockCleanup;
       AccessToken ignore3 = lockContextCleanup
     ) {
-      if (!isProgressDialog()) {
+      if (!isProgressDialog() && !ApplicationManager.getApplication().isReadAccessAllowed()) {
         WriteIntentReadAction.run((Runnable) () -> {
           myDialog.show();
         });
