@@ -9,6 +9,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 internal fun <T> flowWithMessageBus(
   project: Project,
@@ -18,6 +19,8 @@ internal fun <T> flowWithMessageBus(
   if (!scope.isActive || project.isDisposed) return@callbackFlow
 
   val connection = project.messageBus.connect(scope)
-  operation(connection)
+  scope.launch {
+    operation(connection)
+  }
   awaitClose { connection.disconnect() }
 }
