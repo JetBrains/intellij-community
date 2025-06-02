@@ -25,7 +25,6 @@ import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -252,7 +251,7 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
       XDebugSession session = SoftReference.dereference(mySessionRef);
       if (session != null) {
         notification.expire();
-        ExecutionEnvironment environment = ((XDebugSessionImpl)session).getExecutionEnvironment();
+        ExecutionEnvironment environment = session.getExecutionEnvironment();
         if (environment != null) {
           ExecutionUtil.restart(environment);
         }
