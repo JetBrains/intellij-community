@@ -120,7 +120,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
 
                 LibrarySourceRoot(
                     libraryName = (split.getOrNull(0) ?: error())
-                        .replace("{{kotlin_version}}", kgpVersion.toString())
+                        .replace("{{kotlin_version}}", testProperties.kotlinGradlePluginVersion.toString())
                         .replace("{{space}}", " "),
                     sourcesJar = split.getOrNull(1) ?: error(),
                     testDataPath = split.getOrNull(2) ?: error(),

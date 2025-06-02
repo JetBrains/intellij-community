@@ -15,7 +15,7 @@ import java.io.File
 class KotlinTestProperties private constructor(
     private val kotlinGradlePluginVersionFromEnv: KotlinToolingVersion,
     private val gradleVersionFromEnv: GradleVersion,
-    private val agpVersionFromEnv: String,
+    private val agpVersionFromEnv: String?,
     private val devModeTweaks: DevModeTweaks?,
 ) {
     val kotlinGradlePluginVersion: KotlinToolingVersion
@@ -24,10 +24,8 @@ class KotlinTestProperties private constructor(
     val gradleVersion: GradleVersion
         get() = devModeTweaks?.overrideGradleVersion?.let { GradleVersion.version(it) } ?: gradleVersionFromEnv
 
-    val agpVersion: String
+    val agpVersion: String?
         get() = devModeTweaks?.overrideAgpVersion ?: agpVersionFromEnv
-
-
 
     fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
         val simpleProperties =  SimpleProperties(gradleVersion, kotlinGradlePluginVersion)
@@ -36,7 +34,7 @@ class KotlinTestProperties private constructor(
         val allPropertiesValuesById = simpleProperties.toMutableMap().apply {
             put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
             put(GradleVersionTestsProperty.id, gradleVersion.version)
-            put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
+            if (agpVersion != null) put(AndroidGradlePluginVersionTestsProperty.id, agpVersion!!)
             if (kotlinGradlePluginVersion < KotlinGradlePluginVersions.V_2_1_0) {
                 put("androidTargetPlaceholder", "android()")
                 put("iosTargetPlaceholder", "ios()")
@@ -99,5 +97,13 @@ class KotlinTestProperties private constructor(
                 testConfiguration?.getConfiguration(DevModeTestFeature),
             )
         }
+
+        fun constructRaw(kotlinVersion: KotlinToolingVersion, gradleVersion: GradleVersion, agpVersion: String? = null) =
+            KotlinTestProperties(
+                kotlinVersion,
+                gradleVersion,
+                agpVersion,
+                null,
+            )
     }
 }

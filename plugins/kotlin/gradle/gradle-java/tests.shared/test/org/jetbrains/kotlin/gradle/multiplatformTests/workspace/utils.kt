@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.workspace
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.utils.Printer
@@ -14,27 +15,4 @@ internal fun Printer.indented(block: () -> Unit) {
     pushIndent()
     block()
     popIndent()
-}
-
-fun checkWorkspaceModel(
-    project: Project,
-    expectedTestDataDir: File,
-    actualTestProjectRoot: File, // root of [project]
-    kotlinPluginVersion: KotlinToolingVersion,
-    gradleVersion: String,
-    checkers: List<WorkspaceModelChecker<*>>,
-    testConfiguration: TestConfiguration,
-    agpClassifier: String? = null,
-) {
-    for (checker in checkers) {
-        checker.check(
-            project,
-            expectedTestDataDir,
-            actualTestProjectRoot,
-            kotlinPluginVersion,
-            gradleVersion,
-            testConfiguration,
-            agpClassifier
-        )
-    }
 }

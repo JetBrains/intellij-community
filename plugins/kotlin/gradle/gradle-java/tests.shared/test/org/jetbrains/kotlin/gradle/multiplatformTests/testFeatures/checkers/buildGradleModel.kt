@@ -16,7 +16,7 @@ fun <T : Any> KotlinMppTestsContext.buildGradleModel(
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<T> =
     org.jetbrains.kotlin.idea.codeInsight.gradle.buildGradleModel(
-        this.testProjectRoot, gradleVersion, gradleJdkPath.absolutePath, clazz, debuggerOptions
+        this.testProjectRoot, testProperties.gradleVersion, gradleJdkPath.absolutePath, clazz, debuggerOptions
     )
 
 fun KotlinMppTestsContext.buildKotlinMPPGradleModel(
