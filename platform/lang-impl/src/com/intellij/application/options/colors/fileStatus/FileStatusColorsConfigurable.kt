@@ -48,11 +48,16 @@ class FileStatusColorsConfigurable : BoundSearchableConfigurable(
         colorSettingsVisible.set(false)
       }
       else {
+        val isOverridden = descriptor.uiThemeColor != null
+
         colorSettingsVisible.set(true)
         useColorCheckBox.setSelected(descriptor.color != null)
         colorPanel.setSelectedColor(descriptor.color)
         resetColorButton.setEnabled(!descriptor.isDefault)
-        overriddenByThemeLabel.isVisible = descriptor.uiThemeColor != null
+
+        useColorCheckBox.isEnabled = !isOverridden
+        colorPanel.setEditable(!isOverridden)
+        overriddenByThemeLabel.isVisible = isOverridden
       }
     }
     table.selectionModel.addListSelectionListener { updateColorPanel() }
