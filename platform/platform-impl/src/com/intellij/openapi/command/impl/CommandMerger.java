@@ -31,6 +31,7 @@ public final class CommandMerger {
   }
 
   private final @Nullable Project project;
+  private final boolean isTransparentSupported;
   private @Nullable @Command String commandName;
   private @Nullable Reference<Object> lastGroupId; // weak reference to avoid memleaks when clients pass some exotic objects as commandId
   private @NotNull UndoRedoList<UndoableAction> currentActions = new UndoRedoList<>();
@@ -43,8 +44,9 @@ public final class CommandMerger {
   private boolean isTransparent;
   private boolean isValid = true;
 
-  CommandMerger(@Nullable Project project, boolean isTransparent) {
+  CommandMerger(@Nullable Project project, boolean isTransparent, boolean isTransparentSupported) {
     this.project = project;
+    this.isTransparentSupported = isTransparentSupported;
     this.isTransparent = isTransparent;
   }
 
@@ -176,7 +178,7 @@ public final class CommandMerger {
       allAffectedDocuments.stream().findFirst().orElse(null),
       currentActions.snapshot(),
       lastGroupId,
-      isTransparent,
+      isTransparent(),
       commandName,
       editorStateBefore,
       editorStateAfter,
@@ -259,7 +261,10 @@ public final class CommandMerger {
   }
 
   boolean isTransparent() {
-    return isTransparent;
+    if (isTransparentSupported) {
+      return isTransparent;
+    }
+    return isTransparent && !hasActions();
   }
 
   @NotNull UndoConfirmationPolicy getUndoConfirmationPolicy() {
@@ -293,13 +298,13 @@ public final class CommandMerger {
   private void merge(@NotNull CommandMerger nextCommandToMerge) {
     setEditorStateBefore(nextCommandToMerge.editorStateBefore);
     editorStateAfter = nextCommandToMerge.editorStateAfter;
-    if (isTransparent) { // todo write test
+    if (isTransparent()) { // todo write test
       if (nextCommandToMerge.hasActions()) {
-        isTransparent = nextCommandToMerge.isTransparent;
+        isTransparent = nextCommandToMerge.isTransparent();
       }
     } else {
       if (!hasActions()) {
-        isTransparent = nextCommandToMerge.isTransparent;
+        isTransparent = nextCommandToMerge.isTransparent();
       }
     }
     isValid &= nextCommandToMerge.isValid;

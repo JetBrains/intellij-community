@@ -33,7 +33,11 @@ public enum UndoableActionType {
       case FINISH_MARK -> new FinishMarkAction(docRefs.get(0), isGlobal);
       case MENTION_ONLY -> new MentionOnlyUndoableAction(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
       case EDITOR_CHANGE -> null;
-      case NON_UNDOABLE -> new NonUndoableAction(docRefs.get(0), isGlobal);
+      case NON_UNDOABLE -> {
+        yield docRefs.isEmpty()
+              ? null
+              : new NonUndoableAction(docRefs.get(0), isGlobal);
+      }
       case OTHER -> new MockUndoableAction(docRefs, isGlobal);
     };
   }

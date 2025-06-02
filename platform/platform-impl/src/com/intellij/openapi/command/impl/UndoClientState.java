@@ -84,7 +84,7 @@ final class UndoClientState implements Disposable {
     this.sharedRedoStacksHolder = undoManager.getSharedRedoStacksHolder();
     this.undoStacksHolder = new UndoRedoStacksHolder(true, adjustableUndoableActionsHolder);
     this.redoStacksHolder = new UndoRedoStacksHolder(false, adjustableUndoableActionsHolder);
-    this.commandMerger = new CommandMerger(project, false);
+    this.commandMerger = new CommandMerger(project, false, isTransparentSupported);
   }
 
   @Override
@@ -178,7 +178,7 @@ final class UndoClientState implements Disposable {
     undoSpy.commandStarted(commandProject, undoConfirmationPolicy);
     if (!isInsideCommand()) {
       boolean isTransparent = CommandProcessor.getInstance().isUndoTransparentActionInProgress();
-      currentCommandMerger = new CommandMerger(project, isTransparent && isTransparentSupported);
+      currentCommandMerger = new CommandMerger(project, isTransparent, isTransparentSupported);
       if (commandProject != null) {
         currentProject = commandProject;
       }
