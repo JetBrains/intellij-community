@@ -39,7 +39,7 @@ import javax.swing.SwingUtilities
  * If the freeze lasts too long, the IDE will show a "modal" progress indicator and drop accumulated input events.
  *
  * The name of this class is an allusion to [PotemkinProgress] (which in turn was named after [Potemkin villages](https://en.wikipedia.org/wiki/Potemkin_village)).
- * However, the name of this class alludes to the occupation of both Grigory Potemkin and Alexander Suvorov.
+ * It is named after Alexander Suvorov, who shared the same occupation as Grigory Potemkin
  */
 @ApiStatus.Internal
 object SuvorovProgress {
