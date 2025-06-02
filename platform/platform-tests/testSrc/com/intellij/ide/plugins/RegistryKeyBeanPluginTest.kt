@@ -9,8 +9,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.util.registry.RegistryKeyDescriptor
-import com.intellij.platform.testFramework.PluginBuilder
 import com.intellij.platform.testFramework.loadPluginWithText
+import com.intellij.platform.testFramework.plugins.PluginSpec
+import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
+import com.intellij.platform.testFramework.plugins.extensions
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.Ksuid
@@ -52,20 +55,20 @@ class RegistryKeyBeanPluginTest {
   @Test
   fun `a dynamic key load is allowed`() {
     val key = "test.plugin.registry.key.1"
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey(key, defaultValue = true))
-
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey(key, defaultValue = true))
+    }
     loadPlugins(testDisposable, plugin1)
-
     assertTrue(Registry.get(key).asBoolean())
   }
 
   @Test
   fun `a static override of a non-existing key is allowed`() {
-    val plugin = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = true, overrides = true))
+    val plugin = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = true, overrides = true))
+    }
     assertDoesNotThrow {
       emulateStaticRegistryLoad(plugin)
     }
@@ -73,24 +76,28 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a static override of a key is allowed`() {
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = false))
-    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin2")
-      .extensions(registryKey("my.key", defaultValue = true, overrides = true))
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = false))
+    }
+    val plugin2 = plugin("plugin2") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = true, overrides = true))
+    }
     val registry = emulateStaticRegistryLoad(plugin1, plugin2)
     registry["my.key"].shouldNotBeNull().defaultValue.toBoolean() shouldBe true
   }
 
   @Test
   fun `a dynamic override of an existing key is forbidden`() {
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = true))
-    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin2")
-      .extensions(registryKey("my.key", defaultValue = true, overrides = true))
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = true))
+    }
+    val plugin2 = plugin("plugin2") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = true, overrides = true))
+    }
     val message = executeAndReturnPluginLoadingWarning {
       loadPlugins(testDisposable, plugin1, plugin2)
     }
@@ -99,25 +106,28 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `loading of the key owner after overrider is a no-op`() {
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = false))
-    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin2")
-      .extensions(registryKey("my.key", defaultValue = true, overrides = true))
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = false))
+    }
+    val plugin2 = plugin("plugin2") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = true, overrides = true))
+    }
     val registry = emulateStaticRegistryLoad(plugin2, plugin1)
     registry["my.key"].shouldNotBeNull().defaultValue.toBoolean() shouldBe true
   }
 
   @Test
   fun `loading two owners of same key replaces the key value but reports a diagnostic`() {
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = true))
-    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin2")
-      .extensions(registryKey("my.key", defaultValue = false))
-
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = true))
+    }
+    val plugin2 = plugin("plugin2") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = false))
+    }
     lateinit var registry: Map<String, RegistryKeyDescriptor>
     val message = executeAndReturnPluginLoadingWarning {
       registry = emulateStaticRegistryLoad(plugin1, plugin2)
@@ -129,12 +139,14 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a dynamic load of a non-overriding key reports a diagnostic but works`() {
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = true))
-    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin2")
-      .extensions(registryKey("my.key", defaultValue = false))
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = true))
+    }
+    val plugin2 = plugin("plugin2") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = false))
+    }
 
     val message = executeAndReturnPluginLoadingWarning {
       loadPlugins(testDisposable, plugin1, plugin2)
@@ -146,15 +158,18 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a second override of an already overridden key is ignored but reports a diagnostic`() {
-    val pluginB = PluginBuilder().dependsIntellijModulesLang()
-      .id("pluginB")
-      .extensions(registryKey("my.key", defaultValue = "base"))
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = "1", overrides = true))
-    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin2")
-      .extensions(registryKey("my.key", defaultValue = "2", overrides = true))
+    val pluginB = plugin("pluginB") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = "base"))
+    }
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = "1", overrides = true))
+    }
+    val plugin2 = plugin("plugin2") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = "2", overrides = true))
+    }
 
     lateinit var registry: Map<String, RegistryKeyDescriptor>
     val message = executeAndReturnPluginLoadingWarning {
@@ -167,16 +182,18 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a key should be deregistered after the owner plugin is unloaded`() {
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = "1"))
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = "1"))
+    }
 
     val nestedDisposable = Disposer.newDisposable()
     try {
       loadPlugins(nestedDisposable, plugin1)
       val key = getContributedKeyDescriptor("my.key")
       key.shouldNotBeNull().pluginId.shouldNotBeNull().shouldBe("plugin1")
-    } finally {
+    }
+    finally {
       Disposer.dispose(nestedDisposable)
     }
 
@@ -185,12 +202,14 @@ class RegistryKeyBeanPluginTest {
 
   @Test
   fun `a key should not be deregistered after the owner plugin wasn't actually owning it`() {
-    val plugin1 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin1")
-      .extensions(registryKey("my.key", defaultValue = "1"))
-    val plugin2 = PluginBuilder().dependsIntellijModulesLang()
-      .id("plugin2")
-      .extensions(registryKey("my.key", defaultValue = "2", overrides = true))
+    val plugin1 = plugin("plugin1") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = "1"))
+    }
+    val plugin2 = plugin("plugin2") {
+      dependsIntellijModulesLang()
+      extensions(registryKey("my.key", defaultValue = "2", overrides = true))
+    }
 
     loadPlugins(testDisposable, plugin1)
 
@@ -203,7 +222,8 @@ class RegistryKeyBeanPluginTest {
 
       val key = getContributedKeyDescriptor("my.key")
       key.shouldNotBeNull().pluginId.shouldNotBeNull().shouldBe("plugin1")
-    } finally {
+    }
+    finally {
       Disposer.dispose(nestedDisposable)
     }
 
@@ -214,7 +234,7 @@ class RegistryKeyBeanPluginTest {
   /**
    * "Static" means a Registry loading as if the plugins were loaded during the startup, i.e., not dynamically.
    */
-  private fun emulateStaticRegistryLoad(vararg plugins: PluginBuilder): Map<String, RegistryKeyDescriptor> {
+  private fun emulateStaticRegistryLoad(vararg plugins: PluginSpec): Map<String, RegistryKeyDescriptor> {
     val point = (ApplicationManager.getApplication().extensionArea)
       .getExtensionPoint<RegistryKeyBean>("com.intellij.registryKey")
     val beans = mutableListOf<Pair<RegistryKeyBean, PluginDescriptor>>()
@@ -241,7 +261,7 @@ class RegistryKeyBeanPluginTest {
     return registryMock
   }
 
-  private fun loadPlugins(disposable: Disposable, vararg plugins: PluginBuilder) {
+  private fun loadPlugins(disposable: Disposable, vararg plugins: PluginSpec) {
     for (plugin in plugins) {
       val pluginDisposable = loadPluginWithText(plugin, rootPath.resolve(Ksuid.generate()))
       Disposer.register(disposable, pluginDisposable)

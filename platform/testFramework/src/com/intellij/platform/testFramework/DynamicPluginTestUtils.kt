@@ -7,8 +7,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.testFramework.plugins.PluginSpec
-import com.intellij.platform.testFramework.plugins.buildDir
+import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.IndexingTestUtil
 import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
@@ -66,7 +65,10 @@ fun loadDescriptorInTest(
 @JvmOverloads
 fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Disposable {
   return loadPluginWithText(
-    pluginBuilder = PluginBuilder().dependsIntellijModulesLang().extensions(extensionTag, ns),
+    pluginSpec = plugin {
+      dependsIntellijModulesLang()
+      extensions(extensionTag, ns)
+    },
     path = FileUtil.createTempDirectory("test", "test", true).toPath(),
   ).also {
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
@@ -74,12 +76,12 @@ fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Di
 }
 
 fun loadPluginWithText(
-  pluginBuilder: PluginBuilder,
+  pluginSpec: PluginSpec,
   path: Path,
   disabledPlugins: Set<String> = emptySet(),
 ): Disposable {
   val descriptor = loadAndInitDescriptorInTest(
-    pluginBuilder = pluginBuilder,
+    pluginSpec = pluginSpec,
     rootPath = path,
     disabledPlugins = disabledPlugins,
   )
