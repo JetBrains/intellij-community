@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
-import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.jetbrains.rhizomedb.EID
@@ -51,31 +51,27 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
       }
     }
 
-    val equalityChecker = SeEqualityChecker()
+    SeLog.log(SeLog.ITEM_EMIT) { "Backend will request items from providers: ${providerIds.joinToString(", ")}" }
+
     val itemsFlows = providerIds.mapNotNull {
-      getProvidersHolder(sessionRef, dataContextId)?.get(it, isAllTab)
-    }.map {
-      getItems(it, params, equalityChecker, requestedCountState)
+      getProvidersHolder(sessionRef, dataContextId)
+        ?.get(it, isAllTab)
+        ?.getItems(params)
     }
 
-    return itemsFlows.merge().buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND).onCompletion {
-      receivingJob.cancel()
-    }
-  }
-
-  private fun getItems(
-    provider: SeLocalItemDataProvider,
-    params: SeParams,
-    equalityChecker: SeEqualityChecker,
-    requestedCountState: MutableStateFlow<Int>
-  ): Flow<SeItemData> {
+    val equalityChecker = SeEqualityChecker()
     return flow {
-      provider.getItems(params, equalityChecker).collect { item ->
+      itemsFlows.merge().buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND).mapNotNull { itemData ->
+        equalityChecker.checkAndUpdateIfNeeded(itemData)
+      }.collect { item ->
         requestedCountState.first { it > 0 }
         requestedCountState.update { it - 1 }
 
         emit(item)
       }
+    }.onCompletion {
+      SeLog.log(SeLog.ITEM_EMIT) { "Backend merged flow completed" }
+      receivingJob.cancel()
     }
   }
 

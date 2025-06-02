@@ -2,8 +2,9 @@
 package com.intellij.platform.searchEverywhere.equalityProviders
 
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
@@ -32,9 +33,12 @@ class SeEqualityChecker {
   private val alreadyFoundItems = mutableMapOf<String, SearchEverywhereFoundElementInfo>()
   private val lock = ReentrantLock()
 
-  fun getAction(itemObject: Any, newItemUuid: String, priority: Int, contributor: SearchEverywhereContributor<*>): Action {
+  fun checkAndUpdateIfNeeded(newItemData: SeItemData): SeItemData? {
+    val item = newItemData.fetchItemIfExists() ?: return newItemData
+    val itemObject = (item as? SeLegacyItem)?.rawObject ?: return newItemData
+
     lock.withLock {
-      val newItemInfo = SearchEverywhereFoundElementInfo(newItemUuid, itemObject, priority, contributor)
+      val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight, item.contributor)
       val action = equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
 
       val result = when (action) {
@@ -42,22 +46,43 @@ class SeEqualityChecker {
           val toRemove = action.toBeReplaced.mapNotNull { it.uuid }
           toRemove.forEach { alreadyFoundItems.remove(it) }
 
-          Replace(toRemove)
+          newItemData.withUuidToReplace(toRemove).logReplaceAndReturn()
         }
         is SEResultsEqualityProvider.SEEqualElementsActionType.Skip -> {
-          Skip
+          newItemData.logSkipAndReturnNull()
         }
         else -> {
-          alreadyFoundItems[newItemUuid] = newItemInfo
-          Add
+          alreadyFoundItems[newItemData.uuid] = newItemInfo
+          newItemData.logAddAndReturn()
         }
       }
 
       SeLog.log(SeLog.EQUALITY) {
-        "Equality result for ${contributor.searchProviderId}: $result for $newItemInfo"
+        "Equality result for ${item.contributor.searchProviderId}: $result for ${newItemInfo.uuid}"
       }
 
       return result
     }
+  }
+
+  private fun SeItemData.logSkipAndReturnNull(): SeItemData? {
+    SeLog.log(SeLog.EQUALITY) {
+      "Equality result SKIP: for ${providerId}: ${uuid}"
+    }
+    return null
+  }
+
+  private fun SeItemData.logAddAndReturn(): SeItemData {
+    SeLog.log(SeLog.EQUALITY) {
+      "Equality result ADD: for ${providerId}: ${uuid}"
+    }
+    return this
+  }
+
+  private fun SeItemData.logReplaceAndReturn(): SeItemData {
+    SeLog.log(SeLog.EQUALITY) {
+      "Equality result REPLACE(itemsIds=$uuidsToReplace): for ${providerId}: ${uuid}"
+    }
+    return this
   }
 }

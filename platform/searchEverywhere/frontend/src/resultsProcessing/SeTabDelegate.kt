@@ -47,7 +47,7 @@ class SeTabDelegate(
 
     return flow {
       providers.getValue().getItems(params, disabledProviders ?: emptyList()) {
-        SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${it.presentation.text}" }
+        SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${it.uuid} - ${it.presentation.text}" }
         accumulator.add(it)
       }.collect {
         emit(it)
@@ -100,16 +100,16 @@ class SeTabDelegate(
 
     fun getItems(params: SeParams, disabledProviders: List<SeProviderId>, mapToResultEvent: suspend (SeItemData) -> SeResultEvent?): Flow<SeResultEvent> {
       return channelFlow {
-
         launch {
           val equalityChecker = SeEqualityChecker()
           val localProviders = localProviders.filterKeys { !disabledProviders.contains(it) }.values
 
           localProviders.asFlow().flatMapMerge { provider ->
-            provider.getItems(params, equalityChecker).mapNotNull {
-              mapToResultEvent(it)
-            }
-          }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).collect {
+            provider.getItems(params)
+          }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).mapNotNull {
+            val checkedItemData = equalityChecker.checkAndUpdateIfNeeded(it) ?: return@mapNotNull null
+            mapToResultEvent(checkedItemData)
+          }.collect {
             send(it)
           }
         }

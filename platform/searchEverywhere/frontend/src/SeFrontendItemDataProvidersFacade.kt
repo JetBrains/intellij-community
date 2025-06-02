@@ -44,7 +44,7 @@ class SeFrontendItemDataProvidersFacade(private val projectId: ProjectId,
           channel.send(DEFAULT_CHUNK_SIZE)
         }
 
-        SeLog.log(ITEM_EMIT) { "Frontend provider for ${it.providerId.value} receives: ${it.presentation.text}" }
+        SeLog.log(ITEM_EMIT) { "Frontend provider for ${it.providerId.value} receives: ${it.uuid} - ${it.presentation.text}" }
         send(it)
       }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND)

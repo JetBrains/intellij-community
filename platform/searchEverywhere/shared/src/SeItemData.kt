@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 @ApiStatus.Experimental
 @ApiStatus.Internal
-data class SeItemData(
+class SeItemData(
   val uuid: String,
   val providerId: SeProviderId,
   val weight: Int,
@@ -17,9 +17,12 @@ data class SeItemData(
   val uuidsToReplace: List<String>,
   private val itemRef: DurableRef<SeItemEntity>
 ) {
-
   fun fetchItemIfExists(): SeItem? {
     return itemRef.derefOrNull()?.findItemOrNull()
+  }
+
+  fun withUuidToReplace(uuidToReplace: List<String>): SeItemData {
+    return SeItemData(uuid, providerId, weight, presentation, uuidToReplace, itemRef)
   }
 
   @ApiStatus.Internal
