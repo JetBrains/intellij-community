@@ -2,7 +2,6 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
@@ -11,8 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal fun isFuzzyFileSearchEnabled(): Boolean {
-  return `is`("search.everywhere.fuzzy.file.search.enabled", false) ||
-         ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
+  return ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
 }
 
 @ApiStatus.Internal
