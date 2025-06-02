@@ -12,41 +12,52 @@ import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
 import java.nio.file.Path
 
+internal val StubBuildNumber: BuildNumber get() = BuildNumber.fromString("2042.42")!!
+
+internal val StubPluginDescriptorLoadingContext: PluginDescriptorLoadingContext get() = PluginDescriptorLoadingContext(
+  getBuildNumberForDefaultDescriptorVersion = { StubBuildNumber }
+)
+
 @JvmOverloads
 fun loadAndInitDescriptorInTest(
   dir: Path,
   isBundled: Boolean = false,
   disabledPlugins: Set<String> = emptySet(),
 ): PluginMainDescriptor {
-  assertThat(dir).exists()
-  PluginManagerCore.getAndClearPluginLoadingErrors()
-
-  val buildNumber = BuildNumber.fromString("2042.42")!!
-  val loadingContext = PluginDescriptorLoadingContext(
-    getBuildNumberForDefaultDescriptorVersion = { buildNumber }
-  )
+  val result = loadDescriptorInTest(dir, isBundled)
   val initContext = PluginInitializationContext.buildForTest(
     essentialPlugins = emptySet(),
     disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),
-    getProductBuildNumber = { buildNumber },
+    getProductBuildNumber = { StubBuildNumber },
     requirePlatformAliasDependencyForLegacyPlugins = false,
     checkEssentialPlugins = false,
     explicitPluginSubsetToLoad = null,
     disablePluginLoadingCompletely = false,
     currentProductModeId = ProductMode.MONOLITH.id,
   )
+  result.initialize(context = initContext)
+  return result
+}
+
+@JvmOverloads
+fun loadDescriptorInTest(
+  fileOrDir: Path,
+  isBundled: Boolean = false,
+  loadingContext: PluginDescriptorLoadingContext = StubPluginDescriptorLoadingContext
+): PluginMainDescriptor {
+  assertThat(fileOrDir).exists()
+  PluginManagerCore.getAndClearPluginLoadingErrors()
   val result = loadDescriptorFromFileOrDirInTests(
-    file = dir,
+    file = fileOrDir,
     loadingContext = loadingContext,
     isBundled = isBundled,
   )
   if (result == null) {
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
-    throw AssertionError("Cannot load plugin from $dir")
+    throw AssertionError("Cannot load plugin from $fileOrDir")
   }
-  result.initialize(context = initContext)
   return result
 }
 
