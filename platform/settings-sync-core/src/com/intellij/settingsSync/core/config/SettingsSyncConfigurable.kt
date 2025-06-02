@@ -317,15 +317,14 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_AND_REMOVED_DATA_FROM_SERVER)
       }
       DisableSyncType.DISABLE -> {
-        syncStatusChanged()
         SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
       }
       else -> {
-        syncStatusChanged()
         SettingsSyncEventsStatistics.DISABLED_MANUALLY.log(SettingsSyncEventsStatistics.ManualDisableMethod.DISABLED_ONLY)
       }
     }
     disableSyncOption.set(DisableSyncType.DISABLE)
+    syncStatusChanged()
   }
 
   private fun enableButtonAction(){
@@ -620,40 +619,47 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     if (!::cellDropDownLink.isInitialized)
       return
     updateUserAccountsList()
+    refreshActionRequired()
     if (!enableCheckbox.isSelected) {
       //statusLabel.icon = icons.SettingsSyncIcons.StatusDisabled
       cellDropDownLink.comment?.text = "" //message("sync.status.disabled.message")
       return
     }
-    val currentStatus = SettingsSyncStatusTracker.getInstance().currentStatus
-    actionRequired.set(currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
     if (SettingsSyncSettings.getInstance().syncEnabled) {
-
-      if (currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
-        actionRequiredAction = { currentStatus.execute(syncConfigPanel) }
-        actionRequiredLabel.text = currentStatus.message
-        actionRequiredButton.text = currentStatus.actionTitle
-        cellDropDownLink.comment?.text = message("sync.status.action.required.comment", currentStatus.actionTitle, currentStatus.message)
-      } else {
-        cellDropDownLink.comment?.text = ""
-        actionRequiredAction = null
-        actionRequiredLabel.text = ""
-        actionRequiredButton.text = ""
-        if (currentStatus == SettingsSyncStatusTracker.SyncStatus.Success) {
-          val lastSyncTime = SettingsSyncStatusTracker.getInstance().getLastSyncTime()
-          if (lastSyncTime > 0) {
-            cellDropDownLink.comment?.text = "<icon src='AllIcons.General.GreenCheckmark'>&nbsp;" + message("sync.status.last.sync.message", DateFormatUtil.formatPrettyDateTime(lastSyncTime))
-          } else {
-            cellDropDownLink.comment?.text = message("sync.status.enabled")
-          }
-        } else if (currentStatus is SettingsSyncStatusTracker.SyncStatus.Error) {
-          cellDropDownLink.comment?.text = message("sync.status.failed", currentStatus.errorMessage)
+      val currentStatus = SettingsSyncStatusTracker.getInstance().currentStatus
+      if (currentStatus == SettingsSyncStatusTracker.SyncStatus.Success) {
+        val lastSyncTime = SettingsSyncStatusTracker.getInstance().getLastSyncTime()
+        if (lastSyncTime > 0) {
+          cellDropDownLink.comment?.text = "<icon src='AllIcons.General.GreenCheckmark'>&nbsp;" + message("sync.status.last.sync.message", DateFormatUtil.formatPrettyDateTime(lastSyncTime))
         }
+        else {
+          cellDropDownLink.comment?.text = message("sync.status.enabled")
+        }
+      }
+      else if (currentStatus is SettingsSyncStatusTracker.SyncStatus.Error) {
+        cellDropDownLink.comment?.text = message("sync.status.failed", currentStatus.errorMessage)
       }
     }
     else {
       //statusLabel.icon = icons.SettingsSyncIcons.StatusNotRun
       cellDropDownLink.comment?.text = ""
+    }
+  }
+
+  private fun refreshActionRequired() {
+    val currentStatus = SettingsSyncStatusTracker.getInstance().currentStatus
+    actionRequired.set(currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
+    if (currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
+      actionRequiredAction = { currentStatus.execute(syncConfigPanel) }
+      actionRequiredLabel.text = currentStatus.message
+      actionRequiredButton.text = currentStatus.actionTitle
+      cellDropDownLink.comment?.text = message("sync.status.action.required.comment", currentStatus.actionTitle, currentStatus.message)
+    }
+    else {
+      cellDropDownLink.comment?.text = ""
+      actionRequiredAction = null
+      actionRequiredLabel.text = ""
+      actionRequiredButton.text = ""
     }
   }
 
