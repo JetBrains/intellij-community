@@ -2,23 +2,24 @@
 package com.intellij.polySymbols.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProcess
+import com.intellij.codeInsight.completion.CompletionProcessEx
 import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.getAndUpdateUserData
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.PsiElement
-import com.intellij.psi.util.startOffset
-import com.intellij.util.ProcessingContext
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.startOffset
+import com.intellij.util.ProcessingContext
 
 abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionProvider<CompletionParameters>() {
   final override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -58,18 +59,19 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
 
   companion object {
 
-    private val exclusiveKindMap: MutableMap<CompletionProcess, Set<PolySymbolQualifiedKind>> = ContainerUtil.createConcurrentWeakMap()
-
+    private val preventedCodeCompletionsKey = Key<Set<PolySymbolQualifiedKind>>("polySymbols.completion.preventedSymbolKinds")
 
     @JvmStatic
     fun preventFurtherCodeCompletionsFor(parameters: CompletionParameters, qualifiedKind: PolySymbolQualifiedKind) {
-      exclusiveKindMap.merge(parameters.process, setOf(qualifiedKind)) { s1, s2 -> s1 + s2 }
+      (parameters.process as CompletionProcessEx).getAndUpdateUserData(preventedCodeCompletionsKey) {
+        it?.let { it + qualifiedKind } ?: setOf(qualifiedKind)
+      }
     }
 
     @JvmStatic
     fun isFurtherCodeCompletionPreventedFor(parameters: CompletionParameters, vararg qualifiedKind: PolySymbolQualifiedKind): Boolean =
-      exclusiveKindMap[parameters.process]?.let { exclusive -> qualifiedKind.any { exclusive.contains(it) } } == true
-
+      (parameters.process as CompletionProcessEx).getUserData(preventedCodeCompletionsKey)
+        ?.let { prevented -> qualifiedKind.any { prevented.contains(it) } } == true
     @JvmStatic
     fun processCompletionQueryResults(
       queryExecutor: PolySymbolsQueryExecutor,
