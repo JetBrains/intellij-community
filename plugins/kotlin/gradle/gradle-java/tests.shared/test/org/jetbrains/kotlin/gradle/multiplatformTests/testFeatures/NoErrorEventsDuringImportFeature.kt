@@ -31,14 +31,7 @@ object NoErrorEventsDuringImportFeature : TestFeatureWithSetUpTearDown<Unit> {
     }
 
     override fun KotlinMppTestsContext.afterImport() {
-        val expectedFailure = findMostSpecificExistingFileOrNewDefault(
-            "importErrors",
-            testDataDirectory,
-            kgpVersion,
-            gradleVersion.version,
-            agpVersion,
-            testConfiguration
-        )
+        val expectedFailure = findMostSpecificExistingFileOrNewDefault("importErrors")
         val buildErrors = importStatusCollector!!.buildErrors
         val isBuildFailed = importStatusCollector!!.isBuildSuccessful.not()
         when {

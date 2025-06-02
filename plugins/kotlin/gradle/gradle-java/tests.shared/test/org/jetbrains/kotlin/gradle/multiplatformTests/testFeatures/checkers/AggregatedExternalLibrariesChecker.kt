@@ -18,14 +18,7 @@ object AggregatedExternalLibrariesChecker : AbstractTestChecker<AggregatedExtern
     override fun createDefaultConfiguration(): AggregatedExternalLibrariesConfiguration = AggregatedExternalLibrariesConfiguration()
 
     override fun KotlinMppTestsContext.check() {
-        val expectedFile = findMostSpecificExistingFileOrNewDefault(
-            "aggregatedExternalLibraries",
-            testDataDirectory,
-            kgpVersion,
-            gradleVersion.version,
-            agpVersion,
-            testConfiguration
-        )
+        val expectedFile = findMostSpecificExistingFileOrNewDefault("aggregatedExternalLibraries")
         val expectedContent = expectedFile.takeIf { it.exists() }
             ?.readText()
             ?: error("Expected file does not exist")
