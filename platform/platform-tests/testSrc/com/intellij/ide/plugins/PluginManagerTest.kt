@@ -15,7 +15,7 @@ import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeRe
 import com.intellij.platform.plugins.parser.impl.consume
 import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
+import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.UsefulTestCase
@@ -25,7 +25,6 @@ import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.assertj.core.api.Assertions
-import org.jetbrains.annotations.TestOnly
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -193,7 +192,7 @@ class PluginManagerTest {
   @Test
   fun testModulePluginIdContract() {
     val pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules")
-    val descriptorBundled = loadAndInitDescriptorInTest(pluginsPath, true)
+    val descriptorBundled = loadDescriptorInTest(pluginsPath, true)
     val pluginSet = PluginSetBuilder(mutableSetOf(descriptorBundled)).createPluginSetWithEnabledModulesMap()
 
     val moduleId = PluginId.getId("foo.bar")
@@ -204,8 +203,8 @@ class PluginManagerTest {
   @Test
   fun testIdentifyPreInstalledPlugins() {
     val pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled")
-    val bundled = loadAndInitDescriptorInTest(pluginsPath.resolve("bundled"), true)
-    val updated = loadAndInitDescriptorInTest(pluginsPath.resolve("updated"))
+    val bundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), true)
+    val updated = loadDescriptorInTest(pluginsPath.resolve("updated"))
     val expectedPluginId = updated.getPluginId()
     Assert.assertEquals(expectedPluginId, bundled.getPluginId())
 

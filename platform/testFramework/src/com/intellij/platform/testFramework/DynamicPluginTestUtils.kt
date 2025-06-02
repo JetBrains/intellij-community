@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.IndexingTestUtil
 import org.assertj.core.api.Assertions.assertThat
@@ -17,28 +16,6 @@ internal val StubBuildNumber: BuildNumber get() = BuildNumber.fromString("2042.4
 internal val StubPluginDescriptorLoadingContext: PluginDescriptorLoadingContext get() = PluginDescriptorLoadingContext(
   getBuildNumberForDefaultDescriptorVersion = { StubBuildNumber }
 )
-
-@JvmOverloads
-fun loadAndInitDescriptorInTest(
-  dir: Path,
-  isBundled: Boolean = false,
-): PluginMainDescriptor {
-  val result = loadDescriptorInTest(dir, isBundled)
-  val initContext = PluginInitializationContext.buildForTest(
-    essentialPlugins = emptySet(),
-    disabledPlugins = emptySet(),
-    expiredPlugins = emptySet(),
-    brokenPluginVersions = emptyMap(),
-    getProductBuildNumber = { StubBuildNumber },
-    requirePlatformAliasDependencyForLegacyPlugins = false,
-    checkEssentialPlugins = false,
-    explicitPluginSubsetToLoad = null,
-    disablePluginLoadingCompletely = false,
-    currentProductModeId = ProductMode.MONOLITH.id,
-  )
-  result.initialize(context = initContext)
-  return result
-}
 
 @JvmOverloads
 fun loadDescriptorInTest(
@@ -77,7 +54,7 @@ fun loadPluginWithText(
   pluginSpec: PluginSpec,
   path: Path,
 ): Disposable {
-  val descriptor = loadAndInitDescriptorInTest(
+  val descriptor = loadDescriptorInTest(
     pluginSpec = pluginSpec,
     rootPath = path,
   )
@@ -98,35 +75,15 @@ fun loadPluginWithText(
   }
 }
 
-fun loadAndInitDescriptorInTest(
-  pluginBuilder: PluginBuilder,
-  rootPath: Path,
-  useTempDir: Boolean = false,
-): IdeaPluginDescriptorImpl {
-  val path = if (useTempDir)
-    Files.createTempDirectory(rootPath, null)
-  else
-    rootPath
-
-  val pluginDirectory = path.resolve("plugin")
-  pluginBuilder.build(pluginDirectory)
-
-  return loadAndInitDescriptorInTest(
-    dir = pluginDirectory,
-  )
-}
-
-fun loadAndInitDescriptorInTest(
+fun loadDescriptorInTest(
   pluginSpec: PluginSpec,
   rootPath: Path,
   useTempDir: Boolean = false,
-): IdeaPluginDescriptorImpl {
+): PluginMainDescriptor {
   val path = if (useTempDir) Files.createTempDirectory(rootPath, null) else rootPath
   val pluginDirectory = path.resolve("plugin")
   pluginSpec.buildDir(pluginDirectory)
-  return loadAndInitDescriptorInTest(
-    dir = pluginDirectory,
-  )
+  return loadDescriptorInTest(fileOrDir = pluginDirectory)
 }
 
 fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {

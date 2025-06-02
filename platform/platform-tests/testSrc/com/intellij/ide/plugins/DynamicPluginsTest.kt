@@ -42,7 +42,7 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
-import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
+import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.platform.testFramework.plugins.*
 import com.intellij.platform.testFramework.setPluginClassLoaderForMainAndSubPlugins
@@ -116,7 +116,7 @@ class DynamicPluginsTest {
       name = "testLoadListeners"
       applicationListeners = """<listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>"""
     }
-    val descriptor = loadAndInitDescriptorInTest(plugin, rootPath, useTempDir = true)
+    val descriptor = loadDescriptorInTest(plugin, rootPath, useTempDir = true)
 
     setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPlugins::class.java.classLoader)
     DynamicPlugins.loadPlugin(descriptor)
@@ -131,7 +131,7 @@ class DynamicPluginsTest {
   @Test
   fun testClassloaderAfterReload() {
     val bar = plugin("bar") { dependsIntellijModulesLang() }
-    val descriptor = loadAndInitDescriptorInTest(bar, rootPath)
+    val descriptor = loadDescriptorInTest(bar, rootPath)
     assertThat(descriptor).isNotNull
 
     DynamicPlugins.loadPlugin(descriptor)
@@ -144,7 +144,7 @@ class DynamicPluginsTest {
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
     DisabledPluginsState.saveDisabledPluginsAndInvalidate(PathManager.getConfigDir())
-    val newDescriptor = loadAndInitDescriptorInTest(pluginsPath)
+    val newDescriptor = loadDescriptorInTest(pluginsPath)
     ClassLoaderConfigurator(PluginManagerCore.getPluginSet()
                               .withPlugin(newDescriptor)
                               .createPluginSetWithEnabledModulesMap())
@@ -265,7 +265,7 @@ class DynamicPluginsTest {
       extensionPoints = """<extensionPoint qualifiedName="$epName" interface="java.lang.Runnable"/>"""
       extensions("""<foo implementation="${MyRunnable::class.java.name}"/>""", "one")
     }
-    val descriptor = loadAndInitDescriptorInTest(plugin, rootPath, useTempDir = true)
+    val descriptor = loadDescriptorInTest(plugin, rootPath, useTempDir = true)
     assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor))
       .isEqualTo("Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName")
   }
@@ -424,11 +424,11 @@ class DynamicPluginsTest {
       }
     }
 
-    val barDescriptor = loadAndInitDescriptorInTest(pluginsPath.resolve(barJar))
+    val barDescriptor = loadDescriptorInTest(pluginsPath.resolve(barJar))
     try {
       assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
 
-      val fooDescriptor = loadAndInitDescriptorInTest(pluginsPath.resolve(fooJar))
+      val fooDescriptor = loadDescriptorInTest(pluginsPath.resolve(fooJar))
       try {
         assertThat(DynamicPlugins.loadPlugin(fooDescriptor)).isTrue()
 
@@ -460,10 +460,10 @@ class DynamicPluginsTest {
       includePackageClassFiles<BarService>()
     }.buildMainJar(barJar)
 
-    val fooDescriptor = loadAndInitDescriptorInTest(fooJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
+    val fooDescriptor = loadDescriptorInTest(fooJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
     try {
       assertThat(DynamicPlugins.loadPlugin(fooDescriptor)).isTrue()
-      val barDescriptor = loadAndInitDescriptorInTest(barJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
+      val barDescriptor = loadDescriptorInTest(barJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
       try {
         // FIXME perhaps it should return false to indicate that restart is needed to load more stuff
         assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
@@ -889,7 +889,7 @@ class DynamicPluginsTest {
     }
     loadPluginWithText(bar).use {
       loadPluginWithText(quux).use {
-        val descriptor = loadAndInitDescriptorInTest(main, rootPath, useTempDir = true)
+        val descriptor = loadDescriptorInTest(main, rootPath, useTempDir = true)
         setPluginClassLoaderForMainAndSubPlugins(descriptor, DynamicPluginsTest::class.java.classLoader)
         assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isEqualTo(
           "Plugin ${main.id} is not unload-safe because of extension to non-dynamic EP foo.barExtension in optional dependency on ${quux.id} in optional dependency on ${bar.id}")
@@ -958,7 +958,7 @@ class DynamicPluginsTest {
       extensions("""<applicationService serviceInterface="${MyPersistentComponent::class.java.name}"
         |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin())
     }
-    val descriptor = loadAndInitDescriptorInTest(incompatiblePlugin, rootPath, useTempDir = true)
+    val descriptor = loadDescriptorInTest(incompatiblePlugin, rootPath, useTempDir = true)
 
     PluginEnabler.getInstance().disable(listOf(descriptor))
     assertThat(PluginEnabler.getInstance().isDisabled(PluginId.getId(incompatiblePlugin.id!!))).isTrue()
