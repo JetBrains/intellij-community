@@ -7,6 +7,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.AsyncProcessIcon
@@ -59,6 +60,8 @@ object SuvorovProgress {
     if (awaitedValue.isCompleted) {
       return
     }
+
+    FreezeUiUsageCollector.reportUiFreezePopupVisible(showingDelay)
 
     val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
       "None"
