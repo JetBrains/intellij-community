@@ -3,7 +3,6 @@ package com.intellij.platform.testFramework
 
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.runtime.product.ProductMode
@@ -23,12 +22,11 @@ internal val StubPluginDescriptorLoadingContext: PluginDescriptorLoadingContext 
 fun loadAndInitDescriptorInTest(
   dir: Path,
   isBundled: Boolean = false,
-  disabledPlugins: Set<String> = emptySet(),
 ): PluginMainDescriptor {
   val result = loadDescriptorInTest(dir, isBundled)
   val initContext = PluginInitializationContext.buildForTest(
     essentialPlugins = emptySet(),
-    disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
+    disabledPlugins = emptySet(),
     expiredPlugins = emptySet(),
     brokenPluginVersions = emptyMap(),
     getProductBuildNumber = { StubBuildNumber },
@@ -78,12 +76,10 @@ fun loadExtensionWithText(extensionTag: String, ns: String = "com.intellij"): Di
 fun loadPluginWithText(
   pluginSpec: PluginSpec,
   path: Path,
-  disabledPlugins: Set<String> = emptySet(),
 ): Disposable {
   val descriptor = loadAndInitDescriptorInTest(
     pluginSpec = pluginSpec,
     rootPath = path,
-    disabledPlugins = disabledPlugins,
   )
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
   try {
@@ -105,7 +101,6 @@ fun loadPluginWithText(
 fun loadAndInitDescriptorInTest(
   pluginBuilder: PluginBuilder,
   rootPath: Path,
-  disabledPlugins: Set<String> = emptySet(),
   useTempDir: Boolean = false,
 ): IdeaPluginDescriptorImpl {
   val path = if (useTempDir)
@@ -118,14 +113,12 @@ fun loadAndInitDescriptorInTest(
 
   return loadAndInitDescriptorInTest(
     dir = pluginDirectory,
-    disabledPlugins = disabledPlugins,
   )
 }
 
 fun loadAndInitDescriptorInTest(
   pluginSpec: PluginSpec,
   rootPath: Path,
-  disabledPlugins: Set<String> = emptySet(),
   useTempDir: Boolean = false,
 ): IdeaPluginDescriptorImpl {
   val path = if (useTempDir) Files.createTempDirectory(rootPath, null) else rootPath
@@ -133,7 +126,6 @@ fun loadAndInitDescriptorInTest(
   pluginSpec.buildDir(pluginDirectory)
   return loadAndInitDescriptorInTest(
     dir = pluginDirectory,
-    disabledPlugins = disabledPlugins,
   )
 }
 

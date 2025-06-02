@@ -97,12 +97,10 @@ class DynamicPluginsTest {
 
   private fun loadPluginWithText(
     pluginSpec: PluginSpec,
-    disabledPlugins: Set<String> = emptySet(),
   ): Disposable {
     return com.intellij.platform.testFramework.loadPluginWithText(
       pluginSpec = pluginSpec,
       path = rootPath.resolve(Ksuid.generate()),
-      disabledPlugins = disabledPlugins,
     )
   }
 

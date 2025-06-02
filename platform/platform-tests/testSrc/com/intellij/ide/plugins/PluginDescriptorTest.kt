@@ -513,11 +513,9 @@ class PluginDescriptorTest {
 
     private fun loadDescriptorFromTestDataDir(
       dirName: String,
-      disabledPlugins: Set<String> = emptySet(),
     ): IdeaPluginDescriptorImpl {
       return loadAndInitDescriptorInTest(
         dir = Path.of(testDataPath, dirName),
-        disabledPlugins = disabledPlugins,
       )
     }
 
