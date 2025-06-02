@@ -951,8 +951,6 @@ object DynamicPlugins {
     app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
     app.runWriteAction {
       try {
-        PluginManagerCore.setPluginSet(pluginSet)
-
         val listenerCallbacks = mutableListOf<Runnable>()
 
         // 4. load into service container
@@ -967,6 +965,8 @@ object DynamicPlugins {
 
         clearPluginClassLoaderParentListCache(pluginSet)
         clearCachedValues()
+
+        PluginManagerCore.setPluginSet(pluginSet)
 
         listenerCallbacks.forEach(Runnable::run)
 
