@@ -7,16 +7,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
-import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import fleet.kernel.DurableRef
@@ -37,7 +36,7 @@ class SeTabDelegate(
   val scope: CoroutineScope
 ) : Disposable {
   private val providers = initAsync(scope) {
-    initializeProviders(project, providerIds, initEvent, sessionRef, logLabel, this)
+    initializeProviders(project, providerIds, initEvent, sessionRef)
   }
   private val providersAndLimits = providerIds.associateWith { Int.MAX_VALUE }
 
@@ -150,14 +149,8 @@ class SeTabDelegate(
       project: Project?,
       providerIds: List<SeProviderId>,
       initEvent: AnActionEvent,
-      sessionRef: DurableRef<SeSessionEntity>,
-      logLabel: String,
-      parentDisposable: Disposable,
+      sessionRef: DurableRef<SeSessionEntity>
     ): Providers {
-      val dataContextId = readAction {
-        initEvent.dataContext.rpcId()
-      }
-
       val hasWildcard = providerIds.any { it.isWildcard }
       val remoteProviderIds = SeRemoteApi.getInstance().getAvailableProviderIds().filter { hasWildcard || providerIds.contains(it) }.toSet()
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
@@ -169,23 +162,25 @@ class SeTabDelegate(
       val localProviderIds =
         (if (hasWildcard) localFactories.keys else providerIds) - remoteProviderIds
 
-      val localProvidersHolder = SeProvidersHolder.initialize(initEvent, project, sessionRef, logLabel, localProviderIds)
+      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder ?: error("Local providers holder is not initialized")
       val localProviders = localProviderIds.mapNotNull { providerId ->
-        localProvidersHolder.get(providerId, !hasWildcard)?.let {
+        localProvidersHolder.get(providerId, hasWildcard)?.let {
           providerId to it
         }
       }.toMap()
+
+      val dataContextId = readAction {
+        initEvent.dataContext.rpcId()
+      }
 
       val frontendProvidersFacade = if (project != null) {
         val remoteProviderIdToName =
           SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), sessionRef, dataContextId, remoteProviderIds.toList())
 
         if (remoteProviderIdToName.isEmpty()) null
-        else SeFrontendItemDataProvidersFacade(project.projectId(), remoteProviderIdToName, sessionRef, dataContextId)
+        else SeFrontendItemDataProvidersFacade(project.projectId(), remoteProviderIdToName, sessionRef, dataContextId, hasWildcard)
       }
       else null
-
-      localProviders.values.forEach { Disposer.register(parentDisposable, it) }
 
       return Providers(localProviders, frontendProvidersFacade)
     }

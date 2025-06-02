@@ -32,6 +32,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
     providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
     params: SeParams,
     dataContextId: DataContextId?,
     requestedCountChannel: ReceiveChannel<Int>,
@@ -43,6 +44,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
     itemData: SeItemData,
     modifiers: Int,
     searchText: String,
+    isAllTab: Boolean,
   ): Boolean
 
   /**
@@ -51,7 +53,8 @@ interface SeRemoteApi : RemoteApi<Unit> {
   suspend fun canBeShownInFindResults(projectId: ProjectId,
                                       sessionRef: DurableRef<SeSessionEntity>,
                                       dataContextId: DataContextId,
-                                      providerIds: List<SeProviderId>): Boolean
+                                      providerIds: List<SeProviderId>,
+                                      isAllTab: Boolean): Boolean
 
   suspend fun getAvailableProviderIds(): List<SeProviderId>
 
@@ -60,6 +63,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
   ): Map<SeProviderId, SeSearchScopesInfo>
 
   suspend fun getTypeVisibilityStatesForProviders(
@@ -67,6 +71,7 @@ interface SeRemoteApi : RemoteApi<Unit> {
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
   ): List<SeTypeVisibilityStatePresentation>
 
   suspend fun getDisplayNameForProviders(

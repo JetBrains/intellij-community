@@ -20,9 +20,10 @@ class SeRemoteApiImpl: SeRemoteApi {
                                     sessionRef: DurableRef<SeSessionEntity>,
                                     itemData: SeItemData,
                                     modifiers: Int,
-                                    searchText: String): Boolean {
+                                    searchText: String,
+                                    isAllTab: Boolean): Boolean {
     val project = projectId.findProjectOrNull() ?: return false
-    return SeBackendService.getInstance(project).itemSelected(sessionRef, itemData, modifiers, searchText)
+    return SeBackendService.getInstance(project).itemSelected(sessionRef, itemData, modifiers, searchText, isAllTab)
   }
 
   override suspend fun canBeShownInFindResults(
@@ -30,22 +31,24 @@ class SeRemoteApiImpl: SeRemoteApi {
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
   ): Boolean {
     val project = projectId.findProjectOrNull() ?: return false
-    return SeBackendService.getInstance(project).canBeShownInFindResults(sessionRef, dataContextId, providerIds)
+    return SeBackendService.getInstance(project).canBeShownInFindResults(sessionRef, dataContextId, providerIds, isAllTab)
   }
 
   override suspend fun getItems(
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
     providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
     params: SeParams,
     dataContextId: DataContextId?,
     requestedCountChannel: ReceiveChannel<Int>,
   ): Flow<SeItemData> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     return SeBackendService.getInstance(project)
-      .getItems(sessionRef, providerIds, params, dataContextId, requestedCountChannel)
+      .getItems(sessionRef, providerIds, isAllTab, params, dataContextId, requestedCountChannel)
   }
 
   override suspend fun getAvailableProviderIds(): List<SeProviderId> {
@@ -57,9 +60,10 @@ class SeRemoteApiImpl: SeRemoteApi {
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
   ): Map<SeProviderId, SeSearchScopesInfo> {
     val project = projectId.findProjectOrNull() ?: return emptyMap()
-    return SeBackendService.getInstance(project).getSearchScopesInfoForProviders(sessionRef, dataContextId, providerIds)
+    return SeBackendService.getInstance(project).getSearchScopesInfoForProviders(sessionRef, dataContextId, providerIds, isAllTab)
   }
 
   override suspend fun getTypeVisibilityStatesForProviders(
@@ -67,9 +71,10 @@ class SeRemoteApiImpl: SeRemoteApi {
     sessionRef: DurableRef<SeSessionEntity>,
     dataContextId: DataContextId,
     providerIds: List<SeProviderId>,
+    isAllTab: Boolean,
   ): List<SeTypeVisibilityStatePresentation> {
     val project = projectId.findProjectOrNull() ?: return emptyList()
-    return SeBackendService.getInstance(project).getTypeVisibilityStatesForProviders(sessionRef, dataContextId, providerIds)
+    return SeBackendService.getInstance(project).getTypeVisibilityStatesForProviders(sessionRef, dataContextId, providerIds, isAllTab)
   }
 
   override suspend fun getDisplayNameForProviders(

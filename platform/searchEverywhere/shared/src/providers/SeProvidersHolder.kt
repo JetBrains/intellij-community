@@ -30,9 +30,9 @@ class SeProvidersHolder(
   private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
 ) : Disposable {
-  fun get(providerId: SeProviderId, isSeparateTab: Boolean): SeLocalItemDataProvider? =
-    if (isSeparateTab) separateTabProviders[providerId] ?: allTabProviders[providerId]
-    else allTabProviders[providerId]
+  fun get(providerId: SeProviderId, isAllTab: Boolean): SeLocalItemDataProvider? =
+    if (isAllTab) allTabProviders[providerId]
+    else separateTabProviders[providerId] ?: allTabProviders[providerId]
 
   override fun dispose() {
     allTabProviders.values.forEach { Disposer.dispose(it) }
