@@ -2,11 +2,14 @@
 package com.intellij.ui.jcef.menu
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun isJcefContextMenuActionGroupRegistered(): Boolean {
-  return Registry.`is`("remoteDev.jcef.prefer.internal.context.menu.actions", false)
-         && ActionUtil.getActionGroup("Jcef.ContextMenuGroup") != null
+  val registryEnabled = Registry.`is`("remoteDev.jcef.prefer.internal.context.menu.actions", false)
+  val actionGroupRegistered = ActionUtil.getActionGroup("Jcef.ContextMenuGroup") != null
+  fileLogger().debug("JCEF context menu action group availability check: registryEnabled=$registryEnabled, actionGroupRegistered=$actionGroupRegistered")
+  return registryEnabled && actionGroupRegistered
 }

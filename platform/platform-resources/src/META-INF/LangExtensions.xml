@@ -1715,5 +1715,6 @@
   </projectListeners>
   <actions>
     <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
+    <group id="Jcef.ContextMenuGroup" popup="true" text="Frontend Jcef Actions"/>
   </actions>
 </idea-plugin>

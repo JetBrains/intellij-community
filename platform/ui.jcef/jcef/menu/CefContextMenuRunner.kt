@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef.menu
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.ui.awt.RelativePoint
@@ -21,6 +22,7 @@ internal class CefContextMenuRunner : CefContextMenuHandlerAdapter() {
     }
 
     if (isJcefContextMenuActionGroupRegistered()) {
+      thisLogger().warn("Native context menu actions are overridden, skip native menu popup")
       return true
     }
     val menuAdapter = JBCefMenuAdapter(model) { selectedItem ->
