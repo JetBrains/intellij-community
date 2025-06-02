@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
-import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.HintAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.ApplicationManager
@@ -40,7 +40,9 @@ class ImportQuickFix(
     element: KtElement,
     @IntentionName private val text: String,
     importVariants: List<AutoImportVariant>
-) : ImportLikeQuickFix(element, importVariants), HintAction, HighPriorityAction {
+) : ImportLikeQuickFix(element, importVariants), HintAction, PriorityAction {
+    override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.TOP
+
     override fun getText(): String = text
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.import")
