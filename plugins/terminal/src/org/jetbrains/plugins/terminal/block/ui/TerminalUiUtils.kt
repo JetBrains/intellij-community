@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
@@ -312,18 +311,17 @@ object TerminalUiUtils {
 
 fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase) {
   val colorScheme = checkNotNull(getUserData(TerminalColorScheme.KEY)) { "Should've been set on creation" }
-  val newPreferences = FontPreferencesImpl()
-  newSettings.fontPreferences.copyTo(newPreferences)
-  // the font size in the settings is unscaled, we need to get the scaled one separately
-  for (fontFamily in newPreferences.effectiveFontFamilies) {
-    newPreferences.setFontSize(fontFamily, newSettings.terminalFontSize)
-  }
-  colorScheme.fontPreferences = newPreferences
+  colorScheme.fontPreferences = newSettings.fontPreferences
   // for some reason, even though fontPreferences contains lineSpacing, the editor doesn't take it from there
   colorScheme.lineSpacing = newSettings.lineSpacing
   settings.apply {
     characterGridWidthMultiplier = newSettings.columnSpacing
   }
+  // The font size in the preferences is not scaled.
+  // Global user scaling will be applied by the editor itself,
+  // but if the _terminal_ font size was changed temporarily (Ctrl/Cmd+wheel, pinch zoom, etc.),
+  // it needs to be applied explicitly to the new editor.
+  setTerminalFontSize(newSettings.terminalFontSize, showZoomIndicator = false)
 }
 
 @ApiStatus.Internal
