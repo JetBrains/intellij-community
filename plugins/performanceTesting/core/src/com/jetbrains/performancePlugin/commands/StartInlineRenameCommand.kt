@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -53,10 +54,13 @@ class StartInlineRenameCommand(text: String, line: Int) : AbstractCommand(text, 
       if (renamers.isEmpty()) {
         val element = CommonDataKeys.PSI_ELEMENT.getData(dataContext)
         val offset = editor.caretModel.offset
+        val caret = CommonDataKeys.CARET.getData(dataContext)?.offset ?: offset
         val file = CommonDataKeys.PSI_FILE.getData(dataContext)
+        val util = TargetElementUtil.getInstance()
+        val targetElement = util.findTargetElement(editor, util.getReferenceSearchFlags(), caret)
         actionCallback.reject("Renamers are empty for element: $element, " +
-                              "file: $file, offset: $offset, elementAtOffset: ${file?.findElementAt(offset)}, " +
-                              "text: ${editor.document.text.substring(offset)}")
+                              "file: $file, offset: $offset, caret: $caret, elementAtOffset: ${file?.findElementAt(offset)}, " +
+                              "targetElement: $targetElement, text: ${editor.document.text.substring(offset)}")
       }
       else if (renamers.size == 1) {
         PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).use {
