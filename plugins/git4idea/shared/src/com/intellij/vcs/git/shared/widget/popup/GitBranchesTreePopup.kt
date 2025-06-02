@@ -15,9 +15,8 @@ import com.intellij.vcs.git.shared.ref.GitReferenceName
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeFilters
 import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel.RefUnderRepository
 import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
 import git4idea.GitReference
@@ -42,8 +41,8 @@ internal class GitBranchesTreePopup private constructor(
   }
 
   override fun getSearchFiledEmptyText(): String {
-    val isActionFilterSelected = GitBranchesTreePopupFilterByAction.isSelected(project)
-    val isRepositoryFilterSelected = GitBranchesTreePopupFilterByRepository.isSelected(project)
+    val isActionFilterSelected = GitBranchesTreeFilters.byActions(project)
+    val isRepositoryFilterSelected = GitBranchesTreeFilters.byRepositoryName(project)
     val separatorKind = if (isActionFilterSelected && isRepositoryFilterSelected) 2 else 1
     val byActions =
       if (isActionFilterSelected) GitBundle.message("git.branches.popup.search.field.actions.empty.text", separatorKind) else ""
@@ -61,7 +60,7 @@ internal class GitBranchesTreePopup private constructor(
 
   override fun getTreeEmptyText(searchPattern: String?): String {
     val filtersActive =
-      GitBranchesTreePopupFilterByAction.isSelected(project) || GitBranchesTreePopupFilterByRepository.isSelected(project)
+      GitBranchesTreeFilters.byActions(project) || GitBranchesTreeFilters.byRepositoryName(project)
 
     return if (filtersActive) GitBundle.message("git.branches.popup.tree.no.nodes", searchPattern)
     else GitBundle.message("git.branches.popup.tree.no.branches", searchPattern)

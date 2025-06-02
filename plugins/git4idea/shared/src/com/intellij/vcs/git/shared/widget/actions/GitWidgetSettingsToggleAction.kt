@@ -6,21 +6,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
 import git4idea.GitDisposable
 import git4idea.config.GitVcsSettings
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-abstract class GitWidgetSettingsToggleAction(
-  @NlsActions.ActionText text: String? = null,
-  @NlsActions.ActionDescription description: String? = null,
-  private val requireMultiRoot: Boolean = false
-) : ToggleAction(text, description, null), DumbAware {
+internal abstract class GitWidgetSettingsToggleAction(private val requireMultiRoot: Boolean = false) : ToggleAction(), DumbAware {
   final override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   final override fun isSelected(e: AnActionEvent): Boolean {

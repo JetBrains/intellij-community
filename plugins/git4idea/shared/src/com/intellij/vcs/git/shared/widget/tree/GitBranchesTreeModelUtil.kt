@@ -14,8 +14,6 @@ import com.intellij.util.containers.init
 import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.telemetry.GitBranchesPopupSpan
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
 import git4idea.*
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
@@ -200,14 +198,14 @@ internal open class LazyRepositoryHolder(
   repositories.map { GitBranchesTreeModel.RepositoryNode(it, !canHaveChildren) },
   matcher,
   nodeNameSupplier = { it.repository.shortName },
-  needFilter = { GitBranchesTreePopupFilterByRepository.isSelected(project) })
+  needFilter = { GitBranchesTreeFilters.byRepositoryName(project) })
 
 @ApiStatus.Internal
 class LazyActionsHolder(project: Project, actions: List<Any>, matcher: MinusculeMatcher?) :
   LazyHolder<Any>(actions, matcher,
                   exceptFilter = { it is SeparatorWithText },
                   nodeNameSupplier = { (it as? PopupFactoryImpl.ActionItem)?.text ?: it.toString() },
-                  needFilter = { GitBranchesTreePopupFilterByAction.isSelected(project) })
+                  needFilter = { GitBranchesTreeFilters.byActions(project) })
 
 @ApiStatus.Internal
 open class LazyHolder<N>(nodes: List<N>,

@@ -5,8 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByAction
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesTreePopupFilterByRepository
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -39,9 +37,9 @@ object GitBranchesTreeUtil {
   internal fun canSelect(project: Project, tree: JTree, node: Any?): Boolean {
     val model = tree.model
     return when (node) {
-      is PopupFactoryImpl.ActionItem -> GitBranchesTreePopupFilterByAction.isSelected(project)
+      is PopupFactoryImpl.ActionItem -> GitBranchesTreeFilters.byActions(project)
       is GitBranchesTreeModel.RepositoryNode -> {
-        if (!node.isLeaf) false else GitBranchesTreePopupFilterByRepository.isSelected(project)
+        if (!node.isLeaf) false else GitBranchesTreeFilters.byRepositoryName(project)
       }
       else -> model.isLeaf(node)
     }

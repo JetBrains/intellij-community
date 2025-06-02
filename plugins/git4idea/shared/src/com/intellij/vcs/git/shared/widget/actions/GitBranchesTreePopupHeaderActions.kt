@@ -15,15 +15,16 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.ui.ExperimentalUI
+import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeFilters
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
-internal class GitBranchesTreePopupSettings :
-  DefaultActionGroup(DvcsBundle.messagePointer("action.BranchActionGroupPopup.settings.text"), true), DumbAware {
+internal class GitBranchesTreePopupSettings : DefaultActionGroup(), DumbAware {
   init {
+    templatePresentation.text = DvcsBundle.message("action.BranchActionGroupPopup.settings.text")
+    templatePresentation.isPopupGroup = true
     templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
   }
 
@@ -35,8 +36,11 @@ internal class GitBranchesTreePopupSettings :
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-internal class GitBranchesTreePopupResizeAction :
-  DumbAwareAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size")) {
+internal class GitBranchesTreePopupResizeAction : DumbAwareAction() {
+  init {
+    templatePresentation.text = DvcsBundle.message("action.BranchActionGroupPopup.Anonymous.text.restore.size")
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -53,10 +57,11 @@ internal class GitBranchesTreePopupResizeAction :
   }
 }
 
-internal class GitBranchesTreePopupTrackReposSynchronouslyAction : GitWidgetSettingsToggleAction(
-  text = DvcsBundle.message("sync.setting"),
-  requireMultiRoot = true
-) {
+internal class GitBranchesTreePopupTrackReposSynchronouslyAction : GitWidgetSettingsToggleAction(requireMultiRoot = true) {
+  init {
+    templatePresentation.text = DvcsBundle.message("sync.setting")
+  }
+
   override fun isSelected(project: Project, settings: GitVcsSettings): Boolean {
     return settings.syncSetting == DvcsSyncSettings.Value.SYNC
   }
@@ -112,8 +117,7 @@ internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(
   }
 }
 
-@ApiStatus.Internal
-class GitBranchesTreePopupFilterByAction : GitWidgetSettingsToggleAction() {
+internal class GitBranchesTreePopupFilterByAction : GitWidgetSettingsToggleAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     if (!isEnabledAndVisible(e, requireMultiRoot = true)) {
@@ -121,7 +125,7 @@ class GitBranchesTreePopupFilterByAction : GitWidgetSettingsToggleAction() {
     }
   }
 
-  override fun isSelected(project: Project, settings: GitVcsSettings): Boolean = isSelected(project)
+  override fun isSelected(project: Project, settings: GitVcsSettings): Boolean = GitBranchesTreeFilters.byActions(project)
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
@@ -130,23 +134,15 @@ class GitBranchesTreePopupFilterByAction : GitWidgetSettingsToggleAction() {
     }
   }
 
-  companion object {
-    fun isSelected(project: Project): Boolean = GitVcsSettings.getInstance(project).filterByActionInPopup()
-  }
 }
 
-@ApiStatus.Internal
-class GitBranchesTreePopupFilterByRepository : GitWidgetSettingsToggleAction(requireMultiRoot = true) {
-  override fun isSelected(project: Project, settings: GitVcsSettings): Boolean = isSelected(project)
+internal class GitBranchesTreePopupFilterByRepository : GitWidgetSettingsToggleAction(requireMultiRoot = true) {
+  override fun isSelected(project: Project, settings: GitVcsSettings): Boolean = GitBranchesTreeFilters.byRepositoryName(project)
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
     changeSetting(project) { api ->
       api.setFilteringByRepositories(project.projectId(), state)
     }
-  }
-
-  companion object {
-    fun isSelected(project: Project): Boolean = GitVcsSettings.getInstance(project).filterByRepositoryInPopup() && isMultiRoot(project)
   }
 }
