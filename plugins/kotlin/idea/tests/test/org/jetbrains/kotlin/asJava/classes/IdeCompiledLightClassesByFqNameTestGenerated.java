@@ -295,6 +295,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/AnnotatedPropertyWithSites.kt"));
         }
 
+        @TestMetadata("annotatedReturnType.kt")
+        public void testAnnotatedReturnType() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/annotatedReturnType.kt"));
+        }
+
         @TestMetadata("annotationBinaryRetention.kt")
         public void testAnnotationBinaryRetention() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/annotationBinaryRetention.kt"));

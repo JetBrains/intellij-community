@@ -59,7 +59,7 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
                 val invokeCallReceiverTypePointer = analyze(invokeCallReceiverCopy) {
                     invokeCallReceiverCopy.expressionType?.createPointer()
                 }
-                
+
                 invokeCallReceiverTypePointer?.restore()
             }
 

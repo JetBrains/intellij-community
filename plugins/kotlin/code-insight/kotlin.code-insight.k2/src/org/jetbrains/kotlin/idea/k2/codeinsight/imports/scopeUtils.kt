@@ -1,10 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeWithKindImpl
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -19,7 +21,9 @@ import org.jetbrains.kotlin.resolve.ImportPath
 internal fun KaSession.buildImportingScopes(originalFile: KtFile, imports: Collection<ImportPath>): List<KaScopeWithKind> {
     val fileWithImports = buildFileWithImports(originalFile, imports)
 
-    return fileWithImports.importingScopeContext.scopes.map { originalScope ->
+    // FIXME: KTIJ-34274
+    @OptIn(KaImplementationDetail::class)
+    return KaBaseIllegalPsiException.allowIllegalPsiAccess { fileWithImports.importingScopeContext }.scopes.map { originalScope ->
 
         // we have to add this scope by hand, because buildFileWithImports builds a file without a package
         val fixedPackageScope = if (originalScope.kind is KaScopeKind.PackageMemberScope) {

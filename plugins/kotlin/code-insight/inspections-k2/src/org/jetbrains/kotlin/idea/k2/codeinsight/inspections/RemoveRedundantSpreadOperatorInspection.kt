@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -89,11 +90,13 @@ internal class RemoveRedundantSpreadOperatorInspection : KotlinApplicableInspect
     }
 }
 
-private fun KaSession.resolveCallToPsiElement(call: KtExpression): PsiElement? = call.resolveToCall()
-    ?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
-    ?.partiallyAppliedSymbol
-    ?.symbol
-    ?.psi
+private fun resolveCallToPsiElement(call: KtExpression): PsiElement? = analyze(call) {
+    call.resolveToCall()
+        ?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
+        ?.partiallyAppliedSymbol
+        ?.symbol
+        ?.psi
+}
 
 private fun removeRedundantSpreadOperator(
     project: Project,

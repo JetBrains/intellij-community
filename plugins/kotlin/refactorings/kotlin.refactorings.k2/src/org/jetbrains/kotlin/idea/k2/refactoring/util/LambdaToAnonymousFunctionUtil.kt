@@ -3,8 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -23,7 +22,6 @@ object LambdaToAnonymousFunctionUtil {
      * NB: to perform required calculations, the whole file with the lambda expression is copied!
      * So it should not be used during highlighting or other non-explicitly started activities
      */
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun prepareFunctionText(lambda: KtLambdaExpression, functionName: String = "") : String? {
         val functionLiteral = lambda.functionLiteral
@@ -37,40 +35,46 @@ object LambdaToAnonymousFunctionUtil {
         val bodyExpressionCopy = PsiTreeUtil.findSameElementInCopy(bodyExpression, fileCopy)
         val functionLiteralInCopy = PsiTreeUtil.findSameElementInCopy(functionLiteral, fileCopy)
 
-        bodyExpressionCopy.collectDescendantsOfType<KtReturnExpression>().forEach {
-            val targetDescriptor = it.targetSymbol
-            if (targetDescriptor?.psi == functionLiteralInCopy) {
-                it.labeledExpression?.delete()
+        analyze(bodyExpressionCopy) {
+            bodyExpressionCopy.collectDescendantsOfType<KtReturnExpression>().forEach {
+                val targetDescriptor = it.targetSymbol
+                if (targetDescriptor?.psi == functionLiteralInCopy) {
+                    it.labeledExpression?.delete()
+                }
             }
         }
 
-        val functionSymbol = functionLiteral.symbol as? KaAnonymousFunctionSymbol ?: return null
-        return KtPsiFactory.CallableBuilder(KtPsiFactory.CallableBuilder.Target.FUNCTION).apply {
-            typeParams()
-            functionSymbol.receiverType?.let {
-                receiver(it.render(position = Variance.INVARIANT))
-            }
-
-            name(functionName)
-            for (parameter in functionSymbol.valueParameters) {
-                val parameterType = parameter.returnType
-                val renderType = parameterType.render(position = Variance.IN_VARIANCE)
-                val parameterName = parameter.name
-                param(if (parameterName.isSpecial) "_" else parameterName.asString().quoteIfNeeded(), renderType)
-            }
-
-            functionSymbol.returnType.takeIf { !it.isUnitType && it !is KaErrorType }?.let {
-                val lastStatement = bodyExpressionCopy.statements.lastOrNull()
-                if (lastStatement != null && lastStatement !is KtReturnExpression) {
-                    val foldableReturns = BranchedFoldingUtils.getFoldableReturns(lastStatement)
-                    if (foldableReturns.isNullOrEmpty()) {
-                        lastStatement.replace(psiFactory.createExpressionByPattern("return $0", lastStatement))
-                    }
+        return analyze(functionLiteral) {
+            val functionSymbol = functionLiteral.symbol
+            KtPsiFactory.CallableBuilder(KtPsiFactory.CallableBuilder.Target.FUNCTION).apply {
+                typeParams()
+                functionSymbol.receiverType?.let {
+                    receiver(it.render(position = Variance.INVARIANT))
                 }
-                returnType(it.render(position = Variance.OUT_VARIANCE))
-            } ?: noReturnType()
-            blockBody(" " + bodyExpressionCopy.text)
-        }.asString()
+
+                name(functionName)
+                for (parameter in functionSymbol.valueParameters) {
+                    val parameterType = parameter.returnType
+                    val renderType = parameterType.render(position = Variance.IN_VARIANCE)
+                    val parameterName = parameter.name
+                    param(if (parameterName.isSpecial) "_" else parameterName.asString().quoteIfNeeded(), renderType)
+                }
+
+                functionSymbol.returnType.takeIf { !it.isUnitType && it !is KaErrorType }?.let {
+                    val lastStatement = bodyExpressionCopy.statements.lastOrNull()
+                    if (lastStatement != null && lastStatement !is KtReturnExpression) {
+                        analyze(lastStatement) {
+                            val foldableReturns = BranchedFoldingUtils.getFoldableReturns(lastStatement)
+                            if (foldableReturns.isNullOrEmpty()) {
+                                lastStatement.replace(psiFactory.createExpressionByPattern("return $0", lastStatement))
+                            }
+                        }
+                    }
+                    returnType(it.render(position = Variance.OUT_VARIANCE))
+                } ?: noReturnType()
+                blockBody(" " + bodyExpressionCopy.text)
+            }.asString()
+        }
     }
 
     fun convertLambdaToFunction(

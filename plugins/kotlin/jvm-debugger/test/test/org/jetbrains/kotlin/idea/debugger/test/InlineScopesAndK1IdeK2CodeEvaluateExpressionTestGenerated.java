@@ -2138,6 +2138,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/localClass.kt");
             }
 
+            @TestMetadata("localFunRefCapturingLocalVar.kt")
+            public void testLocalFunRefCapturingLocalVar() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/localFunRefCapturingLocalVar.kt");
+            }
+
             @TestMetadata("localFunctionCapturedLocalVariable.kt")
             public void testLocalFunctionCapturedLocalVariable() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/localFunctionCapturedLocalVariable.kt");
