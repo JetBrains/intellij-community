@@ -3,8 +3,8 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 
 class JavaSupportTest : GrazieTestBase() {
@@ -58,5 +58,9 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test spellchecking normalization`() {
     runHighlightTestForFile("ide/language/java/Normalization.java")
+  }
+
+  fun testCommentIsNotHighlightedIfThereIsReference() {
+    runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
   }
 }

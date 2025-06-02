@@ -15,7 +15,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.tokenizer.*;
@@ -23,15 +27,19 @@ import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.Normalizer;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class SpellCheckingInspection extends LocalInspectionTool implements DumbAware {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
@@ -241,27 +249,25 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       }
 
       boolean keyword = myNamesValidator.isKeyword(word, myElement.getProject());
-      if (keyword) {
+      if (keyword || !hasProblem(word) || hasSameNamedReferenceInFile(word)) {
         return;
       }
 
-      if (hasProblem(word)) {
-        //Use tokenizer to generate accurate range in element (e.g. in case of escape sequences in element)
-        SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, myElement.getLanguage());
+      //Use tokenizer to generate accurate range in element (e.g. in case of escape sequences in element)
+      SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, myElement.getLanguage());
 
-        Tokenizer<?> tokenizer = strategy != null ? strategy.getTokenizer(myElement) : null;
-        if (tokenizer != null) {
-          range = tokenizer.getHighlightingRange(myElement, myOffset, range);
-        }
-        assert range.getStartOffset() >= 0;
+      Tokenizer<?> tokenizer = strategy != null ? strategy.getTokenizer(myElement) : null;
+      if (tokenizer != null) {
+        range = tokenizer.getHighlightingRange(myElement, myOffset, range);
+      }
+      assert range.getStartOffset() >= 0;
 
-        if (myHolder.isOnTheFly()) {
-          addRegularDescriptor(myElement, range, myHolder, myUseRename, word);
-        }
-        else {
-          myAlreadyChecked.add(word);
-          addBatchDescriptor(myElement, range, word, myHolder);
-        }
+      if (myHolder.isOnTheFly()) {
+        addRegularDescriptor(myElement, range, myHolder, myUseRename, word);
+      }
+      else {
+        myAlreadyChecked.add(word);
+        addBatchDescriptor(myElement, range, word, myHolder);
       }
     }
 
@@ -298,6 +304,29 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         .replaceAll("Ö", "Oe")
         .replaceAll("Ä", "Ae")
         .replaceAll("ẞ", "SS");
+    }
+
+    private boolean hasSameNamedReferenceInFile(String word) {
+      Language language = myElement.getLanguage();
+      SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, language);
+      if (strategy == null || !strategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Comments))) {
+        return false;
+      }
+
+      PsiFile file = myElement.getContainingFile();
+      Map<String, Boolean> referenceWords = CachedValuesManager.getProjectPsiDependentCache(file, (element) -> new ConcurrentHashMap<>());
+      return referenceWords.computeIfAbsent(word, (key) -> hasSameNamedReferenceInFile(file, key));
+    }
+
+    private boolean hasSameNamedReferenceInFile(PsiFile file, String word) {
+      for (int occurrence : new StringSearcher(word, true, true).findAllOccurrences(file.getText())) {
+        PsiReference reference = file.findReferenceAt(occurrence);
+        PsiElement element = reference != null ? reference.resolve() : null;
+        if (reference != null && element != null && reference.getElement() != element) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
