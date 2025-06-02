@@ -29,6 +29,9 @@ public interface ToolWindowEx extends ToolWindow {
     return false;
   }
 
+  /**
+   * Returns the top-level decorator of the tool window. This decorator doesn't change when the tool window is split or unsplit.
+   */
   @NotNull InternalDecorator getDecorator();
 
   /**

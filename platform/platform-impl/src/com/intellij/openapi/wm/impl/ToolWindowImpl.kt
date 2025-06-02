@@ -108,7 +108,10 @@ internal class ToolWindowImpl(
   private var contentUi: ToolWindowContentUi? = null
 
   internal var decorator: InternalDecoratorImpl? = null
-    private set
+    private set(value) {
+      check(field == null) { "Decorator already set" }
+      field = value
+    }
   private var scrollPaneTracker: ScrollPaneTracker? = null
 
   private var hideOnEmptyContent = false
