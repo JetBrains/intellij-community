@@ -12,7 +12,6 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.packaging.management.PythonPackageManagerService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,21 +54,7 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       }
       else {
         cache = myStandardManagers;
-        // TODO:
-        // * There should be no difference between local and "Remote" package manager
-        // * But python flavor makes the difference.
-        // So one must check flavor and execute appropriate command on SDK target
-        // (be it localRequest or target request)
-
-        // This is a temporary solution to support local conda
-        if (PythonSdkUtil.isConda(sdk) &&
-            sdk.getHomePath() != null &&
-            PyCondaPackageService.getCondaExecutable(sdk.getHomePath()) != null) {
-          manager = new PyCondaPackageManagerImpl(sdk);
-        }
-        else {
-          manager = new PyTargetEnvironmentPackageManager(sdk);
-        }
+        manager = new PyPackageManagerBridge(sdk);
       }
       cache.put(key, manager);
       if (sdk instanceof Disposable) {

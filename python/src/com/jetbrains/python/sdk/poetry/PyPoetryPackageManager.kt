@@ -2,123 +2,13 @@
 package com.jetbrains.python.sdk.poetry
 
 import com.intellij.execution.ExecutionException
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyPackage
-import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.packaging.PyPackageManagerBridge
 
 
-class PyPoetryPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
-  @Volatile
-  private var packages: List<PyPackage>? = null
-
-  private var requirements: List<PyRequirement>? = null
-
-
-  override fun installManagement() {}
-
-  override fun hasManagement() = true
-
-  override fun install(requirementString: String) {
-    install(parseRequirements(requirementString), emptyList())
-  }
-
-  override fun install(requirements: List<PyRequirement>?, extraArgs: List<String>) {
-    val args = if (requirements.isNullOrEmpty()) {
-      listOfNotNull(listOf("install"),
-                    extraArgs)
-        .flatten()
-    }
-    else {
-      listOfNotNull(listOf("add"),
-                    requirements.map { it.name },
-                    extraArgs)
-        .flatten()
-    }
-
-    try {
-      runBlockingCancellable { runPoetryWithSdk(sdk, *args.toTypedArray()) }
-    }
-    finally {
-      sdk.associatedModuleDir?.refresh(true, false)
-      refreshAndGetPackages(true)
-    }
-  }
-
-  override fun uninstall(packages: List<PyPackage>) {
-    val args = listOf("remove") +
-               packages.map { it.name }
-    try {
-      runBlockingCancellable { runPoetryWithSdk(sdk, *args.toTypedArray()) }
-    }
-    finally {
-      sdk.associatedModuleDir?.refresh(true, false)
-      refreshAndGetPackages(true)
-    }
-  }
-
-  override fun refresh() {
-    with(ApplicationManager.getApplication()) {
-      invokeLater {
-        runWriteAction {
-          val files = sdk.rootProvider.getFiles(OrderRootType.CLASSES)
-          VfsUtil.markDirtyAndRefresh(true, true, true, *files)
-        }
-        PythonSdkType.getInstance().setupSdkPaths(sdk)
-      }
-    }
-  }
-
+internal class PyPoetryPackageManager(sdk: Sdk) : PyPackageManagerBridge(sdk) {
   override fun createVirtualEnv(destinationDir: String, useGlobalSite: Boolean): String {
-    throw ExecutionException(
-      PyBundle.message("python.sdk.dialog.message.creating.virtual.environments.based.on.poetry.environments.not.supported"))
-  }
-
-  override fun getPackages() = packages
-
-  override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage> {
-    if (alwaysRefresh || packages == null) {
-      val allPackages = runBlockingCancellable {
-        poetryListPackages(sdk)
-      }.getOr {
-        packages = emptyList()
-        return emptyList()
-      }
-
-      packages = allPackages.first
-      requirements = allPackages.second
-
-      ApplicationManager.getApplication().messageBus.syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
-    }
-
-    return packages ?: emptyList()
-  }
-
-  override fun getRequirements(module: Module): List<PyRequirement>? {
-    return requirements
-  }
-
-  override fun parseRequirements(text: String): List<PyRequirement> =
-    PyRequirementParser.fromText(text)
-
-  override fun parseRequirement(line: String): PyRequirement? =
-    PyRequirementParser.fromLine(line)
-
-  override fun parseRequirements(file: VirtualFile): List<PyRequirement> =
-    PyRequirementParser.fromFile(file)
-
-  override fun getDependents(pkg: PyPackage): Set<PyPackage> {
-    // TODO: Parse the dependency information from `pipenv graph`
-    return emptySet()
+    throw ExecutionException(PyBundle.message("python.sdk.dialog.message.creating.virtual.environments.based.on.poetry.environments.not.supported"))
   }
 }

@@ -21,8 +21,8 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.packaging.conda.CondaEnvCreator
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
@@ -114,7 +114,7 @@ open class PyAddNewCondaEnvPanel(
     val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.conda.environment.title"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
-        return PyCondaPackageManagerImpl.createVirtualEnv(condaPath, pathField.text, selectedLanguageLevel)
+        return CondaEnvCreator.createVirtualEnv(condaPath, pathField.text, selectedLanguageLevel)
       }
     }
     val shared = makeSharedField.isSelected

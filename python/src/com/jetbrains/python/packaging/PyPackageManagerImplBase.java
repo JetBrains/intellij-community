@@ -204,7 +204,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
   }
 
   @Override
-  public final @NotNull List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
+  public @NotNull List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException {
     final List<PyPackage> currentPackages = myPackagesCache;
     if (alwaysRefresh || currentPackages == null) {
       myPackagesCache = null;

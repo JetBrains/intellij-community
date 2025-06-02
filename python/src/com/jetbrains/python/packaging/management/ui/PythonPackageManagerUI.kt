@@ -114,7 +114,13 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     @ApiStatus.Internal
     fun forSdk(project: Project, sdk: Sdk, sink: ErrorSink = ShowingMessageErrorSync): PythonPackageManagerUI {
       val packageManager = PythonPackageManager.forSdk(project, sdk)
-      return PythonPackageManagerUI(packageManager, sink)
+      return forPackageManager(packageManager, sink)
     }
+
+    @ApiStatus.Internal
+    fun forPackageManager(
+      packageManager: PythonPackageManager,
+      sink: ErrorSink = ShowingMessageErrorSync,
+    ): PythonPackageManagerUI = PythonPackageManagerUI(packageManager, sink)
   }
 }

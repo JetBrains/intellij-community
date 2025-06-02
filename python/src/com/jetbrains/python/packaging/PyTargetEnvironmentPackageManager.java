@@ -48,9 +48,10 @@ import java.util.*;
 /**
  * @deprecated TODO: explain
  */
+@SuppressWarnings("ALL")
 @Deprecated(forRemoval = true)
 @ApiStatus.Internal
-public final class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase {
+public abstract class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase {
   private static final Logger LOG = Logger.getInstance(PyTargetEnvironmentPackageManager.class);
 
   @Override
@@ -64,7 +65,7 @@ public final class PyTargetEnvironmentPackageManager extends PyPackageManagerImp
     getPythonProcessResult(pythonExecution, true, true, helpersAwareTargetRequest.getTargetEnvironmentRequest());
   }
 
-  PyTargetEnvironmentPackageManager(final @NotNull Sdk sdk) {
+  public PyTargetEnvironmentPackageManager(final @NotNull Sdk sdk) {
     super(sdk);
   }
 

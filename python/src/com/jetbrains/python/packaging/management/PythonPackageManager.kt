@@ -4,16 +4,12 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -27,7 +23,6 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
-import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.await
@@ -123,7 +118,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       }
     }
 
-    refreshPaths()
     return PyResult.success(packages)
   }
 
@@ -169,16 +163,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     }
   }
 
-  private suspend fun refreshPaths() = edtWriteAction {
-    // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
-    // Temporary folders can't be deleted on Windows due to that.
-    // That breaks tests.
-    // This code should be deleted, but disabled temporary to fix tests
-    if (!(ApplicationManager.getApplication().isUnitTestMode && SystemInfoRt.isWindows)) {
-      VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
-    }
-    PythonSdkUpdater.scheduleUpdate(sdk, project)
-  }
 
   @ApiStatus.Internal
   suspend fun waitForInit() {
