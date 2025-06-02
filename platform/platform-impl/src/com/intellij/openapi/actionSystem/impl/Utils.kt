@@ -928,7 +928,7 @@ object Utils {
     }
   }
 
-  fun <R> runWithInputEventEdtDispatcher(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
+  private fun <R> runWithPotemkinOverlayProgress(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
     val applicationEx = ApplicationManagerEx.getApplicationEx()
     if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx) && !applicationEx.isBackgroundWriteActionRunningOrPending) {
       LOG.error("Actions cannot be updated when write-action is running or pending on EDT")
@@ -998,39 +998,46 @@ object Utils {
   }
 
 
-  suspend fun <T> runUpdateSessionForInputEvent(actions: List<AnAction>,
-                                                inputEvent: InputEvent,
-                                                dataContext: DataContext,
-                                                place: String,
-                                                actionProcessor: ActionProcessor,
-                                                factory: PresentationFactory,
-                                                function: suspend (List<AnAction>,
-                                                                   suspend (AnAction) -> Presentation,
-                                                                   Map<Presentation, AnActionEvent>) -> T): T = withContext(
-    CoroutineName("runUpdateSessionForInputEvent")) {
-    checkAsyncDataContext(dataContext, place)
-    val start = System.nanoTime()
-    val events = ConcurrentHashMap<Presentation, AnActionEvent>()
-    val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
-    val actionUpdater = ActionUpdater(factory, dataContext, place, ActionUiKind.NONE, edtDispatcher) {
-      val event = actionProcessor.createEvent(inputEvent, it.dataContext, it.place, it.presentation, it.actionManager)
-      events.putIfAbsent(event.presentation, event) ?: event
-    }
-    cancelAllUpdates("'$place' invoked")
-
-    val result = actionUpdater.runUpdateSession(shortcutUpdateDispatcher) {
-      ActionUpdaterInterceptor.runUpdateSessionForInputEvent(actions, dataContext, place, actionUpdater.asUpdateSession()) { promoted ->
-        val rearranged = if (promoted.isNotEmpty()) promoted
-        else rearrangeByPromoters(actions, dataContext)
-        function(rearranged, actionUpdater::presentation, events)
+  fun <T> runUpdateSessionForInputEvent(
+    actions: List<AnAction>,
+    inputEvent: InputEvent,
+    dataContext: DataContext,
+    place: String,
+    actionProcessor: ActionProcessor,
+    factory: PresentationFactory,
+    block: suspend (
+      List<AnAction>,
+      suspend (AnAction) -> Presentation,
+      Map<Presentation, AnActionEvent>,
+    ) -> T,
+  ): T? = runWithPotemkinOverlayProgress(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) {
+    withContext(CoroutineName("runUpdateSessionForInputEvent")) {
+      checkAsyncDataContext(dataContext, place)
+      val start = System.nanoTime()
+      val events = ConcurrentHashMap<Presentation, AnActionEvent>()
+      val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
+      val actionUpdater = ActionUpdater(factory, dataContext, place, ActionUiKind.NONE, edtDispatcher) {
+        val event = actionProcessor.createEvent(inputEvent, it.dataContext, it.place, it.presentation, it.actionManager)
+        events.putIfAbsent(event.presentation, event) ?: event
       }
+      cancelAllUpdates("'$place' invoked")
+
+      val result = actionUpdater.runUpdateSession(shortcutUpdateDispatcher) {
+        ActionUpdaterInterceptor.runUpdateSessionForInputEvent(
+          actions, dataContext, place, actionUpdater.asUpdateSession()) { promoted ->
+          val rearranged = promoted.ifEmpty {
+            rearrangeByPromoters(actions, dataContext)
+          }
+          block(rearranged, actionUpdater::presentation, events)
+        }
+      }
+      actionUpdater.applyPresentationChanges()
+      val elapsed = TimeoutUtil.getDurationMillis(start)
+      if (elapsed > 1000) {
+        LOG.warn("$elapsed ms to runUpdateSessionForInputEvent@$place")
+      }
+      result
     }
-    actionUpdater.applyPresentationChanges()
-    val elapsed = TimeoutUtil.getDurationMillis(start)
-    if (elapsed > 1000) {
-      LOG.warn("$elapsed ms to runUpdateSessionForInputEvent@$place")
-    }
-    result
   }
 
   @ApiStatus.Internal

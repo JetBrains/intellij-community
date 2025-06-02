@@ -1339,25 +1339,22 @@ private fun tryToExecuteNow(action: AnAction,
     if (contextComponent == null) it.dataContext else it.getDataContext(contextComponent)
   }
   val wrappedContext = Utils.createAsyncDataContext(dataContext)
-  val componentAdjusted = PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext) ?: contextComponent
   val actionProcessor = object : ActionProcessor() {}
   val inputEventAdjusted = inputEvent ?: KeyEvent(
-    componentAdjusted ?: JLabel(), KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
-  val event = Utils.runWithInputEventEdtDispatcher(componentAdjusted) block@{
-    Utils.runUpdateSessionForInputEvent(
-      listOf(action), inputEventAdjusted, wrappedContext, place, actionProcessor, presentationFactory) { rearranged, updater, events ->
-      val presentation = updater(action)
-      val event = events[presentation]
-      if (event == null || !presentation.isEnabled) {
-        null
-      }
-      else {
-        UpdateResult(action, event, 0L)
-      }
+    contextComponent ?: JLabel(), KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
+  val updateResult = Utils.runUpdateSessionForInputEvent(
+    listOf(action), inputEventAdjusted, wrappedContext, place, actionProcessor, presentationFactory) { _, updater, events ->
+    val presentation = updater(action)
+    val event = events[presentation]
+    if (event == null || !presentation.isEnabled) {
+      null
     }
-  }?.event
-  if (event != null && event.presentation.isEnabled) {
-    doPerformAction(action, event, callback)
+    else {
+      UpdateResult(action, event, 0L)
+    }
+  }
+  if (updateResult != null && updateResult.event.presentation.isEnabled) {
+    doPerformAction(action, updateResult.event, callback)
   }
 }
 
