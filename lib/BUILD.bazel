@@ -2295,8 +2295,8 @@ jvm_import(
 
 jvm_import(
   name = "jackson",
-  jar = "@jackson-core-2_17_0_http//file",
-  source_jar = "@jackson-core-2_17_0-sources_http//file",
+  jar = "@jackson-core-2_19_0_http//file",
+  source_jar = "@jackson-core-2_19_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2310,22 +2310,22 @@ java_library(
 java_library(
   name = "jackson-databind",
   exports = [
-    ":jackson-databind-2_17_2_http_import",
-    ":jackson-annotations-2_17_2_http_import",
+    ":jackson-databind-2_19_0_http_import",
+    ":jackson-annotations-2_19_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "jackson-databind-2_17_2_http_import",
-  jar = "@jackson-databind-2_17_2_http//file",
-  source_jar = "@jackson-databind-2_17_2-sources_http//file"
+  name = "jackson-databind-2_19_0_http_import",
+  jar = "@jackson-databind-2_19_0_http//file",
+  source_jar = "@jackson-databind-2_19_0-sources_http//file"
 )
 
 jvm_import(
-  name = "jackson-annotations-2_17_2_http_import",
-  jar = "@jackson-annotations-2_17_2_http//file",
-  source_jar = "@jackson-annotations-2_17_2-sources_http//file"
+  name = "jackson-annotations-2_19_0_http_import",
+  jar = "@jackson-annotations-2_19_0_http//file",
+  source_jar = "@jackson-annotations-2_19_0-sources_http//file"
 )
 
 java_library(
@@ -2337,50 +2337,50 @@ java_library(
 
 jvm_import(
   name = "jackson-dataformat-toml",
-  jar = "@jackson-dataformat-toml-2_17_2_http//file",
-  source_jar = "@jackson-dataformat-toml-2_17_2-sources_http//file",
+  jar = "@jackson-dataformat-toml-2_19_0_http//file",
+  source_jar = "@jackson-dataformat-toml-2_19_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jackson-dataformat-yaml",
-  jar = "@jackson-dataformat-yaml-2_17_2_http//file",
-  source_jar = "@jackson-dataformat-yaml-2_17_2-sources_http//file",
+  jar = "@jackson-dataformat-yaml-2_19_0_http//file",
+  source_jar = "@jackson-dataformat-yaml-2_19_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jackson-datatype-joda",
   exports = [
-    ":jackson-datatype-joda-2_17_2_http_import",
-    ":joda-time-2_10_14_http_import",
+    ":jackson-datatype-joda-2_19_0_http_import",
+    ":joda-time-2_12_7_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "jackson-datatype-joda-2_17_2_http_import",
-  jar = "@jackson-datatype-joda-2_17_2_http//file",
-  source_jar = "@jackson-datatype-joda-2_17_2-sources_http//file"
+  name = "jackson-datatype-joda-2_19_0_http_import",
+  jar = "@jackson-datatype-joda-2_19_0_http//file",
+  source_jar = "@jackson-datatype-joda-2_19_0-sources_http//file"
 )
 
 jvm_import(
-  name = "joda-time-2_10_14_http_import",
-  jar = "@joda-time-2_10_14_http//file",
-  source_jar = "@joda-time-2_10_14-sources_http//file"
+  name = "joda-time-2_12_7_http_import",
+  jar = "@joda-time-2_12_7_http//file",
+  source_jar = "@joda-time-2_12_7-sources_http//file"
 )
 
 jvm_import(
   name = "jackson-jr-objects",
-  jar = "@jackson-jr-objects-2_17_2_http//file",
-  source_jar = "@jackson-jr-objects-2_17_2-sources_http//file",
+  jar = "@jackson-jr-objects-2_19_0_http//file",
+  source_jar = "@jackson-jr-objects-2_19_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "jackson-module-kotlin",
-  jar = "@jackson-module-kotlin-2_17_2_http//file",
-  source_jar = "@jackson-module-kotlin-2_17_2-sources_http//file",
+  jar = "@jackson-module-kotlin-2_19_0_http//file",
+  source_jar = "@jackson-module-kotlin-2_19_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
