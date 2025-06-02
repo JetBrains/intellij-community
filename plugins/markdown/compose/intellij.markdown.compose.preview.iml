@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.ideLafBridgeStyling" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.autolink" />

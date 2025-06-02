@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.jetbrains.jewel.bridge.retrievePlatformTextStyle
+import org.jetbrains.jewel.bridge.theme.retrieveEditorTextStyle
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
@@ -54,8 +55,9 @@ internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextU
 
   val codeFenceFont = Font(FontPreferences.JETBRAINS_MONO, Font.PLAIN, (fontSize.value * 0.9f).toInt()).asComposeFontFamily()
   val codeFenceTextStyle = baseTextStyle.copy(fontFamily = codeFenceFont)
+  val editorTextStyle: TextStyle = retrieveEditorTextStyle()
 
-  val inlinesStyling = createInlinesStyling(baseTextStyle, scheme)
+  val inlinesStyling = createInlinesStyling(baseTextStyle, editorTextStyle, scheme)
   val paragraph = createParagraphStyling(inlinesStyling)
   val heading = createHeadingStyling(scheme, baseTextStyle, fontSizeDp)
   val blockQuote = createBlockQuoteStyling(scheme)
@@ -80,14 +82,15 @@ internal fun JcefLikeMarkdownStyling(scheme: PreviewStyleScheme, fontSize: TextU
 
 private fun createInlinesStyling(
   baseTextStyle: TextStyle,
+  editorTextStyle: TextStyle,
   scheme: PreviewStyleScheme,
   link: SpanStyle = baseTextStyle.copy(
     color = JBUI.CurrentTheme.Link.Foreground.ENABLED.toComposeColor(),
     textDecoration = TextDecoration.Underline,
-  ).toSpanStyle()
+  ).toSpanStyle(),
 ): InlinesStyling = InlinesStyling(
   textStyle = baseTextStyle,
-  inlineCode = baseTextStyle
+  inlineCode = editorTextStyle
     .copy(
       fontSize = baseTextStyle.fontSize,
       background = scheme.fenceBackgroundColor.toComposeColor(),
@@ -96,7 +99,7 @@ private fun createInlinesStyling(
   link = link,
   emphasis = baseTextStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
   strongEmphasis = baseTextStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
-  inlineHtml = baseTextStyle.toSpanStyle(),
+  inlineHtml = editorTextStyle.toSpanStyle(),
   linkDisabled = link.copy(color = JBUI.CurrentTheme.Link.Foreground.DISABLED.toComposeColor()),
   linkHovered = link.copy(color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor()),
   linkFocused = link.copy(
@@ -166,7 +169,7 @@ private fun headerInlinesStyling(scheme: PreviewStyleScheme, textStyle: TextStyl
     color = color ?: textStyle.color,
     fontSize = fontSize,
     lineHeight = fontSize * lineHeightMultiplier,
-  ), scheme)
+  ), retrieveEditorTextStyle(), scheme)
 }
 
 private fun createBlockQuoteStyling(scheme: PreviewStyleScheme): BlockQuote = BlockQuote(
