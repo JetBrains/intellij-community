@@ -1,5 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(SettingsInternalApi::class)
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.codeWithMe.ClientId
@@ -9,7 +11,10 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -256,6 +261,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     val isSaveModLogEnabled = SAVE_MOD_LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode
+    val isExternalSystemStorageEnabled = storageManager.isExternalSystemStorageEnabled
 
     // well, strictly speaking, each component saving takes some time, but +/- several seconds don't matter
     val nowInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
@@ -297,7 +303,13 @@ abstract class ComponentStoreImpl : IComponentStore {
             modificationCountChanged = true
           }
         }
-        commitComponent(sessionManager, info, name, modificationCountChanged)
+        commitComponent(
+          sessionManager = sessionManager,
+          info = info,
+          componentName = name,
+          modificationCountChanged = modificationCountChanged,
+          isExternalSystemStorageEnabled = isExternalSystemStorageEnabled,
+        )
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -336,8 +348,14 @@ abstract class ComponentStoreImpl : IComponentStore {
       @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
         val pluginId = PluginManager.getPluginByClass(component::class.java)?.pluginId ?: PluginManagerCore.CORE_ID
-        val componentInfo = componentInfo ?: ComponentInfoImpl(pluginId, component, stateSpec)
-        commitComponent(saveManager, componentInfo, componentName = null, modificationCountChanged = false)
+        val componentInfo = componentInfo ?: ComponentInfoImpl(pluginId = pluginId, component = component, stateSpec = stateSpec)
+        commitComponent(
+          sessionManager = saveManager,
+          info = componentInfo,
+          componentName = null,
+          modificationCountChanged = false,
+          isExternalSystemStorageEnabled = storageManager.isExternalSystemStorageEnabled,
+        )
         val saveResult = SaveResult()
         saveManager.save(saveResult)
         saveResult.rethrow()
@@ -351,7 +369,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     sessionManager: SaveSessionProducerManager,
     info: ComponentInfo,
     componentName: String?,
-    modificationCountChanged: Boolean
+    modificationCountChanged: Boolean,
+    isExternalSystemStorageEnabled: Boolean,
   ) {
     val component = info.component
     @Suppress("DEPRECATION")
@@ -382,7 +401,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       val storage = storageManager.getStateStorage(storageSpec)
 
       if (resolution == Resolution.DO) {
-        resolution = storage.getResolution(component, StateStorageOperation.WRITE)
+        resolution = storage.getResolution(component, StateStorageOperation.WRITE, isExternalSystemStorageEnabled)
         if (resolution == Resolution.SKIP) {
           continue
         }
@@ -391,7 +410,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       val sessionProducer = sessionManager.getProducer(storage) ?: continue
       if (resolution == Resolution.CLEAR ||
           (storageSpec.deprecated && storageSpecs.none { !it.deprecated && it.value == storageSpec.value })) {
-        sessionProducer.setState(component, effectiveComponentName, info.pluginId, state = null)
+        sessionProducer.setState(component = component, componentName = effectiveComponentName, pluginId = info.pluginId, state = null)
       }
       else {
         if (!stateRequested) {

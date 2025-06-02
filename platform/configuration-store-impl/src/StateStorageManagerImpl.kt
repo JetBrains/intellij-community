@@ -313,16 +313,13 @@ open class StateStorageManagerImpl(
       super.providerDataStateChanged(writer, type)
     }
 
-    override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
+    override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation, isExternalSystemStorageEnabled: Boolean): Resolution {
       val clearExtStorage = operation == StateStorageOperation.WRITE &&
-                            storageManager.isExternalSystemStorageEnabled &&
+                            isExternalSystemStorageEnabled &&
                             (component as? ProjectModelElement)?.externalSource != null
       return if (clearExtStorage) Resolution.CLEAR else Resolution.DO
     }
   }
-
-  open val isExternalSystemStorageEnabled: Boolean
-    get() = false
 
   // the function must be pure and do not use anything outside passed arguments
   protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) { }
