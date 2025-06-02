@@ -31,6 +31,9 @@ import java.net.URI
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 class MavenIndexerCMDState(
   private val myJdk: Sdk,
@@ -108,25 +111,24 @@ class MavenIndexerCMDState(
     }
 
     private fun collectClassPathAndLibsFolder(distribution: MavenDistribution): List<File> {
-      val pluginFileOrDir = File(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-
-      val root = pluginFileOrDir.parent
-
-      val classpath: MutableList<File> = ArrayList()
-
+      val classpath = ArrayList<File>()
       addMavenLibs(classpath, distribution.mavenHome.toFile())
       addIndexerRTLibs(classpath)
-      if (pluginFileOrDir.isDirectory) {
+      val pathToClass = PathManager.getJarForClass(MavenServerManager::class.java)
+                        ?: throw IllegalStateException("Cannot find path to maven server manager code")
+      val packed = pathToClass.isRegularFile()
+
+      if (!packed || pathToClass.parent.name == "intellij.maven") {
+        // we are running from some kind of sources build, packed or not.
         MavenLog.LOG.debug("collecting classpath for local run")
-
-        prepareClassPathForLocalRunAndUnitTests(distribution.version!!, classpath, root)
+        val root = if (packed) { pathToClass.parent.parent } else { pathToClass.parent }
+        prepareClassPathForLocalRunAndUnitTests(classpath, root, packed)
         addDependenciesFromMavenRepo(classpath)
-      }
-      else {
+      } else {
+        // we are running in production
         MavenLog.LOG.debug("collecting classpath for production")
-        prepareClassPathForProduction(distribution.version!!, classpath, root)
+        prepareClassPathForProduction(distribution.version!!, classpath, pathToClass.parent)
       }
-
       MavenLog.LOG.debug("Collected classpath = ", classpath)
       return classpath
     }
@@ -181,19 +183,26 @@ class MavenIndexerCMDState(
     private fun prepareClassPathForProduction(
       mavenVersion: String,
       classpath: MutableList<File>,
-      root: String,
+      root: Path,
     ) {
       classpath.add(File(PathUtil.getJarPathForClass(MavenId::class.java)))
       classpath.add(File(PathUtil.getJarPathForClass(MavenServer::class.java)))
-      classpath.add(File(root, "maven-server-indexer.jar"))
-      addDir(classpath, File(root, "maven-server-indexer"))
-      addDir(classpath, File(File(root, "intellij.maven.server.indexer"), "lib"))
+      classpath.add( root.resolve("maven-server-indexer.jar").toFile())
+      addDir(classpath, root.resolve("maven-server-indexer").toFile())
+      addDir(classpath, root.resolve("intellij.maven.server.indexer").resolve("lib").toFile())
     }
 
-    private fun prepareClassPathForLocalRunAndUnitTests(mavenVersion: String, classpath: MutableList<File>, root: String) {
+    private fun prepareClassPathForLocalRunAndUnitTests(classpath: MutableList<File>, root: Path, packed: Boolean = false) {
       classpath.add(File(PathUtil.getJarPathForClass(MavenId::class.java)))
-      classpath.add(File(root, "intellij.maven.server"))
-      classpath.add(File(root, "intellij.maven.server.indexer"))
+      listOf(root.resolve("intellij.maven.server"),
+             root.resolve("intellij.maven.server.indexer")).forEach {
+        if (packed) {
+          classpath.add(it.listDirectoryEntries("*.jar").first().toFile())
+        }
+        else {
+          classpath.add(it.toFile())
+        }
+      }
     }
 
     private fun addMavenLibs(classpath: MutableList<File>, mavenHome: File) {
