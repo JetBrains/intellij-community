@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -44,6 +45,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -436,7 +438,14 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         @Override
         public void processTerminated(final @NotNull ProcessEvent event) {
           process.removeProcessListener(this);
-          WriteIntentReadAction.run((Runnable)() ->stopRunning(true));
+          if (EDT.isCurrentThreadEdt()) {
+            WriteIntentReadAction.run((Runnable)() -> stopRunning(true));
+          }
+          else {
+            ApplicationManager.getApplication().invokeAndWait(() -> {
+              stopRunning(true);
+            }, ModalityState.any());
+          }
         }
       };
       process.addProcessListener(stopListener);
