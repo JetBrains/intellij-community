@@ -1,4 +1,5 @@
 <idea-plugin>
+  <module value="com.intellij.modules.relaxng"/>
   <extensions defaultExtensionNs="com.intellij">
     <gotoSymbolContributor implementation="org.intellij.plugins.relaxNG.GotoSymbolContributor" />
 
