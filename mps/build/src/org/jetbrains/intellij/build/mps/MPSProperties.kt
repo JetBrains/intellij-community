@@ -83,6 +83,9 @@ class MPSProperties : JetBrainsProductProperties() {
                 }
             }
 
+            // Contains the expanded plugin.xml inside
+            layout.withModule("intellij.mps.resources", "mps-resources.zip")
+
             layout.withModule("intellij.tools.testsBootstrap")
 
             layout.excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
