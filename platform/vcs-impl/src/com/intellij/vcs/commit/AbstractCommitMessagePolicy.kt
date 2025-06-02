@@ -167,6 +167,7 @@ internal abstract class ChangeListCommitMessagePolicy(
   }
 
   override fun dispose() {
+    if(project.isDisposed) return
     saveStateOnDispose()
   }
 
