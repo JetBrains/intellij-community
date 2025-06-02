@@ -978,7 +978,8 @@ com.intellij.refactoring.safeDelete.SafeDeleteDialog$Callback
 - a:run(com.intellij.refactoring.safeDelete.SafeDeleteDialog):V
 com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:findConflicts(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[]):java.util.Collection
+- findConflicts(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[]):java.util.Collection
+- findConflicts(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[],com.intellij.usageView.UsageInfo[],com.intellij.util.containers.MultiMap):V
 - a:findUsages(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement[],java.util.List):com.intellij.refactoring.safeDelete.NonCodeUsageSearchInfo
 - a:getAdditionalElementsToDelete(com.intellij.psi.PsiElement,java.util.Collection,Z):java.util.Collection
 - a:getElementsToSearch(com.intellij.psi.PsiElement,java.util.Collection):java.util.Collection

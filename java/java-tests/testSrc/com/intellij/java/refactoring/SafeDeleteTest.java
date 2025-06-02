@@ -59,8 +59,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertTrue(message, message.startsWith("Constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
+      assertEquals("Usage of constructor <b><code>Super.Super()</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -70,8 +69,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      String message = e.getMessage();
-      assertTrue(message, message.startsWith("Constructor <b><code>Super.Super()</code></b> has 1 usage that is not safe to delete"));
+      assertEquals("Usage of constructor <b><code>Super.Super()</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -197,7 +195,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method <b><code>Super.foo()</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of method <b><code>Super.foo()</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -208,7 +206,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of interface <b><code>SAM</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -219,7 +217,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of interface <b><code>SAM</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -260,7 +258,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of local variable <b><code>varName</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -270,7 +268,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Parameter <b><code>i</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of parameter <b><code>i</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -288,7 +286,9 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method <b><code>ImplicitClass.gasdfasdf()</code></b> has 2 usages that are not safe to delete.", e.getMessage());
+      assertEquals("""
+                     Usage of method <b><code>ImplicitClass.gasdfasdf()</code></b> that is not safe to delete.
+                     Usage of method <b><code>ImplicitClass.gasdfasdf()</code></b> that is not safe to delete.""", e.getMessage());
     }
   }
 
@@ -302,7 +302,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method <b><code>Inner.x()</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of method <b><code>Inner.x()</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -316,8 +316,9 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Class <b><code>p.Next</code></b> has 1 usage that is not safe to delete.\n"
-                   + "Class <b><code>p.TwoClasses</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("""
+                     Usage of class <b><code>p.Next</code></b> that is not safe to delete.
+                     Usage of class <b><code>p.TwoClasses</code></b> that is not safe to delete.""", e.getMessage());
     }
   }
 
@@ -372,7 +373,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Side effect was ignored");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Class <b><code>Test.Foo</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of class <b><code>Test.Foo</code></b> that is not safe to delete.", e.getMessage());
     }
   }
 
@@ -472,8 +473,9 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail();
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Constructor <b><code>Point(int, int)</code></b> is already defined in record <b><code>Point</code></b>\n" +
-                   "Record component <b><code>z</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("""
+                     Constructor <b><code>Point(int, int)</code></b> is already defined in record <b><code>Point</code></b>
+                     Usage of record component <b><code>z</code></b> that is not safe to delete.""", e.getMessage());
     }
   }
 
@@ -483,7 +485,27 @@ public class SafeDeleteTest extends MultiFileTestCase {
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", e.getMessage());
+      assertEquals("Usage of class <b><code>foo.Parent</code></b> that is not safe to delete.", e.getMessage());
+    }
+  }
+
+  public void testMethodReference1() {
+    try{
+      doSingleFileTest();
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Usage of method <b><code>Safe.x(int)</code></b> that is not safe to delete.", e.getMessage());
+    }
+  }
+
+  public void testMethodReference2() {
+    try{
+      doSingleFileTest();
+      fail();
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Method reference will be converted to a lambda expression", e.getMessage());
     }
   }
 

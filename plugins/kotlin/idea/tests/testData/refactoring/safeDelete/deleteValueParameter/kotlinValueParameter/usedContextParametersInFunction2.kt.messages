@@ -1,1 +1,2 @@
-Parameter a has 2 usages that are not safe to delete.
+Usage of parameter a that is not safe to delete.
+Usage of parameter a that is not safe to delete.

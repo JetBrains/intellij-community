@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -19,16 +21,11 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDe
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -57,7 +54,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
-    override fun handlesElement(element: PsiElement?) = element.canDeleteElement()
+    override fun handlesElement(element: PsiElement?): Boolean = element.canDeleteElement()
 
     override fun findUsages(
         element: PsiElement,
@@ -321,28 +318,32 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         return null
     }
 
-    override fun findConflicts(element: PsiElement, allElementsToDelete: Array<out PsiElement>): Collection<String>? {
+    override fun findConflicts(
+        element: PsiElement,
+        allElementsToDelete: Array<out PsiElement>,
+        usages: Array<out UsageInfo>,
+        conflicts: MultiMap<PsiElement, @NlsContexts.DialogMessage String>
+    ) {
         if (element is KtNamedFunction || element is KtProperty) {
             val ktClass = element.getNonStrictParentOfType<KtClass>()
-            if (ktClass == null || ktClass.body != element.parent) return null
+            if (ktClass == null || ktClass.body != element.parent) return
 
             val modifierList = ktClass.modifierList
-            if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
+            if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return
 
             return analyzeInModalWindow(element as KtDeclaration, RefactoringBundle.message("detecting.possible.conflicts")) {
                 (element.symbol as? KaCallableSymbol)?.allOverriddenSymbols
                     ?.filter { it.modality == KaSymbolModality.ABSTRACT }
                     ?.mapNotNull { it.psi }
-                    ?.mapTo(ArrayList()) {
-                        KotlinK2RefactoringsBundle.message(
-                            "safe.delete.implements.conflict.message", 
-                            ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT), 
+                    ?.forEach {
+                        val message = KotlinK2RefactoringsBundle.message("safe.delete.implements.conflict.message",
+                            ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT),
                             ElementDescriptionUtil.getElementDescription(it, RefactoringDescriptionLocation.WITH_PARENT)
                         )
+                        conflicts.putValue(it, StringUtil.capitalize(message))
                     }
             }
         }
-        return null
     }
 
     override fun preprocessUsages(project: Project, usages: Array<out UsageInfo>): Array<UsageInfo> {

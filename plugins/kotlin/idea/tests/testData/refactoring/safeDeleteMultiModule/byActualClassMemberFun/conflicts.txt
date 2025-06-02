@@ -1,1 +1,3 @@
-Function Foo.foo(Int) has 3 usages that are not safe to delete.
+Usage of function Foo.foo(Int) that is not safe to delete.
+Usage of function Foo.foo(Int) that is not safe to delete.
+Usage of function Foo.foo(Int) that is not safe to delete.

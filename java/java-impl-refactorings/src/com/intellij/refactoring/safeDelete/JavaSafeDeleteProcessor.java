@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -310,47 +311,19 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   @Override
-  public Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element,
-                                                         PsiElement @NotNull [] elements,
-                                                         UsageInfo @NotNull [] usages) {
-    final PsiMethod method;
-    if (element instanceof PsiMethod m) method = m;
-    else if (element instanceof PsiParameter p) method = (p.getDeclarationScope() instanceof PsiMethod m) ? m : null;
-    else method = null;
-    String methodRefFound = null;
-    if (method != null) {
-      for (UsageInfo usage : usages) {
-        if (usage.getElement() instanceof PsiMethodReferenceExpression ref && method.equals(ref.resolve())) {
-          methodRefFound = JavaRefactoringBundle.message("expand.method.reference.warning");
-          break;
-        }
-      }
-    }
-    if (methodRefFound != null) {
-      Collection<String> result = new ArrayList<>();
-      result.add(methodRefFound);
-      Collection<String> conflicts = super.findConflicts(element, elements, usages);
-      if (conflicts != null) {
-        result.addAll(conflicts);
-      }
-      return result;
-    }
-    return super.findConflicts(element, elements, usages);
-  }
-
-  @Override
-  public Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete) {
+  public void findConflicts(@NotNull PsiElement element,
+                            PsiElement @NotNull [] allElementsToDelete,
+                            UsageInfo @NotNull [] usages,
+                            @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (element instanceof PsiMethod method) {
       PsiClass containingClass = method.getContainingClass();
-
       if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        PsiMethod[] superMethods = method.findSuperMethods();
-        for (PsiMethod superMethod : superMethods) {
+        for (PsiMethod superMethod : method.findSuperMethods()) {
           if (isInside(superMethod, allElementsToDelete)) continue;
           if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
             String message = JavaRefactoringBundle.message("0.implements.1", RefactoringUIUtil.getDescription(element, true),
                                                            RefactoringUIUtil.getDescription(superMethod, true));
-            return Collections.singletonList(message);
+            conflicts.putValue(superMethod, StringUtil.capitalize(message));
           }
         }
       }
@@ -358,9 +331,13 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     else if (element instanceof PsiParameter parameter) {
       PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod method) {
-        MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+        for (UsageInfo usage : usages) {
+          if (usage.getElement() instanceof PsiMethodReferenceExpression ref && method.equals(ref.resolve())) {
+            String message = JavaRefactoringBundle.message("method.reference.will.be.converted.to.lambda.expression.warning");
+            conflicts.putValue(ref, StringUtil.capitalize(message));
+          }
+        }
         collectMethodConflicts(conflicts, method, parameter);
-        return conflicts.values();
       }
     }
     else if (element instanceof PsiRecordComponent component) {
@@ -374,12 +351,11 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         if (index >= 0) {
           PsiParameter parameter = constructor.getParameterList().getParameter(index);
           if (parameter != null) {
-            return findConflicts(parameter, allElementsToDelete); 
+            findConflicts(parameter, allElementsToDelete, UsageInfo.EMPTY_ARRAY, conflicts);
           }
         }
       }
     }
-    return null;
   }
 
   @Override

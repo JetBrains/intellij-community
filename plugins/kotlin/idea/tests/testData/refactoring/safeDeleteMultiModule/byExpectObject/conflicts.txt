@@ -1,1 +1,2 @@
-Object test.Obj has 2 usages that are not safe to delete.
+Usage of object test.Obj that is not safe to delete.
+Usage of object test.Obj that is not safe to delete.
