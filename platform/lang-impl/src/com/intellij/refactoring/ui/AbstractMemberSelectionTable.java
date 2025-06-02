@@ -124,6 +124,8 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       protected boolean onDoubleClick(@NotNull MouseEvent event) {
         int row = getSelectedRow();
         if (row < 0 || row >= myMemberInfos.size()) return false;
+        M memberInfo = myMemberInfos.get(row);
+        if (!myMemberInfoModel.isMemberEnabled(memberInfo)) return false;
         Boolean current = (Boolean)getValueAt(row, CHECKED_COLUMN);
         setValueAt(!current, row, CHECKED_COLUMN);
         setRowSelectionInterval(row,row);
