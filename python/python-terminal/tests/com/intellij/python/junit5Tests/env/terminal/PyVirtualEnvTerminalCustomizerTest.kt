@@ -108,7 +108,7 @@ class PyVirtualEnvTerminalCustomizerTest {
 
     val (pythonBinary, venvDirName) =
       if (useConda) {
-        val envDir = venvPath.resolve("some path with spaces")
+        val envDir = venvPath.resolve("some_path_with_underscores")
         val sdk = createCondaEnv(condaEnv, envDir).createSdkFromThisEnv(null, emptyList())
         sdkToDelete = sdk
         sdk.persist()
