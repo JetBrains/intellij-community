@@ -1369,7 +1369,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
       is ModuleOutputEntry -> {
         classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)))
         for (classpathPluginEntry in pluginLayouts.firstOrNull { it.mainModule == entry.moduleName }?.scrambleClasspathPlugins ?: emptyList()) {
-          context.getModuleOutputDir(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)).toString()
+          classPath.add(context.getModuleOutputDir(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)))
         }
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
