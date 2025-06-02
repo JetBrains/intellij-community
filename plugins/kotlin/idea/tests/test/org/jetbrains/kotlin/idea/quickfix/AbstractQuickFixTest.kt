@@ -311,7 +311,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     private fun loadScriptConfiguration(file: KtFile) {
-        ScriptConfigurationManager.getInstance(project).getConfiguration(file)
+        ScriptConfigurationManager.getInstanceSafe(project)?.getConfiguration(file)
     }
 
     private fun PsiFile.actionHint(contents: String): ActionHint {

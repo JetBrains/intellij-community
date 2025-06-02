@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script
 
-import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 
 interface ScriptDependencyAware {
@@ -23,15 +22,9 @@ interface ScriptDependencyAware {
     fun getScriptSdk(virtualFile: VirtualFile): Sdk?
 
     companion object {
-        fun getInstance(project: Project): ScriptDependencyAware {
-            return if (KotlinPluginModeProvider.isK2Mode()) {
-                project.serviceIfCreated<ScriptConfigurationsProvider>() as? ScriptDependencyAware ?: EMPTY
-            } else {
-                ScriptConfigurationManager.getInstance(project)
-            }
-        }
+        fun getInstance(project: Project): ScriptDependencyAware = project.service<ScriptConfigurationsProvider>() as ScriptDependencyAware
 
-        val EMPTY = object : ScriptDependencyAware {
+        val EMPTY: ScriptDependencyAware = object : ScriptDependencyAware {
             override fun getAllScriptDependenciesSources(): Collection<VirtualFile> = listOf()
             override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> = listOf()
             override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope = GlobalSearchScope.EMPTY_SCOPE

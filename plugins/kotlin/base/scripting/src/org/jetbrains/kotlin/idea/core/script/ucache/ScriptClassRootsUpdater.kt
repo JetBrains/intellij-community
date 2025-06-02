@@ -30,8 +30,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -60,7 +60,7 @@ val LOG = logger<ScriptClassRootsUpdater>()
  */
 abstract class ScriptClassRootsUpdater(
     val project: Project,
-    val manager: CompositeScriptConfigurationManager,
+    val manager: ScriptConfigurationManager,
     val scope: CoroutineScope
 ) {
     private var invalidated: Boolean = false

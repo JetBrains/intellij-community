@@ -97,9 +97,6 @@
 
     <vfs.asyncListener implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptFileListener"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl"/>
 

@@ -38,7 +38,7 @@ So, it should work in that way:
 - It should call `updater.update { ... updater.invalidate() ...  }` when the new script configurations are required. The manager will schedule an asynchronous update in the background.
 - It is not able to load new configurations lazily on the first request (it is still possible to calculate script configuration lazily, but file name should be already registered)
 
-The [CompositeScriptConfigurationManager] will provide redirection of [ScriptConfigurationManager] calls to the custom [ScriptingSupport] or [DefaultScriptingSupport].
+The [ScriptConfigurationManager] will provide redirection of [ScriptConfigurationManager] calls to the custom [ScriptingSupport] or [DefaultScriptingSupport].
 
 ## Gradle CustomScriptingSupport
 

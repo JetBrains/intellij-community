@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  * by calling [ScriptClassRootsCache.getLightScriptInfo].
  *
  * [ScriptChangeListener] can be used to listen script changes.
- * [CompositeScriptConfigurationManager.updater] should be used to schedule configuration reloading.
+ * [org.jetbrains.kotlin.idea.core.script.CompositeScriptConfigurationManager.updater] should be used to schedule configuration reloading.
  *
  * [isApplicable] should return true for files that is covered by that support.
  *

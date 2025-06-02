@@ -13,7 +13,6 @@ import com.intellij.testFramework.replaceService
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.applySuggestedScriptConfiguration
-import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.areSimilar
@@ -45,8 +44,8 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
 
     val projectDir: File get() = File(GradleSettings.getInstance(myProject).linkedProjectsSettings.first().externalProjectPath)
 
-    internal val scriptConfigurationManager: CompositeScriptConfigurationManager
-        get() = ScriptConfigurationManager.getInstance(myProject) as CompositeScriptConfigurationManager
+    internal val scriptConfigurationManager: ScriptConfigurationManager
+        get() = ScriptConfigurationManager.getInstance(myProject)
 
     override fun testDataDirName(): String = "gradleKtsImportTest"
 

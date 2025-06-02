@@ -2,29 +2,77 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.search.GlobalSearchScope
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
+import org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport
+import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK1
+import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK2
+import org.jetbrains.kotlin.idea.core.script.ucache.LightScriptInfo
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsUpdater
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import org.jetbrains.kotlin.utils.addToStdlib.cast
+import java.nio.file.Path
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.makeFailureResult
 
-// NOTE: this service exists exclusively because ScriptDependencyManager
-// cannot be registered as implementing two services (state would be duplicated)
-internal class IdeScriptDependenciesProvider(project: Project) : ScriptConfigurationsProvider(project) {
+class ScriptConfigurationManager(val myProject: Project, val scope: CoroutineScope) : ScriptConfigurationsProvider(myProject), ScriptDependencyAware {
+    private val notifier = if (KotlinPluginModeProvider.isK2Mode()) ScriptChangesNotifierK2() else ScriptChangesNotifierK1(project)
+
+    private val classpathRoots: ScriptClassRootsCache
+        get() = updater.classpathRoots
+
+    private val plugins
+        get() = ScriptingSupport.EP_NAME.getPoint(project).extensionList
+
+    val default: DefaultScriptingSupport = DefaultScriptingSupport(this)
+
+    val updater: ScriptClassRootsUpdater = object : ScriptClassRootsUpdater(project, this, scope) {
+        override fun gatherRoots(builder: ScriptClassRootsBuilder) {
+            default.collectConfigurations(builder)
+            plugins.forEach { it.collectConfigurations(builder) }
+        }
+
+        override fun afterUpdate() {
+            plugins.forEach { it.afterUpdate() }
+        }
+
+        override fun onTrivialUpdate() {
+            plugins.forEach { it.onTrivialUpdate() }
+        }
+
+        override fun onUpdateException(exception: Exception) {
+            plugins.forEach { it.onUpdateException(exception) }
+        }
+    }
+
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val configuration = getScriptConfiguration(file)
         val reports = getScriptReports(file)
@@ -37,69 +85,135 @@ internal class IdeScriptDependenciesProvider(project: Project) : ScriptConfigura
     override fun getScriptConfiguration(file: KtFile): ScriptCompilationConfigurationWrapper? {
         // return only already loaded configurations OR force to load gradle-related configurations
         return if (DefaultScriptingSupport.getInstance(project).isLoadedFromCache(file) || !ScratchUtil.isScratch(file.virtualFile)) {
-            ScriptConfigurationManager.getInstance(project).getConfiguration(file)
+            getConfiguration(file)
         } else {
             null
         }
     }
 
-}
+    fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
+        notifier.updateScriptDependenciesIfNeeded(file)
+    }
 
-/**
- * Facade for loading and caching Kotlin script files configuration.
- *
- * This service also starts indexing of new dependency roots and runs highlighting
- * of opened files when configuration will be loaded or updated.
- */
-interface ScriptConfigurationManager : ScriptDependencyAware {
-    /**
-     * Get cached configuration for [file] or load it.
-     * May return null even configuration was loaded but was not yet applied.
-     */
-    fun getConfiguration(file: KtFile): ScriptCompilationConfigurationWrapper?
+    fun getConfiguration(file: KtFile): ScriptCompilationConfigurationWrapper? {
+        val virtualFile = file.alwaysVirtualFile
+        val scriptConfiguration = classpathRoots.getScriptConfiguration(virtualFile)
+        if (scriptConfiguration != null) return scriptConfiguration
 
-    /**
-     * Check if configuration is already cached for [file] (in cache or FileAttributes).
-     * The result may be true, even cached configuration is considered out-of-date.
-     *
-     * Supposed to be used to switch highlighting off for scripts without configuration
-     * to avoid all file being highlighted in red.
-     */
-    fun hasConfiguration(file: KtFile): Boolean
+        // check that this script should be loaded later in special way (e.g. gradle project import)
+        // (and not for syntactic diff files)
+        if (!OutsidersPsiFileSupport.isOutsiderFile(virtualFile)) {
+            val plugin = plugins.firstOrNull { it.isApplicable(virtualFile) }
+            if (plugin != null) {
+                return plugin.getConfigurationImmediately(virtualFile)?.also {
+                    updater.addConfiguration(virtualFile, it)
+                }
+            }
+        }
 
-    /**
-     * returns true when there is no configuration and highlighting should be suspended
-     */
-    fun isConfigurationLoadingInProgress(file: KtFile): Boolean
+        return default.getOrLoadConfiguration(virtualFile, file)
+    }
 
-    /**
-     * Update caches that depends on script definitions and do update if necessary
-     */
-    fun updateScriptDefinitionReferences()
+    @TestOnly
+    fun hasConfiguration(file: KtFile): Boolean =
+        classpathRoots.contains(file.alwaysVirtualFile)
 
-    ///////////////
-    // classpath roots info:
+    fun isConfigurationLoadingInProgress(file: KtFile): Boolean =
+        plugins.firstOrNull { it.isApplicable(file.alwaysVirtualFile) }?.isConfigurationLoadingInProgress(file)
+            ?: default.isConfigurationLoadingInProgress(file)
 
-    fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
-    fun getAllScriptsSdkDependenciesClassFiles(): Collection<VirtualFile>
-    fun getAllScriptSdkDependenciesSources(): Collection<VirtualFile>
-    fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile?
+    fun getLightScriptInfo(file: String): LightScriptInfo? =
+        updater.classpathRoots.getLightScriptInfo(file)
+
+    fun updateScriptDefinitionReferences() {
+        ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+
+        default.updateScriptDefinitionsReferences()
+
+        if (classpathRoots.customDefinitionsUsed) {
+            updater.invalidateAndCommit()
+        }
+    }
+
+    init {
+        val connection = project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
+        connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+            override fun beforeChanged(event: VersionedStorageChange) {
+                val storageBefore = event.storageBefore
+                val storageAfter = event.storageAfter
+                val changes = event.getChanges<SdkEntity>().ifEmpty { return }
+
+                changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::newEntity)
+                    .mapNotNull { it.findSdkBridge(storageAfter) }
+                    .firstOrNull()?.let {
+                        updater.checkInvalidSdks()
+                        return
+                    }
+
+                val outdated: List<Sdk> = changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::oldEntity)
+                    .mapNotNull { it.findSdkBridge(storageBefore) }
+                    .toList()
+
+                if (outdated.isNotEmpty()) {
+                    updater.checkInvalidSdks(*outdated.toTypedArray())
+                }
+            }
+        })
+    }
+
+    override fun getScriptSdk(virtualFile: VirtualFile): Sdk? =
+        if (ScratchUtil.isScratch(virtualFile)) {
+            ProjectRootManager.getInstance(project).projectSdk
+        } else {
+            classpathRoots.getScriptSdk(virtualFile)
+        }
+
+    override fun getFirstScriptsSdk(): Sdk? =
+        classpathRoots.firstScriptSdk
+
+    override fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope =
+        classpathRoots.getScriptDependenciesClassFilesScope(file)
+
+    override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope =
+        classpathRoots.allDependenciesClassFilesScope
+
+    override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope =
+        classpathRoots.allDependenciesSourcesScope
+
+    override fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile> =
+        classpathRoots.allDependenciesClassFiles
+
+    override fun getAllScriptDependenciesSources(): Collection<VirtualFile> =
+        classpathRoots.allDependenciesSources
+
+    fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? =
+        classpathRoots.scriptsPaths().firstNotNullOfOrNull { scriptPath ->
+            VfsUtil.findFile(Path.of(scriptPath), true)?.takeIf { scriptVirtualFile ->
+                getScriptDependenciesClassFiles(scriptVirtualFile).any { scriptDependency ->
+                    dependencies.contains(scriptDependency.presentableUrl)
+                }
+            }
+        }
+
+    override fun getScriptDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile> =
+        classpathRoots.getScriptDependenciesClassFiles(file)
+
+    fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile> =
+        classpathRoots.getScriptDependenciesSourceFiles(file)
 
     companion object {
-        fun getServiceIfCreated(project: Project): ScriptConfigurationManager? = project.serviceIfCreated()
+        @JvmStatic
+        fun getInstance(project: Project): ScriptConfigurationManager = project.service<ScriptConfigurationsProvider>() as ScriptConfigurationManager
 
         @JvmStatic
-        fun getInstance(project: Project): ScriptConfigurationManager = project.service()
-
-        @JvmStatic
-        fun compositeScriptConfigurationManager(project: Project): CompositeScriptConfigurationManager =
-            getInstance(project).cast<CompositeScriptConfigurationManager>()
+        fun getInstanceSafe(project: Project): ScriptConfigurationManager? = project.serviceOrNull<ScriptConfigurationsProvider>() as? ScriptConfigurationManager
 
         @Suppress("TestOnlyProblems")
         @TestOnly
         fun updateScriptDependenciesSynchronously(file: PsiFile) {
-            // TODO: review the usages of this method
-            val defaultScriptingSupport = defaultScriptingSupport(file.project)
+            val defaultScriptingSupport = getInstanceSafe(file.project)?.default ?: return
             when (file) {
                 is KtFile -> {
                     defaultScriptingSupport.updateScriptDependenciesSynchronously(file)
@@ -120,12 +234,9 @@ interface ScriptConfigurationManager : ScriptDependencyAware {
             }
         }
 
-        private fun defaultScriptingSupport(project: Project) =
-            compositeScriptConfigurationManager(project).default
-
         @TestOnly
         fun clearCaches(project: Project) {
-            defaultScriptingSupport(project).updateScriptDefinitionsReferences()
+            getInstanceSafe(project)?.default?.updateScriptDefinitionsReferences()
         }
     }
 }

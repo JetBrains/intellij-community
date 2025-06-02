@@ -11,7 +11,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.containers.HashSetQueue
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.DefaultBackgroundExecutor.Companion.PROGRESS_INDICATOR_DELAY
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.DefaultBackgroundExecutor.Companion.PROGRESS_INDICATOR_MIN_QUEUE
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
@@ -34,7 +34,7 @@ import javax.swing.SwingUtilities
  */
 internal class DefaultBackgroundExecutor(
     val project: Project,
-    val manager: CompositeScriptConfigurationManager
+    val manager: ScriptConfigurationManager
 ) : BackgroundExecutor {
     companion object {
         const val PROGRESS_INDICATOR_DELAY = 1000

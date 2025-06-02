@@ -28,10 +28,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-fun interface GradleBuildRootsLocatorFactory {
-    fun getInstance(): GradleBuildRootsLocator
-}
-
 abstract class GradleBuildRootsLocator(private val project: Project, private val coroutineScope: CoroutineScope) {
     val roots: GradleBuildRootIndex = GradleBuildRootIndex(project)
 

@@ -6,7 +6,6 @@ import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,7 +13,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.*
-import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptConfigurationManagerExtensions.LOADER
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.*
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader
@@ -85,7 +83,7 @@ import kotlin.script.experimental.api.ScriptDiagnostic
  *
  * [reloadOutOfDateConfiguration] guard this states. See it's docs for more details.
  */
-class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : DefaultScriptingSupportBase(manager) {
+class DefaultScriptingSupport(manager: ScriptConfigurationManager) : DefaultScriptingSupportBase(manager) {
     // TODO public for tests
     internal val backgroundExecutor: BackgroundExecutor = when {
         isUnitTestMode() -> @Suppress("TestOnlyProblems") TestingBackgroundExecutor(manager)
@@ -99,7 +97,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
         get() = mutableListOf<ScriptConfigurationLoader>().apply {
             add(outsiderLoader)
             add(fileAttributeCache)
-            addAll(LOADER.getPoint(project).extensionList)
+            addAll(ScriptConfigurationLoader.EP_NAME.getPoint(project).extensionList)
             add(defaultLoader)
         }
 
@@ -351,8 +349,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
     }
 
     companion object {
-        fun getInstance(project: Project) =
-            (ScriptConfigurationManager.getInstance(project) as CompositeScriptConfigurationManager).default
+        fun getInstance(project: Project) = ScriptConfigurationManager.getInstance(project).default
     }
 }
 
@@ -368,9 +365,9 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
  * [ScriptClassRootsCache] will be calculated based on [cache]d configurations.
  * Every change in [cache] will invalidate [ScriptClassRootsCache] cache.
  */
-abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigurationManager) {
+abstract class DefaultScriptingSupportBase(val manager: ScriptConfigurationManager) {
     val project: Project
-        get() = manager.project
+        get() = manager.myProject
 
     @Suppress("LeakingThis")
     protected val cache: ScriptConfigurationCache = createCache()
@@ -549,13 +546,8 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
 
 internal fun isFSRootsStorageEnabled(): Boolean = Registry.`is`("kotlin.scripting.fs.roots.storage.enabled")
 
-object DefaultScriptConfigurationManagerExtensions {
-    val LOADER: ProjectExtensionPointName<ScriptConfigurationLoader> =
-        ProjectExtensionPointName("org.jetbrains.kotlin.scripting.idea.loader")
-}
-
 val ScriptConfigurationManager.testingBackgroundExecutor: TestingBackgroundExecutor
     get() {
         @Suppress("TestOnlyProblems")
-        return (this as CompositeScriptConfigurationManager).default.backgroundExecutor as TestingBackgroundExecutor
+        return this.default.backgroundExecutor as TestingBackgroundExecutor
     }

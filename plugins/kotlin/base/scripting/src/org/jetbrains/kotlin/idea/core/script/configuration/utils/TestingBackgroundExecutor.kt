@@ -7,11 +7,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.HashSetQueue
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 
 @TestOnly
 class TestingBackgroundExecutor internal constructor(
-    private val manager: CompositeScriptConfigurationManager
+    private val manager: ScriptConfigurationManager
 ) : BackgroundExecutor {
     private val backgroundQueue = HashSetQueue<BackgroundTask>()
 

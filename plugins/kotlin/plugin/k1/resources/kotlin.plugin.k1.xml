@@ -32,7 +32,6 @@
   <xi:include href="native-fe10.xml"/>
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-fe10.xml"/>
-  <xi:include href="scripting-base.xml"/>
   <xi:include href="facets-base.xml"/>
   <xi:include href="platform-kind-resolution-fe10.xml"/>
   <xi:include href="jvm.xml"/>

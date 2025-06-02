@@ -33,8 +33,8 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
                     status.errorAnalyzingFinished = false
                 }
             } else {
-                val configurations = ScriptConfigurationManager.getServiceIfCreated(project)
-                if (configurations == null || configurations.isConfigurationLoadingInProgress(file)) {
+                val configurations = ScriptConfigurationManager.getInstance(project)
+                if (configurations.isConfigurationLoadingInProgress(file)) {
                     status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
                     status.errorAnalyzingFinished = false
                 }

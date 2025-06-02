@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportS
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
 import org.jetbrains.kotlin.gradle.scripting.shared.scriptConfigurationsNeedToBeUpdated
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
@@ -47,8 +46,8 @@ import java.nio.file.Path
  *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported] - imported
  */
 class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project, coroutineScope) {
-    private val manager: CompositeScriptConfigurationManager
-        get() = ScriptConfigurationManager.getInstance(project) as CompositeScriptConfigurationManager
+    private val manager: ScriptConfigurationManager
+        get() = ScriptConfigurationManager.getInstance(project)
 
     private val updater
         get() = manager.updater
