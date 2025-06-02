@@ -105,7 +105,7 @@ internal open class ImmutableEntityStorageImpl(
     private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
     val EMPTY = ImmutableEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), ImmutableStorageIndexes.EMPTY)
 
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
       val instancesCountCounter = meter.counterBuilder("workspaceModel.entityStorageSnapshotImpl.instances.count").buildObserver()
 
       meter.batchCallback(
@@ -121,7 +121,6 @@ internal open class ImmutableEntityStorageImpl(
     }
   }
 }
-
 
 internal class MutableEntityStorageImpl(
   private val originalSnapshot: ImmutableEntityStorageImpl,
@@ -229,6 +228,7 @@ internal class MutableEntityStorageImpl(
       entityToAdd.applyToBuilder(this)
       entityToAdd.changedProperty.clear()
 
+      @Suppress("UNCHECKED_CAST")
       return@addMeasuredTime this.entityDataByIdOrDie(entityToAdd.id).createEntity(this) as T
     }
     finally {
@@ -397,8 +397,6 @@ internal class MutableEntityStorageImpl(
   }
 
   override fun collectChanges(): Map<Class<*>, List<EntityChange<*>>> = collectChangesTimeMs.addMeasuredTime {
-    val result = HashMap<Class<*>, MutableList<EntityChange<*>>>()
-
     // We keep the Removed-Replaced-Added ordering of the events
     //
     // This implemented by adding Removed events at the start, Added events at the end, and Replaced before the Added events.
@@ -408,7 +406,12 @@ internal class MutableEntityStorageImpl(
     try {
       lockWrite()
 
-      for ((entityId, change) in this.changeLog.changeLog) {
+      if (changeLog.changeLog.isEmpty()) {
+        return@addMeasuredTime emptyMap()
+      }
+
+      val result = HashMap<Class<*>, MutableList<EntityChange<*>>>()
+      for ((entityId, change) in changeLog.changeLog) {
         when (change) {
           is ChangeEntry.AddEntity -> {
             val addedEntity = change.entityData.createEntity(this).asBase()
@@ -439,12 +442,11 @@ internal class MutableEntityStorageImpl(
           }
         }
       }
+      result
     }
     finally {
       unlockWrite()
     }
-
-    return@addMeasuredTime result
   }
 
   override fun hasSameEntities(): Boolean = hasSameEntitiesTimeMs.addMeasuredTime {
@@ -899,7 +901,7 @@ internal class MutableEntityStorageImpl(
     private val getMutableExternalMappingTimeMs = MillisecondsMeasurer()
     private val getMutableVFUrlIndexTimeMs = MillisecondsMeasurer()
 
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
       val instancesCountCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.instances.count").buildObserver()
       val getEntitiesTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.entities.ms").buildObserver()
       val getReferrersTimeCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.referrers.ms").buildObserver()
