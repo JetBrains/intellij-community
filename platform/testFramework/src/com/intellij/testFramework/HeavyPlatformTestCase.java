@@ -462,68 +462,70 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    RunAll.runAll(
-      () -> disposeRootDisposable(),
-      () -> {
-        if (project != null) {
-          TestApplicationManager.tearDownProjectAndApp(project);
-        }
-        // must be set to null only after dispose (maybe used by tests during dispose)
-        myProject = null;
-      },
-      () -> {
-        AccessToken projectTracker = this.projectTracker;
-        if (projectTracker != null) {
-          this.projectTracker = null;
-          projectTracker.finish();
-        }
-      },
-      () -> UIUtil.dispatchAllInvocationEvents(),
-      () -> {
-        if (myCodeStyleSettingsTracker != null) {
-          myCodeStyleSettingsTracker.checkForSettingsDamage();
-        }
-      },
-      () -> {
-        if (project != null) {
-          InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
-        }
-      },
-      () -> {
-        JarFileSystemImpl.cleanupForNextTest();
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-      },
-      () -> {
-        if (!myAssertionsInTestDetected) {
-          if (IdeaLogger.ourErrorsOccurred != null) {
-            throw IdeaLogger.ourErrorsOccurred;
+    EdtTestUtil.runInEdtAndWait(() -> {
+      RunAll.runAll(
+        () -> disposeRootDisposable(),
+        () -> {
+          if (project != null) {
+            TestApplicationManager.tearDownProjectAndApp(project);
           }
+          // must be set to null only after dispose (maybe used by tests during dispose)
+          myProject = null;
+        },
+        () -> {
+          AccessToken projectTracker = this.projectTracker;
+          if (projectTracker != null) {
+            this.projectTracker = null;
+            projectTracker.finish();
+          }
+        },
+        () -> UIUtil.dispatchAllInvocationEvents(),
+        () -> {
+          if (myCodeStyleSettingsTracker != null) {
+            myCodeStyleSettingsTracker.checkForSettingsDamage();
+          }
+        },
+        () -> {
+          if (project != null) {
+            InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
+          }
+        },
+        () -> {
+          JarFileSystemImpl.cleanupForNextTest();
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+        },
+        () -> {
+          if (!myAssertionsInTestDetected) {
+            if (IdeaLogger.ourErrorsOccurred != null) {
+              throw IdeaLogger.ourErrorsOccurred;
+            }
+          }
+        },
+        () -> super.tearDown(),
+        () -> {
+          if (myEditorListenerTracker != null) {
+            myEditorListenerTracker.checkListenersLeak();
+          }
+        },
+        () -> {
+          if (myThreadTracker != null) {
+            VfsTestUtil.waitForFileWatcher();
+            myThreadTracker.checkLeak();
+          }
+        },
+        () -> LightPlatformTestCase.checkEditorsReleased(),
+        () -> myOldSdks.checkForJdkTableLeaks(),
+        () -> myVirtualFilePointerTracker.assertPointersAreDisposed(),
+        () -> myLibraryTableTracker.assertDisposed(),
+        () -> {
+          myModule = null;
+          myEditorListenerTracker = null;
+          myThreadTracker = null;
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
+          ourTestCase = null;
         }
-      },
-      () -> super.tearDown(),
-      () -> {
-        if (myEditorListenerTracker != null) {
-          myEditorListenerTracker.checkListenersLeak();
-        }
-      },
-      () -> {
-        if (myThreadTracker != null) {
-          VfsTestUtil.waitForFileWatcher();
-          myThreadTracker.checkLeak();
-        }
-      },
-      () -> LightPlatformTestCase.checkEditorsReleased(),
-      () -> myOldSdks.checkForJdkTableLeaks(),
-      () -> myVirtualFilePointerTracker.assertPointersAreDisposed(),
-      () -> myLibraryTableTracker.assertDisposed(),
-      () -> {
-        myModule = null;
-        myEditorListenerTracker = null;
-        myThreadTracker = null;
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourTestCase = null;
-      }
-    );
+      );
+    });
   }
 
   protected void resetAllFields() {
