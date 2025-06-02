@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -106,9 +105,7 @@ class KotlinInlineAnonymousFunctionProcessor(
                     val lambdaExpression = function.parent as? KtLambdaExpression ?: return null
                     val signature = allowAnalysisOnEdt {
                         allowAnalysisFromWriteAction {
-                            analyze(lambdaExpression) {
-                                LambdaToAnonymousFunctionUtil.prepareFunctionText(lambdaExpression)
-                            }
+                            LambdaToAnonymousFunctionUtil.prepareFunctionText(lambdaExpression)
                         }
                     } ?: return null
                     LambdaToAnonymousFunctionUtil.convertLambdaToFunction(lambdaExpression, signature) as? KtNamedFunction

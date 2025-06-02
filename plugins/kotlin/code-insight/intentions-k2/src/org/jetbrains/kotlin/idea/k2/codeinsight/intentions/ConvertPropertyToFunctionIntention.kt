@@ -201,7 +201,9 @@ private fun KaSession.prepareContext(
                 )
             }
 
-            if (callable is KtProperty) {
+            // TODO: KTIJ-34287 Investigate why some tests fails without canBeAnalyzed check
+            // org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated.Other
+            if (callable is KtProperty && callable.canBeAnalysed()) {
                 callable.containingKtFile
                     .scopeContext(callable)
                     .compositeScope()
@@ -230,10 +232,12 @@ private fun KaSession.prepareContext(
                 if (usage is KtReference) {
                     if (usage is KtSimpleNameReference) {
                         val expression = usage.expression
-                        if (expression.resolveToCall() != null && expression.getStrictParentOfType<KtCallableReferenceExpression>() == null) {
-                            kotlinRefsToReplaceWithCall.add(expression)
-                        } else if (nameChanged) {
-                            refsToRename.add(usage)
+                        analyze(expression) {
+                            if (expression.resolveToCall() != null && expression.getStrictParentOfType<KtCallableReferenceExpression>() == null) {
+                                kotlinRefsToReplaceWithCall.add(expression)
+                            } else if (nameChanged) {
+                                refsToRename.add(usage)
+                            }
                         }
                     } else {
                         val refElement = usage.element

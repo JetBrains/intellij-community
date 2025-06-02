@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
@@ -97,15 +96,13 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         }
         val codeFragment = KtPsiFactory(expression.project).createExpressionCodeFragment(copiedExpression.text, expression)
         val contentElement = codeFragment.getContentElement() as? KtQualifiedExpression ?: return nonInvertedFix
-        return analyze(codeFragment) {
-            // After changing to the inverted name, we make sure that if the function is inverted, we are calling the correct function.
-            // (Relevant if, for example, a different List.isEmpty() is already defined in the same scope, we do not want to use it)
-            val invertedName = contentElement.invertSelectorFunction()?.callExpression?.calleeExpression?.text
-            if (invertedName != null && !expression.isUsingLabelInScope(invertedName)) {
-                RenameUselessCallFix(invertedName, invert = true)
-            } else {
-                nonInvertedFix
-            }
+        // After changing to the inverted name, we make sure that if the function is inverted, we are calling the correct function.
+        // (Relevant if, for example, a different List.isEmpty() is already defined in the same scope, we do not want to use it)
+        val invertedName = contentElement.invertSelectorFunction()?.callExpression?.calleeExpression?.text
+        return if (invertedName != null && !expression.isUsingLabelInScope(invertedName)) {
+            RenameUselessCallFix(invertedName, invert = true)
+        } else {
+            nonInvertedFix
         }
     }
 }

@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -37,6 +39,7 @@ internal object ConvertKClassToClassFixFactories {
         )
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun KaSession.createFixIfAvailable(
         element: PsiElement?,
         expectedType: KaType,
@@ -46,8 +49,13 @@ internal object ConvertKClassToClassFixFactories {
         if (!isKClass(actualType) || !isJavaClass(expectedType)) return null
         val codeFragment = KtPsiFactory(element.project).createExpressionCodeFragment(element.text + ".java", element)
         val contentElement = codeFragment.getContentElement() ?: return null
-        val javaLangClassType = contentElement.expressionType ?: return null
-        if (!javaLangClassType.isSubtypeOf(expectedType)) return null
+        val expectedTypePointer = expectedType.createPointer()
+        analyze(contentElement) {
+            val javaLangClassType = contentElement.expressionType ?: return null
+            val expectedType = expectedTypePointer.restore() ?: return null
+            if (!javaLangClassType.isSubtypeOf(expectedType)) return null
+        }
+
         return ConvertKClassToClassFix(element)
     }
 }
