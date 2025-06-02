@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -21,7 +22,7 @@ import git4idea.i18n.GitBundle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-internal class GitBranchesTreePopupSettings : DefaultActionGroup(), DumbAware {
+internal class GitBranchesTreePopupSettings : DefaultActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   init {
     templatePresentation.text = DvcsBundle.message("action.BranchActionGroupPopup.settings.text")
     templatePresentation.isPopupGroup = true
@@ -36,7 +37,7 @@ internal class GitBranchesTreePopupSettings : DefaultActionGroup(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
-internal class GitBranchesTreePopupResizeAction : DumbAwareAction() {
+internal class GitBranchesTreePopupResizeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   init {
     templatePresentation.text = DvcsBundle.message("action.BranchActionGroupPopup.Anonymous.text.restore.size")
   }
@@ -105,7 +106,8 @@ internal class GitBranchesTreePopupShowRecentBranchesAction : GitWidgetSettingsT
   }
 }
 
-internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(), DumbAware {
+internal class GitBranchesTreePopupFilterSeparatorWithText :
+  DefaultActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   init {
     addSeparator(GitBundle.message("separator.git.branches.popup.filter.by"))
   }
