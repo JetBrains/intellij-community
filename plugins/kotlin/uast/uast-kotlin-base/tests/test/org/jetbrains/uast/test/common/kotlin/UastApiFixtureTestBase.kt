@@ -2227,4 +2227,26 @@ interface UastApiFixtureTestBase {
         val expected = anno!!.findDeclaredAttributeValue("expected") as? UClassLiteralExpression
         TestCase.assertEquals("java.lang.Throwable", expected?.type?.canonicalText)
     }
+
+    fun checkAttributeValueWithExtraParenthesis(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt",
+            """
+                // not replaceWith=ReplaceWith(...), but extra parenthesis
+                @Deprecated(message="good-bye", replaceWith=(ReplaceWith("bar()")))
+                fun foo() {}
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        val foo = uFile.findElementByTextFromPsi<UMethod>("foo", strict = false)
+            .orFail("cant convert to UMethod: foo")
+        val anno = foo.uAnnotations.single()
+        val attr = anno.findAttributeValue("replaceWith")
+        TestCase.assertNotNull(attr)
+        val replaceWith = ((attr as? UParenthesizedExpression)?.expression ?: attr) as? UCallExpression
+        TestCase.assertNotNull(replaceWith)
+        val literal = replaceWith!!.valueArguments.getOrNull(0)?.evaluate()
+        TestCase.assertNotNull(literal)
+        TestCase.assertEquals("bar()", literal)
+    }
 }
