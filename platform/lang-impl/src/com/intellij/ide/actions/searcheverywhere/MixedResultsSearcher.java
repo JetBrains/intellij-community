@@ -382,7 +382,7 @@ public final class MixedResultsSearcher implements SESearcher {
         List<SearchEverywhereFoundElementInfo> alreadyFoundItems = mySections.values().stream()
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
-        SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
+        SEEqualElementsActionType action = myEqualityProvider.compareItemsCollection(newElementInfo, alreadyFoundItems);
         if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
           action = fixReplaceAction(replaceAction);
         }

@@ -35,7 +35,7 @@ class SeEqualityChecker {
   fun getAction(itemObject: Any, newItemUuid: String, priority: Int, contributor: SearchEverywhereContributor<*>): Action {
     lock.withLock {
       val newItemInfo = SearchEverywhereFoundElementInfo(newItemUuid, itemObject, priority, contributor)
-      val action = equalityProvider.compareItems(newItemInfo, alreadyFoundItems.values.toList())
+      val action = equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
 
       val result = when (action) {
         is SEResultsEqualityProvider.SEEqualElementsActionType.Replace -> {

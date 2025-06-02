@@ -606,9 +606,14 @@ c:com.intellij.find.actions.FindUsagesAction
 - a:isVisible(com.intellij.openapi.actionSystem.DataContext,java.lang.String):com.intellij.util.ThreeState
 *:com.intellij.ide.actions.NewFileActionWithCategory
 - a:getCategory():java.lang.String
+a:com.intellij.ide.actions.searcheverywhere.AbstractEqualityProvider
+- com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
+- *f:compareItemsCollection(com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo,java.util.Collection):com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider$SEEqualElementsActionType
 *:com.intellij.ide.actions.searcheverywhere.PromoAction
 - a:getCallToAction():java.lang.String
 - a:getPromotedProductIcon():javax.swing.Icon
+com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
+- *:compareItemsCollection(com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo,java.util.Collection):com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider$SEEqualElementsActionType
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 - *a:getCurrentlyShownPopupInstance():com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
 *:com.intellij.ide.actions.searcheverywhere.SearchEverywherePopupInstance
