@@ -18,11 +18,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.ComponentUtil
+import org.jetbrains.annotations.ApiStatus
 
 private const val SELECT_CONTEXT_FILE = "SelectInProjectView"
 private const val SELECT_OPENED_FILE = "SelectOpenedFileInProjectView"
 
-internal class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+@ApiStatus.Internal
+class SelectFileAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(event: AnActionEvent) {
     when (getActionId(event)) {
       SELECT_CONTEXT_FILE -> getSelector(event)?.run { target.selectIn(context, true) }
