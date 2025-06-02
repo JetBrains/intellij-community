@@ -70,7 +70,7 @@ import java.util.*
  * tweak them in inheritors.
  *
  * Avoid using [Rule] in inheritors to not complicate lifecycle any further, instead use [TestFeatureWithSetUpTearDown].
- * [KotlinMppTestsContext.description] should cover common needs for [Rule]
+ * [KotlinSyncTestsContext.description] should cover common needs for [Rule]
  *
  * Sharing of the test suite capabilities should be done via standalone composable modularized [TestFeature]s
  *
@@ -111,7 +111,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         LibrarySourcesChecker
     )
 
-    private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl(installedFeatures)
+    private val context: KotlinMppTestsContext = KotlinMppTestsContext(installedFeatures)
 
     @get:Rule
     val testDescriptionProviderJUnitRule = TestDescriptionProviderJUnitRule(context)
@@ -140,7 +140,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
 
     protected fun doTest(
         runImport: Boolean = true,
-        afterImport: (KotlinMppTestsContextImpl) -> Unit = { },
+        afterImport: (KotlinMppTestsContext) -> Unit = { },
         testSpecificConfiguration: TestConfigurationDslScope.() -> Unit = { },
     ) {
         context.testConfiguration.defaultTestConfiguration()
@@ -148,7 +148,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         context.doTest(runImport, afterImport)
     }
 
-    private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean, afterImport: (KotlinMppTestsContextImpl) -> Unit = { }) {
+    private fun KotlinMppTestsContext.doTest(runImport: Boolean, afterImport: (KotlinMppTestsContext) -> Unit = { }) {
         runAll(
             {
                 runForEnabledFeatures { context.beforeTestExecution() }
@@ -168,7 +168,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         )
     }
 
-    private fun KotlinMppTestsContextImpl.runForEnabledFeatures(action: TestFeature<*>.() -> Unit) {
+    private fun KotlinMppTestsContext.runForEnabledFeatures(action: TestFeature<*>.() -> Unit) {
         enabledFeatures.combineMultipleFailures { feature ->
             with(feature) { action() }
         }
@@ -232,7 +232,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         )
     }
 
-    private fun KotlinMppTestsContext.configureByFiles(): List<VirtualFile> {
+    private fun KotlinSyncTestsContext.configureByFiles(): List<VirtualFile> {
         val rootDir = context.testDataDirectory
         assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
         val devModeConfig = testConfiguration.getConfiguration(DevModeTestFeature)
@@ -361,7 +361,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         }
     }
 
-    class TestDescriptionProviderJUnitRule(private val testContext: KotlinMppTestsContextImpl) : KotlinBeforeAfterTestRuleWithDescription {
+    class TestDescriptionProviderJUnitRule(private val testContext: KotlinMppTestsContext) : KotlinBeforeAfterTestRuleWithDescription {
         override fun before(description: Description) {
             testContext.description = description
         }

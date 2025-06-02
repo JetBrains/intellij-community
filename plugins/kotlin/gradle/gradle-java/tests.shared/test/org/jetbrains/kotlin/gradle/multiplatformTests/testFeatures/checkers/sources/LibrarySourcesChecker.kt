@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sou
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContextImpl
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
 import kotlin.collections.component2
@@ -18,12 +18,12 @@ interface LibrarySourcesChecker : TestFeature<LibrarySourcesConfiguration>, Libr
     companion object : AbstractTestChecker<LibrarySourcesConfiguration>() {
         override fun createDefaultConfiguration() = LibrarySourcesConfiguration()
 
-        override fun KotlinMppTestsContext.check() {
+        override fun KotlinSyncTestsContext.check() {
 
             val configuration = testConfiguration.getConfiguration(this@Companion)
             val classifier = configuration.classifier ?: return
             val testProperties =
-                (this as? KotlinMppTestsContextImpl)?.testProperties ?: error("LibrarySourcesChecker requires KotlinMppTestsContextImpl")
+                (this as? KotlinMppTestsContext)?.testProperties ?: error("LibrarySourcesChecker requires KotlinMppTestsContextImpl")
 
             val expectedDownloadedSourcesFile = findMostSpecificExistingFileOrNewDefault(classifier)
 

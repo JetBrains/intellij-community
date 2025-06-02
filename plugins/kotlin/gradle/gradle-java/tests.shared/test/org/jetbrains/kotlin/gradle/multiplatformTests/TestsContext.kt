@@ -3,14 +3,12 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.TestTasksChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.runner.Description
 import java.io.File
 
-interface KotlinMppTestsContext {
+interface KotlinSyncTestsContext {
     val description: Description
 
     /**
@@ -35,12 +33,12 @@ interface KotlinMppTestsContext {
 
     val enabledFeatures: List<TestFeature<*>>
 
-    val testProperties: KotlinMppTestProperties
+    val testProperties: KotlinTestProperties
 }
 
-class KotlinMppTestsContextImpl(
+class KotlinMppTestsContext(
     override val testFeatures: List<TestFeature<*>>
-) : KotlinMppTestsContext {
+) : KotlinSyncTestsContext {
     override val testConfiguration: TestConfiguration = TestConfiguration()
     override val testProperties: KotlinMppTestProperties = KotlinMppTestProperties.construct(testConfiguration)
 

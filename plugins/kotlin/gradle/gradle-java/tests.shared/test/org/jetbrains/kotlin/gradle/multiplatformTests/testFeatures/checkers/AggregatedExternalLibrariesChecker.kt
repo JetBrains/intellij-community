@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager.getInstance
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
 import kotlin.collections.flatMap
 import kotlin.test.assertEquals
@@ -17,7 +17,7 @@ object AggregatedExternalLibrariesChecker : AbstractTestChecker<AggregatedExtern
 
     override fun createDefaultConfiguration(): AggregatedExternalLibrariesConfiguration = AggregatedExternalLibrariesConfiguration()
 
-    override fun KotlinMppTestsContext.check() {
+    override fun KotlinSyncTestsContext.check() {
         val expectedFile = findMostSpecificExistingFileOrNewDefault("aggregatedExternalLibraries")
         val expectedContent = expectedFile.takeIf { it.exists() }
             ?.readText()

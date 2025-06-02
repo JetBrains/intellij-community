@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.idea.codeInsight.gradle.HighlightingCheck
 import java.io.File
@@ -35,7 +35,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
         return textWithRemovedTestConfig
     }
 
-    override fun KotlinMppTestsContext.check() {
+    override fun KotlinSyncTestsContext.check() {
         val highlightingConfig = testConfiguration.getConfiguration(HighlightingChecker)
         if (highlightingConfig.skipCodeHighlighting) return
 
@@ -58,7 +58,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
         }
     }
 
-    private fun KotlinMppTestsContext.markupUpdatingTestFeatureIfAny(): TestFeatureWithFileMarkup<*>? {
+    private fun KotlinSyncTestsContext.markupUpdatingTestFeatureIfAny(): TestFeatureWithFileMarkup<*>? {
         val enabledHighlightingCompatibleFeatures = enabledFeatures.filterIsInstance<TestFeatureWithFileMarkup<*>>().filter { feature ->
             val generalChecksConfig = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
             generalChecksConfig.disableCheckers?.contains(feature) != true
@@ -76,7 +76,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
         return enabledHighlightingCompatibleFeatures.singleOrNull()
     }
 
-    private fun KotlinMppTestsContext.postProcessActualTestData(actualTestData: String, editor: Editor): String {
+    private fun KotlinSyncTestsContext.postProcessActualTestData(actualTestData: String, editor: Editor): String {
         val renderedConfig = renderConfiguration()
 
         val actualTestDataWithRestoredMarkup = markupUpdatingTestFeatureIfAny()?.let { testFeature ->
@@ -85,7 +85,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
         return renderedConfig + "\n" + actualTestDataWithRestoredMarkup
     }
 
-    private fun KotlinMppTestsContext.renderConfiguration(): String {
+    private fun KotlinSyncTestsContext.renderConfiguration(): String {
         val configuration = testConfiguration.getConfiguration(this@HighlightingChecker)
 
         val hiddenHighlightingEntries: List<String> = buildList {
@@ -103,7 +103,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
             ""
     }
 
-    private fun KotlinMppTestsContext.parseLibrarySourcesConfig(): Map<String, LibrarySourceRoot> {
+    private fun KotlinSyncTestsContext.parseLibrarySourcesConfig(): Map<String, LibrarySourceRoot> {
         fun error(): Nothing = error(
             "Error while parsing library-sources.txt. Expected line format:\n\n" +
                     "<library name> <path to sources jar> <path to test data sources>"
@@ -129,7 +129,7 @@ object HighlightingChecker : AbstractTestChecker<HighlightingCheckConfiguration>
     }
 
     // workaround for IDEA-227215 and stdlib / kotlin-test
-    private fun KotlinMppTestsContext.addSourcesJarToWorkspace(librarySources: Map<String, LibrarySourceRoot>) {
+    private fun KotlinSyncTestsContext.addSourcesJarToWorkspace(librarySources: Map<String, LibrarySourceRoot>) {
         val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(testProject)
         librarySources.forEach { (libraryName, sourceRoot) ->
             val library = libraryTable.getLibraryByName(libraryName) ?: error("Can't find library '${libraryName} in the project'")

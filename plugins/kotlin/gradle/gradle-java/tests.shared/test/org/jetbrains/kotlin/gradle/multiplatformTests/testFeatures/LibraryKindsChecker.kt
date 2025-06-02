@@ -8,11 +8,11 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.UnknownLibraryKind
 import com.intellij.openapi.roots.libraries.LibraryType
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import kotlin.test.assertIsNot
 
 object LibraryKindsChecker : AbstractTestChecker<Unit>() {
-    override fun KotlinMppTestsContext.check() {
+    override fun KotlinSyncTestsContext.check() {
         val libraries = testProject.modules.flatMap { module ->
             module.rootManager.orderEntries
                 .filterIsInstance<LibraryOrderEntry>()

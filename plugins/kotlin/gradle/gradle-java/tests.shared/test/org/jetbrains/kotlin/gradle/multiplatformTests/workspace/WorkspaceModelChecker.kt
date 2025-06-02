@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
@@ -56,7 +56,7 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
      */
     abstract fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String>
 
-    final override fun KotlinMppTestsContext.check() {
+    final override fun KotlinSyncTestsContext.check() {
         check(
             testProject,
             testDataDirectory,

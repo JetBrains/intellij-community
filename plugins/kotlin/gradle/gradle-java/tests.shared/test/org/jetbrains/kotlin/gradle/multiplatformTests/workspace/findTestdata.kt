@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.gradle.multiplatformTests.workspace
 
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.konan.target.HostManager
 import java.io.File
 
-internal fun KotlinMppTestsContext.findMostSpecificExistingFileOrNewDefault(
+internal fun KotlinSyncTestsContext.findMostSpecificExistingFileOrNewDefault(
     checkerClassifier: String
 ) = findMostSpecificExistingFileOrNewDefault(
     checkerClassifier = checkerClassifier,
