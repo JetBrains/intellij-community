@@ -164,6 +164,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
    * @param localPort the local port that is listening for the incoming connections
    * @return the promised value with the host and port the process started on the target may connect to be directed to the local one
    */
+  @Deprecated("Use `TargetEnvironment.getLocalPortBindings` after constructing `TargetEnvironment` instead")
   fun requestLocalPortBinding(host: String, localPort: Int): TargetValue<HostPort> {
     val binding = TargetEnvironment.LocalPortBinding(localPort, target = null)
     request.localPortBindings.add(binding)
