@@ -3,7 +3,10 @@
 
 package com.intellij.execution.ui
 
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.Executor
+import com.intellij.execution.KillableProcess
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -49,6 +52,7 @@ import java.awt.KeyboardFocusManager
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Predicate
 import javax.swing.Icon
+import kotlin.concurrent.Volatile
 
 private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
 
@@ -281,15 +285,24 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val processHandler = descriptor.processHandler
     if (processHandler != null) {
       val processAdapter = object : ProcessListener {
+        /**
+         * Events from [ProcessHandler] may be received on different threads, and this depends on the specific implementation.
+         * Therefore, we must ensure the visibility of actual values.
+         */
+        @Volatile
+        var processTerminated = false
+
         override fun startNotified(event: ProcessEvent) {
           val pid = getPid(processHandler)
           UIUtil.invokeLaterIfNeeded {
-            content.icon = getLiveIndicator(descriptor.icon)
-            var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
-            if (ExperimentalUI.isNewUI() && toolWindowIcon is ScalableIcon) {
-              toolWindowIcon = loadIconCustomVersionOrScale(icon = toolWindowIcon, size = 20)
+            if (!processTerminated) {
+              content.icon = getLiveIndicator(descriptor.icon)
+              var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
+              if (ExperimentalUI.isNewUI() && toolWindowIcon is ScalableIcon) {
+                toolWindowIcon = loadIconCustomVersionOrScale(icon = toolWindowIcon, size = 20)
+              }
+              toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
             }
-            toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
             if (pid != null) {
               content.description = ExecutionBundle.message("process.id.tooltip", pid)
             }
@@ -302,6 +315,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         }
 
         override fun processTerminated(event: ProcessEvent) {
+          processTerminated = true
           AppUIUtil.invokeLaterIfProjectAlive(project) {
             val manager = getContentManagerByToolWindowId(toolWindowId) ?: return@invokeLaterIfProjectAlive
             val alive = isAlive(manager)
