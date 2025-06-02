@@ -418,6 +418,17 @@ class PluginSetLoadingTest {
     }
   }
 
+  @Test
+  fun testLoadDisabledPlugin() {
+    plugin("disabled") { }.buildDir(pluginsDirPath.resolve("disabled"))
+    val pluginSet = buildPluginSet {
+      withDisabledPlugins("disabled")
+    }
+    val descriptor = pluginSet.getPlugin("disabled")
+    assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    assertThat(descriptor).isNotMarkedEnabled()
+  }
+
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginsDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)

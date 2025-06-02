@@ -31,7 +31,6 @@ import java.util.*
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.name
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 
 class PluginDescriptorTest {
@@ -75,7 +74,7 @@ class PluginDescriptorTest {
     assertThat(pluginDependencies.map { it.isOptional }).allMatch { it == true }
     assertThat(pluginDependencies.map { it.pluginId.idString }).containsExactly("dep2", "dep1")
   }
-  
+
   @Test
   fun `descriptor with multiple plugin dependencies loads`() {
     val descriptor = loadDescriptorFromTestDataDir("multiplePluginDependencies")
@@ -506,18 +505,6 @@ class PluginDescriptorTest {
     assertEquals(impl1, impl2)
     assertEquals(impl1.hashCode(), impl2.hashCode())
     assertNotEquals(impl1.name, impl2.name)
-  }
-
-  // todo why does it needs to know disabled plugins?
-  @Test
-  fun testLoadDisabledPlugin() {
-    val descriptor = loadDescriptorFromTestDataDir(
-      dirName = "disabled",
-      disabledPlugins = setOf("com.intellij.disabled"),
-    )
-    assertFalse(descriptor.isEnabled)
-    assertEquals("This is a disabled plugin", descriptor.description)
-    assertThat(descriptor.dependencies.map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
   }
 
   companion object {
