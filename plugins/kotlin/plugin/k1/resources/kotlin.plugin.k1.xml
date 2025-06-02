@@ -25,6 +25,7 @@
   <xi:include href="caches-fe10.xml"/>
   <xi:include href="jps.xml"/>
   <xi:include href="statistics.xml"/>
+  <xi:include href="scripting-base.xml"/>
   <xi:include href="scripting-k1.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
   <xi:include href="kotlinx-serialization.xml"/>

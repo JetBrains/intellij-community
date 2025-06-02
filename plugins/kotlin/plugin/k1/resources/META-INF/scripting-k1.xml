@@ -1,52 +1,18 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
-            interface="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scripting.idea.scriptingSupport"
             interface="org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport"
             area="IDEA_PROJECT"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
-            interface="org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider"
-            dynamic="true"/>
 
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scripting.idea.loader"
             interface="org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader"
             area="IDEA_PROJECT"/>
 
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
-            interface="org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener"
-            area="IDEA_PROJECT" dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
-            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
-            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
     <extensionPoint qualifiedName="org.jetbrains.kotlin.scratchFileLanguageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.kotlin.idea.jvm.k1.scratch.ScratchFileLanguageProvider"/>
     </extensionPoint>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
-            interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -58,15 +24,7 @@
 
     <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependenciesFileInvalidator"/>
 
-    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
-
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
-
-
-    <psi.clsCustomNavigationPolicy implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
-
-    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
-    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
     <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
 
@@ -121,8 +79,6 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
 
-    <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>
-
     <idea.base.projectStructure.moduleInfoProviderExtension implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
     <scriptDefinitionsSource
@@ -136,10 +92,6 @@
     <scriptDefinitionsSource
             id="ScriptTemplatesFromCompilerSettingsProvider"
             implementation="org.jetbrains.kotlin.idea.script.ScriptTemplatesFromCompilerSettingsProvider"/>
-
-    <scriptDefinitionsSource
-            id="BridgeScriptDefinitionsContributor"
-            implementation="org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor"/>
 
     <scriptDefinitionsSource
             id="ScriptTemplatesFromDependenciesProvider"

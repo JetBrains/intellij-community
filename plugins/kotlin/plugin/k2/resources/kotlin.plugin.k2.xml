@@ -25,6 +25,7 @@
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-k2.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
+  <xi:include href="scripting-base.xml"/>
   <xi:include href="scripting-k2.xml"/>
   <xi:include href="native.xml"/>
   <xi:include href="native-k2.xml"/>

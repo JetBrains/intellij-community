@@ -1,0 +1,57 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
+            interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
+            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
+            interface="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
+            interface="org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider"
+            dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scripting.definitions.scriptDefinitionProvider"
+            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
+            area="IDEA_PROJECT"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
+            interface="org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener"
+            area="IDEA_PROJECT" dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
+            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.clsCustomNavigationPolicy
+            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
+    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
+    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
+    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>
+    <scriptDefinitionsSource
+            id="BridgeScriptDefinitionsContributor"
+            implementation="org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor"/>
+  </extensions>
+</idea-plugin>

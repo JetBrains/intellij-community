@@ -11,57 +11,8 @@
             dynamic="true"/>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsProvider"
-            interface="kotlin.script.experimental.intellij.ScriptDefinitionsProvider"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinScripDeferredResolutionPolicy"
             interface="org.jetbrains.kotlin.idea.core.script.k2.KotlinScripDeferredResolutionPolicy"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionsSource"
-            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
-            interface="org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider"
-            dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.definitions.scriptDefinitionProvider"
-            interface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
-            area="IDEA_PROJECT"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptAdditionalIdeaDependenciesProvider"
-            interface="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.idea.scriptingSupport"
-            interface="org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport"
-            area="IDEA_PROJECT"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.idea.loader"
-            interface="org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader"
-            area="IDEA_PROJECT"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
-            interface="org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener"
-            area="IDEA_PROJECT" dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
-            interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
             area="IDEA_PROJECT"
             dynamic="true"/>
   </extensionPoints>
@@ -103,32 +54,12 @@
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptingReportsSink"/>
 
-    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependenciesFileInvalidator"/>
-
-    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
-
-    <psi.clsCustomNavigationPolicy
-            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
-
-    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
-    <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
-
     <configuration.moduleStructureFilterExtension
             implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptsProjectStructureFilter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <k2IdeScriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptDependenciesProvider"/>
-    <scriptDefinitionsSource
-            id="BridgeScriptDefinitionsContributor"
-            implementation="org.jetbrains.kotlin.idea.core.script.BridgeScriptDefinitionsContributor"/>
-
-    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
-
-    <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>
-
-    <idea.base.projectStructure.moduleInfoProviderExtension
-            implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptDefinitionSource"/>
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
