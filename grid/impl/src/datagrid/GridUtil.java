@@ -68,6 +68,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.TextFieldWithAutoCompletion;
@@ -805,6 +806,10 @@ public class GridUtil extends GridUtilCore {
     ActionManager actionManager = ActionManager.getInstance();
     ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, actions, true);
     ActionToolbar toolbarSecondary = actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, secondaryActions, true);
+
+    addToolbarActualizer(dataGrid, toolbar);
+    addToolbarActualizer(dataGrid, toolbarSecondary);
+
     toolbar.setTargetComponent(dataGrid.getPanel().getComponent());
     toolbarSecondary.setTargetComponent(dataGrid.getPanel().getComponent());
     toolbarSecondary.setReservePlaceAutoPopupIcon(false);
@@ -826,6 +831,29 @@ public class GridUtil extends GridUtilCore {
     }
 
     return header;
+  }
+
+  private static void addToolbarActualizer(
+    @NotNull DataGrid dataGrid,
+    @NotNull ActionToolbar toolbar
+  ) {
+    var pageModel = dataGrid.getDataHookup().getPageModel();
+    if (pageModel instanceof MultiPageModel<GridRow, GridColumn> multiPageModel) {
+      multiPageModel.addPageModelListener(
+        new MultiPageModel.PageModelListener() {
+
+          @Override
+          public void pageSizeChanged() {
+            AppUIUtil.invokeOnEdt(() -> {
+              toolbar.updateActionsAsync();
+            });
+          }
+
+          @Override
+          public void pageStartChanged() {}
+        }
+      );
+    }
   }
 
   public static @NotNull JComponent addVerticalGridHeaderComponent(@NotNull DataGrid dataGrid, @Nullable String actionGroupName) {
