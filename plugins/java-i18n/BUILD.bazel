@@ -25,7 +25,6 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/lang-impl",
     "//xml/impl",
-    "//spellchecker",
     "//java/java-impl:impl",
     "//platform/usageView",
     "//java/jsp-base-openapi:jsp-base",

@@ -19,7 +19,6 @@ jvm_library(
     "//platform/icons",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//spellchecker",
     "//platform/lang-impl",
     "@lib//:fastutil-min",
     "//platform/core-ui",
