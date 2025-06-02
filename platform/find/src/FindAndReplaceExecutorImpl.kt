@@ -2,9 +2,11 @@
 package com.intellij.platform.find
 
 import com.intellij.find.FindModel
+import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
+import com.intellij.find.replaceInProject.ReplaceInProjectManager
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
@@ -57,8 +59,16 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   }
 
   override fun performFindAllOrReplaceAll(findModel: FindModel, project: Project) {
-    coroutineScope.launch {
-      FindRemoteApi.getInstance().performFindAllOrReplaceAll(findModel, project.projectId())
+    if (FindKey.isEnabled) {
+      coroutineScope.launch {
+        FindRemoteApi.getInstance().performFindAllOrReplaceAll(findModel, project.projectId())
+      }
+    } else {
+      if (findModel.isReplaceState) {
+        ReplaceInProjectManager.getInstance(project).replaceInPath(findModel)
+      } else {
+        FindInProjectManager.getInstance(project).findInPath(findModel)
+      }
     }
   }
 }
