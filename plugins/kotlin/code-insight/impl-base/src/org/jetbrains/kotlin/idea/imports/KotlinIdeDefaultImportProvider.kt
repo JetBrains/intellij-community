@@ -38,7 +38,7 @@ class KotlinIdeDefaultImportProvider {
         val scriptExtraImports = contextFile.takeIf { it.isScript() }?.let { ktFile ->
             val scriptDependencies = ScriptConfigurationsProvider.getInstance(ktFile.project)
                 ?.getScriptConfiguration(ktFile.originalFile as KtFile)
-            scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
+
             scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
         }.orEmpty()
 
