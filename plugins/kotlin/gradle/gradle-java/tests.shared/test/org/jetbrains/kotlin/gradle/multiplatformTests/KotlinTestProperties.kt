@@ -12,37 +12,52 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
-class KotlinTestProperties private constructor(
-    private val kotlinGradlePluginVersionFromEnv: KotlinToolingVersion,
-    private val gradleVersionFromEnv: GradleVersion,
-    private val agpVersionFromEnv: String?,
-    private val devModeTweaks: DevModeTweaks?,
-) {
-    val kotlinGradlePluginVersion: KotlinToolingVersion
-        get() = devModeTweaks?.overrideKgpVersion?.let { KotlinToolingVersion(it) } ?: kotlinGradlePluginVersionFromEnv
+abstract class KotlinTestProperties {
+    abstract val kotlinGradlePluginVersion: KotlinToolingVersion
 
-    val gradleVersion: GradleVersion
-        get() = devModeTweaks?.overrideGradleVersion?.let { GradleVersion.version(it) } ?: gradleVersionFromEnv
+    /**
+     * Allows providing test properties. If a pair { key, value } is provided,
+     * then all occurrences of string `{{ KEY }}` in test input data will be replaced with `value`.
+     *
+     * Capitalization and whitespacing doesn't matter in `{{ KEY }}` (so, `{{kEy }}` will also be replaced).
+     *
+     * NB: providing property here doesn't replace `value` with `{{ KEY }}` in the actual test output data (golden files).
+     * However, some checkers do it manually on their own (e.g.
+     * [org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker] replaces [kotlinVersion]
+     * with `{{ KGP_VERSION }}`.
+     */
+    abstract fun collectAllProperties(): Map<String, String>
 
-    val agpVersion: String?
-        get() = devModeTweaks?.overrideAgpVersion ?: agpVersionFromEnv
+    /**
+     * Returns classifiers that will be used for finding relevant expected test-data file for the test.
+     * Classifiers allow storing expected test data for "parametrized" tests.
+     *
+     * Example: suppose the test stores its testdata in the file `expected.ext`.
+     * If the [getTestDataClassifiersFromMostSpecific] returns the following sequence:
+     *      [ "1.0", "dev", "173"]
+     *      [ "1.0", "173" ]
+     *      [ "1.0", "dev" ]
+     *      [ "1.0" ]
+     * then the following sequence of files will be probed:
+     *      `expected-1.0-dev-173.ext`
+     *      `expected-1.0-173.ext`
+     *      `expected-1.0-dev.ext`
+     *      `expected-1.0.ext`
+     *      `expected.ext` (empty classifiers are always assumed)
+     *
+     * The files are proved in order; the first found will be used for the current test. Therefore:
+     *   - more specific classifier lists should come first, less specific - last.
+     *   - order of classifiers matters (this will be exact list of suffixes of the file at the disk that
+     *     will be used for test data lookup).
+     *
+     * Items in sequence don't have to be unique.
+     *
+     * See [findTestData.kt] for more details
+     */
+    abstract fun getTestDataClassifiersFromMostSpecific(): Sequence<List<String>>
 
     fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
-        val simpleProperties =  SimpleProperties(gradleVersion, kotlinGradlePluginVersion)
-
-        // Important! Collect final properties exactly here to get versions with devModeTweaks applied
-        val allPropertiesValuesById = simpleProperties.toMutableMap().apply {
-            put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
-            put(GradleVersionTestsProperty.id, gradleVersion.version)
-            if (agpVersion != null) put(AndroidGradlePluginVersionTestsProperty.id, agpVersion!!)
-            if (kotlinGradlePluginVersion < KotlinGradlePluginVersions.V_2_1_0) {
-                put("androidTargetPlaceholder", "android()")
-                put("iosTargetPlaceholder", "ios()")
-            } else {
-                put("androidTargetPlaceholder", "androidTarget()")
-                put("iosTargetPlaceholder", "iosX64()\niosArm64()\niosSimulatorArm64()")
-            }
-        }
+        val allPropertiesValuesById = collectAllProperties()
 
         var result = text
         allPropertiesValuesById.forEach { (key, value) ->
@@ -80,8 +95,60 @@ class KotlinTestProperties private constructor(
 
     companion object {
         val ANY_TEMPLATE_REGEX = Regex("""\{\s*\{\s*.*\s*}\s*}""")
+    }
+}
 
-        fun construct(testConfiguration: TestConfiguration? = null): KotlinTestProperties {
+class KotlinMppTestProperties private constructor(
+    private val kotlinGradlePluginVersionFromEnv: KotlinToolingVersion,
+    private val gradleVersionFromEnv: GradleVersion,
+    private val agpVersionFromEnv: String?,
+    private val devModeTweaks: DevModeTweaks?,
+) : KotlinTestProperties() {
+    override val kotlinGradlePluginVersion: KotlinToolingVersion
+        get() = devModeTweaks?.overrideKgpVersion?.let { KotlinToolingVersion(it) } ?: kotlinGradlePluginVersionFromEnv
+
+    val gradleVersion: GradleVersion
+        get() = devModeTweaks?.overrideGradleVersion?.let { GradleVersion.version(it) } ?: gradleVersionFromEnv
+
+    val agpVersion: String?
+        get() = devModeTweaks?.overrideAgpVersion ?: agpVersionFromEnv
+
+    override fun getTestDataClassifiersFromMostSpecific(): Sequence<List<String>> {
+        val kotlinClassifier = with(kotlinGradlePluginVersion) { "$major.$minor.$patch" }
+        val gradleClassifier = gradleVersion.version
+        val agpClassifier = agpVersion
+
+        return sequenceOf(
+            listOfNotNull(kotlinClassifier, gradleClassifier, agpClassifier),
+            listOfNotNull(kotlinClassifier, gradleClassifier),
+            listOfNotNull(kotlinClassifier, agpClassifier),
+            listOfNotNull(gradleClassifier, agpClassifier),
+            listOfNotNull(kotlinClassifier),
+            listOfNotNull(gradleClassifier),
+            listOfNotNull(agpClassifier)
+        )
+    }
+
+    override fun collectAllProperties(): Map<String, String> {
+        val simpleProperties = SimpleProperties(gradleVersion, kotlinGradlePluginVersion)
+
+        // Important! Collect final properties exactly here to get versions with devModeTweaks applied
+        return simpleProperties.toMutableMap().apply {
+            put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
+            put(GradleVersionTestsProperty.id, gradleVersion.version)
+            if (agpVersion != null) put(AndroidGradlePluginVersionTestsProperty.id, agpVersion!!)
+            if (kotlinGradlePluginVersion < KotlinGradlePluginVersions.V_2_1_0) {
+                put("androidTargetPlaceholder", "android()")
+                put("iosTargetPlaceholder", "ios()")
+            } else {
+                put("androidTargetPlaceholder", "androidTarget()")
+                put("iosTargetPlaceholder", "iosX64()\niosArm64()\niosSimulatorArm64()")
+            }
+        }
+    }
+
+    companion object {
+        fun construct(testConfiguration: TestConfiguration? = null): KotlinMppTestProperties {
             val agpVersion = AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
 
             val gradleVersionRaw = GradleVersionTestsProperty.resolveFromEnvironment()
@@ -90,7 +157,7 @@ class KotlinTestProperties private constructor(
             val kgpVersionRaw = KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
             val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
 
-            return KotlinTestProperties(
+            return KotlinMppTestProperties(
                 kgpVersion,
                 gradleVersion,
                 agpVersion,
@@ -99,7 +166,7 @@ class KotlinTestProperties private constructor(
         }
 
         fun constructRaw(kotlinVersion: KotlinToolingVersion, gradleVersion: GradleVersion, agpVersion: String? = null) =
-            KotlinTestProperties(
+            KotlinMppTestProperties(
                 kotlinVersion,
                 gradleVersion,
                 agpVersion,

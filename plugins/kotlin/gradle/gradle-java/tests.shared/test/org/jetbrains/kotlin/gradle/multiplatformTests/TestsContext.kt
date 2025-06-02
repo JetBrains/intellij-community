@@ -35,14 +35,14 @@ interface KotlinMppTestsContext {
 
     val enabledFeatures: List<TestFeature<*>>
 
-    val testProperties: KotlinTestProperties
+    val testProperties: KotlinMppTestProperties
 }
 
 class KotlinMppTestsContextImpl(
     override val testFeatures: List<TestFeature<*>>
 ) : KotlinMppTestsContext {
     override val testConfiguration: TestConfiguration = TestConfiguration()
-    override val testProperties: KotlinTestProperties = KotlinTestProperties.construct(testConfiguration)
+    override val testProperties: KotlinMppTestProperties = KotlinMppTestProperties.construct(testConfiguration)
 
     override lateinit var description: Description
     override lateinit var testProjectRoot: File

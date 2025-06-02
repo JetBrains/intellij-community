@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.konan.target.HostManager
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
 internal fun KotlinMppTestsContext.findMostSpecificExistingFileOrNewDefault(
@@ -25,26 +24,8 @@ internal fun findMostSpecificExistingFileOrNewDefault(
     kotlinTestProperties: KotlinTestProperties,
     testConfiguration: TestConfiguration
 ): File {
-    val kotlinClassifier = with(kotlinTestProperties.kotlinGradlePluginVersion) { "$major.$minor.$patch" }
-    val testClassifier = testConfiguration.getConfiguration(GeneralWorkspaceChecks).testClassifier
-    return findMostSpecificExistingFileOrNewDefault(
-        checkerClassifier,
-        testDataDir,
-        kotlinClassifier,
-        kotlinTestProperties.gradleVersion.version,
-        kotlinTestProperties.agpVersion,
-        testClassifier
-    )
-}
+    val testClassifier: String? = testConfiguration.getConfiguration(GeneralWorkspaceChecks).testClassifier
 
-internal fun findMostSpecificExistingFileOrNewDefault(
-    checkerClassifier: String,
-    testDataDir: File,
-    kotlinClassifier: String,
-    gradleClassifier: String?,
-    agpClassifier: String?,
-    testClassifier: String?
-): File {
     val hostType = when {
         HostManager.hostIsMac -> "macos"
         HostManager.hostIsLinux -> "linux"
@@ -54,16 +35,13 @@ internal fun findMostSpecificExistingFileOrNewDefault(
 
     val hostName = HostManager.host.name
 
-    val prioritisedClassifyingParts = sequenceOf(
-        listOfNotNull(testClassifier, kotlinClassifier, gradleClassifier, agpClassifier),
-        listOfNotNull(testClassifier, kotlinClassifier, gradleClassifier),
-        listOfNotNull(testClassifier, kotlinClassifier, agpClassifier),
-        listOfNotNull(testClassifier, gradleClassifier, agpClassifier),
-        listOfNotNull(testClassifier, kotlinClassifier),
-        listOfNotNull(testClassifier, gradleClassifier),
-        listOfNotNull(testClassifier, agpClassifier),
-        listOfNotNull(testClassifier),
-    ).flatMap { parts ->
+    val classifiersFromTestProperties: Sequence<List<String>> =
+        kotlinTestProperties.getTestDataClassifiersFromMostSpecific() + emptyList() // Ensure that we check "no classifiers" case
+
+    val prioritisedClassifyingParts: Sequence<List<String>> = classifiersFromTestProperties.map {
+        // NB: test classifier always come first and always present (if it is passed)
+        listOfNotNull(testClassifier) + it
+    }.flatMap { parts ->
         sequenceOf(parts, parts + listOfNotNull(hostType), parts + hostName)
     }
 

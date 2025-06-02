@@ -10,7 +10,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestWithKotlinPluginAndGradleVersions
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
@@ -178,7 +178,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             configure()
         }
 
-        val testProperties = KotlinTestProperties.constructRaw(kotlinPluginVersion, GradleVersion.version(gradleVersion))
+        val testProperties = KotlinMppTestProperties.constructRaw(kotlinPluginVersion, GradleVersion.version(gradleVersion))
 
         OrderEntriesChecker.check(
             myProject,
