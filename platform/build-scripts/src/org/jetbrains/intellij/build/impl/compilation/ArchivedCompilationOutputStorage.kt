@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -80,4 +81,5 @@ class ArchivedCompilationOutputStorage(
   }
 
   internal fun getMapping(): List<Map.Entry<Path, Path>> = unarchivedToArchivedMap.entries.sortedBy { it.key.invariantSeparatorsPathString }
+  internal fun getMappingMap(): Map<Path, Path> = Collections.unmodifiableMap(unarchivedToArchivedMap)
 }
