@@ -255,16 +255,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.addAll(components);
     myInfo = null;
     Component showingComponent = components.get(0);
-
-    List<UiInspectorAccessibilityInspection> failedInspections = Collections.emptyList();
-    TreePath path = myHierarchyTree.getSelectionPath();
-    if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
-      failedInspections = node.getFailedInspections();
-    }
-
     setTitle(showingComponent.getClass().getName());
     Disposer.dispose(myInspectorTable);
-    myInspectorTable = new InspectorTable(showingComponent, myProject, failedInspections);
+    myInspectorTable = new InspectorTable(showingComponent, myProject, getFailedAccessibilityInspections());
     myWrapperPanel.setContent(myInspectorTable);
     myNavBarPanel.setSelectedComponent(showingComponent);
   }
@@ -273,15 +266,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myComponents.clear();
     myInfo = clickInfo;
     setTitle("Click Info");
-
-    List<UiInspectorAccessibilityInspection> failedInspections = Collections.emptyList();
-    TreePath path = myHierarchyTree.getSelectionPath();
-    if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
-      failedInspections = node.getFailedInspections();
-    }
-
     Disposer.dispose(myInspectorTable);
-    myInspectorTable = new InspectorTable(clickInfo, myProject, failedInspections);
+    myInspectorTable = new InspectorTable(clickInfo, myProject, getFailedAccessibilityInspections());
     myWrapperPanel.setContent(myInspectorTable);
   }
 
@@ -491,6 +477,15 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
     }
     return false;
+  }
+
+  private @NotNull List<UiInspectorAccessibilityInspection> getFailedAccessibilityInspections() {
+    List<UiInspectorAccessibilityInspection> failedInspections = Collections.emptyList();
+    TreePath path = myHierarchyTree.getSelectionPath();
+    if (path != null && path.getLastPathComponent() instanceof HierarchyTree.ComponentNode node) {
+      failedInspections = node.getFailedInspections();
+    }
+    return failedInspections;
   }
 
   private class MyRootPane extends JRootPane implements UiDataProvider {

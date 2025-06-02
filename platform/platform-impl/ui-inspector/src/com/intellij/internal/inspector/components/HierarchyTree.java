@@ -176,7 +176,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       return;
     }
 
-    // this will be performed for elements that implement Accessible interface, but are not Components (for example JTree nodes)
+    // This will be performed for elements that implement the Accessible interface but aren't Components (for example, JTree nodes)
     if (paths.length > 0 &&
         paths[0].getLastPathComponent() instanceof ComponentNode node &&
         node.getComponent() == null &&
@@ -389,7 +389,7 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       boolean isRenderer = false;
 
       myAccessibilityAuditIcons.clear();
-      String toolTip = "";
+      myToolTipText = "";
 
       if (value instanceof ComponentNode componentNode) {
         isRenderer = componentNode.getUserObject() instanceof List<?> ||
@@ -470,10 +470,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
         }
 
         AccessibilityAuditManager accessibilityAudit = componentNode.accessibilityAudit;
-
         if (accessibilityAudit.isRunning()) {
           int fontHeight = getFontMetrics(getFont()).getHeight();
-
           SeverityCount count = accessibilityAudit.getSeverityCount();
           if (count.getTotal() == 0) {
             myAccessibilityAuditIcons.add(new IconWithErrorCount(
@@ -498,10 +496,10 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
               ));
             }
           }
-          toolTip = InternalActionsBundle.message("ui.inspector.accessibility.audit.tooltip", count.getTotal(), count.getErrors(), count.getWarnings(), count.getRecommendations());
+          myToolTipText = InternalActionsBundle.message("ui.inspector.accessibility.audit.tooltip", count.getTotal(), count.getErrors(),
+                                                        count.getWarnings(), count.getRecommendations());
         }
       }
-      myToolTipText = toolTip;
 
       if (isRenderer) {
         setIcon(AllIcons.Ide.Rating);
@@ -535,12 +533,10 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       for (IconWithErrorCount entry : myAccessibilityAuditIcons) {
         Icon icon = entry.getIcon();
         int iconY = (getHeight() - icon.getIconHeight()) / 2;
-
         icon.paintIcon(this, g, iconX, iconY);
 
         if (entry.getErrorCount() != 0) {
           int textX = iconX + icon.getIconWidth() + iconSpacing;
-
           int textY = (getHeight() + fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
 
           String countStr = String.valueOf(entry.getErrorCount());
