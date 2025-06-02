@@ -7,7 +7,11 @@ import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
 import com.intellij.ide.util.treeView.TreeViewUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -30,13 +34,19 @@ public final class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHe
   public @Nullable String getLocationString(@NotNull PsiDirectory directory, boolean includeUrl, boolean includeRootType) {
     String result = null;
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    if (ProjectRootsUtil.isSourceRoot(directory) && aPackage != null) {   //package prefix
+    if (aPackage != null && ProjectRootsUtil.isSourceRoot(directory) && !isInsideInternalModule(directory)) {   //package prefix
       result = StringUtil.nullize(aPackage.getQualifiedName(), true);
     }
     String baseString = super.getLocationString(directory, includeUrl, includeRootType);
     if (result == null) return baseString;
     if (baseString == null) return result;
     return result  + "," + FontUtil.spaceAndThinSpace() + baseString;
+  }
+
+  private boolean isInsideInternalModule(@NotNull PsiDirectory directory) {
+    ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    Module module = index.getModuleForFile(directory.getVirtualFile());
+    return module != null && ModuleType.isInternal(module);
   }
 
   @Override
