@@ -34,12 +34,12 @@ import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleConfigurationEditor
+import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.testFramework.loadAndInitDescriptorInTest
@@ -620,14 +620,12 @@ class DynamicPluginsTest {
 
     loadPluginWithText(
       pluginSpec = baz,
-      disabledPlugins = setOf(foo.id!!, bar.id!!),
     ).use {
       assertForModules(::assertModuleIsNotLoaded)
       assertThat(ep.size()).isEqualTo(coreInjectorsCount)
 
       loadPluginWithText(
         pluginSpec = foo,
-        disabledPlugins = setOf(bar.id!!),
       ).use {
         assertForModules(::assertModuleIsNotLoaded)
         assertThat(ep.size()).isEqualTo(coreInjectorsCount)
