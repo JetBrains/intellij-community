@@ -20,7 +20,7 @@ class GitShowStashTabAction : DumbAwareAction() {
       return
     }
 
-    if (isStashesAndShelvesTabEnabled(project)) {
+    if (project.service<GitStashUIHandler>().isStashesAndShelvesTabAvailable()) {
       e.presentation.text = GitBundle.message("action.Git.Show.Stash.With.Shelf.text")
       e.presentation.description = GitBundle.message("action.Git.Show.Stash.With.Shelf.description")
     } else {

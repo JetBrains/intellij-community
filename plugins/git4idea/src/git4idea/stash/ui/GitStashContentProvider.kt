@@ -16,7 +16,6 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
 import com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.SimpleTextAttributes
@@ -73,7 +72,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     }
 
     private fun updateVisibleProviders() {
-      val isStashesAndShelvesTabEnabled = isStashesAndShelvesTabEnabled(project)
+      val isStashesAndShelvesTabEnabled = project.service<GitStashUIHandler>().isStashesAndShelvesTabAvailable()
       setVisibleProviders(if (isStashesAndShelvesTabEnabled) listOf(stashProvider, shelfProvider) else listOf(stashProvider))
     }
 
@@ -125,7 +124,7 @@ internal class GitStashContentVisibilityPredicate : Predicate<Project> {
 
 internal class GitStashDisplayNameSupplier(private val project: Project) : Supplier<String> {
   override fun get(): @Nls String {
-    if (isStashesAndShelvesTabEnabled(project)) {
+    if (project.service<GitStashUIHandler>().isStashesAndShelvesTabAvailable()) {
       return GitBundle.message("stashes.and.shelves.tab.name")
     }
     return GitBundle.message("stash.tab.name")
@@ -176,19 +175,6 @@ interface GitStashSettingsListener {
 }
 
 internal fun stashToolWindowRegistryOption(): RegistryValue = Registry.get("git.enable.stash.toolwindow")
-
-internal fun isStashesAndShelvesTabEnabled(project: Project): Boolean {
-  return ShelvedChangesViewManager.hideDefaultShelfTab(project)
-}
-
-internal fun setStashesAndShelvesTabEnabled(enabled: Boolean) {
-  val applicationSettings = GitVcsApplicationSettings.getInstance()
-  if (enabled == applicationSettings.isCombinedStashesAndShelvesTabEnabled) return
-
-  applicationSettings.isCombinedStashesAndShelvesTabEnabled = enabled
-
-  ApplicationManager.getApplication().messageBus.syncPublisher(GitStashSettingsListener.TOPIC).onCombineStashAndShelveSettingChanged()
-}
 
 internal fun isStashTabVertical(project: Project): Boolean {
   return ChangesViewContentManager.isToolWindowTabVertical(project, GitStashContentProvider.TAB_NAME)

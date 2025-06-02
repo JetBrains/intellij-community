@@ -5,6 +5,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.VcsShowToolWindowTabAction
@@ -16,11 +17,18 @@ import git4idea.stash.GitStashTracker
 import git4idea.stash.isNotEmpty
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Manages the visibility, availability, and presentation logic for the Git stash UI.
+ */
 @ApiStatus.Internal
 interface GitStashUIHandler {
   fun isStashTabAvailable(): Boolean
   fun isStashTabAvailableInWindow(): Boolean
   fun isStashTabVisible(): Boolean
+
+  fun isStashesAndShelvesTabAvailable(): Boolean
+  fun canSwitchStashesAndShelvesTab(): Boolean
+
   fun showStashes()
   fun showStashes(root: VirtualFile?)
   fun showStashesNotificationActions(roots: Collection<VirtualFile>): List<NotificationAction>
@@ -39,7 +47,15 @@ private class GitStashUIHandlerImpl(
 
   override fun isStashTabVisible(): Boolean {
     if (!isStashTabAvailable()) return false
-    return isStashesAndShelvesTabEnabled(project) || project.service<GitStashTracker>().isNotEmpty()
+    return isStashesAndShelvesTabAvailable() || project.service<GitStashTracker>().isNotEmpty()
+  }
+
+  override fun isStashesAndShelvesTabAvailable(): Boolean {
+    return ShelvedChangesViewManager.hideDefaultShelfTab(project)
+  }
+
+  override fun canSwitchStashesAndShelvesTab(): Boolean {
+    return true
   }
 
   override fun showStashes() {
