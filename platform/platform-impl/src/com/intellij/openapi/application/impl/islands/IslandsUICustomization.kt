@@ -67,7 +67,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
         add(divider, BorderLayout.NORTH)
         add(child, BorderLayout.CENTER)
 
-        IslandsRoundedBorder.createToolWindowBorder(this, child)
+        IslandsRoundedBorder.createToolWindowBorder(this)
         child.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
       }
     }

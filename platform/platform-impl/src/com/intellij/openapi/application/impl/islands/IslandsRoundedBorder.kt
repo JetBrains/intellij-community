@@ -18,15 +18,15 @@ internal class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
     fillColor,
     fillColor,
     { g: Graphics, c: JComponent -> IdeBackgroundUtil.withEditorBackground(g, c) },
-    { c: JComponent -> InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() },
+    { _: JComponent -> InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() },
     JBUI.getInt("Island.arc", 10),
     JBUI.scale(2),
     JBInsets.create("Island.border1.insets", JBInsets(4, 4, 4, 4)),
     JBInsets.create("Island.border2.insets", JBInsets(3, 3, 3, 3))) {
 
   companion object {
-    fun createToolWindowBorder(component: JComponent, child: JComponent) {
-      component.border = IslandsRoundedBorder { child.background }
+    fun createToolWindowBorder(component: JComponent) {
+      component.border = IslandsRoundedBorder { JBUI.CurrentTheme.ToolWindow.background() }
     }
 
     fun createEditorBorder(editorsSplitters: EditorsSplitters) {
