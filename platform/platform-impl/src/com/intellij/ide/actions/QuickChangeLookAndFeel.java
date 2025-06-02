@@ -113,22 +113,7 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
               if (value instanceof PopupFactoryImpl.ActionItem item) {
                 AnAction action = item.getAction();
                 if (action instanceof LafChangeAction lafAction) {
-                  UIThemeLookAndFeelInfo currentLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
-
-                  if (lafAction.myLookAndFeelInfo.isRestartRequired()) {
-                    icon1.setIcon(AllIcons.General.Beta);
-                    if (!isSelected) {
-                      Groups.GroupInfo<@NotNull UIThemeLookAndFeelInfo> group = ContainerUtil.find(infos, info -> ContainerUtil.find(
-                        info.getItems(), element -> element.getId().equals(lafAction.myLookAndFeelInfo.getId())) != null);
-                      if (group != null &&
-                          ContainerUtil.find(group.getItems(), element -> element.getId().equals(currentLaf.getId())) == null) {
-                        icon2.setIcon(IconUtilKt.getDisabledIcon(AllIcons.Actions.Restart, null));
-                      }
-                    }
-                  }
-                  else if (!isSelected && currentLaf.isRestartRequired()) {
-                    icon2.setIcon(IconUtilKt.getDisabledIcon(AllIcons.Actions.Restart, null));
-                  }
+                  checkRestartRequired(lafAction, infos, isSelected, icon1, icon2);
                 }
               }
             }
@@ -137,6 +122,39 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
       };
     }
     return super.createPopup(e, group, aid);
+  }
+
+  private static boolean checkRestartRequired(@NotNull LafChangeAction lafAction,
+                                              @NotNull List<Groups.GroupInfo<UIThemeLookAndFeelInfo>> infos,
+                                              boolean isSelected,
+                                              @Nullable JLabel icon1,
+                                              @Nullable JLabel icon2) {
+    UIThemeLookAndFeelInfo currentLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+
+    if (lafAction.myLookAndFeelInfo.isRestartRequired()) {
+      if (icon1 != null) {
+        icon1.setIcon(AllIcons.General.Beta);
+      }
+
+      if (!isSelected) {
+        Groups.GroupInfo<@NotNull UIThemeLookAndFeelInfo> group = ContainerUtil.find(infos, info -> ContainerUtil.find(
+          info.getItems(), element -> element.getId().equals(lafAction.myLookAndFeelInfo.getId())) != null);
+        if (group != null &&
+            ContainerUtil.find(group.getItems(), element -> element.getId().equals(currentLaf.getId())) == null) {
+          if (icon2 != null) {
+            icon2.setIcon(IconUtilKt.getDisabledIcon(AllIcons.Actions.Restart, null));
+          }
+          return true;
+        }
+      }
+    }
+    else if (!isSelected && currentLaf.isRestartRequired()) {
+      if (icon2 != null) {
+        icon2.setIcon(IconUtilKt.getDisabledIcon(AllIcons.Actions.Restart, null));
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -205,13 +223,16 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
     void preparePopup(ListPopup popup) {
       UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
 
+      List<Groups.@NotNull GroupInfo<@NotNull UIThemeLookAndFeelInfo>> infos =
+        ThemeListProvider.Companion.getInstance().getShownThemes().getInfos();
+
       switchAlarm.cancelAllRequests();
       if (Registry.is("ide.instant.theme.switch")) {
         popup.addListSelectionListener(event -> {
           Object item = ((JList<?>)event.getSource()).getSelectedValue();
           if (item instanceof AnActionHolder) {
             AnAction anAction = ((AnActionHolder)item).getAction();
-            if (anAction instanceof LafChangeAction action) {
+            if (anAction instanceof LafChangeAction action && !checkRestartRequired(action, infos, false, null, null)) {
               switchAlarm.cancelAllRequests();
               switchAlarm.addRequest(() -> {
                 switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo);
