@@ -6,6 +6,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 @ApiStatus.Internal
+@Deprecated(
+  "This API is temporary multiplatform shim. Please make sure you are not using it by accident",
+  replaceWith = ReplaceWith("it.unimi.dsi.fastutil.ints.IntArrays"),
+  level = DeprecationLevel.WARNING
+)
 object IntArrays {
   val EMPTY_ARRAY: IntArray = intArrayOf()
 

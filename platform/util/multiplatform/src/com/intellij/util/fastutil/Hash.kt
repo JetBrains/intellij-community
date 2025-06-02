@@ -5,6 +5,11 @@ import org.jetbrains.annotations.ApiStatus
 
 /** Basic data for all hash-based classes.  */
 @ApiStatus.Internal
+@Deprecated(
+  "This API is temporary multiplatform shim. Please make sure you are not using it by accident",
+  replaceWith = ReplaceWith("it.unimi.dsi.fastutil.Hash"),
+  level = DeprecationLevel.WARNING
+)
 interface Hash {
   /** A generic hash strategy.
    *

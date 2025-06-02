@@ -48,6 +48,11 @@ import kotlin.math.min
  * @see HashCommon
  */
 @ApiStatus.Internal
+@Deprecated(
+  "This API is temporary multiplatform shim. Please make sure you are not using it by accident",
+  replaceWith = ReplaceWith("it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap"),
+  level = DeprecationLevel.WARNING
+)
 class Int2ObjectOpenHashMap<V> : Hash, MutableIntMap<V> {
   /** The array of keys.  */
   private var key: IntArray

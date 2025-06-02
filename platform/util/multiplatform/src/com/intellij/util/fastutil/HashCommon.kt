@@ -23,6 +23,11 @@ import kotlin.math.min
 
 /** Common code for all hash-based classes.  */
 @ApiStatus.Internal
+@Deprecated(
+  "This API is temporary multiplatform shim. Please make sure you are not using it by accident",
+  replaceWith = ReplaceWith("it.unimi.dsi.fastutil.HashCommon"),
+  level = DeprecationLevel.WARNING
+)
 object HashCommon {
   /** 2<sup>32</sup>  ,  = (&#x221A;5  1)/2.  */
   private const val INT_PHI = -0x61c88647

@@ -4,6 +4,11 @@ package com.intellij.util.fastutil.ints
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Deprecated(
+  "This API is temporary multiplatform shim. Please make sure you are not using it by accident",
+  replaceWith = ReplaceWith("it.unimi.dsi.fastutil.ints.MutableIntMap"),
+  level = DeprecationLevel.WARNING
+)
 interface MutableIntMap<V>: IntMap<V> {
   fun put(key: Int, value: V): V?
   fun remove(key: Int): V?

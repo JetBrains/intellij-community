@@ -42,6 +42,11 @@ import kotlin.math.min
  */
 
 @ApiStatus.Internal
+@Deprecated(
+  "This API is temporary multiplatform shim. Please make sure you are not using it by accident",
+  replaceWith = ReplaceWith("it.unimi.dsi.fastutil.ints.IntArrayList"),
+  level = DeprecationLevel.WARNING
+)
 class IntArrayList: MutableIntList, Comparable<IntList> {
   /** The backing array.  */
   private lateinit var a: IntArray

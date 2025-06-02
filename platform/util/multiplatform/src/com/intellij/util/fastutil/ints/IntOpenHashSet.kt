@@ -46,6 +46,11 @@ import kotlin.math.min
  * @see HashCommon
  */
 @ApiStatus.Internal
+@Deprecated(
+  "This API is temporary multiplatform shim. Please make sure you are not using it by accident",
+  replaceWith = ReplaceWith("it.unimi.dsi.fastutil.ints.IntOpenHashSet"),
+  level = DeprecationLevel.WARNING
+)
 class IntOpenHashSet(
   expected: Int = Hash.DEFAULT_INITIAL_SIZE,
   f: Float = Hash.DEFAULT_LOAD_FACTOR,

@@ -4,6 +4,11 @@ package com.intellij.util.fastutil.ints
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Deprecated(
+  "This API is temporary multiplatform shim. Please make sure you are not using it by accident",
+  replaceWith = ReplaceWith("it.unimi.dsi.fastutil.ints.MutableIntSet"),
+  level = DeprecationLevel.WARNING
+)
 interface MutableIntSet: IntSet {
   fun add(key: Int): Boolean
   fun remove(key: Int): Boolean
