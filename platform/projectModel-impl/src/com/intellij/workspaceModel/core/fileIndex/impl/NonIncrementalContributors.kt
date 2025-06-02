@@ -73,7 +73,7 @@ internal class NonIncrementalContributors(private val project: Project) {
           newFileSets.forEach { (root, sets) ->
             sets.forEach { set ->
               fileSets.putValue(root, set)
-              val fileSet = set as? StoredWorkspaceFileSet
+              val fileSet = set as? WorkspaceFileSetImpl
               if (fileSet != null && fileSet.data is JvmPackageRootDataInternal) {
                 fileSetsByPackagePrefix.addFileSet("", fileSet)
               }
@@ -187,7 +187,7 @@ internal class NonIncrementalContributors(private val project: Project) {
 
   companion object {
     internal fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
-      return fileSet.asSafely<StoredWorkspaceFileSet>()?.entityPointer is NonIncrementalMarker
+      return fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer is NonIncrementalMarker
     }
 
     fun isPlaceholderReference(entityPointer: EntityPointer<WorkspaceEntity>): Boolean {

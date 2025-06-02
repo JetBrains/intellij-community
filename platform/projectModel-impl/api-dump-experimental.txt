@@ -69,7 +69,6 @@
 - a:registerExclusionPatterns(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerFileSet(com.intellij.openapi.vfs.VirtualFile,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V
 - a:registerFileSet(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V
-- a:registerFileSetByCondition(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData,kotlin.jvm.functions.Function1):V
 - a:registerNonRecursiveFileSet(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 - com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet

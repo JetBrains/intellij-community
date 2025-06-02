@@ -23,7 +23,7 @@ object WorkspaceFileSetRecognizer {
   }
 
   fun getEntityPointer(fileSet: WorkspaceFileSet): EntityPointer<*>? {
-    val entityReference = fileSet.asSafely<StoredWorkspaceFileSet>()?.entityPointer
+    val entityReference = fileSet.asSafely<WorkspaceFileSetImpl>()?.entityPointer
     if (entityReference == null) return null
     if (!Registry.`is`("ide.workspace.model.sdk.remove.custom.processing") && LibrariesAndSdkContributors.isPlaceholderReference(entityReference)) return null
     if (NonIncrementalContributors.isPlaceholderReference(entityReference)) return null
@@ -31,7 +31,7 @@ object WorkspaceFileSetRecognizer {
   }
 
   fun getLibraryId(fileSet: WorkspaceFileSet, storage: EntityStorage): LibraryId? {
-    val fileSetImpl = fileSet as? StoredWorkspaceFileSet
+    val fileSetImpl = fileSet as? WorkspaceFileSetImpl
     if (fileSetImpl == null) return null
 
     val libraryRootFileSetData = fileSetImpl.data as? LibraryRootFileSetData
@@ -62,7 +62,7 @@ object WorkspaceFileSetRecognizer {
 
   fun getSdkId(fileSet: WorkspaceFileSet): SdkId? {
     return if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-      fileSet.asSafely<StoredWorkspaceFileSet>()?.data?.asSafely<SdkRootFileSetData>()?.sdkId
+      fileSet.asSafely<WorkspaceFileSetImpl>()?.data?.asSafely<SdkRootFileSetData>()?.sdkId
     }
     else {
       LibrariesAndSdkContributors.getSdk(fileSet)?.let { SdkId(it.name, it.sdkType.name) }
@@ -74,6 +74,6 @@ object WorkspaceFileSetRecognizer {
   }
 
   fun isSourceRoot(fileSet: WorkspaceFileSet): Boolean {
-    return (fileSet as? StoredWorkspaceFileSet)?.data is ModuleSourceRootData
+    return (fileSet as? WorkspaceFileSetImpl)?.data is ModuleSourceRootData
   }
 }

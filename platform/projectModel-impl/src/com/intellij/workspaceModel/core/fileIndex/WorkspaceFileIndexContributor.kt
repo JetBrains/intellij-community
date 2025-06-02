@@ -219,18 +219,4 @@ interface WorkspaceFileSetRegistrar {
     entity: WorkspaceEntity,
     customData: WorkspaceFileSetData?,
   )
-
-  /**
-   * Includes [root] and all files under it which satisfy [condition].
-   * @param kind specify kind which will be assigned to the files
-   * @param entity first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
-   * @param customData optional custom data which will be associated with the root and can be accessed via [WorkspaceFileSetWithCustomData].
-   */
-  fun registerFileSetByCondition(
-    root: VirtualFileUrl,
-    kind: WorkspaceFileKind,
-    entity: WorkspaceEntity,
-    customData: WorkspaceFileSetData?,
-    condition: (VirtualFile) -> Boolean,
-  )
 }

@@ -247,7 +247,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     includeCustomKindSets: Boolean,
   ): WorkspaceFileSet? {
     return when (val info = getFileInfo(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)) {
-      is StoredWorkspaceFileSet -> info
+      is WorkspaceFileSetImpl -> info
       is MultipleWorkspaceFileSets -> info.find(null)
       else -> null
     }
@@ -272,7 +272,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
       includeCustomKindSets = includeCustomKindSets
     )
     return when (info) {
-      is StoredWorkspaceFileSet -> listOf(info)
+      is WorkspaceFileSetImpl -> listOf(info)
       is MultipleWorkspaceFileSets -> info.fileSets
       else -> emptyList()
     }
@@ -352,7 +352,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   override fun findContainingEntities(file: VirtualFile, honorExclusion: Boolean, includeContentSets: Boolean, includeContentNonIndexableSets: Boolean, includeExternalSets: Boolean, includeExternalSourceSets: Boolean, includeCustomKindSets: Boolean): Collection<WorkspaceEntity> {
     return when (val fileInfo = getFileInfo(file, honorExclusion, includeContentSets, includeContentNonIndexableSets, includeExternalSets, includeExternalSourceSets, includeCustomKindSets)) {
-      is StoredWorkspaceFileSet -> listOfNotNull(resolveEntity(fileInfo))
+      is WorkspaceFileSetImpl -> listOfNotNull(resolveEntity(fileInfo))
       is MultipleWorkspaceFileSets -> fileInfo.fileSets.mapNotNull { fileSet ->
         (fileSet as? StoredFileSet?)?.let { resolveEntity(it) }
       }

@@ -139,12 +139,12 @@ internal class WorkspaceFileIndexDataImpl(
             if (storedKindMask == StoredFileSetKindMask.ACCEPTED_FILE_SET) {
               return@addMeasuredTime storedFileSets as WorkspaceFileInternalInfo
             }
-            val acceptedFileSets = ArrayList<StoredWorkspaceFileSet>()
+            val acceptedFileSets = ArrayList<WorkspaceFileSetImpl>()
             //copy a mutable variable used from lambda to a 'val' to ensure that kotlinc won't wrap it into IntRef
             val currentKindMask = acceptedKindsMask 
             //this should be a rare case, so it's ok to use less optimal code here and check 'isUnloaded' again
             storedFileSets.forEach { fileSet ->
-              if (fileSet is StoredWorkspaceFileSet && fileSet.accepts(currentKindMask, project, file)) {
+              if (fileSet is WorkspaceFileSetImpl && fileSet.accepts(currentKindMask, project, file)) {
                 acceptedFileSets.add(fileSet)
               }
             }
@@ -184,7 +184,7 @@ internal class WorkspaceFileIndexDataImpl(
       //forEach call below isn't inlined, so the lambda is stored in a variable to prevent creation of many identical instances (IJPL-14542)
       val action = { storedFileSet: StoredFileSet ->
         when (storedFileSet) {
-          is StoredWorkspaceFileSet -> {
+          is WorkspaceFileSetImpl -> {
             visitor.visitIncludedRoot(storedFileSet, storedFileSet.entityPointer)
           }
           is ExcludedFileSet -> Unit
@@ -437,20 +437,16 @@ internal class WorkspaceFileIndexDataImpl(
                                  kind: WorkspaceFileKind,
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
-      registerFileSet(root, kind, entity, customData, recursive = true, condition = null)
+      registerFileSet(root, kind, entity, customData, recursive = true)
     }
 
     private fun registerFileSet(
-      root: VirtualFileUrl,
-      kind: WorkspaceFileKind,
-      entity: WorkspaceEntity,
-      customData: WorkspaceFileSetData?,
+      root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?,
       recursive: Boolean,
-      condition: ((VirtualFile) -> Boolean)?,
     ) {
       val rootFile = root.virtualFile
       if (rootFile != null) {
-        registerFileSet(rootFile, kind, entity, customData, recursive, condition)
+        registerFileSet(rootFile, kind, entity, customData, recursive)
       }
       else {
         nonExistingFilesRegistry.registerUrl(root, entity, storageKind,
@@ -459,25 +455,15 @@ internal class WorkspaceFileIndexDataImpl(
     }
 
     override fun registerFileSet(root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?) {
-      registerFileSet(root, kind, entity, customData, recursive = true, condition = null)
+      registerFileSet(root, kind, entity, customData, recursive = true)
     }
 
     private fun registerFileSet(
-      root: VirtualFile,
-      kind: WorkspaceFileKind,
-      entity: WorkspaceEntity,
-      customData: WorkspaceFileSetData?,
+      root: VirtualFile, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?,
       recursive: Boolean,
-      condition: ((VirtualFile) -> Boolean)?,
     ) {
-      val fileSet = if (condition == null) {
-        WorkspaceFileSetImpl(root, kind, entity.createPointer(), storageKind, customData ?: DummyWorkspaceFileSetData,
-                             recursive)
-      }
-      else {
-        WorkspaceFileSetByCondition(root, kind, entity.createPointer(), storageKind, customData ?: DummyWorkspaceFileSetData,
-                                    condition)
-      }
+      val fileSet = WorkspaceFileSetImpl(root, kind, entity.createPointer(), storageKind, customData ?: DummyWorkspaceFileSetData,
+                                         recursive)
       fileSets.putValue(root, fileSet)
       if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.addFileSet(customData.packagePrefix, fileSet)
@@ -488,11 +474,7 @@ internal class WorkspaceFileIndexDataImpl(
                                              kind: WorkspaceFileKind,
                                              entity: WorkspaceEntity,
                                              customData: WorkspaceFileSetData?) {
-      registerFileSet(file, kind, entity, customData, recursive = false, condition = null)
-    }
-
-    override fun registerFileSetByCondition(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?, condition: (VirtualFile) -> Boolean) {
-      registerFileSet(root, kind, entity, customData, recursive = true, condition)
+      registerFileSet(file, kind, entity, customData, recursive = false)
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, entity: WorkspaceEntity) {
@@ -565,7 +547,7 @@ internal class WorkspaceFileIndexDataImpl(
                                  kind: WorkspaceFileKind,
                                  entity: WorkspaceEntity,
                                  customData: WorkspaceFileSetData?) {
-      fileSets.removeValueIf(root) { it is StoredWorkspaceFileSet && isOriginatedFrom(it, entity) }
+      fileSets.removeValueIf(root) { it is WorkspaceFileSetImpl && isOriginatedFrom(it, entity) }
       if (customData is JvmPackageRootDataInternal) {
         fileSetsByPackagePrefix.removeByPrefixAndPointer(customData.packagePrefix, entity.createPointer())
       }
@@ -576,10 +558,6 @@ internal class WorkspaceFileIndexDataImpl(
                                              entity: WorkspaceEntity,
                                              customData: WorkspaceFileSetData?) {
       registerFileSet(file, kind, entity, customData)
-    }
-
-    override fun registerFileSetByCondition(root: VirtualFileUrl, kind: WorkspaceFileKind, entity: WorkspaceEntity, customData: WorkspaceFileSetData?, condition: (VirtualFile) -> Boolean) {
-      registerFileSet(root, kind, entity, customData)
     }
 
     private fun isOriginatedFrom(fileSet: StoredFileSet, entity: WorkspaceEntity): Boolean {
