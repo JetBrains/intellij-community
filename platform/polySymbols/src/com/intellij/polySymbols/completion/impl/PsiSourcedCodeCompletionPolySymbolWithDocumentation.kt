@@ -4,8 +4,8 @@ package com.intellij.polySymbols.completion.impl
 import com.intellij.model.Pointer
 import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.polySymbols.PsiSourcedPolySymbol
-import com.intellij.polySymbols.PsiSourcedPolySymbolDelegate
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.utils.PsiSourcedPolySymbolDelegate
 
 /**
  * We need to render documentation for lookup elements. Regular `PolySymbol` does not implement

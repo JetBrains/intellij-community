@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ArrayUtil
-import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem

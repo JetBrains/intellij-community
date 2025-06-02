@@ -14,7 +14,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.PolySymbolTypeSupport
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.PolyContextKindRules

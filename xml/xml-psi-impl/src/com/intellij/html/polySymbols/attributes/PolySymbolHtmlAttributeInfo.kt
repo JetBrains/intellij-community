@@ -4,7 +4,7 @@ package com.intellij.html.polySymbols.attributes
 import com.intellij.html.polySymbols.attributes.impl.HtmlAttributeEnumConstValueSymbol
 import com.intellij.html.polySymbols.attributes.impl.PolySymbolHtmlAttributeInfoImpl
 import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem

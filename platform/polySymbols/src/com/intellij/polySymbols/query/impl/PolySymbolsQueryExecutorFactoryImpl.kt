@@ -15,7 +15,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolsPrioritizedScope
+import com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules

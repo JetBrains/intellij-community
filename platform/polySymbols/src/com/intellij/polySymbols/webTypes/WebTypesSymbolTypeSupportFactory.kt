@@ -3,7 +3,7 @@ package com.intellij.polySymbols.webTypes
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.polySymbols.PolySymbolTypeSupport
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.polySymbols.webTypes.json.jsTypesSyntaxWithLegacy

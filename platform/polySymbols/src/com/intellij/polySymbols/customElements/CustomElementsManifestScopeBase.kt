@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.MultiMap
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.PolySymbolTypeSupport
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.customElements.json.*

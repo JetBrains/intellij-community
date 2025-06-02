@@ -10,7 +10,7 @@ import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.ReferenceRange
 import com.intellij.psi.search.RequestResultProcessor
 import com.intellij.util.Processor
-import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.utils.asSingleSymbol

@@ -1,14 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.polySymbols
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.polySymbols.utils
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.polySymbols.FrameworkId
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.*
-import com.intellij.polySymbols.query.impl.SearchMap
-import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolsQueryParams
+import com.intellij.polySymbols.impl.SearchMap
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -19,14 +28,14 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 /**
- * Used when implementing a [PolySymbolsScope], which contains many elements.
+ * Used when implementing a [com.intellij.polySymbols.PolySymbolsScope], which contains many elements.
  *
  * Caches the list of symbols and uses efficient cache to speed up queries. When extending the class,
  * you only need to override the initialize method and provide parameters to the super constructor to specify how results should be cached.
  */
 abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
   /**
-   * Allows to optimize for symbols with a particular [PolySymbolOrigin.framework].
+   * Allows to optimize for symbols with a particular [com.intellij.polySymbols.PolySymbolOrigin.framework].
    * If `null` all symbols will be accepted and scope will be queried in all contexts.
    */
   protected val framework: FrameworkId?,
@@ -46,10 +55,10 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
    * Called within a read action to initialize the scope's cache. Call [consumer] with all the
    * symbols within the scope.
    *
-   * The results are cached in [dataHolder] using [CachedValue].
+   * The results are cached in [dataHolder] using [com.intellij.psi.util.CachedValue].
    * Add all the cache dependencies to [cacheDependencies] set.
    * If the results are going to be static for a particular [dataHolder]/[key] combination, add
-   * [ModificationTracker.NEVER_CHANGED]. Note that [cacheDependencies] set cannot be empty.
+   * [com.intellij.openapi.util.ModificationTracker.NEVER_CHANGED]. Note that [cacheDependencies] set cannot be empty.
    */
   protected abstract fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>)
 

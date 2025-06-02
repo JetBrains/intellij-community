@@ -4,7 +4,7 @@ package com.intellij.polySymbols.customElements.impl
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.json.CustomElementsContributionWithSource
 

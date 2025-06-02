@@ -10,7 +10,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolsScope
-import com.intellij.polySymbols.PolySymbolsScopeWithCache
+import com.intellij.polySymbols.utils.PolySymbolsScopeWithCache
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

@@ -10,7 +10,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
-import com.intellij.polySymbols.PsiSourcedPolySymbolProvider
+import com.intellij.polySymbols.search.PsiSourcedPolySymbolProvider
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP

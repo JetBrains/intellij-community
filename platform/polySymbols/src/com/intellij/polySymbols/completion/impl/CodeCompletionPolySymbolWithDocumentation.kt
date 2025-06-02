@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.platform.backend.documentation.DocumentationSymbol
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolDelegate
+import com.intellij.polySymbols.utils.PolySymbolDelegate
 
 /**
  * We need to render documentation for lookup elements. Regular `PolySymbol` does not implement

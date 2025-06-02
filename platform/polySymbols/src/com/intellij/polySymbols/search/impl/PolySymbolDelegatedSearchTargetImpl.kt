@@ -8,7 +8,7 @@ import com.intellij.model.search.SearchRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.search.SearchScope
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolDelegate
+import com.intellij.polySymbols.utils.PolySymbolDelegate
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 
 /**

@@ -3,7 +3,7 @@ package com.intellij.polySymbols.webTypes
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 
 interface WebTypesSymbol : PsiSourcedPolySymbol {
 

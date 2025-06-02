@@ -14,7 +14,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SyntheticElement
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
-import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 
 private class PsiSourcedPolySymbolRenameHandler : RenameHandler, TitledHandler {
 

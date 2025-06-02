@@ -9,7 +9,7 @@ import com.intellij.refactoring.rename.api.RenameValidator
 import com.intellij.refactoring.rename.api.ReplaceTextTarget
 import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolDelegate
+import com.intellij.polySymbols.utils.PolySymbolDelegate
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 
 /**

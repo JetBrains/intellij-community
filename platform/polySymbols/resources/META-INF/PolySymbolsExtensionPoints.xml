@@ -58,7 +58,7 @@
       <with attribute="implementationClass" implements="com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.polySymbols.psiSourcedSymbolProvider"
-                    interface="com.intellij.polySymbols.PsiSourcedPolySymbolProvider"
+                    interface="com.intellij.polySymbols.search.PsiSourcedPolySymbolProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.psiSourcedSymbol"
                     beanClass="com.intellij.polySymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP"

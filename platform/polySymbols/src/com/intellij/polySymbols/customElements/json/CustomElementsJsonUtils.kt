@@ -4,7 +4,7 @@ package com.intellij.polySymbols.customElements.json
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.PolySymbolTypeSupport
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.polySymbols.customElements.CustomElementsSymbol

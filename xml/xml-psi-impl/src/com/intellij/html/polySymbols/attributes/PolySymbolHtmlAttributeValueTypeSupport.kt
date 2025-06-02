@@ -4,7 +4,7 @@ package com.intellij.html.polySymbols.attributes
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolTypeSupport
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 
 interface PolySymbolHtmlAttributeValueTypeSupport : PolySymbolTypeSupport {

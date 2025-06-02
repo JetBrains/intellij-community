@@ -1,19 +1,29 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.polySymbols.query.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.polySymbols.impl
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolKind
+import com.intellij.polySymbols.PolySymbolNamespace
+import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.impl.filterByQueryParams
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolsQueryParams
 import com.intellij.polySymbols.utils.match
 import com.intellij.polySymbols.utils.toCodeCompletionItems
 import com.intellij.polySymbols.utils.withMatchedName
 import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import java.util.*
+import java.util.TreeMap
+import kotlin.sequences.flatMap
+import kotlin.sequences.plus
 
 internal abstract class SearchMap<T> internal constructor(
   private val namesProvider: PolySymbolNamesProvider,
@@ -175,4 +185,3 @@ internal abstract class SearchMap<T> internal constructor(
 
   }
 }
-

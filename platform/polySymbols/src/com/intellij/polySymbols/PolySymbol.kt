@@ -22,6 +22,7 @@ import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
+import com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
 import com.intellij.polySymbols.utils.kind
 import com.intellij.polySymbols.utils.matchedNameOrName
 import com.intellij.polySymbols.utils.namespace
@@ -209,7 +210,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
   /**
    * A [PsiElement], which is a file or an element, which can be used to roughly
    * locate the source of the symbol within a project to provide a context for loading additional information,
-   * like types. If the symbol is [PsiSourcedPolySymbol], then `psiContext` is equal to source.
+   * like types. If the symbol is [com.intellij.polySymbols.search.PsiSourcedPolySymbol], then `psiContext` is equal to source.
    */
   val psiContext: PsiElement?
     get() = null

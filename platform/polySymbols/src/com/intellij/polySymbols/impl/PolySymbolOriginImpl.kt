@@ -3,7 +3,7 @@ package com.intellij.polySymbols.impl
 
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.PolySymbolTypeSupport
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import javax.swing.Icon
 
 internal data class PolySymbolOriginImpl(override val framework: FrameworkId?,

@@ -21,7 +21,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.startOffset
 import com.intellij.psi.util.walkUp
 import com.intellij.util.Query
-import com.intellij.polySymbols.PsiSourcedPolySymbol
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.query.PolySymbolNamesProvider

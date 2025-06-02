@@ -37,6 +37,7 @@ import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.utils.NameCaseUtils
+import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.utils.lastPolySymbol
 import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin

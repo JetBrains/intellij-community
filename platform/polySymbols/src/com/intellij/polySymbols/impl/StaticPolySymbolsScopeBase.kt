@@ -7,7 +7,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.*
-import com.intellij.polySymbols.query.impl.SearchMap
+import com.intellij.polySymbols.impl.SearchMap
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus.Internal

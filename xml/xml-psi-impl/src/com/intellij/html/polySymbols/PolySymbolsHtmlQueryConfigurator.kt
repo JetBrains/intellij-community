@@ -14,6 +14,8 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomize
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
 import com.intellij.polySymbols.utils.match
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
