@@ -30,16 +30,6 @@ internal class JavaCodeStyleImportsUI(packages: JComponent,
   }
 
   override fun Panel.fillCustomOptions() {
-    row {
-      cell(preserveModuleImports).applyToComponent {
-        isOpaque = false
-      }
-    }
-    row {
-      cell(deleteUnusedModuleImports).applyToComponent {
-        isOpaque = false
-      }
-    }
     indent {
       row {
         val decorator = ToolbarDecorator.createDecorator(doNotInsertInnerTable)
@@ -51,6 +41,16 @@ internal class JavaCodeStyleImportsUI(packages: JComponent,
             preferredSize = JBDimension(100, 150)
           }
       }.resizableRow()
+    }
+    row {
+      cell(preserveModuleImports).applyToComponent {
+        isOpaque = false
+      }
+    }
+    row {
+      cell(deleteUnusedModuleImports).applyToComponent {
+        isOpaque = false
+      }
     }
     row {
       cell(fqnInJavadocOption)
