@@ -306,16 +306,7 @@
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
-    <action id="Git.Log.GitUseSharedLogAction" class="git4idea.actions.GitUseSharedLogAction" internal="true"/>
-    <action id="Git.Log.GitDumpLogIndexDataAction" class="git4idea.actions.GitDumpLogIndexDataAction" internal="true"/>
-    <group id="Git.Log.ShareLogIndexData" internal="true">
-      <reference ref="Git.Log.GitUseSharedLogAction"/>
-      <reference ref="Git.Log.GitDumpLogIndexDataAction"/>
-    </group>
-
     <group id="Git.Log.Internal" internal="true">
-      <reference ref="Git.Log.ShareLogIndexData"/>
-      <separator/>
       <reference ref="Git.Log.Show.Command"/>
       <add-to-group group-id="Vcs.Log.Internal" anchor="last"/>
     </group>
