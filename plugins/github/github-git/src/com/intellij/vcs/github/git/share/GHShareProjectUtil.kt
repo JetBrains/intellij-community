@@ -17,6 +17,7 @@ import git4idea.i18n.GitBundle
 import git4idea.remote.hosting.GitShareProjectService
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
+import org.jetbrains.plugins.github.GHShareProjectCompatibilityExtension
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
@@ -34,7 +35,13 @@ import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubSettings
 import java.awt.Component
-import java.util.*
+import java.util.Collections
+
+private class GHShareProjectUtilCompatExtension : GHShareProjectCompatibilityExtension {
+  override fun shareProjectOnGithub(project: Project, file: VirtualFile?) {
+    GHShareProjectUtil.shareProjectOnGithub(project, file)
+  }
+}
 
 object GHShareProjectUtil {
   @JvmStatic

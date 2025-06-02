@@ -22,6 +22,11 @@
     <extensionPoint qualifiedName="com.intellij.vcs.github.gistContentsCollector"
                     interface="org.jetbrains.plugins.github.GithubGistContentsCollector"
                     dynamic="true"/>
+
+    <!-- Removal pending after 2025.2 -->
+    <extensionPoint qualifiedName="com.intellij.github.ghShareProjectCompatibilityExtension"
+                    interface="org.jetbrains.plugins.github.GHShareProjectCompatibilityExtension"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

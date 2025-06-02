@@ -14,4 +14,8 @@
       <override-text place="Vcs.Toolbar.Widget"/>
     </action>
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <github.ghShareProjectCompatibilityExtension implementation="com.intellij.vcs.github.git.share.GHShareProjectUtilCompatExtension"/>
+  </extensions>
 </idea-plugin>
