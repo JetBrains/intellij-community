@@ -3202,9 +3202,6 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Profiler
 - sf:ExpandNode:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Rec:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - <init>():V
-f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Promo
-- sf:JavaDuke:org.jetbrains.jewel.ui.icon.IntelliJIconKey
-- <init>():V
 f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Providers
 - sf:ActiveMQ:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Apache:org.jetbrains.jewel.ui.icon.IntelliJIconKey

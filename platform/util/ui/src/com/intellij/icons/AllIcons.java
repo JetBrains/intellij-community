@@ -1191,10 +1191,6 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon Rec = load("expui/profiler/rec.svg", "profiler/rec.svg", 204716318, 2);
   }
 
-  public static final class Promo {
-    /** 14x14 */ public static final @NotNull Icon JavaDuke = load("promo/javaDuke.svg", 820578884, 2);
-  }
-
   public static final class Providers {
     /** 16x16 */ public static final @NotNull Icon ActiveMQ = load("providers/activeMQ.svg", -1202590345, 0);
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", 1920166272, 2);

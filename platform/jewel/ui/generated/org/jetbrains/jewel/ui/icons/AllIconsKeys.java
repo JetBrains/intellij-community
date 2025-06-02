@@ -1184,10 +1184,6 @@ public final class AllIconsKeys {
     /** 12x12 */ public static final @NotNull IntelliJIconKey Rec = new IntelliJIconKey("profiler/rec.svg", "expui/profiler/rec.svg", AllIconsKeys.class);
   }
 
-  public static final class Promo {
-    /** 14x14 */ public static final @NotNull IntelliJIconKey JavaDuke = new IntelliJIconKey("promo/javaDuke.svg", "promo/javaDuke.svg", AllIconsKeys.class);
-  }
-
   public static final class Providers {
     /** 16x16 */ public static final @NotNull IntelliJIconKey ActiveMQ = new IntelliJIconKey("providers/activeMQ.svg", "providers/activeMQ.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Apache = new IntelliJIconKey("providers/apache.svg", "providers/apache.svg", AllIconsKeys.class);
