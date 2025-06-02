@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
@@ -88,13 +88,16 @@ val Project.isExternalStorageEnabled: Boolean
     }
 
     val manager = ExternalStorageConfigurationManager.getInstance(this) ?: return false
-    if (manager.isEnabled) return true
+    if (manager.isEnabled) {
+      return true
+    }
     val testMode = ApplicationManager.getApplication()?.isUnitTestMode ?: false
     return testMode && enableExternalStorageByDefaultInTests
   }
 
 /**
- * By default, external storage is enabled in tests. Wrap code which loads the project into this call to always use explicit option value.
+ * By default, external storage is enabled in tests.
+ * Wrap code which loads the project into this call to always use an explicit option value.
  */
 @TestOnly
 fun doNotEnableExternalStorageByDefaultInTests(action: () -> Unit) {
