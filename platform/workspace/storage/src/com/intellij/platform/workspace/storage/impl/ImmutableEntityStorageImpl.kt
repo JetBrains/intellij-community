@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.debug
@@ -397,7 +397,7 @@ internal class MutableEntityStorageImpl(
   }
 
   override fun collectChanges(): Map<Class<*>, List<EntityChange<*>>> = collectChangesTimeMs.addMeasuredTime {
-    val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
+    val result = HashMap<Class<*>, MutableList<EntityChange<*>>>()
 
     // We keep the Removed-Replaced-Added ordering of the events
     //
@@ -413,7 +413,7 @@ internal class MutableEntityStorageImpl(
           is ChangeEntry.AddEntity -> {
             val addedEntity = change.entityData.createEntity(this).asBase()
             val entityInterface = entityId.clazz.findWorkspaceEntity()
-            res.getOrPut(entityInterface) { ArrayList() }.apply {
+            result.computeIfAbsent(entityInterface) { ArrayList() }.apply {
               this.add(EntityChange.Added(addedEntity))
               if (entityInterface !in firstAddedIndex) firstAddedIndex[entityInterface] = this.size - 1
             }
@@ -422,7 +422,7 @@ internal class MutableEntityStorageImpl(
             val removedData = originalSnapshot.entityDataById(change.id) ?: continue
             val removedEntity = removedData.createEntity(originalSnapshot).asBase()
             val entityInterface = entityId.clazz.findWorkspaceEntity()
-            res.getOrPut(entityInterface) { ArrayList() }.apply {
+            result.computeIfAbsent(entityInterface) { ArrayList() }.apply {
               this.add(0, EntityChange.Removed(removedEntity)) // Add Removed at the start of the list
               if (entityInterface in firstAddedIndex) firstAddedIndex[entityInterface] = firstAddedIndex.getValue(entityInterface) + 1
             }
@@ -432,7 +432,7 @@ internal class MutableEntityStorageImpl(
             val replacedData = oldData.createEntity(originalSnapshot).asBase()
             val replaceToData = this.entityDataByIdOrDie(entityId).createEntity(this)
             val entityInterface = entityId.clazz.findWorkspaceEntity()
-            res.getOrPut(entityInterface) { ArrayList() }.apply {
+            result.computeIfAbsent(entityInterface) { ArrayList() }.apply {
               add(firstAddedIndex.getOrDefault(entityInterface, size), EntityChange.Replaced(replacedData, replaceToData))
               if (entityInterface in firstAddedIndex) firstAddedIndex[entityInterface] = firstAddedIndex.getValue(entityInterface) + 1
             }
@@ -444,7 +444,7 @@ internal class MutableEntityStorageImpl(
       unlockWrite()
     }
 
-    return@addMeasuredTime res
+    return@addMeasuredTime result
   }
 
   override fun hasSameEntities(): Boolean = hasSameEntitiesTimeMs.addMeasuredTime {
