@@ -10,10 +10,12 @@ import org.jetbrains.plugins.gradle.internal.daemon.gracefulStopDaemons
 import org.jetbrains.plugins.gradle.internal.daemon.stopDaemons
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+@Ignore("IDEA-366578 - temporary Gradle User Home cannot be cleaned up reliably")
 class GradleDaemonActionTest : GradleImportingTestCase() {
 
   private lateinit var gradleUserHomesToCheck: Set<String>
