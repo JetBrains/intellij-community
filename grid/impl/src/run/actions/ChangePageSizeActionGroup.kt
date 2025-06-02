@@ -149,16 +149,22 @@ private fun getActionState(grid: DataGrid): ChangePageSizeActionState {
 
   val rowsWereDeleted = totalRowCount < pageEndIdx
   val isSinglePage = pageModel.isFirstPage() && pageModel.isLastPage() && !rowsWereDeleted
-  val text = if (isSinglePage) (format(totalRowCount) +
-                                " " +
-                                (if (totalRowCount == 1L)
-                                  DataGridBundle.message("action.Console.TableResult.ChangePageSize.row")
-                                else
-                                  DataGridBundle.message("action.Console.TableResult.ChangePageSize.rows")))
-  else if (pageEndIdx == 0)
-    "0 " + DataGridBundle.message("action.Console.TableResult.ChangePageSize.rows")
-  else
-    format(pageStartIdx.toLong()) + "-" + format(pageEndIdx.toLong())
+
+  val text = when {
+    isSinglePage -> {
+      val rowLabel = if (totalRowCount == 1L)
+        DataGridBundle.message("action.Console.TableResult.ChangePageSize.row")
+      else
+        DataGridBundle.message("action.Console.TableResult.ChangePageSize.rows")
+      format(totalRowCount) + " " + rowLabel
+    }
+    pageEndIdx == 0 -> {
+      "0 " + DataGridBundle.message("action.Console.TableResult.ChangePageSize.rows")
+    }
+    else -> {
+      format(pageStartIdx.toLong()) + "-" + format(pageEndIdx.toLong())
+    }
+  }
 
   val querying = grid.getDataHookup().getBusyCount() > 0
   val enabled = !querying && grid.isReady()
@@ -191,7 +197,8 @@ private class ChangePageSizeActionState(
     if (this === other) return true
     if (other == null || javaClass != other.javaClass) return false
     val state = other as ChangePageSizeActionState
-    return enabled == state.enabled && pageSize == state.pageSize &&
+    return enabled == state.enabled &&
+           pageSize == state.pageSize &&
            text == state.text &&
            description == state.description &&
            tooltip == state.tooltip

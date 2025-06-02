@@ -6,13 +6,14 @@ import com.intellij.database.datagrid.GridPagingModel
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.Nls
 
-class ChangePageSizeAction(private val myPageSize: Int) : DumbAwareAction(if (myPageSize == GridPagingModel.UNLIMITED_PAGE_SIZE) DataGridBundle.message("action.ChangePageSize.text.all") else format(myPageSize.toLong()),
-                                                                          if (myPageSize == GridPagingModel.UNLIMITED_PAGE_SIZE)
-                                                                            DataGridBundle.message("action.ChangePageSize.description.all")
-                                                                          else
-                                                                            DataGridBundle.message("action.ChangePageSize.description.some", format(myPageSize.toLong())),
-                                                                          null) {
+class ChangePageSizeAction(private val myPageSize: Int) :
+  DumbAwareAction(
+    /* text = */ formatPageSize(myPageSize, DataGridBundle.message("action.ChangePageSize.text.all")),
+    /* description = */ formatPageSize(myPageSize, DataGridBundle.message("action.ChangePageSize.description.all")),
+    /* icon = */ null
+  ) {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -26,5 +27,13 @@ class ChangePageSizeAction(private val myPageSize: Int) : DumbAwareAction(if (my
     val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
     if (grid == null) return
     setPageSizeAndReload(myPageSize, grid)
+  }
+}
+
+private fun formatPageSize(pageSize: Int, defaultText: @Nls String): @Nls String {
+  return if (pageSize == GridPagingModel.UNLIMITED_PAGE_SIZE) {
+    defaultText
+  } else {
+    format(pageSize.toLong())
   }
 }
