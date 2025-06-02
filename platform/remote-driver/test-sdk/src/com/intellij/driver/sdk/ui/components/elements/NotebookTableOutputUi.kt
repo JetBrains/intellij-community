@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.elements
 
+import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.ideFrame
@@ -9,7 +10,9 @@ import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.withThreadDumps
 import com.intellij.openapi.util.SystemInfo
+import java.awt.Point
 import java.awt.event.KeyEvent
+import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
 class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
@@ -81,17 +84,39 @@ class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
     }
     val button = x("//div[@myicon='$iconFileName']")
     val textBefore = tableView.getValueAt(0, 0)
+
+    val headerPoint = header.center
+
     driver.withThreadDumps(
       "threadDumps-goOtherPage",
       "threadDump-waiting-$iconFileName",
       5.seconds,
     ) {
-      button.waitFound(30.seconds)
+      // It's a workaround for the action system bug, see KTNB-1022
+      waitFor(
+        message = "Waiting for the button to appear while shaking the mouse",
+        timeout = 30.seconds,
+      ) {
+        moveAround(headerPoint)
+        button.present()
+      }
     }
     button.click()
     waitFor("expect the cell [0,0] doesn't contain '$textBefore' anymore") {
       tableView.getValueAt(0, 0) != textBefore
     }
+  }
+
+  /**
+   * Moves mouse into a random place around the given point.
+   */
+  private fun moveAround(
+    point: Point,
+    manhattanRadius: Int = 10,
+  ) {
+    fun delta() = Random.nextInt(-manhattanRadius, manhattanRadius + 1)
+    val actualPoint = Point(point.x + delta(), point.y + delta())
+    robot.moveMouse(actualPoint)
   }
 
   fun clickHeaderContextCommand(headerTitle: String, command: String) {
