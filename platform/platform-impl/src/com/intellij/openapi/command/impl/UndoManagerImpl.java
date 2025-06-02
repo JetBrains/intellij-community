@@ -227,7 +227,7 @@ public class UndoManagerImpl extends UndoManager {
     if (snapshot == null) {
       return null;
     }
-    return new ResetUndoHistoryToken(this, snapshot, reference);
+    return new ResetUndoHistoryToken(this, reference, snapshot);
   }
 
   @ApiStatus.Internal
@@ -367,7 +367,7 @@ public class UndoManagerImpl extends UndoManager {
     for (UndoClientState state : getAllClientStates()) {
       PerClientLocalUndoRedoSnapshot perClientSnapshot = snapshot.getClientSnapshots().get(state.getClientId());
       if (perClientSnapshot == null) {
-        perClientSnapshot = PerClientLocalUndoRedoSnapshot.Companion.empty();
+        perClientSnapshot = PerClientLocalUndoRedoSnapshot.empty();
       }
       boolean success = state.resetLocalHistory(reference, perClientSnapshot);
       if (success) {
