@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.impl.SingleConfigurationConfigurable;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.target.*;
+import com.intellij.execution.target.LanguageRuntimeType;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -118,8 +123,10 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @Override
   public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
-    if (Registry.is("maven.use.scripts")) {
-      return new MavenShCommandLineState(env, this);
+    if (env.getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
+      if (Registry.is("maven.use.scripts")) {
+        return new MavenShCommandLineState(env, this);
+      }
     }
     return new MavenCommandLineState(env, this);
   }
