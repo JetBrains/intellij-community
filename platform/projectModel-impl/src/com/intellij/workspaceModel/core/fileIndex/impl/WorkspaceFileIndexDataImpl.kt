@@ -144,7 +144,7 @@ internal class WorkspaceFileIndexDataImpl(
             val currentKindMask = acceptedKindsMask 
             //this should be a rare case, so it's ok to use less optimal code here and check 'isUnloaded' again
             storedFileSets.forEach { fileSet ->
-              if (fileSet is StoredWorkspaceFileSet && fileSet.kind.toMask() and currentKindMask != 0 && !fileSet.isUnloaded(project)) {
+              if (fileSet is StoredWorkspaceFileSet && fileSet.accepts(currentKindMask, project, file)) {
                 acceptedFileSets.add(fileSet)
               }
             }

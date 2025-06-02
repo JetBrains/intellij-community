@@ -93,6 +93,9 @@ internal sealed interface StoredFileSet : StoredFileSetCollection {
 
 internal sealed interface StoredWorkspaceFileSet : StoredFileSet, WorkspaceFileSetWithCustomData<WorkspaceFileSetData>, WorkspaceFileInternalInfo {
   fun isUnloaded(project: Project): Boolean
+  fun accepts(acceptedKindMask: Int, project: Project, file: VirtualFile?): Boolean {
+    return acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project)
+  }
 }
 
 /**
@@ -119,13 +122,17 @@ internal class WorkspaceFileSetImpl(
 
   override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
     val acceptedKindMask = (currentMasks shr ACCEPTED_KINDS_MASK_SHIFT) and WorkspaceFileKindMask.ALL
-    val update = if (acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project) && (recursive || root == file)) {
+    val update = if (accepts(acceptedKindMask, project, file)) {
       StoredFileSetKindMask.ACCEPTED_FILE_SET
     }
     else {
       StoredFileSetKindMask.IRRELEVANT_FILE_SET
     }
     return currentMasks or update
+  }
+
+  override fun accepts(acceptedKindMask: Int, project: Project, file: VirtualFile?): Boolean {
+    return acceptedKindMask and kind.toMask() != 0 && !isUnloaded(project) && (recursive || root == file)
   }
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
