@@ -174,7 +174,7 @@ private fun loadDescriptorFromStream(
   pool: ZipEntryResolverPool,
   id: PluginId? = null,
 ): PluginMainDescriptor {
-  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext, pathResolver.toXIncludeLoader(dataLoader)).let {
+  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, fileOrDir.toString())
     loadingContext.patchPlugin(it.getBuilder())
     if (id != null) {
@@ -220,7 +220,7 @@ fun loadPluginSubDescriptors(
         module.assignDescriptor(subDescriptor)
       }
       else {
-        val subRaw = pathResolver.resolveModuleFile(loadingContext, dataLoader, subDescriptorFile)
+        val subRaw = pathResolver.resolveModuleFile(loadingContext.readContext, dataLoader, subDescriptorFile)
         val subDescriptor = descriptor.createContentModule(subRaw, subDescriptorFile, module)
         module.assignDescriptor(subDescriptor)
         val customRoots = pathResolver.resolveCustomModuleClassesRoots(module.name)
@@ -230,7 +230,7 @@ fun loadPluginSubDescriptors(
       }
     }
     else {
-      val subRaw = PluginDescriptorFromXmlStreamConsumer(loadingContext, null).let {
+      val subRaw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, null).let {
         it.consume(createXmlStreamReader(module.descriptorContent))
         it.getBuilder()
       }
@@ -708,7 +708,7 @@ private fun loadPluginDescriptor(
   val item = fileItems.first()
   val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val descriptorInput = createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
-  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext, pluginPathResolver.toXIncludeLoader(dataLoader)).let {
+  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pluginPathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(descriptorInput)
     loadingContext.patchPlugin(it.getBuilder())
     it.build()
@@ -725,7 +725,7 @@ private fun loadPluginDescriptor(
         loadModuleFromSeparateJar(pool = zipPool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, loadingContext = loadingContext)
       }
       else {
-        PluginDescriptorFromXmlStreamConsumer(loadingContext, pluginPathResolver.toXIncludeLoader(dataLoader)).let {
+        PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pluginPathResolver.toXIncludeLoader(dataLoader)).let {
           it.consume(input, null)
           it.getBuilder()
         }
@@ -733,7 +733,7 @@ private fun loadPluginDescriptor(
     }
     else {
       // TODO isn't pluginPathResolver missing here?
-      val subRaw = PluginDescriptorFromXmlStreamConsumer(loadingContext, null).let {
+      val subRaw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, null).let {
         it.consume(createXmlStreamReader(module.descriptorContent))
         it.getBuilder()
       }
@@ -814,7 +814,7 @@ private fun loadModuleFromSeparateJar(
   try {
     val input = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
     // product module is always fully resolved and do not contain `xi:include`
-    return PluginDescriptorFromXmlStreamConsumer(loadingContext, null).let {
+    return PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, null).let {
       it.consume(input, jarFile.toString())
       it.getBuilder()
     }
@@ -932,7 +932,7 @@ private fun loadCoreProductPlugin(
 
     override fun toString() = "product classpath"
   }
-  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext, pathResolver.toXIncludeLoader(dataLoader)).let {
+  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(reader)
     loadingContext.patchPlugin(it.getBuilder())
     it.build()
@@ -979,7 +979,7 @@ private fun loadContentModuleDescriptors(
       continue
     }
 
-    val raw = pathResolver.resolveModuleFile(readContext = loadingContext, dataLoader = dataLoader, path = subDescriptorFile)
+    val raw = pathResolver.resolveModuleFile(readContext = loadingContext.readContext, dataLoader = dataLoader, path = subDescriptorFile)
     val subDescriptor = descriptor.createContentModule(subBuilder = raw, descriptorPath = subDescriptorFile, module = module)
     val customModuleClassesRoots = pathResolver.resolveCustomModuleClassesRoots(moduleName)
     if (customModuleClassesRoots.isNotEmpty()) {
@@ -1012,7 +1012,7 @@ private fun loadProductModule(
       "Product module ${module.name} descriptor content is not embedded - corrupted distribution " +
       "(jarFile=$jarFile, containerDescriptor=$containerDescriptor, siblings=${containerDescriptor.content.modules.joinToString()})"
     })
-    PluginDescriptorFromXmlStreamConsumer(loadingContext, pathResolver.toXIncludeLoader(dataLoader)).let {
+    PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader)).let {
       it.consume(reader)
       it.getBuilder()
     }
@@ -1256,7 +1256,7 @@ private fun loadDescriptorFromResource(
       else -> return null
     }
 
-    val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext, pathResolver.toXIncludeLoader(dataLoader)).let {
+    val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader)).let {
       it.consume(input, file.toString())
       loadingContext.patchPlugin(it.getBuilder())
       it.build()
@@ -1269,7 +1269,7 @@ private fun loadDescriptorFromResource(
       val runFromSources = pathResolver.isRunningFromSourcesWithoutDevBuild || PluginManagerCore.isUnitTestMode || forceUseCoreClassloader()
       for (module in descriptor.content.modules) {
         val subDescriptorFile = module.configFile ?: "${module.name}.xml"
-        val subRaw = pathResolver.resolveModuleFile(loadingContext, dataLoader, subDescriptorFile)
+        val subRaw = pathResolver.resolveModuleFile(loadingContext.readContext, dataLoader, subDescriptorFile)
         val subDescriptor = descriptor.createContentModule(subRaw, subDescriptorFile, module)
         if (runFromSources && subDescriptor.packagePrefix == null) {
           // no package in run from sources - load module from the main classpath
@@ -1320,7 +1320,7 @@ private fun IdeaPluginDescriptorImpl.loadPluginDependencyDescriptors(context: Pl
 
     var resolveError: Exception? = null
     val raw: PluginDescriptorBuilder? = try {
-      pathResolver.resolvePath(context, dataLoader, configFile)
+      pathResolver.resolvePath(context.readContext, dataLoader, configFile)
     }
     catch (e: IOException) {
       resolveError = e

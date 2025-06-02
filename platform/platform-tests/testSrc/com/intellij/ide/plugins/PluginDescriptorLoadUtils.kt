@@ -66,7 +66,7 @@ fun readAndInitDescriptorFromBytesForTest(
   pathResolver: PathResolver,
   dataLoader: DataLoader,
 ): PluginMainDescriptor {
-  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext, pathResolver.toXIncludeLoader(dataLoader)).let {
+  val raw = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(data, path.toString())
     loadingContext.patchPlugin(it.getBuilder())
     it.build()

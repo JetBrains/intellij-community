@@ -22,10 +22,10 @@ import java.util.function.Supplier
 @ApiStatus.Internal
 class PluginDescriptorLoadingContext(
   private val getBuildNumberForDefaultDescriptorVersion: () -> BuildNumber = { PluginManagerCore.buildNumber },
-  override val isMissingIncludeIgnored: Boolean = false,
+  private val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false
-) : AutoCloseable, PluginDescriptorReaderContext {
+) : AutoCloseable {
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
     val factory = MyXmlInterner()
@@ -36,10 +36,12 @@ class PluginDescriptorLoadingContext(
 
   private val toDispose = ConcurrentLinkedQueue<Array<MyXmlInterner?>>()
 
-  override val interner: XmlInterner
+  private val interner: XmlInterner
     get() = threadLocalXmlFactory.get()[0]!!
 
-  override val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
+  private val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
+
+  val readContext: PluginDescriptorReaderContext = ReaderContext()
 
   @Volatile
   private var defaultVersion: String? = null
@@ -93,6 +95,15 @@ class PluginDescriptorLoadingContext(
     for (ref in toDispose) {
       ref[0] = null
     }
+  }
+
+  private inner class ReaderContext : PluginDescriptorReaderContext {
+    override val interner: XmlInterner
+      get() = this@PluginDescriptorLoadingContext.interner
+    override val elementOsFilter: (OS) -> Boolean
+      get() = this@PluginDescriptorLoadingContext.elementOsFilter
+    override val isMissingIncludeIgnored: Boolean
+      get() = this@PluginDescriptorLoadingContext.isMissingIncludeIgnored
   }
 }
 
