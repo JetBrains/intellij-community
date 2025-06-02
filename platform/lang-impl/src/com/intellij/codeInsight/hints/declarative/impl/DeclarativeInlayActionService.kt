@@ -53,4 +53,6 @@ open class DeclarativeInlayActionService {
   open fun logActionHandlerInvoked(handlerId: String, handlerClass: Class<out InlayActionHandler>) {
     InlayActionHandlerUsagesCollector.clickHandled(handlerId, handlerClass)
   }
+
+  // TODO see if showTooltip/hideTooltip can be extracted to here
 }

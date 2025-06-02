@@ -114,9 +114,9 @@ class InlayTextMetrics(
   editor: Editor,
   val fontHeight: Int,
   val fontBaseline: Int,
-  private val fontMetrics: FontMetrics,
+  val fontMetrics: FontMetrics,
   val fontType: Int,
-  private val ideScale: Float,
+  val ideScale: Float,
 ) {
   companion object {
     internal fun create(editor: Editor, size: Float, fontType: Int, context: FontRenderContext) : InlayTextMetrics {
@@ -142,6 +142,7 @@ class InlayTextMetrics(
   val ascent: Int = editor.ascent
   val descent: Int = (editor as? EditorImpl)?.descent ?: 0
   val lineHeight: Int = editor.lineHeight
+  val spaceWidth: Int = EditorUtil.getPlainSpaceWidth(editor)
   private val editorComponent = editor.component
 
   @Deprecated("Use InlayTextMetricsStorage.getCurrentStamp() to ensure actual metrics are used")

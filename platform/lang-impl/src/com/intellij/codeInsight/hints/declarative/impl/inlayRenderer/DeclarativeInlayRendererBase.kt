@@ -7,8 +7,13 @@ import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
+import com.intellij.codeInsight.hints.declarative.impl.interaction.DefaultInlayInteractionHandler
+import com.intellij.codeInsight.hints.declarative.impl.interaction.InlayInteractionHandler
+import com.intellij.codeInsight.hints.declarative.impl.views.CapturedPointInfo
+import com.intellij.codeInsight.hints.declarative.impl.views.InlayTopLevelElement
 import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
-import com.intellij.codeInsight.hints.declarative.impl.views.DeclarativeHintView
+import com.intellij.codeInsight.hints.declarative.impl.views.computeFullWidth
+import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStamp
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -25,47 +30,79 @@ import java.awt.geom.Rectangle2D
 abstract class DeclarativeInlayRendererBase<Model>(
   val providerId: String,
   val sourceId: String,
-  val fontMetricsStorage: InlayTextMetricsStorage,
+  val textMetricsStorage: InlayTextMetricsStorage,
 ) : EditorCustomElementRenderer {
-  lateinit var inlay: Inlay<out DeclarativeInlayRendererBase<Model>> private set
+  lateinit var inlay: Inlay<out DeclarativeInlayRendererBase<Model>> protected set
 
   open fun initInlay(inlay: Inlay<out DeclarativeInlayRendererBase<Model>>) {
     this.inlay = inlay
   }
 
-  internal abstract val view: DeclarativeHintView<Model>
+  internal abstract val view: InlayTopLevelElement<Model>
 
   abstract val presentationLists: List<InlayPresentationList>
 
   @RequiresEdt
   @ApiStatus.Internal
-  fun updateModel(newModel: Model) {
-    view.updateModel(newModel)
+  abstract fun updateModel(newModel: Model)
+
+  internal fun invalidate() {
+    view.invalidate()
+  }
+
+  private var inlayTextMetricsStamp: InlayTextMetricsStamp? = null
+
+  protected open fun capturePoint(pointInsideInlay: Point, textMetricsStorage: InlayTextMetricsStorage): CapturedPointInfo? {
+    return view.findEntryAtPoint(pointInsideInlay, textMetricsStorage)
+  }
+
+  private fun invalidateIfTextMetricsChanged() {
+    val stamp = textMetricsStorage.getCurrentStamp()
+    if (stamp != inlayTextMetricsStamp) {
+      invalidate()
+      inlayTextMetricsStamp = stamp
+    }
   }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    return view.calcWidthInPixels(inlay, fontMetricsStorage)
+    invalidateIfTextMetricsChanged()
+    return view.computeFullWidth(textMetricsStorage)
   }
 
   override fun paint(inlay: Inlay<*>, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
-    view.paint(inlay, g, targetRegion, textAttributes, fontMetricsStorage)
+    invalidateIfTextMetricsChanged()
+    view.paint(inlay, g, targetRegion, textAttributes, textMetricsStorage)
   }
 
-  internal fun handleLeftClick(e: EditorMouseEvent, pointInsideInlay: Point, controlDown: Boolean) {
-    view.handleLeftClick(e, pointInsideInlay, fontMetricsStorage, controlDown)
+  fun getInteractionHandler(): InlayInteractionHandler {
+    return DefaultInlayInteractionHandler
   }
 
   @ApiStatus.Internal
-  fun handleHover(e: EditorMouseEvent, pointInsideInlay: Point): LightweightHint? {
-    return view.handleHover(e, pointInsideInlay, fontMetricsStorage)
+  open fun handleLeftClick(e: EditorMouseEvent, pointInsideInlay: Point, controlDown: Boolean) {
+    invalidateIfTextMetricsChanged()
+    val clickInfo = capturePoint(pointInsideInlay, textMetricsStorage) ?: return
+    getInteractionHandler().handleLeftClick(inlay, clickInfo, e, controlDown)
   }
 
-  internal fun handleRightClick(e: EditorMouseEvent, pointInsideInlay: Point) {
-    return view.handleRightClick(e, pointInsideInlay, fontMetricsStorage)
+  @ApiStatus.Internal
+  open fun handleHover(e: EditorMouseEvent, pointInsideInlay: Point): LightweightHint? {
+    invalidateIfTextMetricsChanged()
+    val clickInfo = capturePoint(pointInsideInlay, textMetricsStorage) ?: return null
+    return getInteractionHandler().handleHover(inlay, clickInfo, e)
   }
 
-  internal fun getMouseArea(pointInsideInlay: Point): InlayMouseArea? {
-    return view.getMouseArea(pointInsideInlay, fontMetricsStorage)
+  internal open fun handleRightClick(e: EditorMouseEvent, pointInsideInlay: Point) {
+    invalidateIfTextMetricsChanged()
+    val clickInfo = capturePoint(pointInsideInlay, textMetricsStorage) ?: return
+    getInteractionHandler().handleRightClick(inlay, clickInfo, e)
+  }
+
+  internal open fun getMouseArea(pointInsideInlay: Point): InlayMouseArea? {
+    invalidateIfTextMetricsChanged()
+    return capturePoint(pointInsideInlay, textMetricsStorage)
+      ?.entry
+      ?.clickArea
   }
 
   // this should not be shown anywhere, but it is required to show custom menu in com.intellij.openapi.editor.impl.EditorImpl.DefaultPopupHandler.getActionGroup

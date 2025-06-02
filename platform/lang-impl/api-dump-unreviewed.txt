@@ -3736,8 +3736,11 @@ f:com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 - f:getFont():java.awt.Font
 - f:getFontBaseline():I
 - f:getFontHeight():I
+- f:getFontMetrics():java.awt.FontMetrics
 - f:getFontType():I
+- f:getIdeScale():F
 - f:getLineHeight():I
+- f:getSpaceWidth():I
 - f:getStringWidth(java.lang.String):I
 - f:isActual(F,java.lang.String):Z
 - f:offsetFromTop():I

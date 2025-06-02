@@ -4,15 +4,11 @@ package com.intellij.codeInsight.hints.declarative.impl
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationEntry
-import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
 import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry
-import com.intellij.openapi.editor.event.EditorMouseEvent
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import junit.framework.TestCase
 import org.junit.Test
-import java.awt.event.MouseEvent
 
-class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
+class MouseHandlingEntryTestCase : DeclarativeInlayHintPassTestBase() {
   @Test
   fun testCollapseExpand1() {
     testClick("collapse", "expand", "collapse") {
@@ -175,37 +171,48 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
                                     afterUpdateText: String
   ) {
     myFixture.configureByText("test.txt", "my text")
-    val state = buildState {
-      initialStateBuilder()
+    val provider = StoredHintsProvider()
+    val pos = InlineInlayPosition(0, false)
+    provider.hintAdder = {
+      addPresentation(pos,
+                      hintFormat = HintFormat.default) {
+        initialStateBuilder()
+      }
     }
-    var stateUpdateCallbackInvoked = false
-    val presentationList = InlayPresentationList(
-      createInlayData(state, HintFormat.default),
-      onStateUpdated = {
-        stateUpdateCallbackInvoked = true
-      })
-    val beforeClickEntries = presentationList.getEntries().toList()
-    assertEquals(beforeClickText, toText(beforeClickEntries))
-    val editor = myFixture.editor
+
+    val providerPassInfo = InlayProviderPassInfo(provider, "test.inlay.provider", emptyMap())
+    collectAndApplyPass(createPass(providerPassInfo))
+    val inlay = getInlineInlays().single()
+    val presentationList = inlay.renderer.presentationList
+    val metricsBefore = presentationList.getSubViewMetrics(inlay.renderer.textMetricsStorage)
+    val beforeClickEntries = inlay.renderer.presentationList.getEntries().toList()
+    assertEquals(beforeClickText, beforeClickEntries.toText())
     var occurence = 0
     for (beforeClickEntry in beforeClickEntries) {
       if ((beforeClickEntry as TextInlayPresentationEntry).text == clickPlace) {
         if (occurence == occurenceIndex) {
-          beforeClickEntry.simulateClick(editor, presentationList)
+          beforeClickEntry.simulateClick(inlay, presentationList)
           break
         }
         occurence++
       }
     }
     val afterClickEntries = presentationList.getEntries().toList()
-    assertEquals(afterClickText, toText(afterClickEntries))
-    assertTrue(stateUpdateCallbackInvoked)
-    val newState = buildState {
-      updatedStateBuilder()
+    assertEquals(afterClickText, afterClickEntries.toText())
+    val metricsAfterClick = presentationList.getSubViewMetrics(inlay.renderer.textMetricsStorage)
+    assertNotSame("Inlay presentation was invalidated after collapse click", metricsBefore, metricsAfterClick)
+
+    provider.hintAdder = {
+      addPresentation(pos,
+                      hintFormat = HintFormat.default) {
+        updatedStateBuilder()
+      }
     }
-    presentationList.updateModel(createInlayData(newState, HintFormat.default.withColorKind(HintColorKind.TextWithoutBackground)))
+    collectAndApplyPass(createPass(providerPassInfo))
     val updatedStateEntries = presentationList.getEntries().toList()
-    assertEquals(afterUpdateText, toText(updatedStateEntries))
+    assertEquals(afterUpdateText, updatedStateEntries.toText())
+    val metricsAfterUpdate = presentationList.getSubViewMetrics(inlay.renderer.textMetricsStorage)
+    assertNotSame("Inlay presentation was invalidated after content update", metricsAfterClick, metricsAfterUpdate)
   }
 
   private fun PresentationTreeBuilder.genericList(state: CollapseState,
@@ -259,39 +266,30 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
 
   private fun testClick(beforeClick: String, afterClick: String, click: String, b: PresentationTreeBuilder.() -> Unit) {
     myFixture.configureByText("test.txt", "my text")
-    val root = PresentationTreeBuilderImpl.createRoot()
-    b(root)
-    var stateUpdateCallbackInvoked = false
-    val presentationList = InlayPresentationList(
-      createInlayData(root.complete()),
-      onStateUpdated = {
-        stateUpdateCallbackInvoked = true
+    val provider = StoredHintsProvider()
+    val pos = InlineInlayPosition(0, false)
+    provider.hintAdder = {
+      addPresentation(pos,
+                      hintFormat = HintFormat.default) {
+        b()
       }
-    )
+    }
+    val providerPassInfo = InlayProviderPassInfo(provider, "test.inlay.provider", emptyMap())
+    collectAndApplyPass(createPass(providerPassInfo))
+    val inlay = getInlineInlays().single()
+    val presentationList = inlay.renderer.presentationList
+    val metricsBefore = presentationList.getSubViewMetrics(inlay.renderer.textMetricsStorage)
     val beforeClickEntries = presentationList.getEntries().toList()
-    TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
+    TestCase.assertEquals(beforeClick, beforeClickEntries.toText())
     val entry = beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!
-    val editor = myFixture.editor
-    val event = MouseEvent(editor.getContentComponent(), 0, 0, 0, 0, 0, 0, false, 0)
-    entry.handleClick(EditorMouseEvent(editor, event, editor.getMouseEventArea(event)), presentationList, true)
+    entry.simulateClick(inlay, presentationList)
     val afterClickEntries = presentationList.getEntries().toList()
-    TestCase.assertEquals(afterClick, toText(afterClickEntries))
-    assertTrue(stateUpdateCallbackInvoked)
+    TestCase.assertEquals(afterClick, afterClickEntries.toText())
+    val metricsAfter = presentationList.getSubViewMetrics(inlay.renderer.textMetricsStorage)
+    assertNotSame("Inlay presentation was invalidated after collapse click", metricsBefore, metricsAfter)
   }
+}
 
-  private fun toText(entries: List<InlayPresentationEntry>): String {
-    return entries.joinToString(separator = "|") { (it as TextInlayPresentationEntry).text }
-  }
-
-  private fun createInlayData(tree: TinyTree<Any?>, hintFormat: HintFormat = HintFormat.default): InlayData {
-    return InlayData(InlineInlayPosition(0, true),
-                     null,
-                     hintFormat,
-                     tree,
-                     "dummyProvider",
-                     false,
-                     null,
-                     javaClass,
-                     DeclarativeInlayHintsPass.passSourceId)
-  }
+private fun List<InlayPresentationEntry>.toText(): String {
+  return joinToString(separator = "|") { (it as TextInlayPresentationEntry).text }
 }
