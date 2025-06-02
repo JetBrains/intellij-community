@@ -13,9 +13,9 @@
 	* See the License for the specific language governing permissions and
 	* limitations under the License.
 	*/
-package com.intellij.platform.syntax.impl.fastutil.ints
+package com.intellij.util.fastutil.ints
 
-import com.intellij.platform.syntax.impl.fastutil.Arrays
+import com.intellij.util.fastutil.Arrays
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 import kotlin.math.min

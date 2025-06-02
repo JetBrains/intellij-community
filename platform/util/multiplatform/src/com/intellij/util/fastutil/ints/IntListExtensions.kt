@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.syntax.impl.fastutil.ints
+package com.intellij.util.fastutil.ints
 
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,7 +20,8 @@ internal fun IntList.contains(element: Int): Boolean {
   return indexOf(element) != -1
 }
 
-internal fun IntList.isEmpty(): Boolean {
+@ApiStatus.Internal
+fun IntList.isEmpty(): Boolean {
   return size == 0
 }
 
@@ -64,8 +65,8 @@ internal fun IntList.toArray(from: Int, to: Int, a: IntArray): IntArray {
   return a
 }
 
-
-internal fun IntList.lastIndexOf(element: Int): Int {
+@ApiStatus.Internal
+fun IntList.lastIndexOf(element: Int): Int {
   var i = size
   while (i-- != 0) {
     if (element == get(i)) return i

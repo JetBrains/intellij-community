@@ -14,10 +14,10 @@
 	* limitations under the License.
 	*/
 
-package com.intellij.platform.syntax.impl.fastutil.ints
+package com.intellij.util.fastutil.ints
 
-import com.intellij.platform.syntax.impl.fastutil.Hash
-import com.intellij.platform.syntax.impl.fastutil.HashCommon
+import com.intellij.util.fastutil.Hash
+import com.intellij.util.fastutil.HashCommon
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.ceil
 import kotlin.math.max

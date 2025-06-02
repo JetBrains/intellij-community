@@ -1,4 +1,4 @@
-package com.intellij.platform.syntax.impl.fastutil.ints
+package com.intellij.util.fastutil.ints
 
 import org.jetbrains.annotations.ApiStatus
 

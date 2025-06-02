@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-package com.intellij.platform.syntax.impl.fastutil
+package com.intellij.util.fastutil
 
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.ceil
