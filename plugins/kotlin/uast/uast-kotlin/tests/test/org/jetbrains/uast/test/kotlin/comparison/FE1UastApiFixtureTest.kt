@@ -237,4 +237,8 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testTypealiasAnnotation() {
         checkTypealiasAnnotation(myFixture)
     }
+
+    fun testAttributeValueWithExtraParenthesis() {
+        checkAttributeValueWithExtraParenthesis(myFixture)
+    }
 }
