@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,6 +38,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import com.intellij.util.SlowOperations
+import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -161,7 +163,10 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     val file = virtualFile.toNioPath()
     if (Files.isDirectory(file)) {
       @Suppress("TestOnlyProblems")
-      ProjectUtil.openExistingDir(file, project)
+      val openedProject = ProjectUtil.openExistingDir(file, project)
+      if (openedProject != null && Registry.`is`("ide.create.project.root.entity")) {
+        registerProjectRoot(openedProject, virtualFile.toNioPath())
+      }
       return
     }
 
