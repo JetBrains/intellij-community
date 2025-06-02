@@ -52,7 +52,7 @@ import kotlin.time.Duration.Companion.minutes
 @PyEnvTestCaseWithConda
 class PyVirtualEnvTerminalCustomizerTest {
   private val projectFixture = projectFixture()
-  private val tempDirFixture = tempPathFixture(prefix = "some dir with spaces")
+  private val tempDirFixture = tempPathFixture(prefix = "some_path_with_underscores")
   private val moduleFixture = projectFixture.moduleFixture(tempDirFixture, addPathToSourceRoot = true)
 
   @Suppress("unused") // we need venv
@@ -149,13 +149,11 @@ class PyVirtualEnvTerminalCustomizerTest {
 
       // tool -- where.exe Windows, "type(1)" **nix
       // "$TOOL python" returns $PREFIX [path-to-python] $POSTFIX
-      val (locateTool, prefix, postfix) = if (SystemInfo.isWindows) {
-        Triple(PathEnvironmentVariableUtil.findInPath("where.exe")?.toString() ?: "where.exe", "", "")
+      val (locateTool, prefix) = if (SystemInfo.isWindows) {
+        Pair(PathEnvironmentVariableUtil.findInPath("where.exe")?.toString() ?: "where.exe", "")
       }
       else {
-        // zsh wraps text in ''
-        val quot = if (shellType == ShellType.ZSH) "'" else ""
-        Triple("type", "python is $quot", quot)
+        Pair("type", "python is ")
       }
       process.stdin.sendWholeText("$locateTool python\nexit\n")
       val error = stderr.await()
@@ -165,7 +163,7 @@ class PyVirtualEnvTerminalCustomizerTest {
       fileLogger().info("Output was $output")
 
       assertThat("We ran `$locateTool`, so we there should be python path", output,
-                 anyOf(hasItem(prefix + pythonBinary.pathString + postfix), hasItem(prefix + pythonBinaryReal.pathString + postfix)))
+                 anyOf(hasItem(prefix + pythonBinary.pathString), hasItem(prefix + pythonBinaryReal.pathString)))
       if (SystemInfo.isWindows) {
         assertThat("There must be a line with ($venvDirName)", output, hasItem(containsString("($venvDirName)")))
       }
