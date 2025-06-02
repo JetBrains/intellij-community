@@ -105,6 +105,5 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
-    <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
   </component>
 </module>
