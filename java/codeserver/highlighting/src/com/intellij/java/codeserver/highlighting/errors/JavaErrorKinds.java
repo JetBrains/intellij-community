@@ -631,6 +631,7 @@ public final class JavaErrorKinds {
       .withDescription((list, method) -> message("type.parameter.absent.method", formatMethod(method)));
   public static final Parameterized<PsiReferenceParameterList, PsiTypeParameterListOwner> TYPE_PARAMETER_COUNT_MISMATCH =
     parameterized(PsiReferenceParameterList.class, PsiTypeParameterListOwner.class, "type.parameter.count.mismatch")
+      .withNavigationShift(1)
       .withDescription((list, owner) -> message("type.parameter.count.mismatch", list.getTypeArgumentCount(),
                                                 owner.getTypeParameters().length));
   public static final Simple<PsiTypeElement> TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH = error("type.parameter.actual.inferred.mismatch");
@@ -915,6 +916,7 @@ public final class JavaErrorKinds {
         }
         return null;
       })
+      .withNavigationShift((list, ctx) -> ctx.recordComponents().length < ctx.patternComponents().length && !ctx.hasMismatch() ? 0 : 1)
       .withDescription((list, ctx) -> message("pattern.deconstruction.count.mismatch",
                                               ctx.recordComponents().length, ctx.patternComponents().length));
   public static final Parameterized<PsiTypeTestPattern, JavaIncompatibleTypeErrorContext> PATTERN_INSTANCEOF_SUPERTYPE =
