@@ -19,7 +19,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(FlowPreview::class)
 internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : GlobalWorkspaceModelCache {
@@ -52,11 +52,9 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
 
     coroutineScope.launch {
       saveRequests
-        .debounce(1_000.milliseconds)
+        .debounce(1.seconds)
         .collect {
-          withContext(Dispatchers.IO) {
-            doCacheSaving()
-          }
+          doCacheSaving()
         }
     }
   }
@@ -97,7 +95,10 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   }
 
   override fun loadCache(id: GlobalWorkspaceModelCache.InternalEnvironmentName): MutableEntityStorage? {
-    if (ApplicationManager.getApplication().isUnitTestMode && !System.getProperty("ide.tests.permit.global.workspace.model.serialization", "false").toBoolean()) return null
+    if (ApplicationManager.getApplication().isUnitTestMode &&
+        !System.getProperty("ide.tests.permit.global.workspace.model.serialization", "false").toBoolean()) {
+      return null
+    }
     val cacheFile = cacheFile(id)
     return cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateCachesMarkerFile)
   }
@@ -107,7 +108,12 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   }
 
   override fun registerCachePartition(id: GlobalWorkspaceModelCache.InternalEnvironmentName) {
-    val cacheSuffix = if (id.name == GlobalWorkspaceModelRegistry.GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) "$DATA_DIR_NAME/cache.data" else "$DATA_DIR_NAME/${id.name}/cache.data"
+    val cacheSuffix = if (id.name == GlobalWorkspaceModelRegistry.GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) {
+      "$DATA_DIR_NAME/cache.data"
+    }
+    else {
+      "$DATA_DIR_NAME/${id.name}/cache.data"
+    }
     val path = PathManager.getSystemDir().resolve(cacheSuffix)
     cacheFiles[id.name] = path
   }

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "OVERRIDE_DEPRECATION")
 
 package com.intellij.openapi.project.impl
 
@@ -617,8 +617,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path): Project? {
     val frameAllocator = createFrameAllocator(projectStoreBaseDir, options)
     val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
-    val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
-    var module: Module? = null
+    val disableAutoSaveToken = serviceAsync<SaveAndSyncHandler>().disableAutoSave()
+    val module: Module? = null
     var result: Project? = null
     try {
       coroutineScope {
@@ -642,19 +642,19 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             val project = when {
               options.project != null -> options.project!!
               options.isNewProject -> prepareNewProject(
-                projectStoreBaseDir,
-                options.projectName,
-                options.beforeInit,
-                options.useDefaultProjectAsTemplate,
-                options.preloadServices
+                projectStoreBaseDir = projectStoreBaseDir,
+                projectName = options.projectName,
+                beforeInit = options.beforeInit,
+                useDefaultProjectAsTemplate = options.useDefaultProjectAsTemplate,
+                preloadServices = options.preloadServices
               )
               else -> prepareProject(
-                projectStoreBaseDir,
-                options.projectName,
-                options.beforeInit,
+                projectStoreBaseDir = projectStoreBaseDir,
+                projectName = options.projectName,
+                beforeInit = options.beforeInit,
                 projectInitHelper = initHelper.takeIf { initFrameEarly },
-                options.runConversionBeforeOpen,
-                options.preloadServices
+                runConversionBeforeOpen = options.runConversionBeforeOpen,
+                preloadServices = options.preloadServices,
               )
             }
             result = project
@@ -736,7 +736,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (!unitTestMode) {
       val openTimestamp = System.currentTimeMillis()
       (project as ProjectImpl).getCoroutineScope().launch {
-        (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
+        (serviceAsync<RecentProjectsManager>() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
         dispatchEarlyNotifications()
       }
     }
@@ -749,7 +749,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     WslUsagesCollector.logProjectOpened(project)
 
-    options.callback?.projectOpened(project, module ?: ModuleManager.getInstance(project).modules.firstOrNull())
+    options.callback?.projectOpened(project, module ?: project.serviceAsync<ModuleManager>().modules.firstOrNull())
 
     jpsMetrics.endSpan("project.opening")
     return project
@@ -884,10 +884,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       val project = instantiateProject(projectStoreBaseDir, projectName, beforeInit)
       project.putUserData(PROJECT_NEWLY_OPENED, markAsNew)
       val template = templateAsync?.await()
-      initProject(file = projectStoreBaseDir,
-                  project = project,
-                  preloadServices = preloadServices,
-                  template = template)
+      initProject(
+        file = projectStoreBaseDir,
+        project = project,
+        preloadServices = preloadServices,
+        template = template,
+      )
       project
     }
   }
@@ -1063,9 +1065,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           }
         }
       }
-      catch (ce: CancellationException) {
+      catch (@Suppress("IncorrectCancellationExceptionHandling") ce: CancellationException) {
         ensureActive()
-        LOG.error(ce) // log manual CEs
+        // log manual CEs
+        @Suppress("IncorrectCancellationExceptionHandling")
+        LOG.error(ce)
         true
       }
       catch (t: Throwable) {

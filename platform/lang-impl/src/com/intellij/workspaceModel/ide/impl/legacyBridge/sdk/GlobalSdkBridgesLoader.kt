@@ -19,11 +19,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Compa
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry
 import com.intellij.workspaceModel.ide.toPath
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
-@ApiStatus.Internal
-class GlobalSdkBridgeInitializer : BridgeInitializer {
+private class GlobalSdkBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -42,11 +40,9 @@ class GlobalSdkBridgeInitializer : BridgeInitializer {
   }
 }
 
-@ApiStatus.Internal
-class GlobalSdkBridgesLoader(val descriptor: EelDescriptor) : GlobalSdkTableBridge {
-
+private class GlobalSdkBridgesLoader(private val descriptor: EelDescriptor) : GlobalSdkTableBridge {
   override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
-                                                initialEntityStorage: VersionedEntityStorage): () -> Unit {
+                                             initialEntityStorage: VersionedEntityStorage): () -> Unit {
     val sdks = mutableStorage
       .entities(SdkEntity::class.java)
       .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
@@ -112,7 +108,7 @@ class GlobalSdkBridgesLoader(val descriptor: EelDescriptor) : GlobalSdkTableBrid
 
           if (previousName != newName) {
             event.storageBefore.sdkMap.getDataByEntity(change.oldEntity)?.let { sdkBridge ->
-              // fire changes because after renaming JDK its name may match the associated jdk name of modules/project
+              // fire changes because after renaming JDK, its name may match the associated jdk name of modules/project
               ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkNameChanged(sdkBridge, previousName)
             }
           }
@@ -138,20 +134,16 @@ class GlobalSdkBridgesLoader(val descriptor: EelDescriptor) : GlobalSdkTableBrid
     }
     return entity.homePath?.toPath()?.getEelDescriptor() != descriptor
   }
-
-  companion object {
-    private val LOG = logger<GlobalSdkBridgesLoader>()
-  }
 }
 
+private val LOG = logger<GlobalSdkBridgesLoader>()
 
-@ApiStatus.Internal
-class GlobalSdkTableBridgeRegistryImpl : GlobalSdkTableBridgeRegistry {
-  val registry: MutableMap<EelDescriptor, GlobalSdkTableBridge> = ConcurrentHashMap()
+private class GlobalSdkTableBridgeRegistryImpl : GlobalSdkTableBridgeRegistry {
+  private val registry = ConcurrentHashMap<EelDescriptor, GlobalSdkTableBridge>()
+
   override fun getTableBridge(eelDescriptor: EelDescriptor): GlobalSdkTableBridge {
     return registry.computeIfAbsent(eelDescriptor) {
       GlobalSdkBridgesLoader(eelDescriptor)
     }
   }
-
 }

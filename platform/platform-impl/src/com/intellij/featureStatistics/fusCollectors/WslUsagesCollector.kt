@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -74,7 +75,7 @@ object WslUsagesCollector : CounterUsagesCollector() {
 
   private data class ProjectData(val vcsType: VcsType)
 
-  override fun getGroup(): EventLogGroup? = WSL_USAGES_GROUP
+  override fun getGroup(): EventLogGroup = WSL_USAGES_GROUP
 
   fun beforeProjectCreated(path: Path, task: CloneableProjectsService.CloneTask? = null) {
     if (!SystemInfo.isWindows) return
@@ -97,30 +98,35 @@ object WslUsagesCollector : CounterUsagesCollector() {
   private fun String.isWslPath() = WSL_PATH_PREFIXES.any { this.startsWith(it) }
 
   suspend fun logProjectOpened(project: Project) {
-    if (!SystemInfo.isWindows) return
+    if (!SystemInfoRt.isWindows) {
+      return
+    }
+
     val projectPath = project.basePath
-    if (projectPath?.isWslPath() == true) {
-      findWslDistro(projectPath)?.let { wslDistro ->
-        val distroType = DistroType.fromName(wslDistro.presentableName)
-        val isEelUsed = WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()
-        if (newProjectData.contains(projectPath)) {
-          val projectData = newProjectData[projectPath]
-          newProjectData.remove(projectPath)
-          val vcsType = projectData?.vcsType ?: VcsType.None
-          if (vcsType == VcsType.None) {
-            PROJECT_CREATED_EVENT.log(distroType, wslDistro.version, isEelUsed)
-          }
-          else {
-            PROJECT_CLONED_EVENT.log(
-              DISTRO_TYPE_FIELD.with(distroType),
-              WSL_VERSION_FIELD.with(wslDistro.version),
-              EEL_API_USED_FIELD.with(isEelUsed),
-              VCS_TYPE_FIELD.with(vcsType))
-          }
+    if (projectPath?.isWslPath() != true) {
+      return
+    }
+
+    findWslDistro(projectPath)?.let { wslDistro ->
+      val distroType = DistroType.fromName(wslDistro.presentableName)
+      val isEelUsed = WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()
+      if (newProjectData.contains(projectPath)) {
+        val projectData = newProjectData[projectPath]
+        newProjectData.remove(projectPath)
+        val vcsType = projectData?.vcsType ?: VcsType.None
+        if (vcsType == VcsType.None) {
+          PROJECT_CREATED_EVENT.log(distroType, wslDistro.version, isEelUsed)
         }
         else {
-          PROJECT_OPENED_EVENT.log(distroType, wslDistro.version, isEelUsed)
+          PROJECT_CLONED_EVENT.log(
+            DISTRO_TYPE_FIELD.with(distroType),
+            WSL_VERSION_FIELD.with(wslDistro.version),
+            EEL_API_USED_FIELD.with(isEelUsed),
+            VCS_TYPE_FIELD.with(vcsType))
         }
+      }
+      else {
+        PROJECT_OPENED_EVENT.log(distroType, wslDistro.version, isEelUsed)
       }
     }
   }

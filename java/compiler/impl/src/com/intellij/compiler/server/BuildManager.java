@@ -127,8 +127,7 @@ import org.jetbrains.jps.util.Iterators;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1460,7 +1459,7 @@ public final class BuildManager implements Disposable {
 
       cmdLine.addParameter("-Dintellij.jps.use.workspace.model=true");
       WorkspaceModelCache cache = WorkspaceModelCache.getInstance(project);
-      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.getInstance();
+      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.Companion.getInstance();
       if (cache != null && globalCache != null) {
         //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
         cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
