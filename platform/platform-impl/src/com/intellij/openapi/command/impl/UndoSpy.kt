@@ -31,12 +31,15 @@ interface UndoSpy {
     isTransparent: Boolean,
   )
 
+  fun flushCommand(project: Project?)
+
   companion object {
     @JvmField
     val BLIND: UndoSpy = object : UndoSpy {
-      override fun commandStarted(project: Project?, undoConfirmationPolicy: UndoConfirmationPolicy) = Unit
-      override fun addUndoableAction(action: UndoableAction, type: UndoableActionType) = Unit
-      override fun commandFinished(project: Project?, commandName: @Command String?, commandGroupId: Any?, isTransparent: Boolean) = Unit
+      override fun commandStarted(project: Project?, undoConfirmationPolicy: UndoConfirmationPolicy) {}
+      override fun addUndoableAction(action: UndoableAction, type: UndoableActionType) {}
+      override fun commandFinished(project: Project?, commandName: @Command String?, commandGroupId: Any?, isTransparent: Boolean) {}
+      override fun flushCommand(project: Project?) {}
     }
   }
 }

@@ -232,6 +232,7 @@ final class UndoClientState implements Disposable {
 
   void flushCurrentCommand() {
     commandMerger.flushCurrentCommand(undoStacksHolder, nextCommandTimestamp());
+    undoSpy.flushCommand(project);
   }
 
   boolean isInsideCommand() {
