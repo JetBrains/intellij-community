@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.LocalFileSystem
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
@@ -13,7 +13,7 @@ import java.io.File
 object AllFilesAreUnderContentRootChecker : TestFeature<AllFilesUnderContentRootCheckConfiguration> {
     override fun createDefaultConfiguration() = AllFilesUnderContentRootCheckConfiguration()
 
-    override fun KotlinMppTestsContext.afterImport() {
+    override fun KotlinSyncTestsContext.afterImport() {
         if (testConfiguration.getConfiguration(AllFilesAreUnderContentRootChecker).isDisabled) return
 
         val files = mutableListOf<File>()

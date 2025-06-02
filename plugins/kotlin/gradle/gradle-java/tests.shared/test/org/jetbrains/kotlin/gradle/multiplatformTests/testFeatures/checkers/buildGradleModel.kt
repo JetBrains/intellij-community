@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.idea.codeInsight.gradle.BuildGradleModelDebuggerOptions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.BuiltGradleModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.map
@@ -11,15 +12,17 @@ import java.io.ByteArrayInputStream
 import java.io.ObjectInputStream
 import kotlin.reflect.KClass
 
-fun <T : Any> KotlinMppTestsContext.buildGradleModel(
+fun <T : Any> KotlinSyncTestsContext.buildGradleModel(
     clazz: KClass<T>,
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
-): BuiltGradleModel<T> =
-    org.jetbrains.kotlin.idea.codeInsight.gradle.buildGradleModel(
+): BuiltGradleModel<T> {
+    require(this is KotlinMppTestsContext) { "buildGradleModel works only with KotlinMppTestsContext"}
+    return org.jetbrains.kotlin.idea.codeInsight.gradle.buildGradleModel(
         this.testProjectRoot, testProperties.gradleVersion, gradleJdkPath.absolutePath, clazz, debuggerOptions
     )
+}
 
-fun KotlinMppTestsContext.buildKotlinMPPGradleModel(
+fun KotlinSyncTestsContext.buildKotlinMPPGradleModel(
     debuggerOptions: BuildGradleModelDebuggerOptions? = null
 ): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel(KotlinMPPGradleModelBinary::class, debuggerOptions)
     .map { model -> ObjectInputStream(ByteArrayInputStream(model.data)).readObject() as KotlinMPPGradleModel }

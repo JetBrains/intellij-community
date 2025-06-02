@@ -11,7 +11,7 @@ import java.io.File
  * Tip: use `object` for implementors
  *
  * 2. if your test feature provides some per-test configuration, create a mutable class
- * and pass it as [V]. Please, store all settings there and do not extend [KotlinMppTestsContext]
+ * and pass it as [V]. Please, store all settings there and do not extend [KotlinSyncTestsContext]
  *
  * 3. override needed lifetime hooks and implement actual behaviour of the test feature
  *
@@ -38,12 +38,12 @@ interface TestFeature<V : Any> {
      *
      * Tip: use it to tweak the project (e.g. to add a new file to the project)
      */
-    fun KotlinMppTestsContext.beforeTestExecution() {}
+    fun KotlinSyncTestsContext.beforeTestExecution() {}
 
     /**
      * Executed after the test-related actions in IDEA VM or on disk are executed.
      */
-    fun KotlinMppTestsContext.afterTestExecution() {}
+    fun KotlinSyncTestsContext.afterTestExecution() {}
 
     /**
      * Will be invoked on copying the project from testdata to the temporary directory.
@@ -63,14 +63,14 @@ interface TestFeature<V : Any> {
      * Tip: use it to tweak the configuration of IDEA services that affect import (e.g., setting
      * some Registry-key)
      */
-    fun KotlinMppTestsContext.beforeImport() {}
+    fun KotlinSyncTestsContext.beforeImport() {}
 
     /**
      * Invoked after import
      *
      * Tip: use for checks on the imported project
      */
-    fun KotlinMppTestsContext.afterImport() {}
+    fun KotlinSyncTestsContext.afterImport() {}
 
     /**
      * If `false`, the test feature should be explicitly enabled via the DSL of
@@ -116,13 +116,13 @@ interface TestFeatureWithSetUpTearDown<V : Any> : TestFeature<V> {
  * If you want to add some check that should be executed in all tests, use raw [TestFeature]
  */
 abstract class AbstractTestChecker<V : Any> : TestFeature<V> {
-    abstract fun KotlinMppTestsContext.check()
+    abstract fun KotlinSyncTestsContext.check()
 
-    final override fun KotlinMppTestsContext.afterImport() {
+    final override fun KotlinSyncTestsContext.afterImport() {
         check()
     }
 
-    final override fun KotlinMppTestsContext.beforeTestExecution() {}
-    final override fun KotlinMppTestsContext.afterTestExecution() {}
-    final override fun KotlinMppTestsContext.beforeImport() {}
+    final override fun KotlinSyncTestsContext.beforeTestExecution() {}
+    final override fun KotlinSyncTestsContext.afterTestExecution() {}
+    final override fun KotlinSyncTestsContext.beforeImport() {}
 }

@@ -7,7 +7,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.runInEdtAndGet
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
+import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinSyncTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.TestFeatureWithFileMarkup
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -35,13 +35,13 @@ object DocumentationChecker : TestFeatureWithFileMarkup<DocumentationCheckerConf
 
     override fun createDefaultConfiguration() = DocumentationCheckerConfig()
 
-    override fun KotlinMppTestsContext.beforeTestExecution() {
+    override fun KotlinSyncTestsContext.beforeTestExecution() {
         val config = testConfiguration.getConfiguration(DocumentationChecker)
         GradleSystemSettings.getInstance().isDownloadSources = config.downloadSources
         carets.clear()
     }
 
-    override fun KotlinMppTestsContext.afterTestExecution() {
+    override fun KotlinSyncTestsContext.afterTestExecution() {
         GradleSystemSettings.getInstance().isDownloadSources = false
     }
 
@@ -57,7 +57,7 @@ object DocumentationChecker : TestFeatureWithFileMarkup<DocumentationCheckerConf
         }.joinToString("\n")
 
 
-    override fun KotlinMppTestsContext.afterImport() {
+    override fun KotlinSyncTestsContext.afterImport() {
         if (carets.isEmpty()) return
         val actualResult = runInEdtAndGet {
             val allSourceFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, ProjectScope.getProjectScope(testProject))
@@ -86,7 +86,7 @@ object DocumentationChecker : TestFeatureWithFileMarkup<DocumentationCheckerConf
         assertEqualsToFile("Documentation content", testDataDirectory.resolve(EXPECTED_TEST_DATA), actualResult)
     }
 
-    override fun KotlinMppTestsContext.restoreMarkup(text: String, editor: Editor): String {
+    override fun KotlinSyncTestsContext.restoreMarkup(text: String, editor: Editor): String {
         val caretsInFile = carets.filter {
             val relativePath = it.file.relativeTo(testDataDirectory.toPath())
             editor.virtualFile?.toNioPath()?.relativeTo(testProjectRoot.toPath()) == relativePath
