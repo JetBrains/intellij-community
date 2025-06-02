@@ -283,14 +283,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     result.showErrors = showErrors
     result.restartRequired = restartRequired
 
-    if (modalityState != null) {
-      ApplicationManager.getApplication().invokeLater(Runnable {
-        installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent, result, installCallback)
-      }, modalityState)
-    }
-    else {
+    ApplicationManager.getApplication().invokeLater(Runnable {
       installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent, result, installCallback)
-    }
+    }, modalityState ?: ModalityState.defaultModalityState())
   }
 
   override fun updateDescriptorsForInstalledPlugins() {

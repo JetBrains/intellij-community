@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -71,7 +72,7 @@ class BackendPluginInstallerApi : PluginInstallerApi {
     val session = PluginManagerSessionService.getInstance().getSession(installPluginRequest.sessionId) ?: return InstallPluginResult()
 
     val enabler = SessionStatePluginEnabler(session)
-    var result: InstallPluginResult? = null
+    val result: CompletableDeferred<InstallPluginResult> = CompletableDeferred()
     DefaultUiPluginManagerController
       .performInstallOperation(
         installPluginRequest,
@@ -80,10 +81,10 @@ class BackendPluginInstallerApi : PluginInstallerApi {
         BgProgressIndicator(),
         enabler,
       ) {
-        result = it
+        result.complete(it)
       }
-    result?.pluginsToDisable = enabler.pluginsToDisable
-    return result!!
+
+    return result.await().apply { pluginsToDisable = enabler.pluginsToDisable }
   }
 
   override suspend fun uninstallDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean {
