@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.remote.RemoteSdkProperties;
+import com.intellij.remote.TargetAwarePathMappingProvider;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -71,6 +72,7 @@ import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvide
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -503,12 +505,45 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // add path mappings configured in SDK, they will be handled in second place
     PathMappingSettings sdkPathMappings = getSdkPathMappings();
     if (sdkPathMappings != null) {
-      pathMappingSettings.addAll(sdkPathMappings);
+      // filter out any deployment paths, as we want to resolve sources to their local counterparts when possible rather
+      // than the files copied from the remote end
+      var deploymentPaths = getDeploymentPaths();
+      pathMappingSettings.addAll(
+        sdkPathMappings.getPathMappings()
+          .stream()
+          .filter(mapping -> !deploymentPaths.contains(mapping.getRemoteRoot()))
+          .toList()
+      );
     }
     final boolean isMostlySilentProcess = false;
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
     return PyCustomProcessHandlerProvider.createProcessHandler(process, targetEnvironment, commandLineString, commandLine.getCharset(),
                                                                consolidatedPathMappings, isMostlySilentProcess, myRunWithPty);
+  }
+
+  /**
+   * Collects deployment paths from suitable mapping providers.
+   *
+   * If the current SDK additional data is not a {@code PyTargetAwareAdditionalData}, then an empty set is returned.
+   *
+   * @return a set of paths on remote file systems
+   */
+  private @NotNull Set<String> getDeploymentPaths() {
+    Sdk sdk = myConfig.getSdk();
+    Set<String> deploymentPaths = new HashSet<String>();
+    if (sdk != null) {
+      SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+      if (sdkAdditionalData instanceof PyTargetAwareAdditionalData data) {
+        var providers = TargetAwarePathMappingProvider.Companion.getSuitableMappingProviders(data);
+        for (TargetAwarePathMappingProvider provider : providers) {
+          var pathMappings = provider.getPathMappingSettings(myConfig.getProject(), data).getPathMappings();
+          for (PathMappingSettings.PathMapping mapping : pathMappings) {
+            deploymentPaths.add(mapping.getRemoteRoot());
+          }
+        }
+      }
+    }
+    return deploymentPaths;
   }
 
   private @Nullable PathMappingSettings getSdkPathMappings() {
