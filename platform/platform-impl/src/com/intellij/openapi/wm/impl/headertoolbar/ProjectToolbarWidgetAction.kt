@@ -300,7 +300,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          val rowGaps = UnscaledGaps(bottom = 3, top = 3)
+          val rowGaps = UnscaledGaps(bottom = 2, top = 2)
 
           icon(IconUtil.downscaleIconToSize(action.projectIcon, userScaledProjectIconSize(), userScaledProjectIconSize()))
             .align(AlignY.TOP)
@@ -366,7 +366,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
         }
       }
     }.apply {
-      border = JBUI.Borders.empty(5, 0)
+      border = JBUI.Borders.empty(6, 0)
       isOpaque = false
     }
 
