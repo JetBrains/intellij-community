@@ -67,9 +67,8 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
     }
 
     @JvmStatic
-    fun noMoreCodeCompletionsFor(parameters: CompletionParameters, vararg qualifiedKind: PolySymbolQualifiedKind): Boolean =
+    fun isFurtherCodeCompletionPreventedFor(parameters: CompletionParameters, vararg qualifiedKind: PolySymbolQualifiedKind): Boolean =
       exclusiveKindMap[parameters.process]?.let { exclusive -> qualifiedKind.any { exclusive.contains(it) } } == true
-
 
     @JvmStatic
     fun processCompletionQueryResults(

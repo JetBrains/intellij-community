@@ -296,12 +296,12 @@
 - pa:addCompletions(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet,I,java.lang.String,com.intellij.polySymbols.query.PolySymbolsQueryExecutor,com.intellij.psi.PsiElement):V
 - pf:addCompletions(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.ProcessingContext,com.intellij.codeInsight.completion.CompletionResultSet):V
 - pa:getContext(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- sf:noMoreCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.polySymbols.PolySymbolQualifiedKind[]):Z
+- sf:isFurtherCodeCompletionPreventedFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.polySymbols.PolySymbolQualifiedKind[]):Z
 - sf:preventFurtherCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.polySymbols.PolySymbolQualifiedKind):V
 - sf:processCompletionQueryResults(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,I,com.intellij.psi.PsiElement,java.util.List,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 - sf:processPolySymbolCodeCompletionItems(java.util.List,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 *f:com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase$Companion
-- f:noMoreCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.polySymbols.PolySymbolQualifiedKind[]):Z
+- f:isFurtherCodeCompletionPreventedFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.polySymbols.PolySymbolQualifiedKind[]):Z
 - f:preventFurtherCodeCompletionsFor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.polySymbols.PolySymbolQualifiedKind):V
 - f:processCompletionQueryResults(com.intellij.polySymbols.query.PolySymbolsQueryExecutor,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,I,com.intellij.psi.PsiElement,java.util.List,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
 - bs:processCompletionQueryResults$default(com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase$Companion,com.intellij.polySymbols.query.PolySymbolsQueryExecutor,com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,I,com.intellij.psi.PsiElement,java.util.List,java.util.Set,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):V
