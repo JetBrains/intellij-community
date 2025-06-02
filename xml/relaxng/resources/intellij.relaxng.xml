@@ -1,5 +1,8 @@
 <idea-plugin>
   <module value="com.intellij.modules.relaxng"/>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <gotoSymbolContributor implementation="org.intellij.plugins.relaxNG.GotoSymbolContributor" />
 

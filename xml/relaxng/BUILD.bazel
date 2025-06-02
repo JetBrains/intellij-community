@@ -31,7 +31,10 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":relaxng_resources"]
+  runtime_deps = [
+    ":relaxng_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(
