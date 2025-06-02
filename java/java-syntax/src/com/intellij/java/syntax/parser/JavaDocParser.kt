@@ -148,8 +148,28 @@ class JavaDocParser(
     else if (tokenType === JavaDocSyntaxTokenType.DOC_LBRACKET) {
       parseMarkdownReferenceChecked()
     }
+    else if (tokenType === JavaDocSyntaxTokenType.DOC_COMMENT_DATA) {
+      parseCommentData()
+    }
     else {
       remapAndAdvance()
+    }
+  }
+
+  private fun parseCommentData() {
+    val commentData = builder.mark()
+    val offset = builder.currentOffset
+
+    while (COMMENT_DATA_TOKENS.contains(builder.rawLookup(1))) {
+      builder.advanceLexer()
+    }
+
+    if (builder.currentOffset != offset) {
+      builder.advanceLexer()
+      commentData.collapse(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+    } else {
+      commentData.drop()
+      builder.advanceLexer()
     }
   }
 
@@ -656,6 +676,12 @@ private val INLINE_TAG_BORDERS_SET: SyntaxElementTypeSet = syntaxElementTypeSetO
   JavaDocSyntaxTokenType.DOC_INLINE_TAG_START, JavaDocSyntaxTokenType.DOC_INLINE_TAG_END)
 
 private val SKIP_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(JavaDocSyntaxTokenType.DOC_COMMENT_LEADING_ASTERISKS)
+
+private val COMMENT_DATA_TOKENS: SyntaxElementTypeSet = syntaxElementTypeSetOf(
+  JavaDocSyntaxTokenType.DOC_COMMENT_DATA,
+  JavaDocSyntaxTokenType.DOC_TAG_VALUE_SLASH,
+  JavaDocSyntaxTokenType.DOC_COMMA, JavaDocSyntaxTokenType.DOC_SHARP,
+)
 
 private const val SEE_TAG = "@see"
 private const val LINK_TAG = "@link"
