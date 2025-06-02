@@ -69,8 +69,6 @@
     <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.DumbModeWhileScanningSubscriber"/>
     <initProjectActivity id="vfsStartup" implementation="com.intellij.psi.impl.file.impl.PsiVfsInitProjectActivity" order="first"/>
 
-    <initProjectActivity id="projectRootProjectActivity" implementation="com.intellij.platform.ProjectRootProjectActivity"/>
-
     <projectService serviceInterface="com.intellij.codeInsight.multiverse.ProjectModelContextBridge"
                     serviceImplementation="com.intellij.codeInsight.multiverse.ProjectModelContextBridgeImpl"/>
 
