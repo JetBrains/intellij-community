@@ -343,7 +343,7 @@ object DynamicPlugins {
 
     var dependencyMessage: String? = null
     processOptionalDependenciesOnPlugin(module, pluginSet, isLoaded = true) { mainDescriptor, subDescriptor ->
-      if (subDescriptor.packagePrefix == null
+      if ((subDescriptor.pluginClassLoader === module.pluginClassLoader)
           || mainDescriptor.pluginId.idString == "org.jetbrains.kotlin" || mainDescriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID) {
         dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${module.pluginId}" +
                             " does not have a separate classloader for the dependency"
