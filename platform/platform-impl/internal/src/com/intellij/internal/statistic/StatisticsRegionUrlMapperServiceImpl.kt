@@ -30,6 +30,7 @@ private class StatisticsRegionUrlMapperServiceImpl(private val scope: CoroutineS
   */
   init {
     scope.launch {
+      delay(1.minutes)
       while (isActive) {
         url = RegionUrlMapper.tryMapUrl(EventLogInternalApplicationInfo.EVENT_LOG_SETTINGS_URL_TEMPLATE).await()
         delay(10.minutes)
