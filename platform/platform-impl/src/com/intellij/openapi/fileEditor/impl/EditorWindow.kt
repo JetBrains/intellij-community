@@ -482,6 +482,15 @@ class EditorWindow internal constructor(
     virtualFile: VirtualFile?,
     focusNew: Boolean,
     fileIsSecondaryComponent: Boolean = true,
+  ): EditorWindow? = split(orientation, forceSplit, virtualFile, focusNew, fileIsSecondaryComponent, null)
+
+  internal fun split(
+    orientation: Int,
+    forceSplit: Boolean,
+    virtualFile: VirtualFile?,
+    focusNew: Boolean,
+    fileIsSecondaryComponent: Boolean = true,
+    explicitlySetCompositeProvider: (() -> EditorComposite?)?,
   ): EditorWindow? {
     checkConsistency()
     if (tabCount < 1) {
@@ -496,7 +505,7 @@ class EditorWindow internal constructor(
           window = target,
           _file = virtualFile,
           entry = selectedComposite.takeIf { it.file == virtualFile }?.currentStateAsFileEntry(),
-          options = FileEditorOpenOptions(requestFocus = focusNew),
+          options = FileEditorOpenOptions(requestFocus = focusNew, explicitlyOpenCompositeProvider = null),
         )
       }
       return target
@@ -538,6 +547,7 @@ class EditorWindow internal constructor(
         isExactState = true,
         pin = getComposite(nextFile)?.isPinned ?: false,
         selectAsCurrent = focusNew,
+        explicitlyOpenCompositeProvider = explicitlySetCompositeProvider
       ),
     ) ?: return newWindow
     if (!focusNew) {

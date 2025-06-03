@@ -5,7 +5,6 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -41,7 +40,6 @@ fun createEditorCompositeModel(
   fileEntry: FileEntry? = null,
   coroutineScope: CoroutineScope,
 ): Flow<EditorCompositeModel> {
-  LOG.assertTrue(!AppModeAssertions.isFrontend(), "Trying to create a frontend composite using a monolith method. Probably that's a wrong way")
   return flow {
     coroutineScope {
       val file = fileProvider()
