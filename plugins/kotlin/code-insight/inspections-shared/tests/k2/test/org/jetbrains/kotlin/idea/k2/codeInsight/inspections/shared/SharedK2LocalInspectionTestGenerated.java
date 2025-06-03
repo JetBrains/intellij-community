@@ -1203,6 +1203,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
                 runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_inlineWrapper.kt");
             }
 
+            @TestMetadata("functionExtensionReceiver_suspendInlineWrapper.kt")
+            public void testFunctionExtensionReceiver_suspendInlineWrapper() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendInlineWrapper.kt");
+            }
+
+            @TestMetadata("functionExtensionReceiver_suspendInlineWrapper_crossinlineLambda.kt")
+            public void testFunctionExtensionReceiver_suspendInlineWrapper_crossinlineLambda() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendInlineWrapper_crossinlineLambda.kt");
+            }
+
             @TestMetadata("functionExtensionReceiver_suspendWrapper.kt")
             public void testFunctionExtensionReceiver_suspendWrapper() throws Exception {
                 runTest("../testData/inspectionsLocal/coroutines/ambiguousCoroutineScope/functionExtensionReceiver_suspendWrapper.kt");

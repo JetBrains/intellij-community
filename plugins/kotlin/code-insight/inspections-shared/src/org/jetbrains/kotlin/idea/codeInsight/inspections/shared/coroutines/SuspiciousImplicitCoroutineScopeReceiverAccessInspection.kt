@@ -128,8 +128,8 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
             if (current is KtFunctionLiteral) {
                 if (receiverOwnerSymbol == current.symbol) return false
 
-                // Skip lambdas which happen to be inline
-                if (isInlinedArgument(current)) {
+                // Skip lambdas which happen to be fully locally inlined
+                if (isInlinedArgument(current, allowCrossinline = false)) {
                     current = current.parent
                     continue
                 }

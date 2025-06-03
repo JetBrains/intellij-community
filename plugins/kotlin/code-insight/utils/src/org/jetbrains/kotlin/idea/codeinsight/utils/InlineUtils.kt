@@ -16,10 +16,11 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
-fun KaSession.isInlinedArgument(argument: KtFunction): Boolean = getInlineArgumentSymbol(argument) != null
+fun KaSession.isInlinedArgument(argument: KtFunction, allowCrossinline: Boolean = true): Boolean =
+    getInlineArgumentSymbol(argument, allowCrossinline) != null
 
 @ApiStatus.Internal
-fun KaSession.getInlineArgumentSymbol(argument: KtExpression): KaValueParameterSymbol? {
+fun KaSession.getInlineArgumentSymbol(argument: KtExpression, allowCrossinline: Boolean = true): KaValueParameterSymbol? {
     if (argument !is KtFunctionLiteral && argument !is KtNamedFunction && argument !is KtCallableReferenceExpression) return null
 
     val (symbol, argumentSymbol) = getCallExpressionSymbol(argument)
@@ -28,6 +29,7 @@ fun KaSession.getInlineArgumentSymbol(argument: KtExpression): KaValueParameterS
 
     if ((symbol is KaNamedFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {
         if (argumentSymbol.isNoinline) return null
+        if (!allowCrossinline && argumentSymbol.isCrossinline) return null
         val parameterType = argumentSymbol.returnType
         if (!parameterType.isMarkedNullable
                && (parameterType.isFunctionType || parameterType.isSuspendFunctionType)) {
