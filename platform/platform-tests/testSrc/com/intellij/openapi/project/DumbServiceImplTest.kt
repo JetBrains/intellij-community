@@ -9,7 +9,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbServiceImpl.Companion.IDEA_FORCE_DUMB_QUEUE_TASKS
@@ -785,20 +784,18 @@ class DumbServiceImplTest {
   fun `DumbService_queue works when invoked from undispatched EDT via blockingContext`() {
     runInEdtAndWait {
       CoroutineScope(Job()).launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
-        blockingContext {
-          val taskStarted = CountDownLatch(1)
-          val taskFinished = CountDownLatch(1)
-          dumbService.queue {
-            taskStarted.countDown()
-            taskFinished.awaitOrThrow(5, "Test didn't finish dumb mode. Finish it on timeout.")
-          }
-          assertTrue("Should become dumb immediately, when on EDT", DumbService.isDumb(project))
-          PlatformTestUtil.waitWithEventsDispatching("Dumb task didn't start after 5 seconds.", { taskStarted.count == 0L }, 5)
-          assertTrue("Should be dumb when running dumb task", DumbService.isDumb(project))
-          taskFinished.countDown()
-
-          DumbModeTestUtils.waitForSmartMode(project)
+        val taskStarted = CountDownLatch(1)
+        val taskFinished = CountDownLatch(1)
+        dumbService.queue {
+          taskStarted.countDown()
+          taskFinished.awaitOrThrow(5, "Test didn't finish dumb mode. Finish it on timeout.")
         }
+        assertTrue("Should become dumb immediately, when on EDT", DumbService.isDumb(project))
+        PlatformTestUtil.waitWithEventsDispatching("Dumb task didn't start after 5 seconds.", { taskStarted.count == 0L }, 5)
+        assertTrue("Should be dumb when running dumb task", DumbService.isDumb(project))
+        taskFinished.countDown()
+
+        DumbModeTestUtils.waitForSmartMode(project)
       }.invokeOnCompletion { t ->
         if (t != null) {
           throw AssertionError(t)

@@ -196,11 +196,11 @@ private data class LarvaData(
   val dfaVariableValues: List<DfaVariableValue>,
 )
 
-private suspend fun <T> syncReadAction(action: () -> T): T = blockingContext {
+private suspend fun <T> syncReadAction(action: () -> T): T =
   try {
     ReadAction.nonBlocking(action).executeSynchronously()
   }
   catch (e: ExecutionException) {
     throw e.cause ?: e
   }
-}
+

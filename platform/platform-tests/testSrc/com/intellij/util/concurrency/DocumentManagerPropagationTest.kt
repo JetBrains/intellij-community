@@ -6,7 +6,6 @@ import com.intellij.concurrency.TestElementKey
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -28,45 +27,36 @@ class DocumentManagerPropagationTest : HeavyPlatformTestCase() {
     val document = service.getDocument(psiFile)!!
 
     timeoutRunBlocking {
-      blockingContext {
-        runWriteAction {
-          document.setText("42")
-        }
+      runWriteAction {
+        document.setText("42")
       }
       withContext(element) {
-        blockingContext {
+       service.performForCommittedDocument(document) {
+         performForCommittedDocumentTracker.set(true)
+         assertSame(element, currentThreadContext()[TestElementKey])
+       }
 
-          service.performForCommittedDocument(document) {
-            performForCommittedDocumentTracker.set(true)
-            assertSame(element, currentThreadContext()[TestElementKey])
-          }
+       service.performWhenAllCommitted {
+         performWhenAllCommittedTracker.set(true)
+         assertSame(element, currentThreadContext()[TestElementKey])
+       }
 
-          service.performWhenAllCommitted {
-            performWhenAllCommittedTracker.set(true)
-            assertSame(element, currentThreadContext()[TestElementKey])
-          }
-
-          service.performLaterWhenAllCommitted {
-            performLaterWhenAllCommittedTracker.set(true)
-            assertSame(element, currentThreadContext()[TestElementKey])
-          }
-
-        }
+       service.performLaterWhenAllCommitted {
+         performLaterWhenAllCommittedTracker.set(true)
+         assertSame(element, currentThreadContext()[TestElementKey])
+       }
       }
 
-      blockingContext {
-        assertFalse(performForCommittedDocumentTracker.get())
-        assertFalse(performWhenAllCommittedTracker.get())
-        assertFalse(performLaterWhenAllCommittedTracker.get())
+      assertFalse(performForCommittedDocumentTracker.get())
+      assertFalse(performWhenAllCommittedTracker.get())
+      assertFalse(performLaterWhenAllCommittedTracker.get())
+      assertNull(currentThreadContext()[TestElementKey])
+      service.commitDocument(document)
 
-        assertNull(currentThreadContext()[TestElementKey])
-        service.commitDocument(document)
-
-        assertTrue(performWhenAllCommittedTracker.get())
-        assertTrue(performForCommittedDocumentTracker.get())
-        IdeEventQueue.getInstance().flushQueue() // forcing events processing
-        assertTrue(performLaterWhenAllCommittedTracker.get())
-      }
+      assertTrue(performWhenAllCommittedTracker.get())
+      assertTrue(performForCommittedDocumentTracker.get())
+      IdeEventQueue.getInstance().flushQueue() // forcing events processing
+      assertTrue(performLaterWhenAllCommittedTracker.get())
     }
   }
 

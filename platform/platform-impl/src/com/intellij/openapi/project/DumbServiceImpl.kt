@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.MergingQueueGuiExecutor.ExecutorStateListener
@@ -189,9 +188,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }
 
     val task = InitialDumbTaskRequiredForSmartMode(project)
-    blockingContext {
-      queueTask(task)
-    }
+    queueTask(task)
   }
 
   override fun cancelTask(task: DumbModeTask) {
@@ -229,11 +226,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
 
     suspend fun incrementCounter() {
-      blockingContext { // because we need correct modality
-        // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
-        // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
-        incrementDumbCounter(trace = Throwable())
-      }
+      // we need correct modality
+      // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
+      // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
+      incrementDumbCounter(trace = Throwable())
     }
 
     if (EDT.isCurrentThreadEdt()) {
@@ -251,9 +247,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     finally {
       // in the case of cancellation, this block won't execute if NonCancellable is omitted
       withContext(Dispatchers.EDT + NonCancellable) {
-        blockingContext {
-          decrementDumbCounter()
-        }
+        decrementDumbCounter()
         LOG.info("[$project]: finished dumb task without visible indicator: $debugReason")
       }
     }
@@ -404,9 +398,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     }.invokeOnCompletion {
       if (!dumbModeCounterWillBeDecrementedFromOnFinish) {
         scope.launch(modality.asContextElement() + Dispatchers.EDT) {
-          blockingContext {
-            launcher.cancel()
-          }
+          launcher.cancel()
         }
       }
     }
