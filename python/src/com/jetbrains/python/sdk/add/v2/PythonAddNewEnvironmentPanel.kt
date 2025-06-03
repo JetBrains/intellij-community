@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -17,9 +16,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.ui.GotItTooltip
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
@@ -31,7 +28,6 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
-import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.UV
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -44,7 +40,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import javax.swing.JComponent
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
@@ -71,18 +66,6 @@ internal class PythonAddNewEnvironmentPanel(
 
   private lateinit var pythonBaseVersionComboBox: PythonInterpreterComboBox
   private var initialized = false
-
-  // PY-79134: an anchor to display the promo notification on
-  // TODO: remove after promo ends
-  private val promoPopup: GotItTooltip = GotItTooltip("python.uv.promo.tooltip", message("sdk.create.custom.uv.promo.text"))
-    .withShowCount(1)
-    .withLink(message("sdk.create.custom.uv.promo.link")) {
-      selectedMode.set(CUSTOM)
-      custom.newInterpreterManager.set(UV)
-      promoPopup.gotIt()
-      promoPopup.hidePopup()
-    }
-  private lateinit var interpreterTypeButton: SegmentedButton<*>
 
   private suspend fun updateVenvLocationHint(): Unit = withContext(Dispatchers.EDT) {
     val get = selectedMode.get()
@@ -112,7 +95,7 @@ internal class PythonAddNewEnvironmentPanel(
     with(outerPanel) {
       if (allowedInterpreterTypes.size > 1) { // No need to show control with only one selection
         row(message("sdk.create.interpreter.type")) {
-          interpreterTypeButton = segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
+          segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
             .bind(selectedMode)
         }.topGap(TopGap.MEDIUM)
       }
@@ -168,25 +151,6 @@ internal class PythonAddNewEnvironmentPanel(
           updateVenvLocationHint()
           model.navigator.restoreLastState(allowedInterpreterTypes)
           initialized = true
-
-          val customButton = interpreterTypeButton
-            .component
-            ?.let { it as? SegmentedButtonComponent<*> }
-            ?.components
-            ?.find { (it as? ActionButton)?.presentation?.text == message(CUSTOM.nameKey) } as? JComponent
-
-          if (customButton == null) {
-            return@withLock
-          }
-
-          promoPopup.show(customButton, GotItTooltip.BOTTOM_MIDDLE)
-
-          if (promoPopup.wasCreated()) {
-            custom.newInterpreterManager.afterChange(promoPopup) {
-              promoPopup.gotIt()
-              promoPopup.hidePopup()
-            }
-          }
         }
       }
     }
