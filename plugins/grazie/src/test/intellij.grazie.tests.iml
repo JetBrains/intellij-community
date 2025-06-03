@@ -166,6 +166,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:portuguese-pos-dict" type="repository">
         <properties include-transitive-deps="false" maven-id="org.languagetool:portuguese-pos-dict:1.2.0">

@@ -2,6 +2,7 @@
   <module value="com.intellij.modules.spellchecker"/>
   <dependencies>
     <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

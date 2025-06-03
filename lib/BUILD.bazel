@@ -143,97 +143,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "ai-grazie-nlp-langs",
-  jar = "@nlp-langs-jvm-0_4_65_http//file",
-  source_jar = "@nlp-langs-jvm-0_4_65-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "ai-grazie-spell-gec-engine-local",
-  exports = [
-    ":gec-spell-engine-local-jvm-0_4_65_http_import",
-    ":utils-common-jvm-0_4_65_http_import",
-    ":model-gec-jvm-0_4_65_http_import",
-    ":model-text-jvm-0_4_65_http_import",
-    ":model-common-jvm-0_4_65_http_import",
-    ":nlp-langs-jvm-0_4_65_http_import",
-    ":nlp-common-jvm-0_4_65_http_import",
-    ":nlp-patterns-jvm-0_4_65_http_import",
-    ":nlp-similarity-jvm-0_4_65_http_import",
-    ":nlp-phonetics-jvm-0_4_65_http_import",
-    ":nlp-tokenizer-jvm-0_4_65_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "gec-spell-engine-local-jvm-0_4_65_http_import",
-  jar = "@gec-spell-engine-local-jvm-0_4_65_http//file",
-  source_jar = "@gec-spell-engine-local-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "utils-common-jvm-0_4_65_http_import",
-  jar = "@utils-common-jvm-0_4_65_http//file",
-  source_jar = "@utils-common-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "model-gec-jvm-0_4_65_http_import",
-  jar = "@model-gec-jvm-0_4_65_http//file",
-  source_jar = "@model-gec-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "model-text-jvm-0_4_65_http_import",
-  jar = "@model-text-jvm-0_4_65_http//file",
-  source_jar = "@model-text-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "model-common-jvm-0_4_65_http_import",
-  jar = "@model-common-jvm-0_4_65_http//file",
-  source_jar = "@model-common-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "nlp-langs-jvm-0_4_65_http_import",
-  jar = "@nlp-langs-jvm-0_4_65_http//file",
-  source_jar = "@nlp-langs-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "nlp-common-jvm-0_4_65_http_import",
-  jar = "@nlp-common-jvm-0_4_65_http//file",
-  source_jar = "@nlp-common-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "nlp-patterns-jvm-0_4_65_http_import",
-  jar = "@nlp-patterns-jvm-0_4_65_http//file",
-  source_jar = "@nlp-patterns-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "nlp-similarity-jvm-0_4_65_http_import",
-  jar = "@nlp-similarity-jvm-0_4_65_http//file",
-  source_jar = "@nlp-similarity-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "nlp-phonetics-jvm-0_4_65_http_import",
-  jar = "@nlp-phonetics-jvm-0_4_65_http//file",
-  source_jar = "@nlp-phonetics-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "nlp-tokenizer-jvm-0_4_65_http_import",
-  jar = "@nlp-tokenizer-jvm-0_4_65_http//file",
-  source_jar = "@nlp-tokenizer-jvm-0_4_65-sources_http//file"
-)
-
 java_library(
   name = "android-adt-ui-compose-jetbrains-compose-ui-test-junit4-desktop",
   exports = [
@@ -1656,34 +1565,6 @@ jvm_import(
   name = "objenesis-3_1_http_import",
   jar = "@objenesis-3_1_http//file",
   source_jar = "@objenesis-3_1-sources_http//file"
-)
-
-java_library(
-  name = "grazie-core-ai-grazie-nlp-detect",
-  exports = [
-    ":nlp-detect-jvm-0_4_65_http_import",
-    ":utils-common-jvm-0_4_65_http_import",
-    ":nlp-common-jvm-0_4_65_http_import",
-    ":model-text-jvm-0_4_65_http_import",
-    ":model-common-jvm-0_4_65_http_import",
-    ":nlp-patterns-jvm-0_4_65_http_import",
-    ":nlp-tokenizer-jvm-0_4_65_http_import",
-    ":nlp-similarity-jvm-0_4_65_http_import",
-    ":nlp-langs-jvm-0_4_65_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "nlp-detect-jvm-0_4_65_http_import",
-  jar = "@nlp-detect-jvm-0_4_65_http//file",
-  source_jar = "@nlp-detect-jvm-0_4_65-sources_http//file"
-)
-
-jvm_import(
-  name = "grazie-core-ai-grazie-utils-lucene-lt-compatibility",
-  jar = "@utils-lucene-lt-compatibility-0_4_65_http//file",
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -4382,6 +4263,110 @@ jvm_import(
 jvm_import(
   name = "layoutlib",
   jar = "@layoutlib-15_2_2_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
+  jar = "@nlp-detect-jvm-0_4_65_http//file",
+  source_jar = "@nlp-detect-jvm-0_4_65-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
+  exports = [
+    ":gec-spell-engine-local-jvm-0_4_65_http_import",
+    ":utils-common-jvm-0_4_65_http_import",
+    ":model-gec-jvm-0_4_65_http_import",
+    ":model-text-jvm-0_4_65_http_import",
+    ":model-common-jvm-0_4_65_http_import",
+    ":nlp-langs-jvm-0_4_65_http_import",
+    ":nlp-common-jvm-0_4_65_http_import",
+    ":nlp-patterns-jvm-0_4_65_http_import",
+    ":nlp-similarity-jvm-0_4_65_http_import",
+    ":nlp-phonetics-jvm-0_4_65_http_import",
+    ":nlp-tokenizer-jvm-0_4_65_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "gec-spell-engine-local-jvm-0_4_65_http_import",
+  jar = "@gec-spell-engine-local-jvm-0_4_65_http//file",
+  source_jar = "@gec-spell-engine-local-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "utils-common-jvm-0_4_65_http_import",
+  jar = "@utils-common-jvm-0_4_65_http//file",
+  source_jar = "@utils-common-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "model-gec-jvm-0_4_65_http_import",
+  jar = "@model-gec-jvm-0_4_65_http//file",
+  source_jar = "@model-gec-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "model-text-jvm-0_4_65_http_import",
+  jar = "@model-text-jvm-0_4_65_http//file",
+  source_jar = "@model-text-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "model-common-jvm-0_4_65_http_import",
+  jar = "@model-common-jvm-0_4_65_http//file",
+  source_jar = "@model-common-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "nlp-langs-jvm-0_4_65_http_import",
+  jar = "@nlp-langs-jvm-0_4_65_http//file",
+  source_jar = "@nlp-langs-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "nlp-common-jvm-0_4_65_http_import",
+  jar = "@nlp-common-jvm-0_4_65_http//file",
+  source_jar = "@nlp-common-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "nlp-patterns-jvm-0_4_65_http_import",
+  jar = "@nlp-patterns-jvm-0_4_65_http//file",
+  source_jar = "@nlp-patterns-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "nlp-similarity-jvm-0_4_65_http_import",
+  jar = "@nlp-similarity-jvm-0_4_65_http//file",
+  source_jar = "@nlp-similarity-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "nlp-phonetics-jvm-0_4_65_http_import",
+  jar = "@nlp-phonetics-jvm-0_4_65_http//file",
+  source_jar = "@nlp-phonetics-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "nlp-tokenizer-jvm-0_4_65_http_import",
+  jar = "@nlp-tokenizer-jvm-0_4_65_http//file",
+  source_jar = "@nlp-tokenizer-jvm-0_4_65-sources_http//file"
+)
+
+jvm_import(
+  name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-hunspell-en",
+  jar = "@hunspell-en-jvm-0_2_274_http//file",
+  source_jar = "@hunspell-en-jvm-0_2_274-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-utils-lucene-lt-compatibility",
+  jar = "@utils-lucene-lt-compatibility-0_4_65_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8677,35 +8662,6 @@ jvm_import(
   name = "snakeyaml-engine",
   jar = "@snakeyaml-engine-2_9_http//file",
   source_jar = "@snakeyaml-engine-2_9-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "spellchecker-ai-grazie-nlp-detect",
-  exports = [
-    ":nlp-detect-jvm-0_4_65_http_import",
-    ":utils-common-jvm-0_4_65_http_import",
-    ":nlp-common-jvm-0_4_65_http_import",
-    ":model-text-jvm-0_4_65_http_import",
-    ":model-common-jvm-0_4_65_http_import",
-    ":nlp-patterns-jvm-0_4_65_http_import",
-    ":nlp-tokenizer-jvm-0_4_65_http_import",
-    ":nlp-similarity-jvm-0_4_65_http_import",
-    ":nlp-langs-jvm-0_4_65_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "spellchecker-ai-grazie-spell-hunspell-en",
-  jar = "@hunspell-en-jvm-0_2_274_http//file",
-  source_jar = "@hunspell-en-jvm-0_2_274-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "spellchecker-ai-grazie-utils-lucene-lt-compatibility",
-  jar = "@utils-lucene-lt-compatibility-0_4_65_http//file",
   visibility = ["//visibility:public"]
 )
 
