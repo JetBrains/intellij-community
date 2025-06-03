@@ -58,8 +58,8 @@ class GlobalWorkspaceModel(
    * 1. Prevent entities from one environment from appearing for another one;
    * 2. Ensure that the namespace of "global" entities (such as SDKs and global libraries) is local to each environment.
    */
-  val eelDescriptor: EelDescriptor,
-  val internalEnvironmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
+  private val eelDescriptor: EelDescriptor,
+  private val internalEnvironmentName: GlobalWorkspaceModelCache.InternalEnvironmentName,
 ) : Disposable {
 
   /**
