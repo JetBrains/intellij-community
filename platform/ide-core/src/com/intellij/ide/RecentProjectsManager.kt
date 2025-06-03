@@ -53,11 +53,9 @@ interface RecentProjectsManager {
 
   fun removeProjectFromGroup(projectPath: String, from: ProjectGroup) {}
 
-  fun hasPath(path: @SystemIndependent String?): Boolean {
-    return false
-  }
+  fun hasPath(path: @SystemIndependent String?): Boolean = false
 
-  fun willReopenProjectOnStart(): Boolean
+  suspend fun willReopenProjectOnStart(): Boolean = false
 
   @ApiStatus.Internal
   suspend fun reopenLastProjectsOnStart(): Boolean

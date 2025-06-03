@@ -509,9 +509,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  override fun willReopenProjectOnStart(): Boolean {
+  override suspend fun willReopenProjectOnStart(): Boolean {
     if (!synchronized(stateLock) { state.forceReopenProjects }
-        && (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects())) {
+        && (!serviceAsync<GeneralSettings>().isReopenLastProject || AppMode.isDontReopenProjects())) {
       return false
     }
 
