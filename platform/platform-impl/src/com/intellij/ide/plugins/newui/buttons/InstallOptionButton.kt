@@ -16,7 +16,6 @@ class InstallOptionButton @JvmOverloads constructor(
 ) : OptionButton(action, options), PluginInstallButton {
   private val isUpgradeRequired = isUpgradeRequired
 
-
   override fun updateUI() {
     super.updateUI()
     if (parent != null) {

@@ -15,6 +15,12 @@ interface PluginManagerCustomizer {
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
+  fun getDisableButtonCustomizationModel(
+    pluginModelFacade: PluginModelFacade,
+    pluginModel: PluginUiModel,
+    modalityState: ModalityState,
+  ): OptionsButonCustomizationModel
+
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
@@ -24,4 +30,9 @@ interface PluginManagerCustomizer {
   }
 }
 
-data class OptionsButonCustomizationModel(val additionalActions: List<AnAction>)
+data class OptionsButonCustomizationModel(
+  val additionalActions: List<AnAction>,
+  val isVisible: Boolean = true,
+  val mainAction: Action? = null,
+  @param:NlsSafe val text: String? = null,
+)

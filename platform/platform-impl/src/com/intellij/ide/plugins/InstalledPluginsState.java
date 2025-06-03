@@ -31,7 +31,7 @@ public final class InstalledPluginsState {
   }
 
   private final Object myLock = new Object();
-  private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = new IdentityHashMap<>();
+  private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = new HashMap<>();
   private final Set<PluginId> myInstalledWithoutRestartPlugins = new HashSet<>();
   private final Set<PluginId> myUpdatedPlugins = new HashSet<>();
   private final Set<PluginId> myUpdatedWithoutRestartPlugins = new HashSet<>();

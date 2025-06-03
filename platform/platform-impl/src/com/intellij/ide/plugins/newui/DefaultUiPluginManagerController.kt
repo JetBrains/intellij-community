@@ -226,9 +226,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
     val plugin = PluginManagerCore.getPlugin(pluginId)
     val pluginsState = InstalledPluginsState.getInstance()
+    val isDeleted = (plugin as? IdeaPluginDescriptorImpl)?.isDeleted ?: false
     val status = when {
       pluginsState.wasInstalledWithoutRestart(pluginId) -> PluginStatus.INSTALLED_WITHOUT_RESTART
-      pluginsState.wasUninstalledWithoutRestart(pluginId) -> PluginStatus.UNINSTALLED_WITHOUT_RESTART
+      pluginsState.wasUninstalledWithoutRestart(pluginId) || isDeleted -> PluginStatus.UNINSTALLED_WITHOUT_RESTART
       pluginsState.wasInstalled(pluginId) -> PluginStatus.INSTALLED_AND_REQUIRED_RESTART
       else -> null
     }
@@ -694,7 +695,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       if (installedWithoutRestart) {
         val installedDescriptor = PluginManagerCore.getPlugin(request.pluginId)
         if (installedDescriptor != null) {
-          result.installedDescriptor = PluginUiModelAdapter(installedDescriptor)
+          result.installedDescriptor = PluginDto.fromModel(PluginUiModelAdapter(installedDescriptor))
         }
       }
       else {
@@ -843,6 +844,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   private fun uninstallPlugin(pluginId: PluginId): IdeaPluginDescriptor? {
     val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return null
+    descriptorImpl.isDeleted = true
     try {
       if (!isBundledUpdate(descriptorImpl)) {
         val enabler: PluginEnabler = PluginEnabler.HEADLESS

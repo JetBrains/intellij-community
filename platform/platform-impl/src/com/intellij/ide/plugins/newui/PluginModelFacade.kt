@@ -38,8 +38,8 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
   }
 
   @JvmOverloads
-  fun installOrUpdatePlugin(component: JComponent?, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController()) {
-    pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState, controller)
+  fun installOrUpdatePlugin(component: JComponent?, model: PluginUiModel, updateDescriptor: PluginUiModel?, modalityState: ModalityState, controller: UiPluginManagerController = UiPluginManager.getInstance().getController(), callback: (Boolean) -> Unit = {}) {
+    pluginModel.installOrUpdatePlugin(component, model, updateDescriptor, modalityState, controller, callback)
   }
 
   fun addUninstalled(pluginId: PluginId) {
@@ -86,8 +86,9 @@ open class PluginModelFacade(private val pluginModel: MyPluginModel) {
     pluginModel.setEnabledState(models.map { it.getDescriptor() }, action)
   }
 
-  fun uninstallAndUpdateUi(descriptor: PluginUiModel) {
-    pluginModel.uninstallAndUpdateUi(descriptor)
+  @JvmOverloads
+  fun uninstallAndUpdateUi(descriptor: PluginUiModel, controller: UiPluginManagerController = UiPluginManager.getInstance().getController()) {
+    pluginModel.uninstallAndUpdateUi(descriptor, controller)
   }
 
   fun isDisabledInDiff(model: PluginUiModel): Boolean {

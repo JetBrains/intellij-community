@@ -466,10 +466,48 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun customizeInstallButton() {
-    if (isMarketplace) {
-      val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
-      val customizationModel = pluginManagerCustomizer?.getInstallButonCustomizationModel(pluginModel, plugin!!, modalityState) ?: return
-      (installButton as? InstallOptionButton)?.setOptions(customizationModel.additionalActions)
+    val pluginToInstall = plugin ?: return
+    if (gearButton!!.isVisible) {
+      installButton?.setVisible(false)
+      return
+    }
+    val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
+    val customizationModel = pluginManagerCustomizer?.getInstallButonCustomizationModel(pluginModel, pluginToInstall, modalityState)
+                             ?: return
+    val installOptionButton = installButton as? InstallOptionButton ?: return
+    installOptionButton.setOptions(customizationModel.additionalActions)
+    val mainAction = customizationModel.mainAction
+    if (mainAction != null) {
+      installOptionButton.action = mainAction
+      installOptionButton.setEnabled(true)
+      installOptionButton.isVisible = true
+    }
+    else {
+      setDefaultInstallAction(installOptionButton)
+      val text = if (customizationModel.isVisible) null else IdeBundle.message("plugins.configurable.installed")
+      installButton?.setEnabled(customizationModel.isVisible, text)
+      installButton?.setVisible(customizationModel.isVisible)
+    }
+
+  }
+
+  private fun customizeEnableDisableButton() {
+    if (pluginManagerCustomizer == null) return
+    val uiModel = descriptorForActions ?: return
+    if (uiModel.isBundled) return
+    val component = gearButton ?: return
+    val modalityState = ModalityState.stateForComponent(component)
+    val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, modalityState)
+    enableDisableController?.setOptions(customizationModel.additionalActions)
+    val visible = customizationModel.isVisible && customizationModel.text == null
+    component.isVisible = visible
+    component.isEnabled = visible
+    if (customizationModel.text != null && restartButton?.isVisible != true) {
+      enableDisableController?.setText(customizationModel.text)
+      gearButton?.isVisible = true
+      gearButton?.isEnabled = false
+    } else {
+      enableDisableController?.update()
     }
   }
 
@@ -1325,43 +1363,63 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     doLayout()
     revalidate()
     repaint()
-    applyCustomization()
   }
 
-  fun applyCustomization() {
+  private fun applyCustomization() {
     if (plugin == null) return
+    customizeEnableDisableButton()
     customizeInstallButton()
     updateAdditionalText()
+    if (updateDescriptor != null) {
+      nameAndButtons!!.setProgressDisabledButton(updateButton!!)
+    }
+    else {
+      if (installButton!!.isVisible()) {
+        nameAndButtons!!.setProgressDisabledButton(installButton!!.getComponent())
+      }
+      else {
+        nameAndButtons!!.setProgressDisabledButton(gearButton!!)
+      }
+    }
+  }
+
+  private fun updateButtonsAndApplyCustomization() {
+    updateButtons()
+    applyCustomization()
   }
 
   fun hideProgress(success: Boolean, restartRequired: Boolean) {
     indicator = null
     nameAndButtons!!.removeProgressComponent()
-
-    if (success) {
-      if (restartRequired) {
-        updateAfterUninstall(true)
-      }
-      else {
-        val installButton = installButton
-        if (installButton != null) {
-          installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
-          if (installButton.isVisible()) {
-            installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
-            installedDescriptorForMarketplace?.let {
-              installButton.setVisible(false)
-              myVersion1!!.text = it.version
-              myVersion1!!.isVisible = true
-              updateEnabledState()
-              return
+    if (pluginManagerCustomizer != null) {
+      updateButtonsAndApplyCustomization()
+    }
+    else {
+      if (success) {
+        if (restartRequired) {
+          updateAfterUninstall(true)
+        }
+        else {
+          val installButton = installButton
+          if (installButton != null) {
+            installButton.setEnabled(false, IdeBundle.message("plugin.status.installed"))
+            if (installButton.isVisible()) {
+              installedDescriptorForMarketplace = UiPluginManager.getInstance().findPlugin(plugin!!.pluginId)
+              installedDescriptorForMarketplace?.let {
+                installButton.setVisible(false)
+                myVersion1!!.text = it.version
+                myVersion1!!.isVisible = true
+                updateEnabledState()
+                return
+              }
             }
           }
+          if (updateButton!!.isVisible) {
+            updateButton!!.isEnabled = false
+            updateButton!!.text = IdeBundle.message("plugin.status.installed")
+          }
+          myEnableDisableButton!!.isVisible = false
         }
-        if (updateButton!!.isVisible) {
-          updateButton!!.isEnabled = false
-          updateButton!!.text = IdeBundle.message("plugin.status.installed")
-        }
-        myEnableDisableButton!!.isVisible = false
       }
     }
 
@@ -1371,11 +1429,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun createInstallButton(): PluginInstallButton {
     if (Registry.`is`("reworked.plugin.manager.enabled")) {
       val button = InstallOptionButton()
-      button.action = object : AbstractAction() {
-        override fun actionPerformed(e: ActionEvent?) {
-          installOrUpdatePlugin()
-        }
-      }
+      setDefaultInstallAction(button)
       return button
     }
     val installButton = InstallButton(true)
@@ -1383,6 +1437,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       installOrUpdatePlugin()
     }
     return installButton
+  }
+
+  private fun setDefaultInstallAction(button: InstallOptionButton) {
+    button.action = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        installOrUpdatePlugin()
+      }
+    }
   }
 
   private fun installOrUpdatePlugin() {
@@ -1424,6 +1486,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   fun updateAfterUninstall(showRestart: Boolean) {
+    if (pluginManagerCustomizer != null) {
+      updateButtonsAndApplyCustomization()
+      return
+    }
     installButton!!.setVisible(false)
     updateButton!!.isVisible = false
     gearButton!!.isVisible = false

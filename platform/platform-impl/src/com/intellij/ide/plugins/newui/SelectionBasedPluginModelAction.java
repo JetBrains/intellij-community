@@ -367,6 +367,14 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       myUninstallButton.putValue(Action.NAME, presentation.getText());
     }
 
+    public void setOptions(List<AnAction> options) {
+      button.setOptions(options);
+    }
+
+    public void setText(@Nls String text) {
+      button.getAction().putValue(Action.NAME, text);
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
       myCurrentAction.actionPerformed(AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));

@@ -235,7 +235,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                              @NotNull PluginUiModel descriptor,
                              @Nullable PluginUiModel updateDescriptor,
                              @NotNull ModalityState modalityState,
-                             @NotNull UiPluginManagerController controller) {
+                             @NotNull UiPluginManagerController controller,
+                             @NotNull Consumer<Boolean> callback) {
     boolean isUpdate = updateDescriptor != null;
     PluginUiModel actionDescriptor = isUpdate ? updateDescriptor : descriptor;
     if (!PluginManagerMain.checkThirdPartyPluginsAllowed(List.of(actionDescriptor.getDescriptor()))) {
@@ -276,7 +277,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                                                          true));
       }
       else {
-        performUninstall(descriptor);
+        performUninstall(descriptor, controller);
       }
     }
 
@@ -318,18 +319,21 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                              MyPluginModel.this,
                                              result -> {
                                                applyInstallResult(result, info);
+                                               callback.accept(result.getSuccess());
                                                return null;
                                              });
         }
 
         private void applyInstallResult(InstallPluginResult result, InstallPluginInfo info) {
-          if (result.getInstalledDescriptor() != null) {
-            info.setInstalledModel(result.getInstalledDescriptor());
-          }
-          disableById(result.getPluginsToDisable());
+          PluginDto installedDescriptor = result.getInstalledDescriptor();
           if (result.getSuccess()) {
             PluginUiModelKt.addInstalledSource(descriptor, controller.getTarget());
+            if (installedDescriptor != null) {
+              installedDescriptor.setInstallSource(descriptor.getInstallSource());
+              info.setInstalledModel(installedDescriptor);
+            }
           }
+          disableById(result.getPluginsToDisable());
           info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired());
         }
 
@@ -919,9 +923,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
-  @ApiStatus.Internal
   public void uninstallAndUpdateUi(@NotNull PluginUiModel descriptor) {
-    boolean needRestartForUninstall = performUninstall(descriptor);
+    uninstallAndUpdateUi(descriptor, UiPluginManager.getInstance().getController());
+  }
+
+  @ApiStatus.Internal
+  public void uninstallAndUpdateUi(@NotNull PluginUiModel descriptor, UiPluginManagerController controller) {
+    boolean needRestartForUninstall = performUninstall(descriptor, controller);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
 
     PluginId pluginId = descriptor.getPluginId();
@@ -960,9 +968,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
-  private boolean performUninstall(@NotNull PluginUiModel model) {
-    boolean doNotNeedRestart = UiPluginManager.getInstance().performUninstall(sessionId.toString(), model.getPluginId());
-    model.setDeleted(true);
+  private boolean performUninstall(@NotNull PluginUiModel model, UiPluginManagerController controller) {
+    boolean doNotNeedRestart = controller.performUninstall(sessionId.toString(), model.getPluginId());
     return !doNotNeedRestart;
   }
 
