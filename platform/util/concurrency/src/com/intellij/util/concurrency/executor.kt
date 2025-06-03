@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("AppJavaExecutorUtil")
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
@@ -38,6 +38,17 @@ fun executeOnPooledIoThread(task: Runnable): Job {
 @ApiStatus.Obsolete
 fun executeOnPooledIoThread(coroutineScope: CoroutineScope, task: Runnable) {
   coroutineScope.launch(Dispatchers.IO) {
+    task.run()
+  }
+}
+
+/**
+ * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
+ */
+@Internal
+@ApiStatus.Obsolete
+fun executeOnPooledCpuThread(coroutineScope: CoroutineScope, task: Runnable) {
+  coroutineScope.launch {
     task.run()
   }
 }

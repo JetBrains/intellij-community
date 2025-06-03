@@ -13,7 +13,6 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -62,7 +61,9 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
@@ -745,20 +746,6 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   else {
     return runBlockingMaybeCancellable(task)
   }
-}
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Internal
-@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
-fun Project.executeOnPooledThread(task: Runnable) {
-  (this as ComponentManagerEx).getCoroutineScope().launch { blockingContext { task.run() } }
-}
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Internal
-@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
-fun Project.executeOnPooledThread(coroutineScope: CoroutineScope, task: Runnable) {
-  coroutineScope.launch { blockingContext { task.run() } }
 }
 
 private fun getActiveWindow(): Window? {

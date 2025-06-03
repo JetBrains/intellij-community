@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -50,6 +49,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.executeOnPooledCpuThread;
 
 /**
  * @author Vladislav.Soroka
@@ -216,7 +216,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
       });
 
       //noinspection deprecation
-      ProjectUtilKt.executeOnPooledThread(myProject, coroutineScope, () -> {
+      executeOnPooledCpuThread(coroutineScope, () -> {
         myPostInitializationBGActivities.run();
         myPostInitializationBGActivities.clear();
       });
