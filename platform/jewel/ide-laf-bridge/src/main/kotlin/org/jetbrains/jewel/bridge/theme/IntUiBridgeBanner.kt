@@ -1,8 +1,6 @@
 package org.jetbrains.jewel.bridge.theme
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.util.ui.JBUI
-import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.ui.component.styling.BannerColors
 import org.jetbrains.jewel.ui.component.styling.BannerMetrics
@@ -20,7 +18,7 @@ internal fun readDefaultBannerStyle(): DefaultBannerStyles =
                         background = JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor(),
                         border = JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR.toComposeColor(),
                     ),
-                metrics = BannerMetrics(borderWidth = DarculaUIUtil.LW.dp),
+                metrics = BannerMetrics(borderWidth = borderWidth),
             ),
         success =
             DefaultBannerStyle(
@@ -29,7 +27,7 @@ internal fun readDefaultBannerStyle(): DefaultBannerStyles =
                         background = JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND.toComposeColor(),
                         border = JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR.toComposeColor(),
                     ),
-                metrics = BannerMetrics(borderWidth = DarculaUIUtil.LW.dp),
+                metrics = BannerMetrics(borderWidth = borderWidth),
             ),
         warning =
             DefaultBannerStyle(
@@ -38,7 +36,7 @@ internal fun readDefaultBannerStyle(): DefaultBannerStyles =
                         background = JBUI.CurrentTheme.Banner.WARNING_BACKGROUND.toComposeColor(),
                         border = JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR.toComposeColor(),
                     ),
-                metrics = BannerMetrics(borderWidth = DarculaUIUtil.LW.dp),
+                metrics = BannerMetrics(borderWidth = borderWidth),
             ),
         error =
             DefaultBannerStyle(
@@ -47,7 +45,7 @@ internal fun readDefaultBannerStyle(): DefaultBannerStyles =
                         background = JBUI.CurrentTheme.Banner.ERROR_BACKGROUND.toComposeColor(),
                         border = JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR.toComposeColor(),
                     ),
-                metrics = BannerMetrics(borderWidth = DarculaUIUtil.LW.dp),
+                metrics = BannerMetrics(borderWidth = borderWidth),
             ),
     )
 
@@ -60,7 +58,7 @@ internal fun readInlineBannerStyle(): InlineBannerStyles =
                         background = JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor(),
                         border = JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR.toComposeColor(),
                     ),
-                metrics = BannerMetrics(borderWidth = DarculaUIUtil.LW.dp),
+                metrics = BannerMetrics(borderWidth = borderWidth),
             ),
         success =
             InlineBannerStyle(
@@ -69,7 +67,7 @@ internal fun readInlineBannerStyle(): InlineBannerStyles =
                         background = JBUI.CurrentTheme.Banner.SUCCESS_BACKGROUND.toComposeColor(),
                         border = JBUI.CurrentTheme.Banner.SUCCESS_BORDER_COLOR.toComposeColor(),
                     ),
-                metrics = BannerMetrics(borderWidth = DarculaUIUtil.LW.dp),
+                metrics = BannerMetrics(borderWidth = borderWidth),
             ),
         warning =
             InlineBannerStyle(
@@ -78,7 +76,7 @@ internal fun readInlineBannerStyle(): InlineBannerStyles =
                         background = JBUI.CurrentTheme.Banner.WARNING_BACKGROUND.toComposeColor(),
                         border = JBUI.CurrentTheme.Banner.WARNING_BORDER_COLOR.toComposeColor(),
                     ),
-                metrics = BannerMetrics(borderWidth = DarculaUIUtil.LW.dp),
+                metrics = BannerMetrics(borderWidth = borderWidth),
             ),
         error =
             InlineBannerStyle(
@@ -87,6 +85,6 @@ internal fun readInlineBannerStyle(): InlineBannerStyles =
                         background = JBUI.CurrentTheme.Banner.ERROR_BACKGROUND.toComposeColor(),
                         border = JBUI.CurrentTheme.Banner.ERROR_BORDER_COLOR.toComposeColor(),
                     ),
-                metrics = BannerMetrics(borderWidth = DarculaUIUtil.LW.dp),
+                metrics = BannerMetrics(borderWidth = borderWidth),
             ),
     )

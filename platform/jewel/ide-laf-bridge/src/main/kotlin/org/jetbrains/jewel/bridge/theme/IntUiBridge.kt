@@ -2,6 +2,7 @@ package org.jetbrains.jewel.bridge.theme
 
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.DirProvider
@@ -9,6 +10,7 @@ import javax.swing.UIManager
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.lafName
 import org.jetbrains.jewel.bridge.readFromLaF
+import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
@@ -101,4 +103,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
 }
 
 internal val componentArc: CornerSize
-    get() = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp / 2)
+    get() = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp.safeValue() / 2)
+
+internal val borderWidth: Dp
+    get() = DarculaUIUtil.LW.dp.safeValue()
