@@ -66,8 +66,8 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
     }
 
     private fun PrinterContext.languageVersionSanitized(fieldValue: LanguageVersion): String {
-        val languageVersionOfKgp = LanguageVersion.fromFullVersionString(kotlinGradlePluginVersion.toString())
-        return if (fieldValue == languageVersionOfKgp) CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER else fieldValue.versionString
+        val languageVersion = LanguageVersion.fromFullVersionString(kotlinVersion.toString())
+        return if (fieldValue == languageVersion) CURRENT_LANGUAGE_VERSION_PLACEHOLDER else fieldValue.versionString
     }
 
     private fun KotlinFacetSettingsChecksConfiguration.computeFieldsToPrint(): Set<FacetField> {
@@ -96,7 +96,7 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
         IKotlinFacetSettings::compilerSettings
     )
 
-    private val CURRENT_KGP_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
+    private val CURRENT_LANGUAGE_VERSION_PLACEHOLDER = "{{LATEST_STABLE}}"
 
     // Possible input: "-Xparam1=value1 -Xflag -param2 value2"
     private fun String.filterOutInternalArguments() =

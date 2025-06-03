@@ -128,7 +128,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         get() = context.testProperties.gradleVersion.version
 
     final override val kotlinPluginVersion: KotlinToolingVersion
-        get() = context.testProperties.kotlinGradlePluginVersion
+        get() = context.testProperties.kotlinVersion
 
     // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
     open val allowOnNonMac: Boolean = false
