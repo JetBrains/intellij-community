@@ -66,7 +66,7 @@ internal class SwingBridgeReader {
     private fun readThemeData(): BridgeThemeData {
         val themeDefinition = createBridgeThemeDefinition()
         return BridgeThemeData(
-            themeDefinition = createBridgeThemeDefinition(),
+            themeDefinition = themeDefinition,
             componentStyling = createBridgeComponentStyling(themeDefinition),
         )
     }
