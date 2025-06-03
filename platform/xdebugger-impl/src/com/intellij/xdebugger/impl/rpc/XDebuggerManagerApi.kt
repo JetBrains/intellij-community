@@ -2,9 +2,9 @@
 package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.openapi.editor.impl.EditorId
+import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
@@ -85,7 +85,7 @@ sealed interface XDebuggerSessionEvent {
   object SessionStopped : XDebuggerSessionEvent
 
   @Serializable
-  class StackFrameChanged(val stackFrame: XStackFrameDto?) : XDebuggerSessionEvent
+  class StackFrameChanged(@Serializable(with = DeferredSerializer::class) val stackFrame: Deferred<XStackFrameDto>?) : XDebuggerSessionEvent
 
   @Serializable
   object BeforeSessionResume : XDebuggerSessionEvent

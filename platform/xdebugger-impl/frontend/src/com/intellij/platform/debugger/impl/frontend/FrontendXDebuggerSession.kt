@@ -225,7 +225,7 @@ class FrontendXDebuggerSession private constructor(
         currentStackFrame.value = null
       }
       is XDebuggerSessionEvent.StackFrameChanged -> {
-        stackFrame?.let {
+        stackFrame?.await()?.let {
           val suspendContext = suspendContext.value ?: return
           currentStackFrame.value = suspendContext.getOrCreateStackFrame(it)
         }
