@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Experimental
 @Internal
-open class UndoDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification {
+private class UndoDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
 
   companion object {
     private val LOG: Logger = logger<UndoDumpAction>()
@@ -44,9 +43,5 @@ open class UndoDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
-  }
-
-  override fun getBehavior(): ActionRemoteBehavior {
-    return ActionRemoteBehavior.BackendOnly
   }
 }
