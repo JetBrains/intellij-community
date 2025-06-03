@@ -441,10 +441,12 @@ f:com.intellij.util.IconUtil
 - sf:brighter(javax.swing.Icon,I):javax.swing.Icon
 - sf:colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color):javax.swing.Icon
 - sf:colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z):javax.swing.Icon
+- sf:colorize(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z,Z):javax.swing.Icon
 - sf:colorize(javax.swing.Icon,java.awt.Color):javax.swing.Icon
 - sf:colorize(javax.swing.Icon,java.awt.Color,Z):javax.swing.Icon
-- bs:colorize$default(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z,I,java.lang.Object):javax.swing.Icon
-- bs:colorize$default(javax.swing.Icon,java.awt.Color,Z,I,java.lang.Object):javax.swing.Icon
+- sf:colorize(javax.swing.Icon,java.awt.Color,Z,Z):javax.swing.Icon
+- bs:colorize$default(java.awt.Graphics2D,javax.swing.Icon,java.awt.Color,Z,Z,I,java.lang.Object):javax.swing.Icon
+- bs:colorize$default(javax.swing.Icon,java.awt.Color,Z,Z,I,java.lang.Object):javax.swing.Icon
 - sf:computeBaseFileIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
 - sf:computeFileIcon(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
 - sf:copy(javax.swing.Icon,java.awt.Component):javax.swing.Icon

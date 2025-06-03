@@ -356,7 +356,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
                 label(it)
                   .customize(rowGaps)
                   .applyToComponent {
-                    icon = AllIcons.Vcs.Branch
+                    icon = IconUtil.colorize(AllIcons.Vcs.Branch, UIUtil.getLabelInfoForeground(), keepGray = false, keepBrightness = false)
                     font = JBFont.smallOrNewUiMedium()
                     foreground = UIUtil.getLabelInfoForeground()
                   }.component
