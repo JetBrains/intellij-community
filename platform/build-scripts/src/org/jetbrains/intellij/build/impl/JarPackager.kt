@@ -296,7 +296,8 @@ class JarPackager private constructor(
     val packToDir = context.options.isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
-                    extraExcludes.isEmpty()
+                    extraExcludes.isEmpty() &&
+                    !moduleOutDir.toString().endsWith(".jar")
 
     val outFile = outDir.resolve(item.relativeOutputFile)
     val asset = if (packToDir) {
@@ -933,6 +934,9 @@ private suspend fun buildAsset(
           sourceToMetadata.computeIfAbsent(source) {
             SizeAndHash(size = 0, hash = computeHashForModuleOutput(it as DirSource))
           }
+        }
+        else {
+          error("Unexpected source: $source")
         }
       }
     }
