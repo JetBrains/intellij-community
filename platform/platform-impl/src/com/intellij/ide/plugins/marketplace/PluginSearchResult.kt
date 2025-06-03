@@ -5,7 +5,9 @@ import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginUiModel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 data class PluginSearchResult(
   @Transient val pluginModels: List<PluginUiModel> = emptyList(),

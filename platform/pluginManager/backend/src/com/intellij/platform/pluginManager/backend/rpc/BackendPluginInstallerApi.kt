@@ -97,7 +97,7 @@ class BackendPluginInstallerApi : PluginInstallerApi {
       FileUtil.delete(pluginDescriptor.getPluginPath())
     }
     catch (e: IOException) {
-      LOG.debug(e);
+      LOG.warn(e);
     }
   }
 

@@ -35,7 +35,6 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): PluginDto
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
-  suspend fun getPluginManagerUrl(): String
   suspend fun getAllPluginsTags(): Set<String>
   suspend fun getAllVendors(): Set<String>
   suspend fun updateDescriptorsForInstalledPlugins()

@@ -534,8 +534,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false) {
       val pluginUiModel = plugin!!
       val installedPlugin = pluginManager.getPlugin(pluginUiModel.pluginId)
-      val pluginManagerUrl = pluginManager.getPluginManagerUrl()
-      getPluginWriteReviewUrl(pluginManagerUrl, pluginUiModel.pluginId, installedPlugin?.version)
+      getPluginWriteReviewUrl(pluginUiModel.pluginId, installedPlugin?.version)
     }
 
     val notePanel: JPanel = Wrapper(
@@ -647,7 +646,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (component == null) {
       installedDescriptorForMarketplace = null
       updateDescriptor = installedDescriptorForMarketplace
-      plugin = null
+      plugin = updateDescriptor
       select(1, true)
       setEmptyState(if (multiSelection) EmptyState.MULTI_SELECT else EmptyState.NONE_SELECTED)
     }

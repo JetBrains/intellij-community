@@ -92,6 +92,10 @@ interface PluginUiModel {
   var externalUpdateId: String?
   var defaultTrialPeriod: Int?
   var customTrialPeriods: Map<String, Int>?
+
+  /**
+   * Date of the last plugin update
+   */
   var date: Long
   var suggestedFeatures: Collection<String>
 

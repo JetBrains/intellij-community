@@ -220,10 +220,6 @@ class UiPluginManager {
     return getController().loadPluginMetadata(externalPluginId)
   }
 
-  fun getPluginManagerUrl(): String {
-    return getController().getPluginManagerUrl()
-  }
-
   fun getAllPluginsTags(): Set<String> {
     return getController().getAllPluginsTags()
   }

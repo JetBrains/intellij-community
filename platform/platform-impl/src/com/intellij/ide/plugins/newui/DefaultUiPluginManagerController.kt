@@ -119,13 +119,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
     var needRestart = false
-    val applyResult = ApplyPluginsStateResult()
-    val session = findSession(sessionId) ?: return applyResult
+    val session = findSession(sessionId) ?: return ApplyPluginsStateResult()
     if (ApplicationManager.getApplication().isExitInProgress) {
       needRestart = true
     }
     val pluginIdMap = buildPluginIdMap()
-    applyResult.pluginsToEnable.addAll(updatePluginDependencies(session, pluginIdMap))
+    val pluginsToEnable = updatePluginDependencies(session, pluginIdMap)
     assertCanApply(session, pluginIdMap)
 
     val pluginEnabler = PluginEnabler.getInstance()
@@ -186,8 +185,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
 
     session.isUiDisposedWithApply = true
-    applyResult.needRestart = needRestart
-    return applyResult
+    return ApplyPluginsStateResult(pluginsToEnable, needRestart)
   }
 
   override suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent?): Map<PluginId, Boolean> {
@@ -490,10 +488,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   @RequiresReadLockAbsence
   override fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     return MarketplaceRequests.getInstance().loadPluginMetadata(externalPluginId)
-  }
-
-  override fun getPluginManagerUrl(): String {
-    return MarketplaceUrls.getPluginManagerUrl()
   }
 
   override fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {

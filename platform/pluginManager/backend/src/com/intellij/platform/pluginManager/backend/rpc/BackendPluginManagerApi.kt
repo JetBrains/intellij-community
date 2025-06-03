@@ -131,10 +131,6 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.loadPluginMetadata(externalPluginId)
   }
 
-  override suspend fun getPluginManagerUrl(): String {
-    return DefaultUiPluginManagerController.getPluginManagerUrl()
-  }
-
   override suspend fun getAllPluginsTags(): Set<String> {
     return DefaultUiPluginManagerController.getAllPluginsTags()
   }

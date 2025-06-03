@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-class ApplyPluginsStateResult {
-  val pluginsToEnable: MutableSet<PluginId> = HashSet()
+data class ApplyPluginsStateResult(
+  val pluginsToEnable: Set<PluginId> = emptySet(),
   var needRestart: Boolean = false
-}
+)

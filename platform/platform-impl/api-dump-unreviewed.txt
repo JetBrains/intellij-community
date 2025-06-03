@@ -3360,7 +3360,6 @@ f:com.intellij.ide.plugins.PluginNode
 - getUntilBuild():java.lang.String
 - getUrl():java.lang.String
 - getVendor():java.lang.String
-- getVendorDetails():com.intellij.ide.plugins.PluginNodeVendorDetails
 - getVendorEmail():java.lang.String
 - getVendorUrl():java.lang.String
 - getVersion():java.lang.String
@@ -3415,7 +3414,6 @@ f:com.intellij.ide.plugins.PluginNode
 - setUntilBuild(java.lang.String):V
 - setUrl(java.lang.String):V
 - setVendor(java.lang.String):V
-- setVendorDetails(com.intellij.ide.plugins.PluginNodeVendorDetails):V
 - setVendorDetails(java.lang.String):V
 - setVendorDetails(java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean):V
 - setVendorEmail(java.lang.String):V
@@ -3467,7 +3465,6 @@ f:com.intellij.ide.plugins.RepositoryHelper
 - s:loadPlugins(java.lang.String,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - s:loadPlugins(java.lang.String,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - s:loadPlugins(java.util.Set):java.util.Collection
-- s:mergePluginsFromRepositories(java.util.List,java.util.List,Z):java.util.Collection
 c:com.intellij.ide.plugins.StandalonePluginUpdateChecker
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.ide.plugins.StandalonePluginUpdateChecker$Companion

@@ -189,10 +189,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().loadPluginMetadata(externalPluginId) }
   }
 
-  override fun getPluginManagerUrl(): String {
-    return awaitForResult { PluginManagerApi.getInstance().getPluginManagerUrl() }
-  }
-
   override fun getAllPluginsTags(): Set<String> {
     return awaitForResult { PluginManagerApi.getInstance().getAllPluginsTags() }
   }
@@ -242,7 +238,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   @Deprecated("Test method ")
-  fun <T> awaitForResult(body: suspend () -> T): T {
+  private fun <T> awaitForResult(body: suspend () -> T): T {
     val deferred = CompletableDeferred<T>()
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
       deferred.complete(body())

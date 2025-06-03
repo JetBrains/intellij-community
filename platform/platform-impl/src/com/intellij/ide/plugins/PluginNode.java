@@ -237,10 +237,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.vendor = vendor;
   }
 
+  @ApiStatus.Internal
   public @Nullable PluginNodeVendorDetails getVendorDetails() {
     return vendorDetails;
   }
 
+  @ApiStatus.Internal
   public void setVendorDetails(@Nullable PluginNodeVendorDetails vendorDetails) {
     this.vendorDetails = vendorDetails;
   }

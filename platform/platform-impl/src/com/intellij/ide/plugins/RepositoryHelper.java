@@ -201,6 +201,7 @@ public final class RepositoryHelper {
     }
   }
 
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static @NotNull Collection<PluginNode> mergePluginsFromRepositories(
     @NotNull List<PluginNode> marketplacePlugins,

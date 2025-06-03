@@ -48,7 +48,6 @@ class PluginDto(
   override var vendorDetails: PluginNodeVendorDetails? = null
   override var reviewComments: ReviewsPageContainer? = null
 
-  // Mutable properties
   override var forumUrl: String? = null
   override var licenseUrl: String? = null
   override var bugtrackerUrl: String? = null
