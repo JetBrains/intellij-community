@@ -239,7 +239,14 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     if (jre != null) {
       LanguageLevel level = LanguageLevel.parse(jre.getVersionString());
       if (level != null) {
+        // preserve DebuggerGlobalSearchScope for the correct sorting inside the new scope
+        if (myBaseScope instanceof DebuggerGlobalSearchScope debuggerScope) {
+          scope = debuggerScope.getDelegate();
+        }
         scope = new JavaVersionBasedScope(getProject(), scope, level);
+        if (myBaseScope instanceof DebuggerGlobalSearchScope) {
+          scope = new DebuggerGlobalSearchScope(scope, getProject());
+        }
       }
     }
     mySearchScope = scope;
