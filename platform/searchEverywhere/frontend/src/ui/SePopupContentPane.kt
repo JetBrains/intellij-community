@@ -49,13 +49,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
-import java.awt.Point
 import java.awt.event.*
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.text.Document
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
@@ -222,7 +222,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   }
 
   private fun indexToFreezeFromListOffset(): Int =
-    resultList.locationToIndex(Point(0, resultList.visibleRect.y)) + DEFAULT_FROZEN_COUNT
+    (resultList.visibleRect.y.toDouble() / JBUI.CurrentTheme.List.rowHeight()).roundToInt() + DEFAULT_FROZEN_COUNT
 
   private fun createListPane(resultList: JBList<*>): JScrollPane {
     val resultsScroll: JScrollPane = object : JBScrollPane(resultList) {
