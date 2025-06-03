@@ -8,7 +8,7 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="enable.markdown.compose.preview.renderer.choice"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Add possibility to render Markdown Preview using Compose instead of JCEF (experimental feature, many inlines are unsupported yet)."/>
   </extensions>
 </idea-plugin>
