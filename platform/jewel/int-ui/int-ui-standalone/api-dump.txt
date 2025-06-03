@@ -1,0 +1,18 @@
+f:org.jetbrains.jewel.intui.standalone.IntUiTypography
+- org.jetbrains.jewel.ui.Typography
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.IntUiTypography
+- getConsoleTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getEditorTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH0TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH1TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH2TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH3TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH4TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getLabelTextSize(androidx.compose.runtime.Composer,I):J
+- getLabelTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getMedium(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getRegular(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getSmall(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+f:org.jetbrains.jewel.intui.standalone.theme.TextStylesKt
+- sf:EditorLineHeightMultiplier:F
