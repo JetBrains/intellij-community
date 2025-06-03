@@ -5,6 +5,7 @@
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.searchEverywhere.backend"/>
     <module name="intellij.yaml"/>
+    <module name="intellij.spellchecker"/>
   </dependencies>
   
   <extensions defaultExtensionNs="com.intellij">

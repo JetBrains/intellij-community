@@ -1,6 +1,7 @@
 <idea-plugin package="org.intellij.plugins.markdown.spellchecker">
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.spellchecker"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <spellchecker.support language="Markdown"

@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
+    <module name="intellij.spellchecker"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <spellchecker.support language="HTML" implementationClass="com.intellij.spellchecker.xml.HtmlSpellcheckingStrategy"/>

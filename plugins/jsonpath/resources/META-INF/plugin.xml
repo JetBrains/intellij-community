@@ -10,6 +10,7 @@
 
   <dependencies>
     <module name="intellij.json.backend"/>
+    <module name="intellij.spellchecker"/>
   </dependencies>
 
   <resource-bundle>messages.JsonPathBundle</resource-bundle>

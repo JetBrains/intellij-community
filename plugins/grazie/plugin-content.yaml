@@ -3,17 +3,20 @@
   module: intellij.grazie.core
   files:
   - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-detect-jvm/0/nlp-detect-jvm-0.jar
+- name: lib/ai.grazie.spell.gec.engine.local.jar
+  library: ai.grazie.spell.gec.engine.local
+  files:
+  - name: $MAVEN_REPOSITORY$/ai/grazie/spell/gec-spell-engine-local-jvm/0/gec-spell-engine-local-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-gec-jvm/0/model-gec-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0/nlp-patterns-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0/nlp-tokenizer-jvm-0.jar
-  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0/nlp-similarity-jvm-0.jar
-- name: lib/ai.grazie.nlp.langs.jar
-  library: ai.grazie.nlp.langs
-  files:
   - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-langs-jvm/0/nlp-langs-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0/nlp-common-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-patterns-jvm/0/nlp-patterns-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-similarity-jvm/0/nlp-similarity-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-phonetics-jvm/0/nlp-phonetics-jvm-0.jar
+  - name: $MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer-jvm/0/nlp-tokenizer-jvm-0.jar
   reason: <- intellij.grazie.core
 - name: lib/ai.grazie.utils.lucene.lt.compatibility.jar
   library: ai.grazie.utils.lucene.lt.compatibility
@@ -79,6 +82,16 @@
   module: intellij.grazie.core
   files:
   - name: $MAVEN_REPOSITORY$/javax/measure/unit-api/1/unit-api-1.jar
+- name: lib/lucene-analysis-common.jar
+  library: lucene-analysis-common
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9/lucene-analysis-common-9.jar
+  reason: <- intellij.grazie.core
+- name: lib/lucene-core.jar
+  library: lucene-core
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/9/lucene-core-9.jar
+  reason: <- intellij.grazie.core
 - name: lib/net.loomchild-segment.jar
   library: net.loomchild:segment:2.0.1
   module: intellij.grazie.core

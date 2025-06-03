@@ -26,6 +26,7 @@
     <module name="intellij.platform.diagnostic.freezes"/>
     <module name="intellij.platform.warmup"/>
     <module name="intellij.settingsSync.core"/>
+    <module name="intellij.spellchecker"/>
     <module name="intellij.spellchecker.xml"/>
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>

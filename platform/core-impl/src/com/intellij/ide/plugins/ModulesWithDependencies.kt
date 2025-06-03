@@ -182,6 +182,7 @@ private val contentModulesExtractedInCorePluginWhichCanBeUsedFromExternalPlugins
   "intellij.platform.tasks.impl",
   "intellij.spellchecker.xml",
   "intellij.relaxng",
+  "intellij.spellchecker",
 )
 
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,

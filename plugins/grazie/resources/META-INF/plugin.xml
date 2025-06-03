@@ -23,6 +23,7 @@
   ]]></description>
 
   <dependencies>
+    <module name="intellij.spellchecker"/>
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
 

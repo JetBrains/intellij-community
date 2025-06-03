@@ -82,7 +82,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.runtime.product",
   "intellij.platform.bootstrap",
 
-  "intellij.spellchecker",
   "intellij.platform.polySymbols",
 
   "intellij.platform.vcs.log",
