@@ -37,6 +37,7 @@ import fleet.rpc.core.toRpc
 import fleet.util.channels.use
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import org.jetbrains.concurrency.Promise
@@ -121,7 +122,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val requestId = requestCounter.getAndIncrement()
     if (LOG.isDebugEnabled) {
       LOG.debug("[$requestId] Toggle line breakpoint request received for project: $projectId, file: ${request.position}, line: ${request.position.line}")
-      LOG.debug("[$requestId] Request details: hasOneBreakpoint=${request.hasOneBreakpoint}, canRemoveBreakpoint=${request.canRemoveBreakpoint}, isTemporary=${request.isTemporary}, isConditional=${request.isConditional}")
+      LOG.debug("[$requestId] Request details: hasOneBreakpoint=${request.hasOneBreakpoint}, isTemporary=${request.isTemporary}, isConditional=${request.isConditional}")
     }
 
     val project = projectId.findProjectOrNull() ?: return null
@@ -142,7 +143,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       if (LOG.isDebugEnabled) {
         LOG.debug("[$requestId] No variants found, returning empty response")
       }
-      return XLineBreakpointInstalledResponse(null)
+      return XNoBreakpointPossibleResponse
     }
 
     val singleVariant = variants.singleOrNull()
@@ -151,25 +152,18 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
         LOG.debug("[$requestId] Single variant found: ${singleVariant.text}")
       }
 
-      if (request.hasOneBreakpoint && request.canRemoveBreakpoint) {
+      if (request.hasOneBreakpoint) {
         if (LOG.isDebugEnabled) {
           LOG.debug("[$requestId] Breakpoint exists and can be removed, returning XRemoveBreakpointResponse")
         }
         return XRemoveBreakpointResponse
       }
 
-      if (request.hasOneBreakpoint) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("[$requestId] Breakpoint exists but cannot be removed, returning XLineBreakpointIgnoreResponse")
-        }
-        return XLineBreakpointIgnoreResponse
-      }
-
       val breakpoint = createBreakpointByVariant(project, singleVariant, position, request)
       if (LOG.isDebugEnabled) {
         LOG.debug("[$requestId] Created breakpoint: $breakpoint, returning XLineBreakpointInstalledResponse")
       }
-      return XLineBreakpointInstalledResponse(breakpoint?.toRpc())
+      return XLineBreakpointInstalledResponse(breakpoint.toRpc())
     }
 
     if (LOG.isDebugEnabled) {
@@ -185,12 +179,17 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
 
     val selectionCallback = Channel<VariantSelectedResponse>()
     project.service<BackendXBreakpointTypeApiProjectCoroutineScope>().cs.launch {
-      val receivedResponse = selectionCallback.receiveCatching().getOrNull()
+      val receivedResponse = try {
+        selectionCallback.receive()
+      }
+      catch (_: ClosedReceiveChannelException) {
+        return@launch
+      }
       if (LOG.isDebugEnabled) {
         LOG.debug("[$requestId] Received variant selection: $receivedResponse")
       }
 
-      val (selectedVariantIndex, breakpointCallback) = receivedResponse ?: return@launch
+      val (selectedVariantIndex, breakpointCallback) = receivedResponse
       breakpointCallback.use {
         val variant = variants[selectedVariantIndex]
         if (LOG.isDebugEnabled) {
@@ -202,7 +201,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
           LOG.debug("[$requestId] Created breakpoint from selected variant: $breakpoint")
         }
 
-        it.send(breakpoint?.toRpc())
+        it.send(breakpoint.toRpc())
       }
     }
 
@@ -217,12 +216,12 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     variant: XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant,
     position: XSourcePosition,
     request: XLineBreakpointInstallationRequest,
-  ): XBreakpointBase<*, *, *>? {
+  ): XBreakpointBase<*, *, *> {
     val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
     val breakpoint = readAction {
       XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, position.file, position.line, request.isTemporary)
     }
-    if (breakpoint != null && request.isConditional) {
+    if (request.isConditional) {
       breakpoint.setSuspendPolicy(SuspendPolicy.NONE)
       if (request.condition != null) {
         breakpoint.setLogExpression(request.condition)
@@ -231,7 +230,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
         breakpoint.setLogMessage(true)
       }
     }
-    return breakpoint as? XBreakpointBase<*, *, *>
+    return breakpoint as XBreakpointBase<*, *, *>
   }
 
   private fun getCurrentBreakpointTypeDtos(project: Project): List<XBreakpointTypeDto> {

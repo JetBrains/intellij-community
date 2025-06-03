@@ -17,6 +17,7 @@ import com.intellij.xdebugger.impl.rpc.*
 import fleet.util.channels.use
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -51,8 +52,7 @@ fun XLineBreakpointInstallationInfo.toRequest(hasOneBreakpoint: Boolean): XLineB
   isTemporary,
   isConditional,
   condition,
-  canRemoveBreakpoint(),
-  hasOneBreakpoint = hasOneBreakpoint,
+  hasOneBreakpoint,
 )
 
 internal class VariantChoiceData(
@@ -111,7 +111,7 @@ internal fun computeBreakpointProxy(
           }
           onVariantsChoice(choiceData)
         }
-        XLineBreakpointIgnoreResponse -> {
+        XNoBreakpointPossibleResponse -> {
           result.complete(null)
         }
       }
@@ -131,21 +131,25 @@ private fun responseWithVariantChoice(
 ) {
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     result.compute {
-      val breakpointCallback = Channel<XBreakpointDto?>()
+      val breakpointCallback = Channel<XBreakpointDto>()
       selectionCallback.use {
         it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
       }
-      val breakpointDto = breakpointCallback.receiveCatching().getOrNull()
-      createBreakpoint(project, breakpointDto)
+      try {
+        val breakpointDto = breakpointCallback.receive()
+        createBreakpoint(project, breakpointDto)
+      }
+      catch (_: ClosedReceiveChannelException) {
+        null
+      }
     }
   }
 }
 
 private fun createBreakpoint(
   project: Project,
-  breakpointDto: XBreakpointDto?,
+  breakpointDto: XBreakpointDto,
 ): XLineBreakpointProxy? {
-  if (breakpointDto == null) return null
   val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
   return breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy
 }
