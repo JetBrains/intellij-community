@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.readAndBackgroundWriteAction
-import com.intellij.openapi.application.useNestedLocking
 import com.intellij.openapi.progress.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -72,10 +71,6 @@ class SuspendingReadAndWriteActionTest {
         Assertions.assertNotNull(Cancellation.currentJob())
         Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
         Assertions.assertFalse(application.isWriteAccessAllowed)
-        if (!useNestedLocking) {
-          // parallelization of a write lock is forbidden anyway
-          Assertions.assertTrue(application.isReadAccessAllowed)
-        }
       }
 
       fun assertReadButNoWriteActionWithCurrentJob() {

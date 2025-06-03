@@ -37,14 +37,6 @@ class BackgroundWriteActionTest {
         "This test suite requires enabled background write actions"
       }
     }
-
-    @BeforeAll
-    @JvmStatic
-    fun ensureLockParallelizationEnabled() {
-      Assumptions.assumeTrue(useNestedLocking) {
-        "This test suite requires enabled lock parallelization"
-      }
-    }
   }
 
   @Test

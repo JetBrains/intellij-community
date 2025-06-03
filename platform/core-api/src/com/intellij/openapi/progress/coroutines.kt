@@ -166,7 +166,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
 }
 
 private fun getLockContext(currentThreadContext: CoroutineContext): Pair<CoroutineContext, AccessToken> {
-  val parallelize = useNestedLocking && with(ApplicationManager.getApplication()) {
+  val parallelize = with(ApplicationManager.getApplication()) {
     installThreadContext(currentThreadContext).use {
       isReadAccessAllowed
     }

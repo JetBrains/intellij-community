@@ -5,7 +5,6 @@ import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.core.rwmutex.ReadPermit
 import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.readLockCompensationTimeout
-import com.intellij.openapi.application.useNestedLocking
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.coroutines.runSuspend
@@ -93,12 +92,7 @@ internal fun rethrowExceptions(transformer: (Runnable) -> Runnable, actual: Runn
 
 @ApiStatus.Internal
 fun getGlobalThreadingSupport(): ThreadingSupport {
-  if (useNestedLocking) {
-    return NestedLocksThreadingSupport.defaultInstance
-  }
-  else {
-    return AnyThreadWriteThreadingSupport.defaultInstance
-  }
+  return NestedLocksThreadingSupport.defaultInstance
 }
 
 @OptIn(InternalCoroutinesApi::class)

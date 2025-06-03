@@ -498,7 +498,6 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Test
   fun `pure read access in explicit read action`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    Assumptions.assumeTrue(useNestedLocking)
     runWithModalProgressBlocking {
       ApplicationManager.getApplication().runReadAction {
         assertFalse(application.isWriteIntentLockAcquired)
