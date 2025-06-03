@@ -91,7 +91,7 @@ class SuspendingWriteActionTest {
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     edtWriteAction {
-      Assertions.assertSame(coroutineJob, Cancellation.currentJob()?.parent?.parent)
+      Assertions.assertSame(coroutineJob, Cancellation.currentJob()?.parent)
     }
   }
 }

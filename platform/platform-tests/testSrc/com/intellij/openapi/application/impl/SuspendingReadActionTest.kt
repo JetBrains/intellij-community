@@ -418,7 +418,7 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     readActionBlocking {
-      assertSame(coroutineJob, Cancellation.currentJob()?.parent?.parent)
+      assertSame(coroutineJob, Cancellation.currentJob()?.parent)
     }
   }
 

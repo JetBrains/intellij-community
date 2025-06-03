@@ -232,6 +232,8 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
 }
 
 /**
+ * This function is deprecated since IJPL-445
+ *
  * Switches from a suspending context to the blocking context.
  *
  * The function is marked with `suspend` so it's only callable from a coroutine.
@@ -246,10 +248,10 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
  *
  * @see com.intellij.concurrency.currentThreadContext
  */
+@Suppress("RedundantSuspendModifier")
+@Deprecated(message = "Starting from 2024.2, `blockingContext` is installed implicitly", replaceWith = ReplaceWith("action()"))
 suspend fun <T> blockingContext(action: () -> T): T {
-  return coroutineScope {
-    blockingContextInner(coroutineContext, action)
-  }
+  return action()
 }
 
 /**
