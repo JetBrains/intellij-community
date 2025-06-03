@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.hotswap
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -96,6 +97,8 @@ class HotSwapSessionManager private constructor(private val project: Project, pr
   companion object {
     @JvmStatic
     fun getInstance(project: Project): HotSwapSessionManager = project.service()
+
+    internal fun getInstanceOrNull(project: Project): HotSwapSessionManager? = project.serviceIfCreated()
   }
 }
 
@@ -104,10 +107,12 @@ data class CurrentSessionState(val session: HotSwapSession<*>, val status: HotSw
 
 @ApiStatus.Internal
 enum class HotSwapVisibleStatus {
-  NO_CHANGES, CHANGES_READY, IN_PROGRESS, SESSION_COMPLETED, SUCCESS, HIDDEN
+  NO_CHANGES, CHANGES_READY, IN_PROGRESS, SUCCESS, HIDDEN
 }
 
 private val logger = logger<HotSwapSession<*>>()
+
+private val COMPLETED_STATUS: HotSwapVisibleStatus? = null
 
 @ApiStatus.Internal
 class HotSwapSession<T> internal constructor(
@@ -119,14 +124,14 @@ class HotSwapSession<T> internal constructor(
   private val coroutineScope = parentScope.childScope("HotSwapSession $this")
   private lateinit var changesCollector: SourceFileChangesCollector<T>
 
-  internal val currentStatus: HotSwapVisibleStatus get() = _currentStatus.get()
-  private val _currentStatus = AtomicReference(HotSwapVisibleStatus.NO_CHANGES)
+  internal val currentStatus: HotSwapVisibleStatus get() = _currentStatus.get() ?: HotSwapVisibleStatus.NO_CHANGES
+  private val _currentStatus = AtomicReference(HotSwapVisibleStatus.NO_CHANGES as HotSwapVisibleStatus?)
 
-  private fun setStatus(status: HotSwapVisibleStatus, fireUpdate: Boolean = true) {
+  private fun setStatus(status: HotSwapVisibleStatus?, fireUpdate: Boolean = true) {
     while (true) {
-      val curStatus = currentStatus
+      val curStatus = _currentStatus.get()
       // No further updates after the session is complete
-      if (curStatus == HotSwapVisibleStatus.SESSION_COMPLETED) return
+      if (curStatus == COMPLETED_STATUS) return
       if (_currentStatus.compareAndSet(curStatus, status)) break
     }
     if (logger.isDebugEnabled) {
@@ -144,9 +149,10 @@ class HotSwapSession<T> internal constructor(
 
   override fun dispose() {
     HotSwapStatusNotificationManager.getInstanceOrNull(project)?.clearNotifications()
-    setStatus(HotSwapVisibleStatus.SESSION_COMPLETED)
+    // Avoid triggering HotSwapSessionManager.getInstance() from dispose()
+    setStatus(COMPLETED_STATUS, fireUpdate = false)
     coroutineScope.cancel()
-    HotSwapSessionManager.getInstance(project).onSessionDispose(this)
+    HotSwapSessionManager.getInstanceOrNull(project)?.onSessionDispose(this)
   }
 
   fun performHotSwap(): Unit = provider.performHotSwap(this)
