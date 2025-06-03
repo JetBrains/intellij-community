@@ -360,8 +360,8 @@ class CompilationContextImpl private constructor(
     return org.jetbrains.intellij.build.impl.findFileInModuleSources(module, relativePath)
   }
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String): ByteArray? {
-    val file = getModuleOutputDir(module).resolve(relativePath)
+  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    val file = getModuleOutputDir(module, forTests).resolve(relativePath)
     try {
       return Files.readAllBytes(file)
     }

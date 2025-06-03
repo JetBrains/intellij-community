@@ -55,8 +55,8 @@ class ArchivedCompilationContext(
     return doReplace(delegate.getModuleRuntimeClasspath(module, forTests), inputMapper = { Path.of(it) }, resultMapper = { it.toString() })
   }
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String): ByteArray? {
-    val moduleOutput = getModuleOutputDir(module)
+  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    val moduleOutput = getModuleOutputDir(module, forTests)
     if (!moduleOutput.startsWith(archivesLocation)) {
       return delegate.readFileContentFromModuleOutput(module, relativePath)
     }

@@ -227,7 +227,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   private suspend fun loadProductModules(productModulesModule: String): ProductModules {
     val relativePath = "META-INF/$productModulesModule/product-modules.xml"
     val debugName = "${context.getModuleOutputDir(context.findRequiredModule(productModulesModule))}/$relativePath"
-    val content = context.getModuleOutputFileContent(context.findRequiredModule(productModulesModule), relativePath)
+    val content = context.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
                   ?: throw MalformedRepositoryException("File '$relativePath' is not found in module $productModulesModule output")
     try {
       return ProductModulesSerialization.loadProductModules(content.inputStream(), debugName, ProductMode.FRONTEND, repository)

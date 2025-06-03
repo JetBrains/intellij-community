@@ -61,9 +61,9 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
 
   suspend fun getPluginXmlContent(pluginModule: JpsModule): String {
     val path = "META-INF/plugin.xml"
-    var pluginXmlContent = context.getModuleOutputFileContent(pluginModule, path, forTests = false)
+    var pluginXmlContent = context.readFileContentFromModuleOutput(pluginModule, path, forTests = false)
     if (useTestSourceEnabled && pluginXmlContent == null) {
-      pluginXmlContent = context.getModuleOutputFileContent(pluginModule, path, forTests = true)
+      pluginXmlContent = context.readFileContentFromModuleOutput(pluginModule, path, forTests = true)
     }
     return pluginXmlContent?.let { String(it, Charsets.UTF_8) }
            ?: throw IllegalStateException("$path not found in ${pluginModule.name} module output")
