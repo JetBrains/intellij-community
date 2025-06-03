@@ -16,7 +16,7 @@ import kotlin.reflect.KProperty
  * This will tell tests' infrastructure to substitute all occurrences of {{my_property}}
  * in the test data with "my-default-value".
  */
-internal fun SimpleProperties(gradleVersion: GradleVersion, kgpVersion: KotlinToolingVersion) : Map<String, String> {
+internal fun SimpleProperties(gradleVersion: GradleVersion, kotlinVersion: KotlinToolingVersion) : Map<String, String> {
     val result: MutableMap<String, String> = mutableMapOf()
 
     fun simplePropertyWithValue(defaultValue: String) = object {
@@ -27,10 +27,10 @@ internal fun SimpleProperties(gradleVersion: GradleVersion, kgpVersion: KotlinTo
         }
 
     val kts_kotlin_plugin_repositories by simplePropertyWithValue(
-        GradleKotlinTestUtils.listRepositories(useKts = true, gradleVersion, kgpVersion)
+        GradleKotlinTestUtils.listRepositories(useKts = true, gradleVersion, kotlinVersion)
     )
     val kotlin_plugin_repositories by simplePropertyWithValue(
-        GradleKotlinTestUtils.listRepositories(useKts = false, gradleVersion, kgpVersion)
+        GradleKotlinTestUtils.listRepositories(useKts = false, gradleVersion, kotlinVersion)
     )
 
     val compile_sdk_version by simplePropertyWithValue("31")
@@ -53,7 +53,7 @@ internal fun SimpleProperties(gradleVersion: GradleVersion, kgpVersion: KotlinTo
     """.trimIndent())
 
     val target_hierarchy_toggle =
-        if (kgpVersion <= KotlinToolingVersion("1.9.0")) "targetHierarchy.default()"
+        if (kotlinVersion <= KotlinToolingVersion("1.9.0")) "targetHierarchy.default()"
         else ""
     val target_hierarchy by simplePropertyWithValue(target_hierarchy_toggle)
 

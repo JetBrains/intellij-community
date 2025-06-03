@@ -81,7 +81,7 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         )
 
         val actualProjectReport = buildProjectReport(
-            project, actualTestProjectRoot, testConfiguration, testProperties.kotlinGradlePluginVersion
+            project, actualTestProjectRoot, testConfiguration, testProperties.kotlinVersion
         )
 
         val expectedProjectReport = if (expectedTestDataFile.exists())
