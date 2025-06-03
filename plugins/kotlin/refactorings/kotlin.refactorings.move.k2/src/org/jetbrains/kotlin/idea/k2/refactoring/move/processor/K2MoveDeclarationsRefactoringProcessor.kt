@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRena
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringListener
-import org.jetbrains.kotlin.idea.refactoring.move.MoveDeclarationsToFileRefactoringListener
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -176,9 +175,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
 
                     val declarationsToMove = moveDescriptor.source.elements
                     val listeners = declarationsToMove.associateWith { transaction.getElementListener(it) }
-                    val publisher = myProject.messageBus.syncPublisher(MoveDeclarationsToFileRefactoringListener.TOPIC)
-                    val moveDescriptorForListeners = convertMoveDescriptorForListeners(moveDescriptor)
-                    moveDescriptorForListeners?.let { publisher.beforeMove(it) }
+                    val publisher = myProject.messageBus.syncPublisher(K2MoveDeclarationsRefactoringListener.TOPIC)
+                    publisher.beforeMove(moveDescriptor)
                     declarationsToMove.forEach { elementToMove ->
                         preprocessDeclaration(elementToMove)
                         preDeclarationMoved(elementToMove)
@@ -203,7 +201,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                         }
                         listeners[original]?.elementMoved(new)
                     }
-                    moveDescriptorForListeners?.let { publisher.afterMove(it) }
+                    publisher.afterMove(moveDescriptor)
                     oldToNewMap.values
                 }
             }
@@ -371,18 +369,6 @@ open class K2MoveDeclarationsRefactoringProcessor(
         } else {
             "`$name`"
         }
-    }
-
-    private fun convertMoveDescriptorForListeners(
-        moveDescriptor: K2MoveDescriptor.Declarations,
-    ): MoveDeclarationsToFileRefactoringListener.MoveDescriptor? {
-        if (moveDescriptor.target !is K2MoveTargetDescriptor.File) return null
-        return MoveDeclarationsToFileRefactoringListener.MoveDescriptor(
-            project = myProject,
-            elements = moveDescriptor.source.elements,
-            targetBaseDirectory = moveDescriptor.target.baseDirectory,
-            targetFileName = moveDescriptor.target.fileName,
-        )
     }
 
     /**
