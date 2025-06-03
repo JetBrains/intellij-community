@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
@@ -43,7 +44,9 @@ public final class LoaderFactory implements Disposable {
     myConnection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(final @NotNull ModuleRootEvent event) {
-        clearClassLoaderCache();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          clearClassLoaderCache();
+        });
       }
     });
   }
