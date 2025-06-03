@@ -40,7 +40,6 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.Numbe
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
-import org.jetbrains.jewel.ui.component.Typography
 
 @ExperimentalJewelApi
 public fun MarkdownStyling.Companion.light(
@@ -725,6 +724,7 @@ public fun InlinesStyling.Companion.light(
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
+    // Detekt suppression — this is for API stability
     @Suppress("UnusedParameter") renderInlineHtml: Boolean = true,
 ): InlinesStyling =
     InlinesStyling(
@@ -805,6 +805,7 @@ public fun InlinesStyling.Companion.dark(
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
+    // Detekt suppression — this is for API stability
     @Suppress("UnusedParameter") renderInlineHtml: Boolean = true,
 ): InlinesStyling =
     InlinesStyling(
@@ -830,18 +831,10 @@ private val blockContentColorDark = Color(0xFFBCBEC4)
 private val defaultTextSize = 13.sp
 
 private val defaultTextStyle
-    get() =
-        JewelTheme.createDefaultTextStyle(
-            fontSize = defaultTextSize,
-            lineHeight = defaultTextSize * Typography.DefaultLineHeightMultiplier,
-        )
+    get() = JewelTheme.createDefaultTextStyle(fontSize = defaultTextSize)
 
 private val defaultEditorTextStyle
-    get() =
-        JewelTheme.createEditorTextStyle(
-            fontSize = defaultTextSize,
-            lineHeight = defaultTextSize * Typography.EditorLineHeightMultiplier,
-        )
+    get() = JewelTheme.createEditorTextStyle(fontSize = defaultTextSize)
 
 private val inlineCodeBackgroundColorLight = Color(red = 212, green = 222, blue = 231, alpha = 255 / 4)
 private val inlineCodeBackgroundColorDark = Color(red = 212, green = 222, blue = 231, alpha = 25)

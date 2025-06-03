@@ -21,10 +21,10 @@ import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Selected
+import org.jetbrains.jewel.ui.typography
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -36,7 +36,7 @@ internal fun WelcomeView() {
     ) {
         Icon(key = ShowcaseIcons.jewelLogo, contentDescription = null, modifier = Modifier.size(200.dp))
 
-        Text("Meet Jewel", style = Typography.h1TextStyle())
+        Text("Meet Jewel", style = JewelTheme.typography.h1TextStyle)
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Theme:")
