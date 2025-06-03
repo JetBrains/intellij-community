@@ -33,7 +33,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MANAGER
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -204,9 +203,7 @@ class CtrlMouseHandler2(
     cs.launch(Dispatchers.EDT, start = CoroutineStart.UNDISPATCHED) {
       val result = compute(request)
       if (result != null) {
-        blockingContext {
-          highlightAndHint(request, result)
-        }
+        highlightAndHint(request, result)
       }
       else {
         clearState()

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
@@ -25,18 +24,14 @@ internal class ChangeListScheduler(private val coroutineScope: CoroutineScope) {
   fun schedule(command: Runnable, delay: Long, unit: TimeUnit) {
     val future = coroutineScope.launch(limitedDispatcher) {
       delay(unit.toMillis(delay))
-      blockingContext {
-        command.run()
-      }
+      command.run()
     }
     addFuture(future)
   }
 
   fun submit(command: Runnable) {
     val future = coroutineScope.launch(limitedDispatcher) {
-      blockingContext {
-        command.run()
-      }
+      command.run()
     }
     addFuture(future)
   }

@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XStackFrame
@@ -215,9 +214,7 @@ private suspend fun getSourcePositionAsync(positionManager: PositionManager, loc
     return positionManager.getSourcePositionAsync(location)
   }
   try {
-    return blockingContext {
-      ReadAction.nonBlocking<SourcePosition?> { positionManager.getSourcePosition(location) }.executeSynchronously()
-    }
+    return ReadAction.nonBlocking<SourcePosition?> { positionManager.getSourcePosition(location) }.executeSynchronously()
   }
   catch (e: Exception) {
     throw DebuggerUtilsAsync.unwrap(e)

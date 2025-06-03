@@ -37,7 +37,6 @@ import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
@@ -411,9 +410,7 @@ open class CodeVisionHost(val project: Project) {
         override fun run() {
           val modalityState = ModalityState.stateForComponent(editor.contentComponent).asContextElement()
           (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + modalityState + ClientId.coroutineContext()) {
-            blockingContext {
-              recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
-            }
+            recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
           }
         }
       })

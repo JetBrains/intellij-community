@@ -5,7 +5,6 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.UiDispatcherKind.RELAX
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
@@ -256,9 +255,7 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
  */
 suspend fun <T> edtWriteAction(action: () -> T): T {
   return withContext(Dispatchers.EDT) {
-    blockingContext {
-      ApplicationManager.getApplication().runWriteAction(Computable(action))
-    }
+    ApplicationManager.getApplication().runWriteAction(Computable(action))
   }
 }
 
@@ -274,9 +271,7 @@ suspend fun <T> edtWriteAction(action: () -> T): T {
 @Experimental
 suspend fun <T> writeAction(action: () -> T): T {
   return withContext(Dispatchers.EDT) {
-    blockingContext {
-      ApplicationManager.getApplication().runWriteAction(Computable(action))
-    }
+    ApplicationManager.getApplication().runWriteAction(Computable(action))
   }
 }
 
@@ -366,9 +361,7 @@ ${dump.rawDump}""")
  */
 @Experimental
 suspend fun <T> writeIntentReadAction(action: () -> T): T {
-  return blockingContext {
-    ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable(action))
-  }
+  return ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable(action))
 }
 
 private fun readWriteActionSupport() = ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java)

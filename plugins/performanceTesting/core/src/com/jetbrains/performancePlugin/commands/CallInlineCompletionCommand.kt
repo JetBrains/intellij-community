@@ -7,7 +7,6 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.util.ActionCallback
@@ -35,7 +34,7 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
   override suspend fun doExecute(context: PlaybackContext) {
     val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
 
-    val editor = blockingContext { FileEditorManager.getInstance(context.project).selectedTextEditor ?: error("No editor") }
+    val editor = FileEditorManager.getInstance(context.project).selectedTextEditor ?: error("No editor")
     val handler = InlineCompletion.getHandlerOrNull(editor) ?: error("No inline completion handler")
     val listener = object : InlineCompletionEventAdapter {
       private var spanShow: Span? = null

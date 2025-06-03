@@ -108,13 +108,11 @@ class CurrentThreadCoroutineScopeTest {
     blockingContextScope {
       ApplicationManager.getApplication().executeOnPooledThread {
         currentThreadCoroutineScope().launch {
-          blockingContext {
-            ApplicationManager.getApplication().executeOnPooledThread {
-              assertNull(Cancellation.currentJob())
-              blockingContextScopeEnded.timeoutWaitUp()
-              // happens strictly outside `blockingContextScope`
-              innerExecuteOnPooledThreadEnded.up()
-            }
+          ApplicationManager.getApplication().executeOnPooledThread {
+            assertNull(Cancellation.currentJob())
+            blockingContextScopeEnded.timeoutWaitUp()
+            // happens strictly outside `blockingContextScope`
+            innerExecuteOnPooledThreadEnded.up()
           }
         }
       }

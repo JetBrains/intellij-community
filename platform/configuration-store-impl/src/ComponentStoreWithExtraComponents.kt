@@ -7,7 +7,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -27,10 +26,8 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
         result.add(object : SettingsSavingComponent {
           override suspend fun save() {
             withContext(Dispatchers.EDT) {
-              blockingContext {
-                @Suppress("removal")
-                instance.save()
-              }
+              @Suppress("removal")
+              instance.save()
             }
           }
         })

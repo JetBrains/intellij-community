@@ -20,7 +20,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -118,9 +117,7 @@ private fun createAllServicesAndExtensions2(): List<Throwable> {
       }
 
       // check first
-      blockingContext {
-        checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
-      }
+      checkExtensionPoint(StubElementTypeHolderEP.EP_NAME.point as ExtensionPointImpl<*>, taskExecutor)
 
       val application = ApplicationManager.getApplication().getComponentManagerImpl()
       reporter.indeterminateStep {
@@ -140,9 +137,7 @@ private fun createAllServicesAndExtensions2(): List<Throwable> {
         }
       }
       reporter.indeterminateStep("Checking light services...")
-      blockingContext {
-        checkLightServices(application, project, errors)
-      }
+      checkLightServices(application, project, errors)
     }
   }
   return errors
@@ -189,9 +184,7 @@ private suspend fun checkContainer2(
     createAllServices2(container, servicesWhichRequireEdt, servicesWhichRequireReadAction)
   }
   reporter.indeterminateStep("Checking ${levelDescription} extensions...") {
-    blockingContext {
-      checkExtensions(container, taskExecutor)
-    }
+    checkExtensions(container, taskExecutor)
   }
 }
 
