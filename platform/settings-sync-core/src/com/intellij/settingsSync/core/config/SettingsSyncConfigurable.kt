@@ -384,21 +384,34 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private fun showDisableSyncDialog(): Int {
     @Suppress("DialogTitleCapitalization")
     val providerName = userDropDownLink.selectedItem?.providerName ?: ""
-    return Messages.showCheckboxMessageDialog( // TODO<rv>: Use AlertMessage instead
-      message("disable.dialog.text", providerName),
-      message("disable.dialog.title"),
-      arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
-      message("disable.dialog.remove.data.box", providerName),
-      false,
-      1,
-      1,
-      Messages.getInformationIcon()
-    ) { index: Int, checkbox: JCheckBox ->
-      if (index == 1) {
-        if (checkbox.isSelected) DisableSyncType.DISABLE_AND_REMOVE_DATA else DisableSyncType.DISABLE
-      }
-      else {
-        0
+    if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
+      return Messages.showDialog( // TODO<rv>: Use AlertMessage instead
+        message("disable.dialog.text", providerName),
+        message("disable.dialog.title"),
+        arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
+        //message("disable.dialog.remove.data.box", providerName),
+        //false,
+        1,
+        1,
+        Messages.getInformationIcon(), null
+      )
+    else {
+      return Messages.showCheckboxMessageDialog( // TODO<rv>: Use AlertMessage instead
+        message("disable.dialog.text", providerName),
+        message("disable.dialog.title"),
+        arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
+        message("disable.dialog.remove.data.box", providerName),
+        false,
+        1,
+        1,
+        Messages.getInformationIcon()
+      ) { index: Int, checkbox: JCheckBox ->
+        if (index == 1) {
+          if (checkbox.isSelected) DisableSyncType.DISABLE_AND_REMOVE_DATA else DisableSyncType.DISABLE
+        }
+        else {
+          0
+        }
       }
     }
   }
