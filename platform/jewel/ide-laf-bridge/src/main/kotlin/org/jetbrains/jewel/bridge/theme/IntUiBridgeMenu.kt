@@ -13,7 +13,8 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.isNewUiTheme
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
-import org.jetbrains.jewel.bridge.retrieveIntAsDpOrUnspecified
+import org.jetbrains.jewel.bridge.retrieveIntAsNonNegativeDpOrUnspecified
+import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toPaddingValues
 import org.jetbrains.jewel.ui.component.styling.MenuColors
 import org.jetbrains.jewel.ui.component.styling.MenuIcons
@@ -69,30 +70,40 @@ internal fun readMenuStyle(): MenuStyle {
         colors = colors,
         metrics =
             MenuMetrics(
-                cornerSize = CornerSize(IdeaPopupMenuUI.CORNER_RADIUS.dp),
+                cornerSize = CornerSize(IdeaPopupMenuUI.CORNER_RADIUS.dp.safeValue()),
                 menuMargin = PaddingValues(vertical = 6.dp),
                 contentPadding = PaddingValues(vertical = 7.dp, horizontal = 2.dp),
                 offset = DpOffset(0.dp, 2.dp),
                 shadowSize = 12.dp,
-                borderWidth = retrieveIntAsDpOrUnspecified("Popup.borderWidth").takeOrElse { 1.dp },
+                borderWidth = retrieveIntAsNonNegativeDpOrUnspecified("Popup.borderWidth").takeOrElse { 1.dp },
                 itemMetrics =
                     MenuItemMetrics(
-                        selectionCornerSize = CornerSize(JBUI.CurrentTheme.PopupMenu.Selection.ARC.dp / 2),
+                        selectionCornerSize = CornerSize(JBUI.CurrentTheme.PopupMenu.Selection.ARC.dp.safeValue() / 2),
                         outerPadding = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets().toPaddingValues(),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                         keybindingsPadding = PaddingValues(start = 36.dp),
                         separatorPadding =
                             PaddingValues(
                                 horizontal =
-                                    retrieveIntAsDpOrUnspecified("PopupMenuSeparator.withToEdge").takeOrElse { 1.dp },
+                                    retrieveIntAsNonNegativeDpOrUnspecified("PopupMenuSeparator.withToEdge")
+                                        .takeOrElse { 1.dp },
                                 vertical =
-                                    retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeIndent").takeOrElse { 1.dp },
+                                    retrieveIntAsNonNegativeDpOrUnspecified("PopupMenuSeparator.stripeIndent")
+                                        .takeOrElse { 1.dp },
                             ),
                         separatorThickness =
-                            retrieveIntAsDpOrUnspecified("PopupMenuSeparator.stripeWidth").takeOrElse { 1.dp },
-                        separatorHeight = retrieveIntAsDpOrUnspecified("PopupMenuSeparator.height").takeOrElse { 3.dp },
+                            retrieveIntAsNonNegativeDpOrUnspecified("PopupMenuSeparator.stripeWidth").takeOrElse {
+                                1.dp
+                            },
+                        separatorHeight =
+                            retrieveIntAsNonNegativeDpOrUnspecified("PopupMenuSeparator.height").takeOrElse { 3.dp },
                         iconSize = 16.dp,
-                        minHeight = if (isNewUiTheme()) JBUI.CurrentTheme.List.rowHeight().dp else Dp.Unspecified,
+                        minHeight =
+                            if (isNewUiTheme()) {
+                                JBUI.CurrentTheme.List.rowHeight().dp.safeValue()
+                            } else {
+                                Dp.Unspecified
+                            },
                     ),
                 submenuMetrics = SubmenuMetrics(offset = DpOffset(0.dp, (-8).dp)),
             ),
