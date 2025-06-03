@@ -75,46 +75,39 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
                                                   @Nullable PsiElement rangeEnd,
                                                   @NotNull PsiStatement body,
                                                   @NotNull String keywordText) {
-    boolean highlightOnlyKeyword = isVisibleHighlight(body);
-    if (highlightOnlyKeyword) {
-      if (rangeStart != null) {
-        registerError(rangeStart, keywordText);
-      }
+    if (rangeStart == null || rangeEnd == null) return;
+
+    if (isVisibleHighlight(body)) {
+      registerError(rangeStart, keywordText);
       return;
     }
 
     final Pair<PsiElement, PsiElement> omittedBodyBounds = getOmittedBodyBounds(body);
     if (omittedBodyBounds == null) {
-      if (rangeStart != null && rangeEnd != null) {
-        registerErrorAtRange(rangeStart, rangeEnd, keywordText);
-      }
+      registerErrorAtRange(rangeStart, rangeEnd, keywordText);
       return;
     }
 
-    if (rangeStart != null) {
-      PsiElement parent = PsiTreeUtil.findCommonParent(rangeStart, omittedBodyBounds.getFirst());
+    {
+      PsiElement parent = PsiTreeUtil.findCommonParent(rangeStart, omittedBodyBounds.first);
       if (parent != null) {
         int parentStart = parent.getTextRange().getStartOffset();
         int startOffset = rangeStart.getTextRange().getStartOffset();
-        int length = omittedBodyBounds.getFirst().getTextRange().getStartOffset() - startOffset;
+        int length = omittedBodyBounds.first.getTextRange().getStartOffset() - startOffset;
         if (length > 0) {
           registerErrorAtOffset(parent, startOffset - parentStart, length, keywordText);
         }
       }
     }
 
-    final PsiElement afterOmitted = omittedBodyBounds.getSecond();
-    if (afterOmitted != null) {
-      if (rangeEnd != null && rangeEnd != afterOmitted) {
-        PsiElement parent = PsiTreeUtil.findCommonParent(rangeEnd, afterOmitted);
-        if (parent != null) {
-          int parentStart = parent.getTextRange().getStartOffset();
-          int startOffset = afterOmitted.getTextRange().getEndOffset();
-          int length = rangeEnd.getTextRange().getEndOffset() - startOffset;
-          if (length > 0) {
-            registerErrorAtOffset(parent, startOffset - parentStart, length,
-                                  keywordText);
-          }
+    if (rangeEnd != omittedBodyBounds.second) {
+      PsiElement parent = PsiTreeUtil.findCommonParent(rangeEnd, omittedBodyBounds.second);
+      if (parent != null) {
+        int parentStart = parent.getTextRange().getStartOffset();
+        int startOffset = omittedBodyBounds.second.getTextRange().getEndOffset();
+        int length = rangeEnd.getTextRange().getEndOffset() - startOffset;
+        if (length > 0) {
+          registerErrorAtOffset(parent, startOffset - parentStart, length, keywordText);
         }
       }
     }

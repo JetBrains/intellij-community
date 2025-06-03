@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.braces;
 
 import com.intellij.application.options.CodeStyle;
@@ -32,6 +32,7 @@ public class ControlFlowStatementWithoutBracesFixTest extends IGQuickFixesTestCa
   public void testWhile() { doTest("while"); }
   public void testWhileOutside() { assertQuickfixNotAvailable(getMessagePrefix()); }
 
+  public void testElseWithForStatementBody() { doTest("else"); }
   public void testLadderInnerElse() { doTest("else"); }
   public void testLadderInnerFor() { doTest("for"); }
   public void testLadderInnerIf() { doTest("if"); }
