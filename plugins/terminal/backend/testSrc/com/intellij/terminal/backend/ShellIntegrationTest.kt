@@ -2,6 +2,7 @@
 package com.intellij.terminal.backend
 
 import com.google.common.base.Ascii
+import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil.ENTER_BYTES
@@ -21,7 +22,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
-import org.jetbrains.plugins.terminal.reworked.util.ZshPS1Customizer
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
@@ -199,20 +199,32 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   @Test
   fun `zsh integration can change PS1`() = timeoutRunBlocking(30.seconds) {
     Assume.assumeTrue(shellPath.name == "zsh")
-    // It's a good idea to configure Zsh with PowerLevel10k.
-    val ps1Suffix = "MyCustomPS1Suffix"
-    ExtensionTestUtil.maskExtensions(
-      LocalTerminalCustomizer.EP_NAME,
-      listOf(ZshPS1Customizer(ps1Suffix)),
-      disposableRule.disposable
-    )
 
-    val events = startSessionAndCollectOutputEvents {}
+    val enforcedPS1 = "my-enforced-PS1>"
+    val zdotdir = Files.createTempDirectory("zsh-custom-zdotdir")
+    zdotdir.resolve(".zshrc").writeText("""
+      # Overwrite PS1, like PowerLevel10k does
+      PS1="$enforcedPS1"
+      builtin autoload -Uz add-zsh-hook
 
-    val output = calculateResultingOutput(events)
-    assertThat(output)
-      .overridingErrorMessage { "Expected output to contain '$ps1Suffix'.\n${dumpTerminalState(events)}" }
-      .contains(ps1Suffix)
+      function enforcePS1() {
+        PS1="$enforcedPS1"
+        # re-add `enforcePS1` to ensure it runs last
+        add-zsh-hook -d precmd enforcePS1
+        add-zsh-hook precmd enforcePS1
+      }
+
+      add-zsh-hook precmd enforcePS1
+    """.trimIndent())
+
+    val envs = mapOf("ZDOTDIR" to zdotdir.toString())
+    val options = ShellStartupOptions.Builder().envVariables(envs).build()
+
+    val events = startSessionAndCollectOutputEvents(options) {}
+    val promptFinishedEvent = events.find { it is TerminalPromptFinishedEvent }
+    assertThat(promptFinishedEvent)
+      .overridingErrorMessage { "Failed to find TerminalPromptFinishedEvent. All events:\n${events.map { it::class.java.simpleName }}" }
+      .isNotNull
     Unit
   }
 
@@ -286,6 +298,44 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     assertThat(output)
       .overridingErrorMessage { "Expected output to contain '$msg'.\n${dumpTerminalState(events)}" }
       .contains(msg)
+    Unit
+  }
+
+  @Test
+  fun `JEDITERM_SOURCE should be loaded after all startup files`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+    val customVariableName = "MY_CUSTOM_VARIABLE_NAME"
+    val customVariableValue = "MY_CUSTOM_VARIABLE_VALUE"
+    val zdotdir = Files.createTempDirectory("zsh-custom-zdotdir")
+    // Use .zlogin, because it's loaded last in the Zsh startup files.
+    zdotdir.resolve(".zlogin").writeText("$customVariableName='$customVariableValue'")
+
+    val customizer = object : LocalTerminalCustomizer() {
+      override fun customizeCommandAndEnvironment(project: Project,
+                                                  workingDirectory: String?,
+                                                  command: Array<out String>?,
+                                                  envs: MutableMap<String?, String?>): Array<out String?>? {
+        val file = Files.createTempFile("my-jediterm-source", ".zsh")
+        file.writeText("echo $$customVariableName")
+        envs["JEDITERM_SOURCE"] = file.toString()
+        return command
+      }
+    }
+
+    ExtensionTestUtil.maskExtensions(
+      LocalTerminalCustomizer.EP_NAME,
+      listOf(customizer),
+      disposableRule.disposable
+    )
+
+    val envs = mapOf("ZDOTDIR" to zdotdir.toString())
+    val options = ShellStartupOptions.Builder().shellCommand(listOf(shellPath.toString(), "--login")).envVariables(envs).build()
+    val events = startSessionAndCollectOutputEvents(options) {}
+
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to contain '$customVariableValue'.\n${dumpTerminalState(events)}" }
+      .contains(customVariableValue)
     Unit
   }
 
