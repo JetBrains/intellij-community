@@ -49,7 +49,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.*
@@ -286,11 +285,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
-  override fun closeProject(project: Project): Boolean =
-    closeProject(project = project, saveProject = true, dispose = false, checkCanClose = true)
+  override fun closeProject(project: Project): Boolean {
+    return closeProject(project = project, saveProject = true, dispose = false, checkCanClose = true)
+  }
 
-  override fun forceCloseProject(project: Project, save: Boolean): Boolean =
-    closeProject(project = project, saveProject = save, checkCanClose = false)
+  override fun forceCloseProject(project: Project, save: Boolean): Boolean {
+    return closeProject(project = project, saveProject = save, checkCanClose = false)
+  }
 
   override suspend fun forceCloseProjectAsync(project: Project, save: Boolean): Boolean {
     if (save) {
@@ -339,6 +340,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       // if we are shutting down the entire test framework, proceed to full dispose
       val projectImpl = project as ProjectImpl
       if (!projectImpl.isTemporarilyDisposed) {
+        @Suppress("ForbiddenInSuspectContextMethod")
         app.runWriteAction {
           projectImpl.disposeEarlyDisposable()
           projectImpl.setTemporarilyDisposed(true)
@@ -354,6 +356,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         if (project is ComponentManagerEx) {
           project.stopServicePreloading()
         }
+        @Suppress("ForbiddenInSuspectContextMethod")
         app.runWriteAction {
           if (project is ProjectImpl) {
             project.disposeEarlyDisposable()
@@ -378,6 +381,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val projectSaveSettingsDurationMs = measureTimeMillis {
       if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments()
+        @Suppress("ForbiddenInSuspectContextMethod")
         SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(project)
       }
     }
@@ -399,6 +403,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
+    @Suppress("ForbiddenInSuspectContextMethod")
     app.runWriteAction {
       removeFromOpened(project)
       if (project is ProjectImpl) {
@@ -710,9 +715,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       result?.let { project ->
         try {
           withContext(Dispatchers.EDT) {
-            blockingContext {
-              closeProject(project, saveProject = false, checkCanClose = false)
-            }
+            closeProject(project, saveProject = false, checkCanClose = false)
           }
         }
         catch (secondException: Throwable) {
@@ -744,9 +747,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (isRunStartUpActivitiesEnabled(project)) {
       (project.serviceAsync<StartupManager>() as StartupManagerImpl).runPostStartupActivities()
     }
-    blockingContext {
-      LifecycleUsageTriggerCollector.onProjectOpened(project)
-    }
+    LifecycleUsageTriggerCollector.onProjectOpened(project)
     WslUsagesCollector.logProjectOpened(project)
 
     options.callback?.projectOpened(project, module ?: project.serviceAsync<ModuleManager>().modules.firstOrNull())
@@ -1003,11 +1004,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         if (!perProcessSupport.canBeOpenedInThisProcess(projectDir)) {
           perProcessSupport.openInChildProcess(projectDir)
 
-          blockingContext {
-            val app = ApplicationManagerEx.getApplicationEx()
-            app.invokeLater {
-              app.exit(true, true)
-            }
+          val app = ApplicationManagerEx.getApplicationEx()
+          @Suppress("ForbiddenInSuspectContextMethod")
+          app.invokeLater {
+            app.exit(true, true)
           }
 
           return true
@@ -1116,9 +1116,7 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     for (component in projectComponents) {
       runCatching {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)
-        blockingContext {
-          component.projectOpened()
-        }
+        component.projectOpened()
         componentActivity.end()
       }.getOrLogException(LOG)
     }
@@ -1413,7 +1411,9 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
   return mode
 }
 
-private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? = if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message())
+private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
+  return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message())
+}
 
 internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
   val id = descriptor.pluginId

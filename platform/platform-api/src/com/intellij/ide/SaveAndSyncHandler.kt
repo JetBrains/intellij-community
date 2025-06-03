@@ -2,9 +2,9 @@
 package com.intellij.ide
 
 import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -15,7 +15,7 @@ abstract class SaveAndSyncHandler {
   companion object {
     @JvmStatic
     @RequiresBlockingContext
-    fun getInstance(): SaveAndSyncHandler = ApplicationManager.getApplication().getService(SaveAndSyncHandler::class.java)
+    fun getInstance(): SaveAndSyncHandler = service()
   }
 
   protected val externalChangesModificationTracker: SimpleModificationTracker = SimpleModificationTracker()

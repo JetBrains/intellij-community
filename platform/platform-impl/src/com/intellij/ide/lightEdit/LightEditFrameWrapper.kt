@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit
 
 import com.apple.eawt.event.FullScreenEvent
@@ -78,7 +78,7 @@ internal class LightEditFrameWrapper(
   }
 
   override fun createStatusBar(): IdeStatusBarImpl {
-    return object : IdeStatusBarImpl(parentCs = cs, getProject = { project }, addToolWindowWidget = false) {
+    return object : IdeStatusBarImpl(parentCs = coroutineScope, getProject = { project }, addToolWindowWidget = false) {
       override fun updateUI() {
         setUI(LightEditStatusBarUI())
       }

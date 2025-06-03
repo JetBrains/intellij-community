@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.application.EDT
@@ -36,7 +36,7 @@ internal class IdeProjectFrameHelper(
 
   override fun createCenterComponent(): JComponent {
     val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
-    val pane = ToolWindowPane.create(frame, cs, paneId)
+    val pane = ToolWindowPane.create(frame, coroutineScope, paneId)
     toolWindowPane = pane
     return pane.buttonManager.wrapWithControls(pane)
   }
@@ -63,7 +63,7 @@ internal class IdeProjectFrameHelper(
       val flow = extension.component(project = project, isDocked = false, statusBar = statusBar!!)
       val key = extension.key
       if (flow != null) {
-        cs.launch(ModalityState.any().asContextElement()) {
+        coroutineScope.launch(ModalityState.any().asContextElement()) {
           flow.collect(FlowCollector { component ->
             withContext(Dispatchers.EDT) {
               if (component == null) {
@@ -99,6 +99,7 @@ internal class IdeProjectFrameHelper(
     northPanel?.revalidate()
   }
 
-  override fun getNorthExtension(key: String): JComponent? =
-    northPanel?.components?.firstOrNull { ClientProperty.isSet(it, EXTENSION_KEY, key) } as? JComponent
+  override fun getNorthExtension(key: String): JComponent? {
+    return northPanel?.components?.firstOrNull { ClientProperty.isSet(it, EXTENSION_KEY, key) } as? JComponent
+  }
 }
