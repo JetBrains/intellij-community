@@ -358,7 +358,8 @@ private class CommandCompletionHighlightingListener(
   }
 
   override fun dispose() {
-    clear(lookup.editor)
+    val lookupEditor = runReadAction { lookup.editor }
+    clear(lookupEditor)
   }
 }
 
