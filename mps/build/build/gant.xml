@@ -169,181 +169,57 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
-        <property name="MPS-38229"
-                  value="${basedir}/patches/MPS-38229.patch"/>
+        <property name="MPS-38229" value="${basedir}/patches/MPS-38229.patch"/>
         <echo message="Applying ${MPS-38229}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${MPS-38229}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
             <arg value="&#45;-ignore-space-change"/>
             <arg value="${MPS-38229}"/>
         </exec>
 
-        <property name="MPS-38534"
-                  value="${basedir}/patches/MPS-38534-WelcomeScreenPromotions_for251.patch"/>
+        <property name="MPS-38534" value="${basedir}/patches/MPS-38534-WelcomeScreenPromotions_for251.patch"/>
         <echo message="Applying ${MPS-38534}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${MPS-38534}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
             <arg value="&#45;-ignore-space-change"/>
             <arg value="${MPS-38534}"/>
         </exec>
 
-        <property name="DisableSlowOperationsInEAP"
-                  value="${basedir}/patches/DisableSlowOperationsInEAP.patch"/>
+        <property name="DisableSlowOperationsInEAP" value="${basedir}/patches/DisableSlowOperationsInEAP.patch"/>
         <echo message="Applying ${DisableSlowOperationsInEAP}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${DisableSlowOperationsInEAP}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
             <arg value="&#45;-ignore-space-change"/>
             <arg value="${DisableSlowOperationsInEAP}"/>
         </exec>
 
-        <property name="LoadModulesFromJars"
-                  value="${basedir}/patches/LoadModulesFromJars.patch"/>
-        <echo message="Applying ${LoadModulesFromJars}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${LoadModulesFromJars}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${LoadModulesFromJars}"/>
-        </exec>
-
-        <property name="patchIconLoader"
-                  value="${basedir}/patches/IconLoader-MPS-36435.patch"/>
-        <echo message="Applying ${patchIconLoader}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchIconLoader}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchIconLoader}"/>
-        </exec>
-
-        <property name="patchInitComponentsBeforeEditorOpens"
-                  value="${basedir}/patches/MPS-36060.patch"/>
+        <property name="patchInitComponentsBeforeEditorOpens" value="${basedir}/patches/MPS-36060.patch"/>
         <echo message="Applying ${patchInitComponentsBeforeEditorOpens}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchInitComponentsBeforeEditorOpens}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
             <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchInitComponentsBeforeEditorOpens}"/>
         </exec>
 
-        <property name="patchDisableRunCurrentFile"
-                  value="${basedir}/patches/DisableRunCurrentFile.patch"/>
-        <echo message="Applying ${patchDisableRunCurrentFile}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchDisableRunCurrentFile}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchDisableRunCurrentFile}"/>
-        </exec>
-
-        <property name="patchDisableCoursesAndTextSearch"
-                  value="${basedir}/patches/DisableCoursesAndTextSearch.patch"/>
+        <property name="patchDisableCoursesAndTextSearch" value="${basedir}/patches/DisableCoursesAndTextSearch.patch"/>
         <echo message="Applying ${patchDisableCoursesAndTextSearch}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchDisableCoursesAndTextSearch}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
             <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchDisableCoursesAndTextSearch}"/>
         </exec>
 
-        <property name="patchFile"
-                  value="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
+        <property name="patchFile" value="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
         <echo message="Applying ${patchFile}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
             <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchFile}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
             <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchFile}"/>
         </exec>
 
-        <property name="patchFile2"
-                  value="${basedir}/patches/Patch_while_waiting_for_IDEA-195678__fixes_MPS-26052_and_MPS-23075.patch"/>
-        <echo message="Applying ${patchFile2}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchFile2}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchFile2}"/>
-        </exec>
-
-        <property name="patchFile3"
-                  value="${basedir}/patches/Fix_version_patching_for_bundled_plugins.patch"/>
-        <echo message="Applying ${patchFile3}"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchFile3}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchFile3}"/>
-        </exec>
-
-        <property name="patchJps"
-                  value="${basedir}/patches/jps.patch"/>
+        <property name="patchJps" value="${basedir}/patches/jps.patch"/>
         <echo message="Applying ${patchJps}"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="&#45;-check"/>
-            <arg value="&#45;-ignore-space-change"/>
-            <arg value="${patchJps}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
             <arg value="apply"/>
             <arg value="&#45;-ignore-space-change"/>
             <arg value="${patchJps}"/>

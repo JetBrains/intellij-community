@@ -1,29 +1,3 @@
-Index: platform/configuration-store-impl/src/ProjectStoreBridge.kt
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>UTF-8
-===================================================================
-diff --git a/platform/configuration-store-impl/src/ProjectStoreBridge.kt b/platform/configuration-store-impl/src/ProjectStoreBridge.kt
---- a/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(revision 37976ff1a51e226063f8165c4d1b3ac439282428)
-+++ b/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(date 1747817990889)
-@@ -493,7 +493,7 @@
-   val fileName = PathUtil.getFileName(filePath)
-   val parentPath = PathUtil.getParentPath(filePath)
-   val parentFileName = PathUtil.getFileName(parentPath)
--  if (filePath.endsWith(".ipr") || fileName == "misc.xml" && parentFileName == Project.DIRECTORY_STORE_FOLDER) {
-+  if (filePath.endsWith(".ipr") || fileName == "misc.xml" && parentFileName == ".mps") {
-     collapsedPath = "\$PROJECT_FILE$"
-     splitterClass = StateSplitterEx::class.java
-   }
-@@ -522,7 +522,7 @@
-           }
-         }
-         if (StreamProviderFactory.EP_NAME.hasAnyExtensions(project)) {
--          error("$filePath is not under .idea directory and not under external system cache")
-+          error("$filePath is not under .mps directory and not under external system cache")
-         }
-       }
-     }
 Index: platform/workspaceModel/jps/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP

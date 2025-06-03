@@ -32,6 +32,7 @@ class MPSProperties : JetBrainsProductProperties() {
         /* main module for JetBrains Client isn't available in the intellij-community project,
            so this property is set only when PyCharm Community is built from the intellij-ultimate project. */
         embeddedFrontendRootModule = null
+        customCompatibleBuildRange = CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
 
         productLayout.productImplementationModules = listOf(
             "intellij.platform.starter",
