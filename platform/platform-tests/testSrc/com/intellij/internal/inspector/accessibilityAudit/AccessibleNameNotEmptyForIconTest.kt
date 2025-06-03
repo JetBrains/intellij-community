@@ -15,7 +15,6 @@ class AccessibleNameNotEmptyForIconTest {
       override fun getAccessibleContext(): AccessibleContext {
         return object : AccessibleJComponent() {
           override fun getAccessibleName(): String = "component"
-
           override fun getAccessibleRole(): AccessibleRole = AccessibleRole.ICON
         }
       }
@@ -30,7 +29,6 @@ class AccessibleNameNotEmptyForIconTest {
       override fun getAccessibleContext(): AccessibleContext {
         return object : AccessibleJComponent() {
           override fun getAccessibleName(): String  = ""
-
           override fun getAccessibleRole(): AccessibleRole = AccessibleRole.ICON
         }
       }

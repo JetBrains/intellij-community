@@ -29,9 +29,7 @@ class AccessibleEditableTextNotNullInspectionTest {
         if (accessibleContext == null) {
           accessibleContext = object : AccessibleJComponent() {
             override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PASSWORD_TEXT
-
             override fun getAccessibleEditableText(): AccessibleEditableText? = null
-
             override fun getAccessibleStateSet(): AccessibleStateSet = super.getAccessibleStateSet().also {
               it.add(AccessibleState.EDITABLE)
             }
@@ -55,7 +53,6 @@ class AccessibleEditableTextNotNullInspectionTest {
   @Test
   fun `invalid role, valid stateSet`() {
     val slider = object : JSlider() {
-
       override fun getAccessibleContext(): AccessibleContext {
         return object : AccessibleJComponent() {
           override fun getAccessibleStateSet(): AccessibleStateSet = super.getAccessibleStateSet().also { it.add(AccessibleState.EDITABLE) }

@@ -9,7 +9,6 @@ import javax.accessibility.AccessibleValue
 import javax.swing.JButton
 import javax.swing.JProgressBar
 
-
 class AccessibleValueNotNullInspectionTest {
   @Test
   fun `valid role and value not null`() {
@@ -31,14 +30,11 @@ class AccessibleValueNotNullInspectionTest {
       override fun getAccessibleContext(): AccessibleContext {
         return object : AccessibleJComponent() {
           override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PROGRESS_BAR
-
           override fun getAccessibleValue(): AccessibleValue? = null
-
         }
       }
     }
     val result = AccessibleValueNotNullInspection().passesInspection(bar)
     Assertions.assertFalse(result)
   }
-
 }

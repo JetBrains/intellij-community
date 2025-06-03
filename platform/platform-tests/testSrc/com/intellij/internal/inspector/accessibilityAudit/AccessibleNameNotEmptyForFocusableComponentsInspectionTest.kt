@@ -71,5 +71,4 @@ class AccessibleNameNotEmptyForFocusableComponentsInspectionTest {
     val result = AccessibleNameNotEmptyForFocusableComponentsInspection().passesInspection(button)
     Assertions.assertTrue(result)
   }
-
 }

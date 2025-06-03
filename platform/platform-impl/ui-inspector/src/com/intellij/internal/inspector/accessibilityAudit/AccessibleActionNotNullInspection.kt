@@ -24,5 +24,3 @@ class AccessibleActionNotNullInspection : UiInspectorAccessibilityInspection {
     return true
   }
 }
-
-// push button, toggle button, check box, radio button, combo box, hyperlink

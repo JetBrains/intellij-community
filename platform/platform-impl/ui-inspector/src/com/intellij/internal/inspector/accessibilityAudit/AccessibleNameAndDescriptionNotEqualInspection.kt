@@ -12,7 +12,8 @@ class AccessibleNameAndDescriptionNotEqualInspection : UiInspectorAccessibilityI
 
   override fun passesInspection(accessible: Accessible?): Boolean {
     val context = accessible?.accessibleContext ?: return true
-    if (context.accessibleName != null && context.accessibleDescription != null && context.accessibleName.isNotEmpty() && context.accessibleDescription.isNotEmpty()) {
+    if (context.accessibleName != null && context.accessibleDescription != null &&
+        context.accessibleName.isNotEmpty() && context.accessibleDescription.isNotEmpty()) {
       return context.accessibleName != context.accessibleDescription
     }
     return true

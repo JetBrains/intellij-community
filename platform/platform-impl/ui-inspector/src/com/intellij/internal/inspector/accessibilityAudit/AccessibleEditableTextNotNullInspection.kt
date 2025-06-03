@@ -14,8 +14,7 @@ class AccessibleEditableTextNotNullInspection : UiInspectorAccessibilityInspecti
 
   override fun passesInspection(accessible: Accessible?): Boolean {
     val context = accessible?.accessibleContext ?: return true
-    if ((context.accessibleRole == AccessibleRole.TEXT ||
-        context.accessibleRole == AccessibleRole.PASSWORD_TEXT) &&
+    if ((context.accessibleRole == AccessibleRole.TEXT || context.accessibleRole == AccessibleRole.PASSWORD_TEXT) &&
         context.accessibleStateSet.contains(AccessibleState.EDITABLE)) {
       return context.accessibleEditableText != null
     }

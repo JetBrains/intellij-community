@@ -23,5 +23,3 @@ class AccessibleValueNotNullInspection : UiInspectorAccessibilityInspection {
     return true
   }
 }
-
-// progress bar, spin box, slider, scroll bar

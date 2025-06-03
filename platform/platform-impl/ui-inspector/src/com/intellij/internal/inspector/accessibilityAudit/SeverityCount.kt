@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 data class SeverityCount(
   val errors: Int = 0,
   val warnings: Int = 0,
-  val recommendations: Int = 0
+  val recommendations: Int = 0,
 ) {
   val total: Int get() = errors + warnings + recommendations
 

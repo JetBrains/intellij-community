@@ -33,9 +33,7 @@ class AccessibilityAuditManager : AccessibilityAudit {
     }
   }
 
-  fun getSeverityCount() : SeverityCount {
-    return SeverityCount.from(failedInspections)
-  }
+  fun getSeverityCount(): SeverityCount = SeverityCount.from(failedInspections)
 
   override fun clearAccessibilityTestsResult() {
     isRunning = false
