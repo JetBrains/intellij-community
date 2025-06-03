@@ -93,7 +93,19 @@ class SeProvidersHolder(
         }
       }
 
+      allContributors.disposeAndFilterOutUnnecessaryLegacyContributors(providers.keys)
+      separateTabContributors.disposeAndFilterOutUnnecessaryLegacyContributors(separateTabProviders.keys)
+
       return SeProvidersHolder(providers, separateTabProviders)
+    }
+
+    private fun MutableMap<String, SearchEverywhereContributor<Any>>.disposeAndFilterOutUnnecessaryLegacyContributors(providerIds: Set<SeProviderId>) {
+      val contributorsToDispose = filter { !providerIds.contains(SeProviderId(it.key)) }
+
+      contributorsToDispose.forEach {
+        Disposer.dispose(it.value)
+        remove(it.key)
+      }
     }
 
     private suspend fun initializeLegacyContributors(
