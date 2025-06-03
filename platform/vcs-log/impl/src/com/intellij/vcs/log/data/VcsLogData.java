@@ -381,6 +381,11 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
       }
     }
     resetState();
+
+    if (myStorage instanceof VcsLogStorageImpl concreteStorage && !concreteStorage.isDisposed()) {
+      LOG.error("Storage for $name was not disposed");
+      Disposer.dispose(concreteStorage);
+    }
   }
 
   public @NotNull VcsLogProvider getLogProvider(@NotNull VirtualFile root) {

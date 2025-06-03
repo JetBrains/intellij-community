@@ -242,7 +242,7 @@ open class VcsLogManager @Internal constructor(
 
   @Internal
   @RequiresBackgroundThread
-  protected open fun disposeData() {
+  private fun disposeData() {
     // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)
     // the above method first disposes ui in EDT, then disposes everything else in a background
