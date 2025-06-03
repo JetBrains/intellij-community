@@ -39,7 +39,6 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:fastutil-min",
     "//platform/core-ui",
-    "//spellchecker",
     "//xml/dom-openapi:dom",
     "//platform/polySymbols",
     "//platform/code-style-impl:codeStyle-impl",
