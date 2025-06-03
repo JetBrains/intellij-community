@@ -6,7 +6,7 @@ import ai.grazie.spell.lists.WordList
 
 internal class WordListAdapter : WordList, EditableWordListAdapter() {
   fun isAlien(word: String): Boolean {
-    return dictionaries.values.all { it.contains(word) == null } && !aggregator.contains(word)
+    return !dictionaries.values.any { it.contains(word) ?: false } && !aggregator.contains(word)
   }
 
   override fun contains(word: String, caseSensitive: Boolean): Boolean {
