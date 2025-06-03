@@ -27,13 +27,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 @ApiStatus.Internal
 public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  private final EventLogGroup GROUP = new EventLogGroup("file.types", 9);
+  private static final StringEventField FILE_EXTENSION = EventFields.String("file_extension", emptyList());
 
   private final RoundedIntEventField COUNT = EventFields.RoundedInt("count");
 
@@ -45,14 +46,22 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   public static final EventField<FileType> TYPE_BY_EXTENSION = EventFields.FileType;
   public static final IntEventField TYPE_BY_EXTENSION_PERCENT = EventFields.Int("percent");
   private final ObjectListEventField FILE_TYPE_BY_EXTENSION_PERCENT = new ObjectListEventField("original_file_type", TYPE_BY_EXTENSION, TYPE_BY_EXTENSION_PERCENT);
-
-  private final VarargEventId FILE_IN_PROJECT = GROUP.registerVarargEvent(
-    "file.in.project",
+  private static final IntEventField FILE_EXTENSION_BY_PERCENT = EventFields.Int("file_extension_percent");
+  private final EventLogGroup GROUP = new EventLogGroup("file.types", 10);
+  private final VarargEventId FILE_TYPE_IN_PROJECT = GROUP.registerVarargEvent(
+    "file.type.in.project",
     EventFields.PluginInfoFromInstance,
     EventFields.FileType,
     COUNT,
     FILE_TYPE_BY_EXTENSION_PERCENT,
     FILE_SCHEME_PERCENT
+  );
+
+  private final VarargEventId FILE_EXTENSION_IN_PROJECT = GROUP.registerVarargEvent(
+    "file.extension.in.project",
+    FILE_EXTENSION,
+    COUNT,
+    FILE_EXTENSION_BY_PERCENT
   );
 
   @Override
@@ -64,17 +73,25 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     if (project.isDisposed()) return emptySet();
 
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
-    IProjectStore stateStore = ProjectKt.getStateStore(project);
+    final ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
+    final IProjectStore stateStore = ProjectKt.getStateStore(project);
     final ObjectIntMap<FileType> filesByTypeCount = new ObjectIntHashMap<>();
-    var fileTypeMappingsCounter = new OriginalFileTypeCounter();
+    final var fileTypeMappingsCounter = new OriginalFileTypeCounter();
+    final var fileExtensionCounter = new FileExtensionCounter();
     projectFileIndex.iterateContent(
       file -> {
-        FileType type = file.getFileType();
+        final FileType type = file.getFileType();
         filesByTypeCount.put(type, filesByTypeCount.getOrDefault(type, 0) + 1);
-        String fileExtension = file.getExtension();
-        var fileTypeByExtension = fileExtension == null ? null : FileTypeManager.getInstance().getFileTypeByExtension(fileExtension);
+        final String fileExtension = file.getExtension();
+
+        if (fileExtension == null) {
+          fileTypeMappingsCounter.recordOriginalFileType(type, null);
+          return true;
+        }
+
+        final var fileTypeByExtension = FileTypeManager.getInstance().getFileTypeByExtension(fileExtension);
         fileTypeMappingsCounter.recordOriginalFileType(type, fileTypeByExtension);
+        fileExtensionCounter.recordOriginalFileType(fileExtension);
         return true;
       },
       //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
@@ -88,9 +105,18 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
       eventPairs.add(EventFields.FileType.with(fileType));
       eventPairs.add(COUNT.with(filesByTypeCount.get(fileType)));
       eventPairs.add(FILE_TYPE_BY_EXTENSION_PERCENT.with(fileTypeMappingsCounter.getFileTypeSchemaUsagePercentage(fileType)));
-      events.add(FILE_IN_PROJECT.metric(eventPairs));
+      events.add(FILE_TYPE_IN_PROJECT.metric(eventPairs));
     }
 
+    for (final var extension : fileExtensionCounter.getFileExtensionsList()) {
+      final var extensionCount = fileExtensionCounter.getFileExtensionCount(extension);
+      final List<EventPair<?>> eventPairs = new ArrayList<>(3);
+      eventPairs.add(FILE_EXTENSION.with(extension));
+      eventPairs.add(COUNT.with(extensionCount));
+      eventPairs.add(FILE_EXTENSION_BY_PERCENT.with(fileExtensionCounter.getFileExtensionUsagePercentage(extension)));
+      events.add(FILE_EXTENSION_IN_PROJECT.metric(eventPairs));
+    }
+    
     return events;
   }
 
