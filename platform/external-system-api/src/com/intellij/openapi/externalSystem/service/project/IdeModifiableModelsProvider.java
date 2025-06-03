@@ -49,10 +49,6 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserData
   ModifiableModuleModel getModifiableModuleModel();
 
   @NotNull
-  @ApiStatus.Internal
-  ModifiableWorkspaceModel getModifiableWorkspaceModel();
-
-  @NotNull
   ModifiableRootModel getModifiableRootModel(Module module);
 
   @NotNull
@@ -87,4 +83,7 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserData
 
   @Nullable
   String getProductionModuleName(Module module);
+
+  @ApiStatus.Internal
+  boolean isLibrarySubstituted(@NotNull Library library);
 }

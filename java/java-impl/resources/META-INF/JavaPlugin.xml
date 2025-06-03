@@ -1424,6 +1424,7 @@
     <externalProjectDataService implementation="com.intellij.externalSystem.JavaModuleDataService"/>
     <externalWorkspaceDataService implementation="com.intellij.externalSystem.JavaManifestDataService"/>
     <libraryDataServiceExtension implementation="com.intellij.externalSystem.JavaLibraryDataServiceExtension"/>
+    <dependencySubstitutionCoordinateContributor implementation="com.intellij.externalSystem.JavaBridgeCoordinateContributor"/>
     <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettingsStartupActivity"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationToInjectorAdapter" order="first"/>

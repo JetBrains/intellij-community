@@ -9,8 +9,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider
-import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -28,6 +26,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -123,7 +123,7 @@ internal open class WorkspaceProjectImporter(
       }
     }
 
-    stats.recordPhase(MavenImportCollector.WORKSPACE_DEPENDENCY_SUBSTITUTION_PHASE) { activity ->
+    stats.recordPhase(MavenImportCollector.WORKSPACE_DEPENDENCY_SUBSTITUTION_PHASE) {
       tracer.spanBuilder("updateLibrarySubstitutions").use {
         updateLibrarySubstitutions()
       }
@@ -556,13 +556,10 @@ internal open class WorkspaceProjectImporter(
 
   private fun updateLibrarySubstitutions() {
     if (Registry.`is`("external.system.substitute.library.dependencies")) {
-      // commit does nothing for this provider, so it should be reused
-      val provider = myModifiableModelsProvider as? IdeUIModifiableModelsProvider
-                     ?: ProjectDataManager.getInstance().createModifiableModelsProvider(myProject)
       MavenUtil.invokeAndWaitWriteAction(myProject) {
-        // The ModifiableWorkspaceModel#updateLibrarySubstitutions function is automatically called
-        // inside the IdeModifiableModelsProviderImpl#commit function
-        provider.commit()
+        myProject.workspaceModel.updateProjectModel("Maven update dependency substitutions") { storage ->
+          DependencySubstitutionUtil.updateDependencySubstitutions(storage)
+        }
       }
     }
   }

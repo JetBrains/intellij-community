@@ -12,6 +12,9 @@
     <extensionPoint qualifiedName="com.intellij.externalSystemCoordinateContributor"
                     interface="com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.dependencySubstitutionCoordinateContributor"
+                    interface="com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionCoordinateContributor"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"
                     dynamic="true"/>

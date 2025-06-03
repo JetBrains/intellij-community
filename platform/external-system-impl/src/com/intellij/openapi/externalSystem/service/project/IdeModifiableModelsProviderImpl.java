@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
+import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionUtil;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.VersionedEntityStorage;
@@ -32,6 +33,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,9 +122,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   private void workspaceModelCommit() {
     ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
 
-      var workspaceModel = getModifiableWorkspaceModel();
-      workspaceModel.updateLibrarySubstitutions();
-      workspaceModel.commit();
+      DependencySubstitutionUtil.updateDependencySubstitutions(getActualStorageBuilder());
 
       LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
       for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
@@ -138,7 +138,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         else if (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null) {
           Disposer.dispose(modifiableModel);
         }
-        else if (workspaceModel.isLibrarySubstituted(fromLibrary)) {
+        else if (isLibrarySubstituted(fromLibrary)) {
           Disposer.dispose(modifiableModel);
         }
         else {
@@ -223,5 +223,14 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {
     module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, this);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public boolean isLibrarySubstituted(@NotNull Library library) {
+    if (library instanceof LibraryBridge libraryBridge) {
+      return DependencySubstitutionUtil.isLibrarySubstituted(getActualStorageBuilder(), libraryBridge.getLibraryId());
+    }
+    return false;
   }
 }

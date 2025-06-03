@@ -1,22 +1,29 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.externalSystem.service.project.manage
+package com.intellij.openapi.externalSystem.dependencySubstitution
 
-import com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceTestCase
-import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionUtil
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.jps.entities.DependencyScope.COMPILE
+import com.intellij.platform.workspace.jps.entities.DependencyScope
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependency
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import kotlinx.coroutines.runBlocking
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
 @TestApplication
-class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCase() {
+class DependencySubstitutionPerformanceTest : DependencySubstitutionTestCase() {
 
   companion object {
     private const val TEST_SOURCE = """
@@ -32,21 +39,21 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
     numModules: Int,
     numLibraries: Int,
     numSubstitutions: Int,
-  ): Unit = runBlocking {
-
+  ) {
+    val storage = MutableEntityStorage.create()
     val testData = TestData(numAppModules, numModules, numLibraries, numSubstitutions)
 
-    cleanUp()
-    assertStateAfterCleanUp()
+    cleanUp(storage)
+    assertStateAfterCleanUp(storage)
 
-    setUp(testData)
-    assertStateAfterSetUp(testData)
+    setUp(storage, testData)
+    assertStateAfterSetUp(storage, testData)
 
-    updateLibrarySubstitutions()
-    assertStateAfterLibrarySubstitution(testData)
+    DependencySubstitutionUtil.updateDependencySubstitutions(storage)
+    assertStateAfterLibrarySubstitution(storage, testData)
 
-    cleanUp()
-    assertStateAfterCleanUp()
+    cleanUp(storage)
+    assertStateAfterCleanUp(storage)
   }
 
   @ParameterizedTest
@@ -57,18 +64,14 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
     numLibraries: Int,
     numSubstitutions: Int,
   ) {
-
+    val storage = MutableEntityStorage.create()
     val testData = TestData(numAppModules, numModules, numLibraries, numSubstitutions)
 
     Benchmark.newBenchmark("($numAppModules, $numModules, $numLibraries, $numSubstitutions)") {
-      runBlocking {
-        updateLibrarySubstitutions()
-      }
+      DependencySubstitutionUtil.updateDependencySubstitutions(storage)
     }.setup {
-      runBlocking {
-        cleanUp()
-        setUp(testData)
-      }
+      cleanUp(storage)
+      setUp(storage, testData)
     }.start()
   }
 
@@ -86,29 +89,23 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
     val librarySubstitutions = substitutions.mapKeys { it.key.second }
   }
 
-  private suspend fun cleanUp() {
-
+  private fun cleanUp(storage: MutableEntityStorage) {
     coordinates.modules.clear()
     coordinates.libraries.clear()
-
-    project.workspaceModel.update { storage ->
-      storage.replaceBySource({ it == ENTITY_SOURCE }, ImmutableEntityStorage.empty())
-    }
+    storage.replaceBySource({ true }, ImmutableEntityStorage.empty())
   }
 
-  private fun assertStateAfterCleanUp() {
-
+  private fun assertStateAfterCleanUp(storage: EntityStorage) {
     Assertions.assertTrue(coordinates.modules.isEmpty()) {
       "Module coordinates should be empty, after test cleanup"
     }
     Assertions.assertTrue(coordinates.libraries.isEmpty()) {
       "Library coordinates should be empty, after test cleanup"
     }
-
-    ModuleAssertions.assertModules(project, emptyList())
+    ModuleAssertions.assertModules(storage, emptyList())
   }
 
-  private suspend fun setUp(testData: TestData) {
+  private fun setUp(storage: MutableEntityStorage, testData: TestData) {
 
     coordinates.modules.putAll(testData.appModules)
     coordinates.modules.putAll(testData.modules)
@@ -116,41 +113,36 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
     coordinates.libraries.putAll(testData.libraries)
     coordinates.libraries.putAll(testData.librarySubstitutions)
 
-    project.workspaceModel.update { storage ->
-      for (moduleName in testData.modules.keys + testData.moduleSubstitutions.keys) {
-        storage addEntity ModuleEntity(moduleName, emptyList(), ENTITY_SOURCE)
-      }
-      for (libraryName in testData.libraries.keys + testData.librarySubstitutions.keys) {
-        storage addEntity LibraryEntity(libraryName, LibraryTableId.ProjectLibraryTableId, emptyList(), ENTITY_SOURCE)
-      }
-      for (appModuleName in testData.appModules.keys) {
-        storage addEntity ModuleEntity(appModuleName, emptyList(), ENTITY_SOURCE) {
-          dependencies += testData.modules.keys.map { moduleName ->
-            ModuleDependency(ModuleId(moduleName), false, COMPILE, false)
-          }
-          dependencies += (testData.libraries.keys + testData.librarySubstitutions.keys).map { libraryName ->
-            LibraryDependency(LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId), false, COMPILE)
-          }
+    for (moduleName in testData.modules.keys + testData.moduleSubstitutions.keys) {
+      storage addEntity ModuleEntity.Companion(moduleName, emptyList(), NonPersistentEntitySource)
+    }
+    for (libraryName in testData.libraries.keys + testData.librarySubstitutions.keys) {
+      storage addEntity LibraryEntity.Companion(libraryName, LibraryTableId.ProjectLibraryTableId, emptyList(), NonPersistentEntitySource)
+    }
+    for (appModuleName in testData.appModules.keys) {
+      storage addEntity ModuleEntity.Companion(appModuleName, emptyList(), NonPersistentEntitySource) {
+        dependencies += testData.modules.keys.map { moduleName ->
+          ModuleDependency(ModuleId(moduleName), false, DependencyScope.COMPILE, false)
+        }
+        dependencies += (testData.libraries.keys + testData.librarySubstitutions.keys).map { libraryName ->
+          LibraryDependency(LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId), false, DependencyScope.COMPILE)
         }
       }
     }
   }
 
-  private fun assertStateAfterSetUp(testData: TestData) {
-
+  private fun assertStateAfterSetUp(storage: EntityStorage, testData: TestData) {
     Assertions.assertTrue(coordinates.modules.isNotEmpty()) {
       "Module coordinates should be prepared, after test setup"
     }
     Assertions.assertTrue(coordinates.libraries.isNotEmpty()) {
       "Library coordinates should be prepared, after test setup"
     }
-
     ModuleAssertions.assertModules(
-      project, (testData.appModules.keys + testData.modules.keys + testData.moduleSubstitutions.keys).toList()
+      storage, (testData.appModules.keys + testData.modules.keys + testData.moduleSubstitutions.keys).toList()
     )
     for (appModuleName in testData.appModules.keys) {
-      ModuleAssertions.assertModuleEntity(project, appModuleName) { module ->
-        Assertions.assertEquals(ENTITY_SOURCE, module.entitySource)
+      ModuleAssertions.assertModuleEntity(storage, appModuleName) { module ->
         DependencyAssertions.assertDependencies(
           module, (testData.modules.keys + testData.libraries.keys + testData.librarySubstitutions.keys).toList()
         )
@@ -159,7 +151,7 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
             Assertions.assertFalse(dependency.exported) {
               "The $moduleName module dependency shouldn't be exported"
             }
-            Assertions.assertEquals(COMPILE, dependency.scope) {
+            Assertions.assertEquals(DependencyScope.COMPILE, dependency.scope) {
               "The $moduleName module dependency should be compile"
             }
           }
@@ -169,7 +161,7 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
             Assertions.assertFalse(dependency.exported) {
               "The $libraryName library dependency shouldn't be exported"
             }
-            Assertions.assertEquals(COMPILE, dependency.scope) {
+            Assertions.assertEquals(DependencyScope.COMPILE, dependency.scope) {
               "The $libraryName library dependency should be compile"
             }
           }
@@ -178,21 +170,18 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
     }
   }
 
-  private fun assertStateAfterLibrarySubstitution(testData: TestData) {
-
+  private fun assertStateAfterLibrarySubstitution(storage: EntityStorage, testData: TestData) {
     Assertions.assertTrue(coordinates.modules.isNotEmpty()) {
       "Module coordinates should be keep, after test"
     }
     Assertions.assertTrue(coordinates.libraries.isNotEmpty()) {
       "Library coordinates should be keep, after test"
     }
-
     ModuleAssertions.assertModules(
-      project, (testData.appModules.keys + testData.modules.keys + testData.moduleSubstitutions.keys).toList()
+      storage, (testData.appModules.keys + testData.modules.keys + testData.moduleSubstitutions.keys).toList()
     )
     for (appModuleName in testData.appModules.keys) {
-      ModuleAssertions.assertModuleEntity(project, appModuleName) { module ->
-        Assertions.assertEquals(ENTITY_SOURCE, module.entitySource)
+      ModuleAssertions.assertModuleEntity(storage, appModuleName) { module ->
         DependencyAssertions.assertDependencies(
           module, (testData.modules.keys + testData.moduleSubstitutions.keys + testData.libraries.keys).toList()
         )
@@ -201,7 +190,7 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
             Assertions.assertFalse(dependency.exported) {
               "The $moduleName module dependency shouldn't be exported"
             }
-            Assertions.assertEquals(COMPILE, dependency.scope) {
+            Assertions.assertEquals(DependencyScope.COMPILE, dependency.scope) {
               "The $moduleName module dependency should be compile"
             }
           }
@@ -211,7 +200,7 @@ class ExternalProjectsWorkspacePerformanceTest : ExternalProjectsWorkspaceTestCa
             Assertions.assertFalse(dependency.exported) {
               "The $libraryName library dependency shouldn't be exported"
             }
-            Assertions.assertEquals(COMPILE, dependency.scope) {
+            Assertions.assertEquals(DependencyScope.COMPILE, dependency.scope) {
               "The $libraryName library dependency should be compile"
             }
           }
