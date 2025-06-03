@@ -160,6 +160,17 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
     }
 
     private fun ModuleDependency.collectExportedDependencies(kind: KaSourceModuleKind, to: MutableCollection<KaModule>) {
+        val exportedDependenciesAvailable = when (scope) {
+            DependencyScope.COMPILE,
+            DependencyScope.PROVIDED -> true
+
+            DependencyScope.TEST -> kind == KaSourceModuleKind.TEST
+
+            DependencyScope.RUNTIME -> false
+        }
+
+        if (!exportedDependenciesAvailable) return
+
         for (dependency in KotlinExportedDependenciesCollector.getInstance(project).getExportedDependencies(this)) {
             when (dependency) {
                 is LibraryDependency -> {
