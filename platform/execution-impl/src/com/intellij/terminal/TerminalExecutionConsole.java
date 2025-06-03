@@ -3,6 +3,7 @@ package com.intellij.terminal;
 
 import com.google.common.base.Ascii;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.actions.ConsoleActionsPostProcessor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.*;
@@ -341,7 +342,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   @Override
   public AnAction @NotNull [] createConsoleActions() {
-    return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
+    var result = new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
+    var postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
+    for (var postProcessor : postProcessors) {
+      result = postProcessor.postProcess(this, result);
+    }
+    return result;
   }
 
   @Override
