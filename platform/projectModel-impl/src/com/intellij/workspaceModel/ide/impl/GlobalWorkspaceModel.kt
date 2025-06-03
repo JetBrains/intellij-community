@@ -336,6 +336,10 @@ class GlobalWorkspaceModel(
       return ApplicationManager.getApplication().service<GlobalWorkspaceModelRegistry>().getGlobalModel(descriptor)
     }
 
+    suspend fun getInstanceAsync(descriptor: EelDescriptor): GlobalWorkspaceModel {
+      return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModel(descriptor)
+    }
+
     suspend fun getInstanceByInternalName(name: GlobalWorkspaceModelCache.InternalEnvironmentName): GlobalWorkspaceModel {
       return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModelByDescriptorName(name)
     }

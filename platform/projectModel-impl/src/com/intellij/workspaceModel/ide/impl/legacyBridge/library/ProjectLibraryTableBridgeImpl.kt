@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -138,7 +137,7 @@ open class ProjectLibraryTableBridgeImpl(
     })
   }
 
-  suspend fun loadLibraries(targetBuilder: MutableEntityStorage?) {
+  suspend fun loadLibraries(targetBuilder: MutableEntityStorage?, workspaceModel: WorkspaceModelImpl) {
     val storage = targetBuilder ?: entityStorage.current
     val libraries = storage
       .entities(LibraryEntity::class.java)
@@ -161,7 +160,7 @@ open class ProjectLibraryTableBridgeImpl(
 
     if (targetBuilder == null) {
       withContext(Dispatchers.EDT) {
-        (project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
+        workspaceModel.updateProjectModelSilent("Add project library mapping") {
           for ((entity, library) in libraries) {
             it.mutableLibraryMap.addIfAbsent(entity, library)
           }

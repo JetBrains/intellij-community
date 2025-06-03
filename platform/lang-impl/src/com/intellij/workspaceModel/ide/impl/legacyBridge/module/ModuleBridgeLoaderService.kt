@@ -71,12 +71,15 @@ private class ModuleBridgeLoaderService : ProjectServiceInitializer {
             workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
             project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
           }
-          loadModules(project = project,
-                      targetBuilder = null,
-                      targetUnloadedEntitiesBuilder = null,
-                      loadedFromCache = workspaceModel.loadedFromCache)
+          loadModules(
+            project = project,
+            targetBuilder = null,
+            targetUnloadedEntitiesBuilder = null,
+            loadedFromCache = workspaceModel.loadedFromCache,
+            workspaceModel = workspaceModel,
+          )
         }
-        val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(project.getEelDescriptor())
+        val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor())
         backgroundWriteAction {
           globalWorkspaceModel.applyStateToProject(project)
         }
@@ -85,10 +88,13 @@ private class ModuleBridgeLoaderService : ProjectServiceInitializer {
         LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
         val projectEntities = span("modules loading without cache") {
           val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
-          loadModules(project = project,
-                      targetBuilder = projectEntities?.builder,
-                      targetUnloadedEntitiesBuilder = projectEntities?.unloadedEntitiesBuilder,
-                      loadedFromCache = workspaceModel.loadedFromCache)
+          loadModules(
+            project = project,
+            targetBuilder = projectEntities?.builder,
+            targetUnloadedEntitiesBuilder = projectEntities?.unloadedEntitiesBuilder,
+            loadedFromCache = workspaceModel.loadedFromCache,
+            workspaceModel = workspaceModel,
+          )
           projectEntities
         }
         if (projectEntities?.builder != null) {
@@ -118,10 +124,13 @@ private class ModuleBridgeLoaderService : ProjectServiceInitializer {
   }
 }
 
-private suspend fun loadModules(project: Project,
-                                targetBuilder: MutableEntityStorage?,
-                                targetUnloadedEntitiesBuilder: MutableEntityStorage?,
-                                loadedFromCache: Boolean) {
+private suspend fun loadModules(
+  project: Project,
+  workspaceModel: WorkspaceModelImpl,
+  targetBuilder: MutableEntityStorage?,
+  targetUnloadedEntitiesBuilder: MutableEntityStorage?,
+  loadedFromCache: Boolean,
+) {
   span("modules instantiation") {
     val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
     if (targetBuilder != null && targetUnloadedEntitiesBuilder != null) {
@@ -141,6 +150,7 @@ private suspend fun loadModules(project: Project,
   }
 
   span("libraries instantiation") {
-    (serviceAsync<LibraryTablesRegistrar>().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries(targetBuilder)
+    (serviceAsync<LibraryTablesRegistrar>().getLibraryTable(project) as ProjectLibraryTableBridgeImpl)
+      .loadLibraries(targetBuilder, workspaceModel)
   }
 }
