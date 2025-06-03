@@ -5,6 +5,7 @@ import androidx.compose.ui.unit.dp
 import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
+import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toPaddingValues
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemColors
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemMetrics
@@ -27,7 +28,8 @@ internal fun readSimpleListItemStyle() =
             SimpleListItemMetrics(
                 innerPadding = JBUI.CurrentTheme.PopupMenu.Selection.innerInsets().toPaddingValues(),
                 outerPadding = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets().toPaddingValues(),
-                selectionBackgroundCornerSize = CornerSize(JBUI.CurrentTheme.PopupMenu.Selection.ARC.dp / 2),
+                selectionBackgroundCornerSize =
+                    CornerSize(JBUI.CurrentTheme.PopupMenu.Selection.ARC.dp.safeValue() / 2),
                 iconTextGap = 2.dp,
             ),
     )
