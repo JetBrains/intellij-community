@@ -40,6 +40,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.cancel
+import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -534,6 +535,7 @@ enum class WslTestStrategy { Legacy, Ijent }
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
   override val descriptor: EelDescriptor
     get() = object : EelDescriptor {
+      override val userReadableDescription: @NonNls String = "mock"
       override val platform: EelPlatform = EelPlatform.Linux(EelPlatform.Arch.Unknown)
 
       override suspend fun toEelApi(): EelApi {

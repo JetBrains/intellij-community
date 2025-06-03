@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelApi
@@ -70,6 +70,8 @@ class EelAbsolutePathTest {
   }
 
   class DummyEelDescriptor(override val platform: EelPlatform) : EelDescriptor {
+    override val userReadableDescription: String = "mock"
+
     override suspend fun toEelApi(): EelApi {
       return Assertions.fail<Nothing>()
     }

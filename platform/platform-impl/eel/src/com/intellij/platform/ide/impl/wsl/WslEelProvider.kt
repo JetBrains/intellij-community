@@ -23,6 +23,7 @@ import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.net.URI
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.Path
@@ -152,6 +153,8 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
 }
 
 data class WslEelDescriptor(val distribution: WSLDistribution, override val platform: EelPlatform) : EelDescriptor {
+
+  override val userReadableDescription: @NonNls String = "WSL: ${distribution.presentableName}"
 
   override suspend fun toEelApi(): EelApi {
     return distribution.getIjent()

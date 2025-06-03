@@ -3,6 +3,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.path.EelPath.OS
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 
 /**
  * A marker interface that indicates an environment where native file chooser dialogs should be disabled.
@@ -54,6 +55,12 @@ interface EelDescriptor {
       is EelPlatform.Windows -> OS.WINDOWS
       is EelPlatform.Posix -> OS.UNIX
     }
+
+  /**
+   * Describes Eel in a user-readable manner, i.e: "Docker: <container_name>" or "Wsl: <distro name>".
+   * Format is *not* specified, but guaranteed to be user-readable.
+   */
+  val userReadableDescription: @NonNls String
 
   /**
    * The platform of an environment corresponding to this [EelDescriptor].

@@ -17,6 +17,7 @@ import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
 interface LocalWindowsEelApi : LocalEelApi, EelWindowsApi
@@ -88,6 +89,7 @@ fun EelDescriptor.toEelApiBlocking(): EelApi {
 
 data object LocalEelDescriptor : EelDescriptor {
   private val LOG = logger<LocalEelDescriptor>()
+  override val userReadableDescription: @NonNls String = "Local: ${System.getProperty("os.name")}"
 
   override val platform: EelPlatform by lazy {
     val arch = CpuArch.CURRENT.toEelArch()
