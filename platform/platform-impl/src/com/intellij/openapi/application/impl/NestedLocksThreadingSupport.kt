@@ -82,6 +82,10 @@ private data class ExposedWritePermitData(
   val oldPermit: WriteIntentPermit?,
 )
 
+@ApiStatus.Internal
+fun newLockingSupport(): ThreadingSupport =
+  NestedLocksThreadingSupport()
+
 /**
  * This class implements a technique that we call "nested locks" (a.k.a. "n-locks", where "n" stands for "natural number").
  *

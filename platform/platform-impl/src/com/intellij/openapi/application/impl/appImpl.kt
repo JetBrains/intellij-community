@@ -95,22 +95,6 @@ fun getGlobalThreadingSupport(): ThreadingSupport {
   return NestedLocksThreadingSupport.defaultInstance
 }
 
-@OptIn(InternalCoroutinesApi::class)
-@VisibleForTesting
-internal fun acquireReadLockWithCompensation(action: suspend () -> ReadPermit): ReadPermit {
-  val compensationTimeout = compensationTimeout
-  return if (compensationTimeout == null) {
-    runSuspend(action)
-  }
-  else {
-    return IntellijCoroutines.runAndCompensateParallelism(compensationTimeout) {
-      runSuspend {
-        action()
-      }
-    }
-  }
-}
-
 @Volatile
 private var compensationTimeout: Duration? = if (readLockCompensationTimeout == -1) {
   null
