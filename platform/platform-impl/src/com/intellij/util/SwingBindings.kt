@@ -20,19 +20,16 @@ import javax.swing.text.JTextComponent
 @Experimental
 fun JTextComponent.bindTextOnShow(textState: MutableStateFlow<String>, launchDebugName: String) {
   launchOnShow(launchDebugName) {
-    bindTextIn(textState, this) {}
+    bindTextIn(textState, this)
   }
 }
 
 @Suppress("DuplicatedCode")
 @Experimental
-fun JTextComponent.bindTextIn(textState: MutableStateFlow<String>, coroutineScope: CoroutineScope, onTextFieldChanged: suspend (String) -> Unit) {
+fun JTextComponent.bindTextIn(textState: MutableStateFlow<String>, coroutineScope: CoroutineScope) {
   val listener = object : DocumentAdapter() {
     override fun textChanged(e: javax.swing.event.DocumentEvent) {
-      coroutineScope.launch {
-        onTextFieldChanged(text)
-        textState.update { text }
-      }
+      textState.update { text }
     }
   }
   coroutineScope.launch {

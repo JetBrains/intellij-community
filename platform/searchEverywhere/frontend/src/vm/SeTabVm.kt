@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.vm
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -9,16 +11,21 @@ import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
+import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.collections.firstOrNull
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -68,9 +75,17 @@ class SeTabVm(
       }.collectLatest { isActive ->
         if (!isActive) return@collectLatest
 
+        val searchPatternWithAutoToggle = searchPattern.withNewValueSideEffect { old, new ->
+          if (!new.startsWith(old)) {
+            withContext(Dispatchers.EDT) {
+              (getSearchEverywhereToggleAction() as? AutoToggleAction)?.autoToggle(false)
+            }
+          }
+        }
+
         val shouldThrottle = AtomicBoolean(false)
 
-        combine(searchPattern, filterEditor.getValue()?.resultFlow ?: flowOf(null)) { searchPattern, filterData ->
+        combine(searchPatternWithAutoToggle, filterEditor.getValue()?.resultFlow ?: flowOf(null)) { searchPattern, filterData ->
           Pair(searchPattern, filterData ?: SeFilterState.Empty)
         }.mapLatest { (searchPattern, filterData) ->
           val params = SeParams(searchPattern, filterData)
@@ -107,4 +122,18 @@ class SeTabVm(
   suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
     return tab.getEmptyResultInfo(context)
   }
+
+  suspend fun getSearchEverywhereToggleAction(): SearchEverywhereToggleAction? {
+    return (tab.getFilterEditor()?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
+      it is SearchEverywhereToggleAction
+    } as? SearchEverywhereToggleAction
+  }
+
+  private fun StateFlow<String>.withNewValueSideEffect(sideEffect: suspend (String, String) -> Unit): Flow<String> =
+    scan(Pair("", "")) { acc, new -> Pair(acc.second, new) }
+      .drop(1)
+      .map { (old, new) ->
+        sideEffect(old, new)
+        new
+      }
 }

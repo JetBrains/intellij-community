@@ -112,15 +112,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         textField.text = vm.searchPattern.value
         textField.selectAll()
       }
-      textField.bindTextIn(vm.searchPattern, this) { newText ->
-        val currentVmPattern = vm.searchPattern.value
-        if (currentVmPattern.startsWith(newText) && newText != currentVmPattern) {
-          val action = vm.getSearchEverywhereToggleAction()
-          if (action is AutoToggleAction) {
-            action.autoToggle(false)
-          }
-        }
-      }
+      textField.bindTextIn(vm.searchPattern, this)
     }
 
     addHistoryExtensionToTextField()
@@ -154,18 +146,14 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               resultListModel.removeLoadingItem()
 
               if (!resultListModel.isValid || resultListModel.isEmpty) {
-                val action = vm.getSearchEverywhereToggleAction()
-                if (action is AutoToggleAction) {
-                  if (!textField.text.isEmpty()) {
-                    if (action.autoToggle(true)) {
-                      headerPane.updateToolbarActions()
-                      return@withContext
-                    }
-                  }
+                val action = vm.currentTab.getSearchEverywhereToggleAction()
+                if (!textField.text.isEmpty() && (action as? AutoToggleAction)?.autoToggle(true) ?: false) {
+                  headerPane.updateToolbarActions()
+                  return@withContext
                 }
-
-                resultListModel.reset()
               }
+
+              if (!resultListModel.isValid) resultListModel.reset()
 
               if (resultListModel.isEmpty) {
                 textField.setSearchInProgress(false)
