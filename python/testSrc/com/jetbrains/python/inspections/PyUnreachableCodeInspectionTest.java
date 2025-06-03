@@ -24,6 +24,32 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
+
+  // PY-81593
+  public void testReachabilityLogicalOperatorChaining() {
+    doTestByText("""
+def react(char1: str, char2: str) -> bool:
+    return char1 != char2 and char1.lower() == char2.lower()
+    #                         ^^^^^ Reachable
+                   """);
+  }
+
+  // PY-81593
+  public void testReachabilityInLoopWithImplicitTypeNarrowing() {
+    doTestByText("""
+class Dot:
+    def __init__(self):
+        self.closest: int | None = None
+
+def largest_area(dots: list[Dot]) -> int:
+    for dot in dots:
+        if dot.closest is None:
+            continue
+        print("reachable")
+
+    return 42
+                   """);
+  }
   
   // PY-79986
   public void testForInsideFinally() {
