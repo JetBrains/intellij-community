@@ -3,6 +3,9 @@ package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.Document
@@ -20,19 +23,19 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ThreeState
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
 import com.intellij.xdebugger.ui.DebuggerColors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DragSource
-import java.util.concurrent.ExecutorService
 
 @ApiStatus.Internal
 class XBreakpointVisualRepresentation(
@@ -193,21 +196,17 @@ class XBreakpointVisualRepresentation(
     if (file == null) return
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return
 
-    ReadAction.nonBlocking<Document?> {
-      var document = FileDocumentManager.getInstance().getDocument(file)
-      if (document == null) return@nonBlocking null
+    val service = RedrawInlaysService.getInstance(myProject)
+    service.launch {
+      val document = readAction {
+        val document = FileDocumentManager.getInstance().getDocument(file) ?: return@readAction null
 
-      if (myBreakpoint.type is XBreakpointTypeWithDocumentDelegation) {
-        document = (myBreakpoint.type as XBreakpointTypeWithDocumentDelegation).getDocumentForHighlighting(document)
-      }
-      document
+        val type = myBreakpoint.type
+        if (type !is XBreakpointTypeWithDocumentDelegation) return@readAction document
+        type.getDocumentForHighlighting(document)
+      } ?: return@launch
+      InlineBreakpointInlayManager.getInstance(myProject).redrawLine(document, line)
     }
-      .expireWith(myProject)
-      .submit(redrawInlaysExecutor)
-      .onSuccess { document: Document? ->
-        if (document == null) return@onSuccess
-        getInstance(myProject).redrawLine(document, line)
-      }
   }
 
   fun createBreakpointDraggableObject(): GutterDraggableObject {
@@ -276,7 +275,7 @@ class XBreakpointVisualRepresentation(
 
   companion object {
     private val LOG = Logger.getInstance(XBreakpointVisualRepresentation::class.java)
-    val redrawInlaysExecutor: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1)
+
     private fun isHighlighterAvailableIn(editor: Editor): Boolean {
       if (editor is EditorImpl && editor.isStickyLinePainting) {
         // suppress breakpoints on sticky lines panel
@@ -284,5 +283,18 @@ class XBreakpointVisualRepresentation(
       }
       return !DiffUtil.isDiffEditor(editor)
     }
+  }
+}
+
+@Service(Service.Level.PROJECT)
+private class RedrawInlaysService(private val cs: CoroutineScope) {
+  private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
+
+  fun launch(block: suspend CoroutineScope.() -> Unit) {
+    cs.launch(limitedDispatcher, block = block)
+  }
+
+  companion object {
+    fun getInstance(project: Project): RedrawInlaysService = project.service()
   }
 }
