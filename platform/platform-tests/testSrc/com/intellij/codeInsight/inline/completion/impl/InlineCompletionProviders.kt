@@ -81,7 +81,7 @@ internal class GradualMultiSuggestInlineCompletionProvider(
   }
 }
 
-internal class SimpleInlineCompletionProvider(val suggestion: List<InlineCompletionElement>) : InlineCompletionProvider {
+internal open class SimpleInlineCompletionProvider(val suggestion: List<InlineCompletionElement>) : InlineCompletionProvider {
   override val id: InlineCompletionProviderID = InlineCompletionProviderID("SimpleInlineCompletionProvider")
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSingleSuggestion {
