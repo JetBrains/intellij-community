@@ -16,6 +16,7 @@ import javax.swing.UIManager
 import org.jetbrains.jewel.bridge.keyNotFound
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.bridge.retrieveTextStyle
+import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 
@@ -74,7 +75,7 @@ public fun retrieveConsoleTextStyle(): TextStyle {
     val editorColorScheme = retrieveEditorColorScheme()
     if (editorColorScheme.isUseEditorFontPreferencesInConsole) return retrieveEditorTextStyle()
 
-    val fontSize = editorColorScheme.consoleFontSize.sp
+    val fontSize = editorColorScheme.consoleFontSize.safeValue().sp
     val fontColor =
         editorColorScheme.getColor(ColorKey.createColorKey("BLOCK_TERMINAL_DEFAULT_FOREGROUND"))
             ?: editorColorScheme.defaultForeground
