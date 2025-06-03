@@ -154,9 +154,7 @@ fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?, context:
 
                     val conditionExpression = (condition as KtWhenConditionWithExpression).expression
                     if (conditionExpression != null) {
-                        val codeFragment =
-                            psiFactory.createExpressionCodeFragment(conditionExpression.text, context).getContentElement() as KtExpression
-                        appendConditionWithSubjectRemoved(codeFragment, subject)
+                        appendConditionWithSubjectRemoved(conditionExpression, subject)
                     }
                 }
             }
