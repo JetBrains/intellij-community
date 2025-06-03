@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.google.gson.GsonBuilder;
 import com.intellij.build.FileNavigatable;
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEvent;
@@ -8,6 +9,7 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileDownloadEventImpl;
 import com.intellij.build.events.impl.FileDownloadedEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -18,7 +20,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
-import com.google.gson.GsonBuilder;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,9 @@ import org.jetbrains.plugins.gradle.tooling.MessageReporter;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 
@@ -193,7 +196,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         long duration = ((FileDownloadedEventImpl)buildEvent).getDuration();
         String operationName = buildEvent.getMessage();
         String text = String.format("%s, took %s", operationName, formatDuration(duration));
-        myListener.onTaskOutput(myTaskId, "\r" + text + "\n", true);
+        myListener.onTaskOutput(myTaskId, "\r" + text + "\n", ProcessOutputType.STDOUT);
       }
       if (buildEvent instanceof FileDownloadEventImpl) {
         long progress = ((FileDownloadEventImpl)buildEvent).getProgress();
@@ -201,10 +204,10 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         String operationName = buildEvent.getMessage();
         String text = String.format("%s (%s / %s)", operationName, formatFileSize(progress), formatFileSize(total));
         if (((FileDownloadEventImpl)buildEvent).isFirstInGroup()) {
-          myListener.onTaskOutput(myTaskId, text, true);
+          myListener.onTaskOutput(myTaskId, text, ProcessOutputType.STDOUT);
         }
         else {
-          myListener.onTaskOutput(myTaskId, "\r" + text, true);
+          myListener.onTaskOutput(myTaskId, "\r" + text, ProcessOutputType.STDOUT);
         }
       }
     }
@@ -224,12 +227,12 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
    */
   private void reportGradleDaemonStartingEvent(String eventDescription) {
     if (StringUtil.equals(STARTING_GRADLE_DAEMON_EVENT, eventDescription) && !myStatusEventIds.containsKey(STARTING_GRADLE_DAEMON_EVENT)) {
-      myListener.onTaskOutput(myTaskId, STARTING_GRADLE_DAEMON_EVENT + "...\n", true);
+      myListener.onTaskOutput(myTaskId, STARTING_GRADLE_DAEMON_EVENT + "...\n", ProcessOutputType.STDOUT);
       myStatusEventIds.put(STARTING_GRADLE_DAEMON_EVENT, System.currentTimeMillis());
     } else if (StringUtil.equals(EXECUTING_BUILD, eventDescription) && myStatusEventIds.containsKey(STARTING_GRADLE_DAEMON_EVENT)) {
       Long startTime = myStatusEventIds.remove(STARTING_GRADLE_DAEMON_EVENT);
       String duration = formatDuration(System.currentTimeMillis() - startTime);
-      myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in " + duration + "\n", true);
+      myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in " + duration + "\n", ProcessOutputType.STDOUT);
     }
   }
 

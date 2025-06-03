@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -119,8 +120,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     StringBuilder gradleClasspath = new StringBuilder();
     ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
       @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        if (!stdOut || text.isBlank()) return;
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
+        if (!processOutputType.isStdout() || text.isBlank()) return;
         if (text.contains("Gradle Daemon")) return;
         gradleClasspath.append(text);
       }

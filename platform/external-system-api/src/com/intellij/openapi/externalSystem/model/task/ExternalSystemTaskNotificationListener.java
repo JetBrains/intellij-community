@@ -1,5 +1,7 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.task;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,13 +94,13 @@ public interface ExternalSystemTaskNotificationListener extends EventListener {
   default void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) { }
 
   /**
-   * Notifies about text written to stdout/stderr during the task execution
+   * Notifies about the text written to stdout/stderr during the task execution
    *
    * @param id     id of the task being executed
-   * @param text   text produced by external system during the target task execution
-   * @param stdOut flag which identifies output type (stdout or stderr)
+   * @param text   text produced by the external system during the target task execution
+   * @param outputType type of the output (stdout, stderr, or system)
    */
-  default void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) { }
+  default void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {}
 
   /**
    * @deprecated use {@link #onEnd(String, ExternalSystemTaskId)} instead

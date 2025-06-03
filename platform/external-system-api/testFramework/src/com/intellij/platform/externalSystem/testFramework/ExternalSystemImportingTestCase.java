@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.externalSystem.testFramework;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
@@ -112,8 +113,8 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
       }
 
       @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        if (stdOut) {
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
+        if (processOutputType.isStdout()) {
           stdOutput.append(id, text.replace("\n", "\\n").replace("\r", "\\r"));
         }
         else {

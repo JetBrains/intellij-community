@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -84,7 +85,7 @@ class GradleSystemPropertiesTest: GradleImportingTestCase() {
 
   private fun createGradleTaskListener(taskOutputSystemProperties: MutableMap<String, String>) =
     object : ExternalSystemTaskNotificationListener {
-      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
         try {
           Gson().fromJson<Map<String, String>>(text, Map::class.java)?.let {
             taskOutputSystemProperties.putAll(it)

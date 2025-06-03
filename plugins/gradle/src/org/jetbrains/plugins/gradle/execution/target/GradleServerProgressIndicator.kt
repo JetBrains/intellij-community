@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
-import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -17,7 +17,7 @@ class GradleServerProgressIndicator(
 ) : TargetProgressIndicator {
 
   override fun addText(text: String, outputType: Key<*>) {
-    taskListener?.onTaskOutput(taskId, text, outputType != ProcessOutputTypes.STDERR)
+    taskListener?.onTaskOutput(taskId, text, ProcessOutputType.fromKey(outputType))
   }
 
   override fun stop(): Unit = progressIndicator.stop()

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task
 
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -162,7 +163,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
 
 class TaskExecutionOutput : ExternalSystemTaskNotificationListener {
   private val storage = mutableListOf<String>()
-  override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+  override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
     storage.add(text)
   }
 

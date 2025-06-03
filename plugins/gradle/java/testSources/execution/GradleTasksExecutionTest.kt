@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
 import com.intellij.openapi.application.ApplicationManager
@@ -168,7 +169,7 @@ tasks.register("hello-module") {
       ExternalSystemProgressNotificationManager::class.java)
     val taskOutput = java.lang.StringBuilder()
     val listener = object : ExternalSystemTaskNotificationListener {
-      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
         taskOutput.append(text)
       }
     }
@@ -186,8 +187,8 @@ tasks.register("hello-module") {
   private fun runTaskAndGetErrorOutput(projectPath: String, taskName: String, scriptParameters: String = ""): String {
     val taskErrOutput = StringBuilder()
     val stdErrListener = object : ExternalSystemTaskNotificationListener {
-      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        if (!stdOut) {
+      override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
+        if (processOutputType.isStderr) {
           taskErrOutput.append(text)
         }
       }

@@ -5,6 +5,7 @@ import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.Disposable;
@@ -398,7 +399,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
     var notificationListener = new ExternalSystemTaskNotificationListener() {
       @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
         if (text.contains("This is scheduled to be removed in Gradle")
             || text.contains("Deprecated Gradle features were used in this build")) {
           deprecationTextLineCount = 30;
