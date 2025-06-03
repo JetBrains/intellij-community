@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 
+@Deprecated("Use AbstractRenameActionCommandProvider instead")
 internal class RenameActionCommandProvider : ActionCommandProvider(actionId = IdeActions.ACTION_RENAME,
                                                                    name = "Rename",
                                                                    i18nName = ActionsBundle.message("action.RenameElement.text"),

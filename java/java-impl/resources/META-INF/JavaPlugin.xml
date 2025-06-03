@@ -1476,7 +1476,7 @@
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaInlineVariableCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGoToDeclarationCommandCompletionProvider" />
     <codeInsight.completion.command.provider language="JAVA"
-                                             implementationClass="com.intellij.codeInsight.completion.command.commands.RenameActionCommandProvider"/>
+                                             implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaRenameActionCommandProvider"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.OptimizeImportCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaFormatCodeCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.LineCommentCompletionCommandProvider" />

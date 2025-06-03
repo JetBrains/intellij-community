@@ -314,6 +314,45 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }""".trimIndent())
   }
 
+  fun testRenameMethod1() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo().<caret> {
+              String y = "1";
+              System.out.println(y);
+          }
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Rename", ignoreCase = true) })
+  }
+
+  fun testRenameMethod2() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              String y = "1";
+              System.out.println(y);
+          }.<caret>
+      }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Rename", ignoreCase = true) })
+  }
+
+  fun testRenameClass() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          void foo() {
+              String y = "1";
+              System.out.println(y);
+          }
+      }.<caret>""".trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element -> element.lookupString.contains("Rename", ignoreCase = true) })
+  }
+
   fun testRenameParameter() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """

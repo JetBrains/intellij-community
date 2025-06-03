@@ -236,8 +236,9 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     for (provider in commandCompletionFactory.commandProviders(project, element.language)) {
       try {
         if (isReadOnly && !provider.supportsReadOnly()) continue
-        val commands = provider.getCommands(
-          CommandCompletionProviderContext(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile, isReadOnly))
+        copyEditor.caretModel.moveToOffset(offset)
+        val context = CommandCompletionProviderContext(project, copyEditor, offset, copyFile, originalEditor, originalOffset, originalFile, isReadOnly)
+        val commands = provider.getCommands(context)
         processor.process(commands)
       }
       catch (e: Exception) {

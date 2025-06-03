@@ -9,7 +9,7 @@
 <!--    <codeInsight.completion.command.provider language="kotlin"-->
 <!--                                             implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider"/>-->
     <codeInsight.completion.command.provider language="kotlin"
-                                               implementationClass="com.intellij.codeInsight.completion.command.commands.RenameActionCommandProvider"/>
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinRenameActionCommandProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
                                                implementationClass="com.intellij.codeInsight.completion.command.commands.OptimizeImportCompletionCommandProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
