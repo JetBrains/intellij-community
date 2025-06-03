@@ -7,11 +7,8 @@ import com.intellij.database.run.ui.FloatingPagingManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Supplier;
 
 import static com.intellij.database.datagrid.GridUtil.hidePageActions;
 
@@ -77,25 +74,10 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
   }
   
   public static abstract class NavigationAction extends PageAction {
-    private static final Logger LOG = Logger.getInstance(NavigationAction.class);
-    
-    private static void traceIfEnabled(Supplier<String> messageSupplier) {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace(messageSupplier.get());
-      }
-    }
     
     @Override
     public void update(@NotNull AnActionEvent e) {
-      traceIfEnabled(
-        () -> "Updating " + this.getClass().getSimpleName() + ": " +
-              "visible: " + e.getPresentation().isVisible() + ", " +
-              "enabled: " + e.getPresentation().isEnabled() + ", ");
       super.update(e);
-      traceIfEnabled(
-        () -> "Updated " + this.getClass().getSimpleName() + " (super called): " +
-              "visible: " + e.getPresentation().isVisible() + ", " +
-              "enabled: " + e.getPresentation().isEnabled() + ", ");
       additionalUpdateVisibilityCheck(e);
       FloatingPagingManager.adjustAction(e);
     }
@@ -106,15 +88,12 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
       GridPagingModel<GridRow, GridColumn> pageModel = dataGrid.getDataHookup().getPageModel();
 
       final int pageSize = pageModel.getPageSize();
-      traceIfEnabled(() -> "Page size: " + pageSize);
-
       if (pageSize == GridPagingModel.UNLIMITED_PAGE_SIZE) {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
 
       final long totalRowCount = pageModel.getTotalRowCount();
-      traceIfEnabled(() -> "Total rows: " + totalRowCount);
       if ((long)pageSize >= totalRowCount) {
         e.getPresentation().setEnabledAndVisible(false);
       }

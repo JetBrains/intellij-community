@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ui.configuration.actions.AlignedIconWithTextAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.JBInsets
@@ -33,24 +32,11 @@ fun createCustomComponentForResultViewToolbar(
 }
 
 fun setPageSizeAndReload(pageSize: Int, grid: DataGrid) {
-  trace {
-    "Setting page size of grid $grid to $pageSize"
-  }
   val pageModel = grid.getDataHookup().getPageModel()
   pageModel.setPageSize(pageSize)
-  trace {
-    "Page size of grid $grid was set to $pageSize (page model: $pageModel)"
-  }
 
   val loader = grid.getDataHookup().getLoader()
   val source = GridRequestSource(DataGridRequestPlace(grid))
   if (GridUtilCore.isPageSizeUnlimited(pageSize)) loader.load(source, 0)
   else loader.reloadCurrentPage(source)
-}
-
-private fun trace(messageFactory: () -> String) {
-  val logger = logger<ChangePageSizeAction>()
-  if (logger.isTraceEnabled) {
-    logger.trace(messageFactory())
-  }
 }
