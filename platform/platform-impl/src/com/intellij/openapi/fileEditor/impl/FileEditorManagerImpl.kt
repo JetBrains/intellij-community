@@ -876,7 +876,7 @@ open class FileEditorManagerImpl(
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
-        openInRightSplit(file, options.requestFocus)?.let {
+        openInRightSplit(file, options.requestFocus, options.explicitlyOpenCompositeProvider)?.let {
           return it
         }
       }
