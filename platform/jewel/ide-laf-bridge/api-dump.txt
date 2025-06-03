@@ -10,6 +10,22 @@ f:org.jetbrains.jewel.bridge.BridgePainterHintsProvider$Companion
 f:org.jetbrains.jewel.bridge.BridgeResourceResolverKt
 - sf:bridgePainterProvider(java.lang.String):org.jetbrains.jewel.ui.painter.ResourcePainterProvider
 - sf:bridgePainterProvider(org.jetbrains.jewel.ui.icon.IconKey):org.jetbrains.jewel.ui.painter.ResourcePainterProvider
+f:org.jetbrains.jewel.bridge.BridgeTypography
+- org.jetbrains.jewel.ui.Typography
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.bridge.BridgeTypography
+- getConsoleTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getEditorTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH0TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH1TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH2TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH3TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getH4TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getLabelTextSize(androidx.compose.runtime.Composer,I):J
+- getLabelTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getMedium(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getRegular(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- getSmall(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:createVerticalBrush-8A-3gB4(java.util.List,F,F,I):androidx.compose.ui.graphics.Brush
 - bs:createVerticalBrush-8A-3gB4$default(java.util.List,F,F,I,I,java.lang.Object):androidx.compose.ui.graphics.Brush
