@@ -205,6 +205,7 @@ class LinuxDistributionBuilder(
 
     spanBuilder("build Linux tar.gz")
       .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
+      .setAttribute("targetLibcImpl", targetLibcImpl.name)
       .use(Dispatchers.IO) {
         val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = runtimeDir != null, arch, this@LinuxDistributionBuilder.targetLibcImpl).keys
         tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
