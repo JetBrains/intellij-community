@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package externalApp;
 
+import externalApp.nativessh.NativeSshAskPassApp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,12 +93,24 @@ public final class ExternalAppUtil {
     return Integer.parseInt(getEnv(env, environment));
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @Deprecated(since = "2025.2", forRemoval = true)
   public static void handleAskPassInvocation(@NotNull String handlerIdEnvName,
                                              @NotNull String idePortEnvName,
                                              @NotNull String entryPoint,
                                              String[] args) {
+    var exitCode = handleAskPassInvocation(handlerIdEnvName,
+                                           idePortEnvName,
+                                           entryPoint,
+                                           ExternalAppEntry.fromMain(args));
+    System.exit(exitCode);
+  }
+
+  public static int handleAskPassInvocation(@NotNull String handlerIdEnvName,
+                                             @NotNull String idePortEnvName,
+                                             @NotNull String entryPoint,
+                                             ExternalAppEntry entry) {
     try {
+      var args = entry.getArgs();
       String handlerId = getEnv(handlerIdEnvName);
       int idePort = getEnvInt(idePortEnvName);
 
@@ -106,23 +119,23 @@ public final class ExternalAppUtil {
       ExternalAppUtil.Result result = sendIdeRequest(entryPoint, idePort, handlerId, description);
 
       if (result.isError) {
-        System.err.println(result.getPresentableError());
-        System.exit(1);
+        entry.getStderr().println(result.getPresentableError());
+        return 1;
       }
 
       String passphrase = result.response;
       if (passphrase == null) {
-        System.err.println("Authentication request was cancelled");
-        System.exit(1); // dialog canceled
+        entry.getStderr().println("Authentication request was cancelled");
+        return 1; // dialog canceled
       }
 
-      System.out.println(passphrase);
-      System.exit(0);
+      entry.getStdout().println(passphrase);
+      return 0;
     }
     catch (Throwable t) {
-      System.err.println(t.getMessage());
-      t.printStackTrace(System.err);
-      System.exit(1);
+      entry.getStderr().println(t.getMessage());
+      t.printStackTrace(entry.getStderr());
+      return 1;
     }
   }
 

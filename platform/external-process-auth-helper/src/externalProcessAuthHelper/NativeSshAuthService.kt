@@ -13,7 +13,7 @@ class NativeSshAuthService(
 ) : ExternalProcessHandlerService<NativeSshAskPassAppHandler>(
   "intellij-ssh-askpass",
   NativeSshAskPassApp::class.java,
-  null,
+  NativeSshAskPassApp(),
   listOf(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV, NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV),
   coroutineScope
 ) {

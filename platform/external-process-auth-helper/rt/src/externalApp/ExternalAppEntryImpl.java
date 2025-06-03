@@ -4,6 +4,7 @@ package externalApp;
 import java.io.PrintStream;
 import java.util.Map;
 
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 class ExternalAppEntryImpl implements ExternalAppEntry {
   public final String[] args;
 
@@ -29,5 +30,10 @@ class ExternalAppEntryImpl implements ExternalAppEntry {
   @Override
   public PrintStream getStderr() {
     return System.err;
+  }
+
+  @Override
+  public PrintStream getStdout() {
+    return System.out;
   }
 }

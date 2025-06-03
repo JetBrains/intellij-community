@@ -123,10 +123,12 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
 
   private class EelExternalAppEntry(val process: EelExecApi.ExternalCliProcess) : ExternalAppEntry, AutoCloseable {
     val myStderr: PrintStream = process.stderr.asOutputStream().let(::PrintStream)
+    val myStdout: PrintStream = process.stdout.asOutputStream().let(::PrintStream)
     override fun getArgs(): Array<out String> = process.args.toTypedArray()
     override fun getEnvironment(): Map<String, String> = process.environment
     override fun getWorkingDirectory(): String = process.workingDir.asNioPath().pathString
     override fun getStderr(): PrintStream = myStderr
+    override fun getStdout(): PrintStream = myStdout
 
     override fun close() {
       stderr.close()

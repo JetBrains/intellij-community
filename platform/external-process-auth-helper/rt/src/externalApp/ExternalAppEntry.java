@@ -9,6 +9,7 @@ public interface ExternalAppEntry {
   Map<String, String> getEnvironment();
   String getWorkingDirectory();
   PrintStream getStderr();
+  PrintStream getStdout();
 
   static ExternalAppEntry fromMain(String[] args) {
     return new ExternalAppEntryImpl(args);
