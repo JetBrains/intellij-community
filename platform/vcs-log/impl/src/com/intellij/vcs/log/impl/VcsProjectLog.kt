@@ -93,10 +93,12 @@ abstract class VcsProjectLog internal constructor() { // not an interface due to
   abstract suspend fun init(force: Boolean): VcsLogManager?
 
   /**
-   * Disposes the [logManager] if it is initialized, runs [beforeCreateLog], and then recreates the [logManager].
+   * Disposes the [logManager] if it is initialized, and then recreates it.
+   *
+   * @param invalidateCaches if true, the persistent caches will be invalidated before recreating the manager.
    */
   @Internal
-  abstract suspend fun reinit(beforeCreateLog: (suspend () -> Unit)? = null): VcsLogManager?
+  abstract suspend fun reinit(invalidateCaches: Boolean)
 
   interface ProjectLogListener {
     @RequiresEdt

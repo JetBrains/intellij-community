@@ -46,7 +46,7 @@ internal class IdeVcsProjectLog(
   override suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): IdeVcsLogManager {
     val uiProperties = project.serviceAsync<VcsLogProjectTabsProperties>()
     return IdeVcsLogManager(project, coroutineScope, mainUiHolderState, uiProperties, logProviders) { s, t ->
-      errorHandler.recreateOnError(s, t)
+      reinitOnErrorAsync(s, t)
     }.apply {
       withContext(Dispatchers.EDT) {
         createUi()

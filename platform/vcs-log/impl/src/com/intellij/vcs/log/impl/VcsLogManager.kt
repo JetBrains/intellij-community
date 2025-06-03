@@ -48,7 +48,6 @@ import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.BiConsumer
 
 @NonExtendable
 open class VcsLogManager @Internal constructor(
@@ -57,7 +56,7 @@ open class VcsLogManager @Internal constructor(
   logProviders: Map<VirtualFile, VcsLogProvider>,
   @Internal val name: String,
   isIndexEnabled: Boolean,
-  private val recreateMainLogHandler: BiConsumer<in VcsLogErrorHandler.Source, in Throwable>?,
+  private val errorHandler: ((VcsLogErrorHandler.Source, Throwable) -> Unit)?,
 ) {
   private val dataDisposable = Disposer.newDisposable("Vcs Log Data Disposable for $name")
   val dataManager: VcsLogData = VcsLogData(project, logProviders, MyErrorHandler(), isIndexEnabled, dataDisposable)
@@ -260,15 +259,37 @@ open class VcsLogManager @Internal constructor(
     return true
   }
 
+  /**
+   * Release all resources associated with the manager
+   *
+   * @param useRawSwingDispatcher on app shutdown the proper EDT dispatcher might not be available
+   * @param clearStorage clear the persistent storage (indexes and stuff)
+   */
   @Internal
-  suspend fun dispose(useRawSwingDispatcher: Boolean = false) {
+  suspend fun dispose(useRawSwingDispatcher: Boolean = false, clearStorage: Boolean = false) {
     if (!startDisposing()) return
     val uiDispatcher = if (useRawSwingDispatcher) RawSwingDispatcher else Dispatchers.EDT
     withContext(uiDispatcher) {
       disposeUi()
     }
     withContext(Dispatchers.Default) {
+      val storageToClear = if (clearStorage) storageIds() else emptyList()
       disposeData()
+
+      for (storageId in storageToClear) {
+        try {
+          val deleted = withContext(Dispatchers.IO) { storageId.cleanupAllStorageFiles() }
+          if (deleted) {
+            LOG.info("Deleted ${storageId.storagePath}")
+          }
+          else {
+            LOG.error("Could not delete ${storageId.storagePath}")
+          }
+        }
+        catch (t: Throwable) {
+          LOG.error(t)
+        }
+      }
     }
   }
 
@@ -297,10 +318,8 @@ open class VcsLogManager @Internal constructor(
 
     override fun handleError(source: VcsLogErrorHandler.Source, throwable: Throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
-        if (recreateMainLogHandler != null) {
-          ApplicationManager.getApplication().invokeLater {
-            recreateMainLogHandler.accept(source, throwable)
-          }
+        if (errorHandler != null) {
+          errorHandler.invoke(source, throwable)
         }
         else {
           LOG.error("Vcs Log exception from $source", throwable)

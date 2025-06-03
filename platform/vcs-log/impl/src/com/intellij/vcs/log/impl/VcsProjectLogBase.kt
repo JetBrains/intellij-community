@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
+import com.google.common.collect.EnumMultiset
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -29,7 +30,11 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.PhmVcsLogStorageBackend
+import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
+import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.util.StorageId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
@@ -49,9 +54,8 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   protected val project: Project,
   protected val coroutineScope: CoroutineScope,
 ) : VcsProjectLog() {
-  protected val errorHandler: VcsProjectLogErrorHandler by lazy { VcsProjectLogErrorHandler(this, coroutineScope) }
-
   private val logManagerState = MutableStateFlow<M?>(null)
+  private val errorCountBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
 
   private val shutDownStarted = AtomicBoolean(false)
   val isDisposing: Boolean get() = shutDownStarted.get()
@@ -85,7 +89,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         LOG.debug("Recreating Vcs Log after durable enumerator registry value changed")
-        coroutineScope.launchWithAnyModality { logManager?.let { invalidateCaches(it) } }
+        reinitAsync(invalidateCaches = true)
       }
     }, listenersDisposable)
 
@@ -120,7 +124,7 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
         mutex.withLock {
           logManagerState.getAndUpdate { null }?.let {
             LOG.debug { "Disposing ${it.name}" }
-            it.dispose(useRawSwingDispatcher)
+            it.dispose(useRawSwingDispatcher = useRawSwingDispatcher)
           }
         }
       }
@@ -162,38 +166,36 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     }
 
   private fun disposeAsync() =
-    coroutineScope.launchWithAnyModality {
-      mutex.withLock {
-        disposeLogManager()
-      }
-    }
-
-  final override suspend fun reinit(beforeCreateLog: (suspend () -> Unit)?): M? = reinitAsync(beforeCreateLog).await()
-
-  private fun reinitAsync(beforeCreateLog: (suspend () -> Unit)? = null) =
     coroutineScope.asyncWithAnyModality {
       mutex.withLock {
         disposeLogManager()
-
-        try {
-          beforeCreateLog?.invoke()
-        }
-        catch (e: Throwable) {
-          LOG.error("Unable to execute 'beforeCreateLog'", e)
-        }
-
-        getOrCreateLogManager(forceInit = false)
       }
     }
 
-  private suspend fun disposeLogManager() {
-    logManagerState.getAndUpdate { null }?.let {
-      LOG.debug { "Disposing ${it.name}" }
-      withContext(Dispatchers.EDT) {
-        notifyLogDisposed(it)
+  final override suspend fun reinit(invalidateCaches: Boolean) {
+    reinitAsync(invalidateCaches).await()
+  }
+
+  private fun reinitAsync(invalidateCaches: Boolean = false) =
+    coroutineScope.asyncWithAnyModality {
+      mutex.withLock {
+        reinitUnsafe(invalidateCaches)
       }
-      it.dispose()
     }
+
+  private suspend fun reinitUnsafe(invalidateCaches: Boolean = false) {
+    disposeLogManager(invalidateCaches)
+    getOrCreateLogManager(forceInit = false)
+  }
+
+  private suspend fun disposeLogManager(invalidateCaches: Boolean = false) {
+    val manager = logManagerState.getAndUpdate { null } ?: return
+
+    LOG.debug { "Disposing ${manager.name}" }
+    withContext(Dispatchers.EDT) {
+      notifyLogDisposed(manager)
+    }
+    manager.dispose(clearStorage = invalidateCaches)
   }
 
   private suspend fun getOrCreateLogManager(forceInit: Boolean): M? {
@@ -225,6 +227,45 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 
   protected abstract suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): M
+
+  private suspend fun reinitOnError(source: VcsLogErrorHandler.Source, error: Throwable) {
+    if (isDisposing) return
+    mutex.withLock {
+      if (isDisposing) return
+      val logManager = logManagerState.value ?: return
+
+      errorCountBySource.add(source)
+      val count = errorCountBySource.count(source)
+
+      if (source == VcsLogErrorHandler.Source.Index && count > DISABLE_INDEX_COUNT) {
+        withContext(Dispatchers.EDT) {
+          val rootsForIndexing = logManager.dataManager.index.indexingRoots
+          LOG.error("Disabling indexing for ${rootsForIndexing.map { it.name }} due to corruption " +
+                    "(count=$count).", error)
+          rootsForIndexing.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
+        }
+        reinitUnsafe(true)
+        return
+      }
+
+      val invalidateCaches = count % INVALIDATE_CACHES_COUNT == 0
+      if (invalidateCaches) {
+        LOG.error("Invalidating Vcs Log caches after $source corruption (count=$count).", error)
+      }
+      else {
+        LOG.debug("Recreating Vcs Log after $source corruption (count=$count).", error)
+      }
+
+      reinitUnsafe(invalidateCaches)
+    }
+  }
+
+  protected fun reinitOnErrorAsync(source: VcsLogErrorHandler.Source, error: Throwable) {
+    if (isDisposing) return
+    coroutineScope.asyncWithAnyModality {
+      reinitOnError(source, error)
+    }
+  }
 
   private fun notifyLogCreated(oldManager: M) {
     ThreadingAssertions.assertEventDispatchThread()
@@ -279,6 +320,15 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 }
 
+private const val INVALIDATE_CACHES_COUNT = 5
+private const val DISABLE_INDEX_COUNT = 2 * INVALIDATE_CACHES_COUNT
+
+internal fun VcsLogManager.storageIds(): List<StorageId> {
+  return linkedSetOf((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
+                     (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
+                     (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId).filterNotNull()
+}
+
 /**
  * @param force run the initialization ignoring the invalid caches and the possible init delay in the manager
  */
@@ -305,10 +355,6 @@ private suspend fun VcsLogManager.initialize(force: Boolean) {
  * Launches the coroutine with "any" modality in the context.
  * Using "any" modality is required in order to create or dispose log when modal dialog (such as Settings dialog) is shown.
  */
-private fun CoroutineScope.launchWithAnyModality(block: suspend CoroutineScope.() -> Unit): Job {
-  return launch(ModalityState.any().asContextElement(), block = block)
-}
-
 private fun <T> CoroutineScope.asyncWithAnyModality(block: suspend CoroutineScope.() -> T): Deferred<T> {
   return async(ModalityState.any().asContextElement(), block = block)
 }
