@@ -63,6 +63,7 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
+    "//java/java-analysis-api:analysis",
   ],
   runtime_deps = [":analysis_resources"]
 )

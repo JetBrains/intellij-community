@@ -16,6 +16,8 @@ import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.Processor
 import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -34,6 +36,7 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
+import org.jetbrains.kotlin.idea.base.analysis.KotlinUastOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -247,10 +250,15 @@ object K2UnusedSymbolUtil {
         declaration: KtNamedDeclaration,
         declarationContainingClass: KtClass?,
         symbol: KaDeclarationSymbol? = null
-    ): Boolean {
-        val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) { isCheapEnoughToSearchUsages(declaration) }
-        return hasNonTrivialUsages(declaration, declarationContainingClass, isCheapEnough, symbol)
-    }
+    ): Boolean =
+        CachedValuesManager.getCachedValue(declaration) {
+            val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) { isCheapEnoughToSearchUsages(declaration) }
+            val hasNonTrivialUsages = hasNonTrivialUsages(declaration, declarationContainingClass, isCheapEnough, symbol)
+            CachedValueProvider.Result.create(
+                hasNonTrivialUsages,
+                KotlinUastOutOfCodeBlockModificationTracker.getInstance(project = declaration.project)
+            )
+        }
 
     context(KaSession)
     private fun hasNonTrivialUsages(
