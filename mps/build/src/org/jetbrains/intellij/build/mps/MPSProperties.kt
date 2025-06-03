@@ -26,7 +26,7 @@ private val javaCompiler: (PlatformLayout, BuildContext) -> Unit = { layout, _ -
 class MPSProperties : JetBrainsProductProperties() {
 
     init {
-        platformPrefix = "Idea"
+        platformPrefix = "MPS"
         applicationInfoModule = "intellij.mps.resources"
         scrambleMainJar = false
         /* main module for JetBrains Client isn't available in the intellij-community project,
