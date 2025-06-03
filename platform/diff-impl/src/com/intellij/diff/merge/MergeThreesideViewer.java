@@ -1014,7 +1014,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @Override
     protected void postInstallHighlighters() {
-      if (!Registry.is("semantic.merge.recompute.after.change", false) || myEditablePsiFile == null || myProject == null) return;
+      if (!Registry.is("semantic.merge.recompute.after.change", false) ||
+          myEditablePsiFile == null ||
+          myProject == null ||
+          !myConflictResolver.isAvailable()) return;
 
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditablePsiFile.getFileDocument());
       List<PsiFile> fileList = List.of(ThreeSide.LEFT.select(myPsiFiles), myEditablePsiFile, ThreeSide.RIGHT.select(myPsiFiles));
