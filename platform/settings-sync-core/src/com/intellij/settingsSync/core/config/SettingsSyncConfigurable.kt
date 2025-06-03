@@ -240,6 +240,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
                 } else {
                   userDropDownLink.selectedItem = null
                 }
+                syncStatusChanged()
               }
               .onIsModified {
                 enableCheckbox.isSelected != SettingsSyncSettings.getInstance().syncEnabled
@@ -371,7 +372,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         }
       }
     }
-    else {
+    else if (SettingsSyncSettings.getInstance().syncEnabled) {
       val syncDisableOption = showDisableSyncDialog()
       if (syncDisableOption != DisableSyncType.DONT_DISABLE) {
         disableSyncOption.set(syncDisableOption)
@@ -380,6 +381,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       } else {
         enableCheckbox.isSelected = true
       }
+    } else {
+      syncStatusChanged()
     }
   }
 
