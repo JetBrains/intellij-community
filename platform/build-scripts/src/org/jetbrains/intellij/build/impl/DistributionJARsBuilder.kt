@@ -1096,7 +1096,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
 
 private suspend fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: CompilationContext) {
   for (module in moduleExcludes.keys) {
-    check(Files.exists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
+    check(context.getModuleOutputRoots(context.findRequiredModule(module)).all(Files::exists)) {
       "There are excludes defined for module '${module}', but the module wasn't compiled;" +
       " most probably it means that '${module}' isn't included into the product distribution," +
       " so it doesn't make sense to define excludes for it."
@@ -1220,7 +1220,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
 
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)))
+        classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(entry.moduleName)))
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
@@ -1238,9 +1238,9 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
 
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)))
+        classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(entry.moduleName)))
         for (classpathPluginEntry in pluginLayouts.firstOrNull { it.mainModule == entry.moduleName }?.scrambleClasspathPlugins ?: emptyList()) {
-          classPath.add(context.getModuleOutputDir(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)))
+          classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)))
         }
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)

@@ -328,20 +328,12 @@ class CompilationContextImpl private constructor(
 
   override fun findModule(name: String): JpsModule? = nameToModule[name.removeSuffix("._test")]
 
-  override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
+  override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(/* module = */ module, /* forTests = */ forTests)
     requireNotNull(url) {
       "Output directory for ${module.name} isn't set"
     }
-    return Path.of(JpsPathUtil.urlToPath(url))
-  }
-
-  override suspend fun getModuleTestsOutputDir(module: JpsModule): Path {
-    val url = JpsJavaExtensionService.getInstance().getOutputUrl(module, true)
-    requireNotNull(url) {
-      "Output directory for ${module.name} isn't set"
-    }
-    return Path.of(JpsPathUtil.urlToPath(url))
+    return listOf(Path.of(JpsPathUtil.urlToPath(url)))
   }
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
@@ -361,6 +353,7 @@ class CompilationContextImpl private constructor(
   }
 
   override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    @Suppress("DEPRECATION")
     val file = getModuleOutputDir(module, forTests).resolve(relativePath)
     try {
       return Files.readAllBytes(file)
@@ -567,32 +560,32 @@ internal suspend fun resolveProjectDependencies(context: CompilationContext) {
 
 @Internal
 suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePath: String): Boolean {
-  val output = getModuleOutputDir(module)
-
-  val attributes = try {
-    Files.readAttributes(output, BasicFileAttributes::class.java)
-  }
-  catch (_: FileSystemException) {
-    return false
-  }
-
-  if (attributes.isDirectory) {
-    return Files.exists(output.resolve(relativePath))
-  }
-  else if (attributes.isRegularFile && output.toString().endsWith(".jar")) {
-    var found = false
-    readZipFile(output) { name, _ ->
-      if (name == relativePath) {
-        found = true
-        ZipEntryProcessorResult.STOP
-      }
-      else {
-        ZipEntryProcessorResult.CONTINUE
-      }
+  return getModuleOutputRoots(module).any { output ->
+    val attributes = try {
+      Files.readAttributes(output, BasicFileAttributes::class.java)
     }
-    return found
-  }
-  else {
-    throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
+    catch (_: FileSystemException) {
+      return@any false
+    }
+
+    if (attributes.isDirectory) {
+      return@any Files.exists(output.resolve(relativePath))
+    }
+    else if (attributes.isRegularFile && output.toString().endsWith(".jar")) {
+      var found = false
+      readZipFile(output) { name, _ ->
+        if (name == relativePath) {
+          found = true
+          ZipEntryProcessorResult.STOP
+        }
+        else {
+          ZipEntryProcessorResult.CONTINUE
+        }
+      }
+      return@any found
+    }
+    else {
+      throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
+    }
   }
 }

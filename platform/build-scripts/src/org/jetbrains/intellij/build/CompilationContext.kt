@@ -48,12 +48,22 @@ interface CompilationContext {
   /**
    * A directory or a .jar file.
    */
-  suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path
+  @Deprecated(message = "Please use `getModuleOutputRoots`", replaceWith = ReplaceWith("getModuleOutputRoots(module, forTests)"))
+  suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path {
+    val outputRoots = getModuleOutputRoots(module, forTests)
+    return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
+  }
 
   /**
    * A directory or a .jar file.
    */
-  suspend fun getModuleTestsOutputDir(module: JpsModule): Path
+  @Deprecated(message = "Please use `getModuleOutputRoots`", replaceWith = ReplaceWith("getModuleOutputRoots(module, forTests = true)"))
+  suspend fun getModuleTestsOutputDir(module: JpsModule): Path {
+    val outputRoots = getModuleOutputRoots(module, forTests = true)
+    return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
+  }
+
+  suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
 
   suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
 

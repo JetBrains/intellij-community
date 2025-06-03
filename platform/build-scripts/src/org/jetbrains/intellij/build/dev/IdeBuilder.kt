@@ -564,9 +564,11 @@ private suspend fun createBuildContext(
 }
 
 internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, compilationContext: CompilationContext, request: BuildRequest): ProductProperties {
-  val classPathFiles = coroutineScope {
-     getBuildModules(productConfiguration).map { async { compilationContext.getModuleOutputDir(compilationContext.findRequiredModule(it)) } }.toList()
-  }.awaitAll()
+  val classPathFiles = buildList {
+    for (moduleName in getBuildModules(productConfiguration)) {
+      addAll(compilationContext.getModuleOutputRoots(compilationContext.findRequiredModule(moduleName)))
+    }
+  }
 
   val classLoader = spanBuilder("create product properties classloader").use {
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))

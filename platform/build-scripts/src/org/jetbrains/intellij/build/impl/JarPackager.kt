@@ -290,18 +290,18 @@ class JarPackager private constructor(
 
     val module = context.findRequiredModule(moduleName)
     val useTestModuleOutput = helper.isTestPluginModule(moduleName, module)
-    val moduleOutDir = context.getModuleOutputDir(module, forTests = useTestModuleOutput)
+    val moduleOutputRoots = context.getModuleOutputRoots(module, forTests = useTestModuleOutput)
     val extraExcludes = layout?.moduleExcludes?.get(moduleName) ?: emptyList()
 
     val packToDir = context.options.isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
                     extraExcludes.isEmpty() &&
-                    !moduleOutDir.toString().endsWith(".jar")
+                    moduleOutputRoots.none { it.toString().endsWith(".jar") }  // TODO(k15tfu): consider running on output sources "as is", without packing
 
     val outFile = outDir.resolve(item.relativeOutputFile)
     val asset = if (packToDir) {
-      assets.computeIfAbsent(moduleOutDir) { file ->
+      assets.computeIfAbsent(moduleOutputRoots.single()) { file ->
         AssetDescriptor(isDir = true, file = file, relativePath = "")
       }
     }
@@ -341,9 +341,11 @@ class JarPackager private constructor(
       result
     }
 
-    val source = createModuleSource(module, moduleOutDir, excludes)
-    if (source != null) {
-      moduleSources.add(source)
+    moduleOutputRoots.forEach { moduleOutDir ->
+      val source = createModuleSource(module, moduleOutDir, excludes)
+      if (source != null) {
+        moduleSources.add(source)
+      }
     }
 
     if (layout is PluginLayout && layout.mainModule == moduleName) {
@@ -844,16 +846,17 @@ internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().
   )
 }
 
-suspend fun moduleOutputAsSource(context: CompilationContext, module: JpsModule, excludes: List<PathMatcher> = commonModuleExcludes): Source {
-  val moduleOutput = context.getModuleOutputDir(module)
-  check(Files.exists(moduleOutput)) {
-    "${module.name} module output directory doesn't exist: $moduleOutput"
-  }
-  return if (moduleOutput.toString().endsWith(".jar")) {
-    ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
-  }
-  else {
-    DirSource(dir = moduleOutput, excludes = excludes)
+suspend fun moduleOutputAsSource(context: CompilationContext, module: JpsModule, excludes: List<PathMatcher> = commonModuleExcludes): List<Source> {
+  return context.getModuleOutputRoots(module).map { moduleOutput ->
+    check(Files.exists(moduleOutput)) {
+      "${module.name} module output directory doesn't exist: $moduleOutput"
+    }
+    if (moduleOutput.toString().endsWith(".jar")) {
+      ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+    }
+    else {
+      DirSource(dir = moduleOutput, excludes = excludes)
+    }
   }
 }
 
@@ -1090,10 +1093,11 @@ suspend fun buildJar(targetFile: Path, moduleNames: List<String>, context: Build
   checkForNoDiskSpace(context) {
     buildJar(
       targetFile = targetFile,
-      sources = moduleNames.mapNotNull { moduleName ->
+      sources = moduleNames.flatMap { moduleName ->
         val module = context.findRequiredModule(moduleName)
-        val output = context.getModuleOutputDir(module)
-        createModuleSource(module = module, outputDir = output, excludes = commonModuleExcludes)
+        context.getModuleOutputRoots(module).mapNotNull { output ->
+          createModuleSource(module = module, outputDir = output, excludes = commonModuleExcludes)
+        }
       },
     )
   }

@@ -285,8 +285,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       for (module in context.project.modules) {
         val contentRoots = module.contentRootsList.urls
         if (!contentRoots.isEmpty() && rootExcludeCondition(Path.of(JpsPathUtil.urlToPath(contentRoots.first())))) {
-          excludedRootPaths.add(context.getModuleOutputDir(module))
-          excludedRootPaths.add(context.getModuleTestsOutputDir(module))
+          excludedRootPaths.addAll(context.getModuleOutputRoots(module))
+          excludedRootPaths.addAll(context.getModuleOutputRoots(module, forTests = true))
         }
       }
       val excludedRoots = replaceWithArchivedIfNeededLP(excludedRootPaths).filter(Files::exists).map(Path::toString)
@@ -412,11 +412,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (isBootstrapSuiteDefault && !isRunningInBatchMode) {
       //module with "com.intellij.TestAll" which output should be found in `testClasspath + modulePath`
       val testFrameworkCoreModule = context.findRequiredModule("intellij.platform.testFramework.core")
-      val testFrameworkOutput = runBlocking(Dispatchers.Default) {
-        context.getModuleOutputDir(testFrameworkCoreModule).toFile()
+      val testFrameworkCoreModuleOutputRoots = runBlocking(Dispatchers.Default) {
+        context.getModuleOutputRoots(testFrameworkCoreModule).map(Path::toFile)
       }
-      if (!testRoots.contains(testFrameworkOutput)) {
-        testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map(::File))
+      for (testFrameworkOutput in testFrameworkCoreModuleOutputRoots) {
+        if (!testRoots.contains(testFrameworkOutput)) {
+          testRoots.addAll(context.getModuleRuntimeClasspath(testFrameworkCoreModule, false).map(::File))
+        }
       }
     }
 
@@ -729,28 +731,29 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private suspend fun getTestClassesForModule(mainModule: String, filteringPattern: Pattern = Pattern.compile(".*\\.class")): List<String> {
-    val root = context.getModuleTestsOutputDir(context.findRequiredModule(mainModule))
-    val testClasses: List<String> = if (root.isRegularFile() && root.extension == "jar") {
-      val classes = ArrayList<String>()
-      val regex = filteringPattern.toRegex()
-      readZipFile(root) { name, _ ->
-        if (FileUtilRt.toSystemIndependentName(name).matches(regex)) {
-          classes.add(name)
+    val testClasses: List<String> = context.getModuleOutputRoots(context.findRequiredModule(mainModule), forTests = true).flatMap { root ->
+      if (root.isRegularFile() && root.extension == "jar") {
+        val classes = ArrayList<String>()
+        val regex = filteringPattern.toRegex()
+        readZipFile(root) { name, _ ->
+          if (FileUtilRt.toSystemIndependentName(name).matches(regex)) {
+            classes.add(name)
+          }
+          ZipEntryProcessorResult.CONTINUE
         }
-        ZipEntryProcessorResult.CONTINUE
+        classes
       }
-      classes
-    }
-    else {
-      Files.walk(root).use { stream ->
-        stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter {
-          filteringPattern.matcher(it).matches()
-        }.toList()
-      } ?: listOf()
+      else {
+        Files.walk(root).use { stream ->
+          stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter {
+            filteringPattern.matcher(it).matches()
+          }.toList()
+        } ?: listOf()
+      }
     }
 
     if (testClasses.isEmpty()) {
-      throw RuntimeException("No tests were found in $root with $filteringPattern")
+      throw RuntimeException("No tests were found in module '$mainModule' with $filteringPattern")
     }
 
     return testClasses
