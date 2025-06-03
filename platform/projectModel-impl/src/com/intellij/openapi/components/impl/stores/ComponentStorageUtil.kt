@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.components.impl.stores
@@ -50,7 +50,7 @@ object ComponentStorageUtil {
         continue
       }
 
-      // so, PathMacroFilter can easily find component name (null parent)
+      // so, PathMacroFilter can easily find the component name (null parent)
       iterator.remove()
 
       if (pathMacroSubstitutor is TrackingPathMacroSubstitutor && !isKotlinSerializable(element)) {
@@ -60,7 +60,7 @@ object ComponentStorageUtil {
         pathMacroSubstitutor.addUnknownMacros(name, PathMacrosCollector.getMacroNames(element, filter, PathMacrosImpl.getInstanceEx()))
       }
 
-      // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
+      // remove only after "getMacroNames" - some PathMacroFilter requires an element name attribute
       element.removeAttribute(NAME)
 
       map.put(name, element)

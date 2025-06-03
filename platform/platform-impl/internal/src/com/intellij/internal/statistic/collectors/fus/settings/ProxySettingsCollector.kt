@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.settings
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -19,7 +19,7 @@ private class ProxySettingsCollector : ApplicationUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(): MutableSet<MetricEvent> {
+  override suspend fun getMetricsAsync(): Set<MetricEvent> {
     val result = HashSet<MetricEvent>()
 
     val httpConfigurable = HttpConfigurable.getInstance()

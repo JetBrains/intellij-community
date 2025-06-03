@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.internal.statistic.collectors.fus.ui
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.jbr.JdkEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.ui.JreHiDpiUtil
@@ -105,17 +106,17 @@ private suspend fun getDescriptors(): Set<MetricEvent> {
     if (navbar()) VisibilityType.visible else VisibilityType.hidden
   ))
   set.add(RETINA.metric(UIUtil.isRetina()))
-  val properties = PropertiesComponent.getInstance()
+  val properties = serviceAsync<PropertiesComponent>()
   set.add(SHOW_TOOLWINDOW.metric(properties.isTrueValue("ShowDocumentationInToolWindow")))
   set.add(QUICK_DOC_AUTO_UPDATE.metric(properties.getBoolean("DocumentationAutoUpdateEnabled", true)))
-  val lafManager = LafManager.getInstance()
+  val lafManager = serviceAsync<LafManager>()
   set.add(LOOK_AND_FEEL.metric(lafManager.currentUIThemeLookAndFeel?.id?.takeIf(String::isNotEmpty) ?: "unknown"))
   set.add(LAF_AUTODETECT.metric(lafManager.autodetect))
-  set.add(TOOL_WINDOW_LAYOUTS_COUNT.metric(ToolWindowDefaultLayoutManager.getInstance().getLayoutNames().size))
+  set.add(TOOL_WINDOW_LAYOUTS_COUNT.metric(serviceAsync<ToolWindowDefaultLayoutManager>().getLayoutNames().size))
   val value = if (JreHiDpiUtil.isJreHiDPIEnabled()) HidpiMode.per_monitor_dpi else HidpiMode.system_dpi
   set.add(HIDPI_MODE.metric(value))
   set.add(SCREEN_READER.metric(ScreenReader.isActive()))
-  set.add(QUICK_LISTS_COUNT.metric(QuickListsManager.getInstance().allQuickLists.size))
+  set.add(QUICK_LISTS_COUNT.metric(serviceAsync<QuickListsManager>().allQuickLists.size))
   addScreenScale(set)
   addNumberOfMonitors(set)
   addScreenResolutions(set)
