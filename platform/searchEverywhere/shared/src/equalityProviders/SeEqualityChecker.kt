@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.equalityProviders
 
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.openapi.application.readAction
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -16,52 +17,36 @@ import kotlin.concurrent.withLock
  */
 @ApiStatus.Internal
 class SeEqualityChecker {
-  sealed interface Action
-  object Add: Action {
-    override fun toString(): String = "Add"
-  }
-  class Replace(val itemsIds: List<String>): Action {
-    override fun toString(): String {
-      return "Replace(itemsIds=$itemsIds)"
-    }
-  }
-  object Skip: Action {
-    override fun toString(): String = "Skip"
-  }
-
   private val equalityProvider: SEResultsEqualityProvider = SEResultsEqualityProvider.composite(SEResultsEqualityProvider.EP_NAME.extensionList)
   private val alreadyFoundItems = mutableMapOf<String, SearchEverywhereFoundElementInfo>()
   private val lock = ReentrantLock()
 
-  fun checkAndUpdateIfNeeded(newItemData: SeItemData): SeItemData? {
+  suspend fun checkAndUpdateIfNeeded(newItemData: SeItemData): SeItemData? {
     val item = newItemData.fetchItemIfExists() ?: return newItemData
     val itemObject = (item as? SeLegacyItem)?.rawObject ?: return newItemData
 
-    lock.withLock {
-      val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight, item.contributor)
-      val action = equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
+    return readAction {
+      lock.withLock {
+        val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight, item.contributor)
+        val action = equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
 
-      val result = when (action) {
-        is SEResultsEqualityProvider.SEEqualElementsActionType.Replace -> {
-          val toRemove = action.toBeReplaced.mapNotNull { it.uuid }
-          toRemove.forEach { alreadyFoundItems.remove(it) }
+        when (action) {
+          is SEResultsEqualityProvider.SEEqualElementsActionType.Replace -> {
+            val toRemove = action.toBeReplaced.mapNotNull { it.uuid }
+            toRemove.forEach { alreadyFoundItems.remove(it) }
+            alreadyFoundItems[newItemData.uuid] = newItemInfo
 
-          newItemData.withUuidToReplace(toRemove).logReplaceAndReturn()
-        }
-        is SEResultsEqualityProvider.SEEqualElementsActionType.Skip -> {
-          newItemData.logSkipAndReturnNull()
-        }
-        else -> {
-          alreadyFoundItems[newItemData.uuid] = newItemInfo
-          newItemData.logAddAndReturn()
+            newItemData.withUuidToReplace(toRemove).logReplaceAndReturn()
+          }
+          is SEResultsEqualityProvider.SEEqualElementsActionType.Skip -> {
+            newItemData.logSkipAndReturnNull()
+          }
+          else -> {
+            alreadyFoundItems[newItemData.uuid] = newItemInfo
+            newItemData.logAddAndReturn()
+          }
         }
       }
-
-      SeLog.log(SeLog.EQUALITY) {
-        "Equality result for ${item.contributor.searchProviderId}: $result for ${newItemInfo.uuid}"
-      }
-
-      return result
     }
   }
 

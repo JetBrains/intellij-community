@@ -68,7 +68,7 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
     } ?: newItem.uuidsToReplace
 
     return if (toReplace.isNotEmpty()) {
-      SeResultReplacedEvent(newItem.uuidsToReplace, newItem)
+      SeResultReplacedEvent(toReplace, newItem)
     }
     else SeResultAddedEvent(newItem)
   }

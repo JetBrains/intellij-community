@@ -60,9 +60,7 @@ fun SeResultList.handleEvent(event: SeResultEvent) {
       }.sorted()
 
       var wasAdded = false
-      indexes.filter {
-        it >= frozenCount
-      }.forEach { index ->
+      indexes.forEach { index ->
         removeRow(index)
         if (!wasAdded) {
           addRow(index, SeResultListItemRow(event.newItemData))
