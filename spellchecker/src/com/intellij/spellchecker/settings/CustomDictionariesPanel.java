@@ -31,6 +31,7 @@ import static java.util.Arrays.asList;
 
 public final class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
+  private final @NotNull Project myProject;
   private final @NotNull SpellCheckerManager myManager;
   private final CustomDictionariesTableView myCustomDictionariesTableView;
   private final List<String> removedDictionaries = new ArrayList<>();
@@ -39,6 +40,7 @@ public final class CustomDictionariesPanel extends JPanel {
 
   public CustomDictionariesPanel(@NotNull SpellCheckerSettings settings, @NotNull Project project, @NotNull SpellCheckerManager manager) {
     mySettings = settings;
+    myProject = project;
     myManager = manager;
     defaultDictionaries = project.isDefault() ? new ArrayList<>() : asList(SpellCheckerBundle.message("app.dictionary"), SpellCheckerBundle
       .message("project.dictionary"));
@@ -145,6 +147,7 @@ public final class CustomDictionariesPanel extends JPanel {
     }));
     mySettings.setCustomDictionariesPaths(newPaths);
     myManager.updateBundledDictionaries(ContainerUtil.filter(oldPaths, o -> !newPaths.contains(o)));
+    myProject.getMessageBus().syncPublisher(CustomDictionarySettingsListener.CUSTOM_DICTIONARY_SETTINGS_TOPIC).customDictionaryPathsChanged(newPaths);
   }
 
   public List<String> getValues() {
