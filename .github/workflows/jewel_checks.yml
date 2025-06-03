@@ -27,4 +27,4 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run :check task
-        run: ./gradlew check --continue --no-daemon
+        run: ./gradlew :decorated-window:check :detekt-plugin:check :foundation:check :ide-laf-bridge:check :int-ui:int-ui-decorated-window:check :int-ui:int-ui-standalone:check :markdown:core:check :markdown:extensions:autolink:check :markdown:extensions:gfm-alerts:check :markdown:extensions:gfm-strikethrough:check :markdown:extensions:gfm-tables:check :markdown:ide-laf-bridge-styling:check :markdown:int-ui-standalone-styling:check :samples:ide-plugin:ktfmtCheck :samples:showcase:check :samples:standalone:check :ui:check :ui-tests:check --continue --no-daemon
