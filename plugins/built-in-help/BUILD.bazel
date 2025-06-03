@@ -15,8 +15,6 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:netty-codec-http",
-    "@lib//:lucene-core",
-    "@lib//:lucene-analysis-common",
     "@lib//:lucene-codecs",
     "@lib//:lucene-memory",
     "@lib//:lucene-queries",
@@ -33,6 +31,7 @@ jvm_library(
     "//platform/util",
     "//platform/util-ex",
     "//platform/built-in-server:builtInServer-impl",
+    "//libraries/lucene.common",
     "@lib//:netty-buffer",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",

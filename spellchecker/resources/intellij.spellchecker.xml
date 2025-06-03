@@ -1,5 +1,8 @@
 <idea-plugin>
   <module value="com.intellij.modules.spellchecker"/>
+  <dependencies>
+    <module name="intellij.libraries.lucene.common"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint name="spellchecker.support" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>

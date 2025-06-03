@@ -147,9 +147,8 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="lucene-core" level="project" />
-    <orderEntry type="library" name="lucene-analysis-common" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.libraries.lucene.common" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />

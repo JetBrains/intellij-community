@@ -10,8 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
-    <orderEntry type="library" name="lucene-core" level="project" />
-    <orderEntry type="library" name="lucene-analysis-common" level="project" />
     <orderEntry type="library" name="lucene-codecs" level="project" />
     <orderEntry type="library" name="lucene-memory" level="project" />
     <orderEntry type="library" name="lucene-queries" level="project" />
@@ -28,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.lucene.common" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />

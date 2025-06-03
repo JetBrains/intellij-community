@@ -356,8 +356,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
-    <orderEntry type="library" name="lucene-core" level="project" />
-    <orderEntry type="library" name="lucene-analysis-common" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.lucene.common" />
     <orderEntry type="library" name="ai.grazie.spell.gec.engine.local" level="project" />
     <orderEntry type="module-library">
       <library name="ai.grazie.utils.lucene.lt.compatibility" type="repository">

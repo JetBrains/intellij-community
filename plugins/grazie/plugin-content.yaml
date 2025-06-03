@@ -82,16 +82,6 @@
   module: intellij.grazie.core
   files:
   - name: $MAVEN_REPOSITORY$/javax/measure/unit-api/1/unit-api-1.jar
-- name: lib/lucene-analysis-common.jar
-  library: lucene-analysis-common
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-analysis-common/9/lucene-analysis-common-9.jar
-  reason: <- intellij.grazie.core
-- name: lib/lucene-core.jar
-  library: lucene-core
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/lucene/lucene-core/9/lucene-core-9.jar
-  reason: <- intellij.grazie.core
 - name: lib/net.loomchild-segment.jar
   library: net.loomchild:segment:2.0.1
   module: intellij.grazie.core
