@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import fleet.kernel.DurableRef
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
@@ -33,20 +34,26 @@ class SeLocalItemDataProvider(private val provider: SeItemsProvider,
     return channelFlow {
       val counter = AtomicInt(0)
 
-      provider.collectItems(params, object : SeItemsProvider.Collector {
-        override suspend fun put(item: SeItem): Boolean {
-          val itemData = SeItemData.createItemData(
-            sessionRef, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), emptyList()
-          ) ?: return coroutineContext.isActive
+      try {
+        provider.collectItems(params, object : SeItemsProvider.Collector {
+          override suspend fun put(item: SeItem): Boolean {
+            val itemData = SeItemData.createItemData(
+              sessionRef, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), emptyList()
+            ) ?: return coroutineContext.isActive
 
-          SeLog.log(SeLog.ITEM_EMIT) {
-            val count = counter.incrementAndFetch()
-            "$logLabel provider for ${id.value} receives (total=$count, priority=${itemData.weight}): ${itemData.uuid} - ${itemData.presentation.text.split("\n").firstOrNull()}"
+            SeLog.log(SeLog.ITEM_EMIT) {
+              val count = counter.incrementAndFetch()
+              "$logLabel provider for ${id.value} receives (total=$count, priority=${itemData.weight}): ${itemData.uuid} - ${itemData.presentation.text.split("\n").firstOrNull()}"
+            }
+            send(itemData)
+            return coroutineContext.isActive
           }
-          send(itemData)
-          return coroutineContext.isActive
-        }
-      })
+        })
+      }
+      catch (e: Throwable) {
+        if (e is CancellationException) throw e
+        SeLog.warn("Error while collecting items from ${provider.id}($logLabel) provider: ${e.message}")
+      }
     }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).onCompletion {
       SeLog.log(SeLog.ITEM_EMIT) { "Item data provider flow completed - $logLabel - ${id.value}" }
     }
