@@ -102,7 +102,14 @@ public class ProcessOutputType extends Key<Object> {
       .replace("\b", "\\b");
   }
 
-  public static @Nullable ProcessOutputType tryCast(@NotNull Key<?> key) {
-    return key instanceof ProcessOutputType ? (ProcessOutputType)key : null;
+  /**
+   * Converts one of the keys from @{@link ProcessOutputTypes} to {@link ProcessOutputType}.
+   * Throws an IllegalArgumentException if the key is not one of ProcessOutputTypes.
+   */
+  public static @NotNull ProcessOutputType fromKey(@NotNull Key<?> key) {
+    if (key instanceof ProcessOutputType) {
+      return (ProcessOutputType)key;
+    }
+    throw new IllegalArgumentException("Unexpected key " + key + ". Should be one of ProcessOutputTypes");
   }
 }
