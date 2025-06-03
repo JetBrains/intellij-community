@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.DynamicPlugins.allowLoadUnloadWithoutRestart
@@ -15,41 +14,30 @@ import com.intellij.ide.plugins.PluginManagerCore.isIncompatible
 import com.intellij.ide.plugins.PluginManagerCore.isUpdatedBundledPlugin
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
+import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.readOrUpdateFile
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
-import com.intellij.ide.plugins.newui.UiPluginManager.Companion.getInstance
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageDialogBuilder.Companion.okCancel
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
-import com.intellij.util.io.HttpRequests
-import com.intellij.util.system.OS
-import com.intellij.util.withQuery
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
-import java.net.URI
-import java.net.URLEncoder
 import java.nio.file.FileVisitResult
 import java.nio.file.Paths
 import java.util.*
@@ -229,6 +217,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     service.setFilter { session?.pluginStates[it.pluginId]?.isEnabled ?: true }
     session?.updateService = service
     return service
+  }
+
+  override fun getAllPluginsTags(): Set<String> {
+    return MarketplaceRequests.getInstance().marketplaceTagsSupplier.get()
+  }
+
+  override fun getAllVendors(): Set<String> {
+    return MarketplaceRequests.getInstance().marketplaceVendorsSupplier.get()
   }
 
   override fun performInstallOperation(
@@ -464,47 +460,36 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return updatePluginDependencies(session, null)
   }
 
-  override fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData> {
-    return HttpRequests.request(MarketplaceUrls.getSearchPluginsUrl(query, count, includeIncompatible)).setHeadersViaTuner().throwStatusCodeException(false).connect {
-      objectMapper.readValue(it.inputStream, object : TypeReference<List<MarketplaceSearchPluginData>>() {})
+  override fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
+    try {
+      val plugins = MarketplaceRequests.getInstance().executePluginSearch(query, count, includeIncompatible)
+      return PluginSearchResult(plugins)
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+      return PluginSearchResult(emptyList(), e.message)
     }
   }
 
-  override fun loadUpdateMetadata(
+  override fun loadPluginDetails(
     xmlId: String,
     ideCompatibleUpdate: IdeCompatibleUpdate,
     indicator: ProgressIndicator?,
-  ): IntellijUpdateMetadata {
-    val updateMetadataFile = Paths.get(PathManager.getPluginTempPath(), "meta")
-    return readOrUpdateFile(updateMetadataFile.resolve(ideCompatibleUpdate.externalUpdateId + ".json"), MarketplaceUrls.getUpdateMetaUrl(ideCompatibleUpdate.externalPluginId, ideCompatibleUpdate.externalUpdateId), indicator, IdeBundle.message("progress.downloading.plugins.meta", xmlId)) {
-      objectMapper.readValue(it, IntellijUpdateMetadata::class.java)
-    }
+  ): PluginUiModel {
+    return MarketplaceRequests.loadPluginModel(xmlId, ideCompatibleUpdate, indicator)
   }
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   @Throws(IOException::class)
   override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
-    return HttpRequests.request(MarketplaceUrls.getPluginReviewsUrl(pluginId, page)).setHeadersViaTuner().productNameAsUserAgent().throwStatusCodeException(false).connect {
-      objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
-    }
+    return MarketplaceRequests.getInstance().loadPluginReviews(pluginId, page)
   }
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   override fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
-    try {
-      return readOrUpdateFile(
-        Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),
-        MarketplaceUrls.getPluginMetaUrl(externalPluginId),
-        null,
-        ""
-      ) { objectMapper.readValue(it, object : TypeReference<IntellijPluginMetadata>() {}) }
-    }
-    catch (e: Exception) {
-      LOG.warn(e)
-      return null
-    }
+    return MarketplaceRequests.getInstance().loadPluginMetadata(externalPluginId)
   }
 
   override fun getPluginManagerUrl(): String {
@@ -512,8 +497,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?, indicator: ProgressIndicator?): PluginUiModel? {
-    return getLastCompatiblePluginUpdate(setOf(pluginId), false, BuildNumber.fromString(buildNumber)).firstOrNull()
-      ?.let { loadUpdateMetadata(pluginId.idString, it, indicator).toUiModel() }
+    return MarketplaceRequests.getInstance().getLastCompatiblePluginUpdateModel(pluginId, BuildNumber.fromString(buildNumber), indicator)
   }
 
   override fun getLastCompatiblePluginUpdate(
@@ -521,7 +505,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     throwExceptions: Boolean,
     buildNumber: String?,
   ): List<IdeCompatibleUpdate> {
-    return getLastCompatiblePluginUpdate(allIds, throwExceptions, BuildNumber.fromString(buildNumber))
+    return MarketplaceRequests.getLastCompatiblePluginUpdate(allIds, BuildNumber.fromString(buildNumber), throwExceptions)
   }
 
   override fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
@@ -768,90 +752,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       val pluginNames = MyPluginModel.getPluginNames(descriptors)
       val message = IdeBundle.message("dialog.message.unable.to.apply.changes", pluginNames.size, MyPluginModel.joinPluginNamesOrIds(pluginNames))
       throw ConfigurationException(XmlStringUtil.wrapInHtml(message)).withHtmlMessage()
-    }
-  }
-
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
-  private fun getLastCompatiblePluginUpdate(
-    allIds: Set<PluginId>,
-    throwExceptions: Boolean,
-    buildNumber: BuildNumber?,
-  ): List<IdeCompatibleUpdate> {
-    val chunks = mutableListOf<MutableList<PluginId>>()
-    chunks.add(mutableListOf())
-
-    val maxLength = 3500 // 4k minus safety gap
-    var currentLength = 0
-    val pluginXmlIdsLength = "&pluginXmlId=".length
-
-    for (id in allIds) {
-      val adder = id.idString.length + pluginXmlIdsLength
-      val newLength = currentLength + adder
-      if (newLength > maxLength) {
-        chunks.add(mutableListOf(id))
-        currentLength = adder
-      }
-      else {
-        currentLength = newLength
-        chunks.last().add(id)
-      }
-    }
-
-    return chunks.flatMap {
-      loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions)
-    }
-  }
-
-  private fun loadLastCompatiblePluginsUpdate(
-    ids: Collection<PluginId>,
-    buildNumber: BuildNumber? = null,
-    throwExceptions: Boolean = false,
-  ): List<IdeCompatibleUpdate> {
-    try {
-      if (ids.isEmpty()) {
-        return emptyList()
-      }
-
-      val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
-      val os = URLEncoder.encode(OS.CURRENT.name + " " + OS.CURRENT.version, CharsetToolkit.UTF8)
-      val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-        MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
-          .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
-      }
-      else null
-
-      val query = buildString {
-        append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
-        append("&os=$os")
-        if (machineId != null) {
-          append("&mid=$machineId")
-        }
-        for (id in ids) {
-          append("&pluginXmlId=${URLEncoder.encode(id.idString, CharsetToolkit.UTF8)}")
-        }
-      }
-
-      val urlString = url.withQuery(query).toString()
-
-      return HttpRequests.request(urlString)
-        .accept(HttpRequests.JSON_CONTENT_TYPE)
-        .setHeadersViaTuner()
-        .productNameAsUserAgent()
-        .throwStatusCodeException(throwExceptions)
-        .connect {
-          objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
-        }
-    }
-    catch (pce: ProcessCanceledException) {
-      throw pce
-    }
-    catch (e: Exception) {
-      LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
-      if (throwExceptions) {
-        throw e
-      }
-      return emptyList()
     }
   }
 

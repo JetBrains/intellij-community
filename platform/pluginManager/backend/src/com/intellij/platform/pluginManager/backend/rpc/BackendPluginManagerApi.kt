@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -47,7 +48,7 @@ class BackendPluginManagerApi : PluginManagerApi {
   override suspend fun getInstalledPlugins(): List<PluginDto> {
     return InstalledPluginsState.getInstance().installedPlugins.map(PluginDescriptorConverter::toPluginDto)
   }
-  
+
   override suspend fun getUpdates(): List<PluginDto> {
     return DefaultUiPluginManagerController.getUpdates().map { PluginDto.fromModel(it) }
   }
@@ -110,16 +111,16 @@ class BackendPluginManagerApi : PluginManagerApi {
     DefaultUiPluginManagerController.createSession(sessionId)
   }
 
-  override suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData> {
-    return DefaultUiPluginManagerController.executeMarketplaceQuery(query, count, includeIncompatible)
+  override suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
+    return DefaultUiPluginManagerController.executePluginsSearch(query, count, includeIncompatible)
   }
 
   override suspend fun isPluginDisabled(pluginId: PluginId): Boolean {
     return PluginManagerCore.isDisabled(pluginId)
   }
 
-  override suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): IntellijUpdateMetadata {
-    return DefaultUiPluginManagerController.loadUpdateMetadata(xmlId, ideCompatibleUpdate)
+  override suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): PluginDto {
+    return PluginDto.fromModel(DefaultUiPluginManagerController.loadPluginDetails(xmlId, ideCompatibleUpdate))
   }
 
   override suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
@@ -132,6 +133,14 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun getPluginManagerUrl(): String {
     return DefaultUiPluginManagerController.getPluginManagerUrl()
+  }
+
+  override suspend fun getAllPluginsTags(): Set<String> {
+    return DefaultUiPluginManagerController.getAllPluginsTags()
+  }
+
+  override suspend fun getAllVendors(): Set<String> {
+    return DefaultUiPluginManagerController.getAllVendors()
   }
 
   override suspend fun updateDescriptorsForInstalledPlugins() {

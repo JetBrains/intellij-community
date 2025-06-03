@@ -13,8 +13,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
 import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.api.ReviewsPageContainer
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.getLastCompatiblePluginUpdate
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.pluginCardOpened
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginHomepage
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls.getPluginReviewNoteUrl
@@ -377,7 +376,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val plugin = plugin
     if (plugin != null && !sentFeedbackPlugins.contains(plugin.pluginId)) {
-      val foundPlugin = UiPluginManager.getInstance().findPlugin(plugin.pluginId)
+      val foundPlugin = DefaultUiPluginManagerController.findPlugin(plugin.pluginId)
       if (foundPlugin != null && pluginModel.isUninstalled(foundPlugin.pluginId)) {
         rootPanel.add(uninstallFeedbackNotification!!, BorderLayout.NORTH)
       }
@@ -566,7 +565,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       val reviewComments = node.reviewComments!!
       val page = reviewComments.getNextPage()
       ProcessIOExecutorService.INSTANCE.execute {
-        val items = MarketplaceRequests.getInstance().loadPluginReviews(node, page)
+        val items = UiPluginManager.getInstance().loadPluginReviews(node.pluginId, page)
         if (items == null) return@execute
         ApplicationManager.getApplication().invokeLater({
                                                           if (showComponent != component) {
@@ -703,7 +702,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                                 ?: return@doLoad
 
           coroutineContext.ensureActive()
-          val update = getLastCompatiblePluginUpdate(setOf(component.pluginModel.pluginId))
+          val update = UiPluginManager.getInstance().getLastCompatiblePluginUpdate(setOf(component.pluginModel.pluginId), false)
           if (!update.isEmpty()) {
             val compatibleUpdate = update[0]
             lastUpdateModel.externalPluginId = compatibleUpdate.externalPluginId
@@ -1433,18 +1432,23 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
 @ApiStatus.Internal
 fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
-  return MarketplaceRequests.getInstance().loadPluginDetails(model)
+  val externalPluginId = model.externalPluginId ?: return model
+  val externalUpdateId = model.externalUpdateId ?: return model
+  
+  return UiPluginManager.getInstance().loadPluginDetails(
+    model.pluginId.idString,
+    IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
+  )
 }
 
 @ApiStatus.Internal
 fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiModel): PluginUiModel? {
-  val marketplaceRequests = MarketplaceRequests.getInstance()
   if (!existingModel.suggestedFeatures.isEmpty()) {
     targetModel.suggestedFeatures = existingModel.suggestedFeatures
   }
 
   val externalPluginId = existingModel.externalPluginId ?: return null
-  val metadata = marketplaceRequests.loadPluginMetadata(externalPluginId)
+  val metadata = UiPluginManager.getInstance().loadPluginMetadata(externalPluginId)
   if (metadata != null) {
     if (metadata.screenshots != null) {
       targetModel.screenShots = metadata.screenshots
@@ -1460,7 +1464,7 @@ fun loadAllPluginDetails(existingModel: PluginUiModel, targetModel: PluginUiMode
 @ApiStatus.Internal
 fun loadReviews(existingModel: PluginUiModel): PluginUiModel? {
   val reviewComments = ReviewsPageContainer(20, 0)
-  val reviews = MarketplaceRequests.getInstance().loadPluginReviews(existingModel, reviewComments.getNextPage()) ?: emptyList()
+  val reviews = UiPluginManager.getInstance().loadPluginReviews(existingModel.pluginId, reviewComments.getNextPage()) ?: emptyList()
   reviewComments.addItems(reviews)
   existingModel.reviewComments = reviewComments
   return existingModel

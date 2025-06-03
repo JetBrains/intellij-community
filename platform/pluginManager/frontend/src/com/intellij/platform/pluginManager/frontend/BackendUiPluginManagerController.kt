@@ -8,9 +8,8 @@ import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
-import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginUiModel
@@ -174,11 +173,11 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().isPluginDisabled(pluginId) }
   }
 
-  override fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData> {
+  override fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult {
     return awaitForResult { PluginManagerApi.getInstance().executeMarketplaceQuery(query, count, includeIncompatible) }
   }
 
-  override fun loadUpdateMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator?): IntellijUpdateMetadata {
+  override fun loadPluginDetails(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator?): PluginUiModel {
     return awaitForResult { PluginManagerApi.getInstance().loadMetadata(xmlId, ideCompatibleUpdate) }
   }
 
@@ -192,6 +191,14 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override fun getPluginManagerUrl(): String {
     return awaitForResult { PluginManagerApi.getInstance().getPluginManagerUrl() }
+  }
+
+  override fun getAllPluginsTags(): Set<String> {
+    return awaitForResult { PluginManagerApi.getInstance().getAllPluginsTags() }
+  }
+
+  override fun getAllVendors(): Set<String> {
+    return awaitForResult { PluginManagerApi.getInstance().getAllVendors() }
   }
 
   override fun updateDescriptorsForInstalledPlugins() {

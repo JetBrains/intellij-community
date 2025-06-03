@@ -8,9 +8,9 @@ import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.ModalityState
@@ -45,8 +45,8 @@ class UiPluginManager {
     getController().closeSession(uuid.toString())
   }
 
-  fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): List<MarketplaceSearchPluginData> {
-    return getController().executeMarketplaceQuery(query, count, includeUpgradeToCommercialIde)
+  fun executeMarketplaceQuery(query: String, count: Int, includeUpgradeToCommercialIde: Boolean): PluginSearchResult {
+    return getController().executePluginsSearch(query, count, includeUpgradeToCommercialIde)
   }
 
   fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel> {
@@ -65,12 +65,12 @@ class UiPluginManager {
     return getController().isPluginDisabled(pluginId)
   }
 
-  fun loadUpdateMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): IntellijUpdateMetadata {
-    return getController().loadUpdateMetadata(xmlId, ideCompatibleUpdate, indicator)
+  fun loadPluginDetails(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginUiModel {
+    return getController().loadPluginDetails(xmlId, ideCompatibleUpdate, indicator)
   }
 
-  fun loadPluginReviews(model: PluginUiModel, page: Int): List<PluginReviewComment>? {
-    return getController().loadPluginReviews(model.pluginId, page)
+  fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {
+    return getController().loadPluginReviews(pluginId, page)
   }
 
   fun tryUnloadPluginIfAllowed(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
@@ -222,6 +222,14 @@ class UiPluginManager {
 
   fun getPluginManagerUrl(): String {
     return getController().getPluginManagerUrl()
+  }
+
+  fun getAllPluginsTags(): Set<String> {
+    return getController().getAllPluginsTags()
+  }
+
+  fun getAllVendors(): Set<String> {
+    return getController().getAllVendors()
   }
 
   fun updateDescriptorsForInstalledPlugins() {

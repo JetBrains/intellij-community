@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
+import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
@@ -29,12 +30,14 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun findPlugin(pluginId: PluginId): PluginDto?
   suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String?): PluginDto?
   suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate>
-  suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): List<MarketplaceSearchPluginData>
+  suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
   suspend fun isPluginDisabled(pluginId: PluginId): Boolean
-  suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): IntellijUpdateMetadata
+  suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): PluginDto
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   suspend fun getPluginManagerUrl(): String
+  suspend fun getAllPluginsTags(): Set<String>
+  suspend fun getAllVendors(): Set<String>
   suspend fun updateDescriptorsForInstalledPlugins()
   suspend fun createSession(sessionId: String)
   suspend fun closeSession(sessionId: String)

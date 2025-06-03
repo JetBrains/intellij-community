@@ -201,7 +201,6 @@ public final class RepositoryHelper {
     }
   }
 
-
   @Deprecated(forRemoval = true)
   public static @NotNull Collection<PluginNode> mergePluginsFromRepositories(
     @NotNull List<PluginNode> marketplacePlugins,
