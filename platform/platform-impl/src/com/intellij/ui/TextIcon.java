@@ -32,17 +32,19 @@ public final class TextIcon implements Icon {
   private Color myBorderColor;
   private Font myFont;
   private String myText;
-  private Rectangle myTextBounds;
+  private Rectangle myStabilizedTextBounds;
   private FontRenderContext myContext;
   private AffineTransform myFontTransform;
   private List<String> myTextsForMinimumBounds;
   private Rectangle myMinimumTextBounds;
+  private Rectangle myCurrentTextBounds;
 
   private Rectangle getTextBounds() {
-    if (myTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
+    if (myStabilizedTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
       myContext = createContext();
       Font fnt = myFontTransform == null ? myFont : myFont.deriveFont(myFontTransform);
-      myTextBounds = getPixelBounds(fnt, myText, myContext);
+      myCurrentTextBounds = getPixelBounds(fnt, myText, myContext);
+      myStabilizedTextBounds = myCurrentTextBounds;
 
       if (myTextsForMinimumBounds != null) {
         if (myMinimumTextBounds == null) {
@@ -50,20 +52,21 @@ public final class TextIcon implements Icon {
             myMinimumTextBounds = max(myMinimumTextBounds, getPixelBounds(fnt, text, myContext));
           }
         }
-        myTextBounds = max(myMinimumTextBounds, myTextBounds);
+        myStabilizedTextBounds = max(myMinimumTextBounds, myStabilizedTextBounds);
       }
 
       if (myFontTransform != null) {
         try {
           AffineTransform reverseTransform = myFontTransform.createInverse();
-          myTextBounds = applyTransform(myTextBounds, reverseTransform);
+          myStabilizedTextBounds = applyTransform(myStabilizedTextBounds, reverseTransform);
+          myCurrentTextBounds = applyTransform(myCurrentTextBounds, reverseTransform);
         }
         catch (NoninvertibleTransformException e) {
           LOG.error(e);
         }
       }
     }
-    return myTextBounds;
+    return myStabilizedTextBounds;
   }
 
   @NotNull
@@ -104,6 +107,8 @@ public final class TextIcon implements Icon {
   public void setFontTransform(AffineTransform fontTransform) {
     myFontTransform = fontTransform;
     myMinimumTextBounds = null;
+    myStabilizedTextBounds = null;
+    myCurrentTextBounds = null;
   }
 
   public void setInsets(int top, int left, int bottom, int right) {
@@ -135,19 +140,21 @@ public final class TextIcon implements Icon {
   }
 
   public void setText(String text) {
-    myTextBounds = null;
+    myStabilizedTextBounds = null;
     myText = text;
+    myCurrentTextBounds = null;
   }
 
   public void setFont(Font font) {
     myFont = font;
-    myTextBounds = null;
+    myStabilizedTextBounds = null;
     myMinimumTextBounds = null;
+    myCurrentTextBounds = null;
   }
 
   public void setTextsForMinimumBounds(List<String> textsForMinimumBounds) {
     myTextsForMinimumBounds = textsForMinimumBounds;
-    myTextBounds = null;
+    myStabilizedTextBounds = null;
     myMinimumTextBounds = null;
   }
 
@@ -208,8 +215,11 @@ public final class TextIcon implements Icon {
       }
     }
     Rectangle bounds = getTextBounds();
+    Rectangle currentTextBounds = myCurrentTextBounds;
     if (myForeground != null && bounds != null) {
-      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x, myInsets.top + y, bounds.width, bounds.height);
+      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x + (bounds.width - currentTextBounds.width)/2,
+                                            myInsets.top + y + (bounds.height - currentTextBounds.height)/2,
+                                            currentTextBounds.width, currentTextBounds.height);
       try {
         Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
         if (textLcdContrast == null) textLcdContrast = getLcdContrastValue(); // L&F is not properly updated
@@ -237,14 +247,15 @@ public final class TextIcon implements Icon {
            Objects.equals(myForeground, icon.myForeground) &&
            Objects.equals(myFont, icon.myFont) &&
            Objects.equals(myText, icon.myText) &&
-           Objects.equals(myTextBounds, icon.myTextBounds) &&
+           Objects.equals(myStabilizedTextBounds, icon.myStabilizedTextBounds) &&
+           Objects.equals(myTextsForMinimumBounds, icon.myTextsForMinimumBounds) &&
            Objects.equals(withBorders, icon.withBorders) &&
            Objects.equals(myBorderColor, icon.myBorderColor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds, withBorders, myBorderColor);
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myStabilizedTextBounds, myTextsForMinimumBounds, withBorders, myBorderColor);
   }
 
   private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {
@@ -272,7 +283,7 @@ public final class TextIcon implements Icon {
   }
 
   public void uiSettingsChanged() {
-      myTextBounds = null;
+    myStabilizedTextBounds = null;
       myMinimumTextBounds = null;
   }
 }
