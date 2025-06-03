@@ -36,11 +36,19 @@ interface KotlinSyncTestsContext {
     val testProperties: KotlinTestProperties
 }
 
-class KotlinMppTestsContext(
+/**
+ * Basic implementation of [KotlinSyncTestsContext].
+ *
+ * It is not a drag-and-drop implementation. It meant to be used together with [AbstractKotlinMppGradleImportingTest]-like
+ * runners that properly initialize lateinits, vars, etc.
+ *
+ * It leaves only [testProperties] not implemented, allowing for covariant overrides in inheritors
+ * to provide more specific type
+ */
+abstract class AbstractKotlinSyncTestsContext(
     override val testFeatures: List<TestFeature<*>>
 ) : KotlinSyncTestsContext {
     override val testConfiguration: TestConfiguration = TestConfiguration()
-    override val testProperties: KotlinMppTestProperties = KotlinMppTestProperties.construct(testConfiguration)
 
     override lateinit var description: Description
     override lateinit var testProjectRoot: File
@@ -57,13 +65,26 @@ class KotlinMppTestsContext(
             val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
 
             return testFeatures.filter { feature ->
-                // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
-                if (feature is TestTasksChecker) return@filter false
-
                 if (config.disableCheckers != null && feature in config.disableCheckers!!) return@filter false
                 if (config.onlyCheckers != null) return@filter feature in config.onlyCheckers!!
 
                 feature.isEnabledByDefault()
             }
         }
+}
+
+
+class KotlinMppTestsContext(
+    testFeatures: List<TestFeature<*>>
+) : AbstractKotlinSyncTestsContext(testFeatures) {
+    override val testProperties: KotlinMppTestProperties = KotlinMppTestProperties.construct(testConfiguration)
+
+    override lateinit var description: Description
+    override lateinit var testProjectRoot: File
+    override lateinit var testProject: Project
+    override lateinit var gradleJdkPath: File
+
+    // Additionally mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
+    override val enabledFeatures: List<TestFeature<*>>
+        get() = super.enabledFeatures.filter { it !is TestTasksChecker }
 }
