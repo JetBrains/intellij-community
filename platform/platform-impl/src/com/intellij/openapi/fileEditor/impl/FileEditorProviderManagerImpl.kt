@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -104,7 +103,7 @@ class FileEditorProviderManagerImpl
 
     val sharedProviders = coroutineScope {
       val fileType = async {
-        blockingContext { file.fileType }
+        file.fileType
       }
 
       var hasDocument: Boolean? = null

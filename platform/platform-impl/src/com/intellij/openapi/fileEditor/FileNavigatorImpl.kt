@@ -8,7 +8,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
@@ -89,9 +88,7 @@ class FileNavigatorImpl : FileNavigator {
     }
 
     withContext(Dispatchers.EDT) {
-      blockingContext {
-        OpenFileDescriptor.navigateInEditor(descriptor, e)
-      }
+      OpenFileDescriptor.navigateInEditor(descriptor, e)
     }
     return true
   }

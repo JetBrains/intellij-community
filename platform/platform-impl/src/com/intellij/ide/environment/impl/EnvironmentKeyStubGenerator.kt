@@ -4,13 +4,13 @@ package com.intellij.ide.environment.impl
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.platform.util.ArgsParser
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
+import java.util.function.Supplier
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
 import kotlin.io.path.createFile
@@ -61,9 +62,7 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
 }
 
 private suspend fun generateKeyConfig(generateDescriptions: Boolean, configuration: EnvironmentConfiguration): ByteArray {
-  val environmentKeys = blockingContext {
-    EnvironmentKeyProvider.EP_NAME.extensionList.flatMap { it.knownKeys.toList() }
-  }.sortedBy { it.first.id }
+  val environmentKeys = EnvironmentKeyProvider.EP_NAME.extensionList.flatMap { it.knownKeys.toList() }.sortedBy { it.first.id }
 
   val registeredKeys = environmentKeys.mapTo(HashSet()) { it.first }
   val unregisteredValues = configuration.map.entries.filter { it.key !in registeredKeys }

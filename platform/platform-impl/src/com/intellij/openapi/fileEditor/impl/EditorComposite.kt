@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUT
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
@@ -220,12 +219,10 @@ open class EditorComposite internal constructor(
       val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
       span("file opening in EDT and repaint", Dispatchers.ui(UiDispatcherKind.RELAX)) {
         span("beforeFileOpened event executing") {
-          blockingContext {
-            computeOrLogException(
-              lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
-              errorMessage = { "exception during beforeFileOpened notification" },
-            )
-          }
+          computeOrLogException(
+            lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
+            errorMessage = { "exception during beforeFileOpened notification" },
+          )
         }
 
         applyFileEditorsInEdt(

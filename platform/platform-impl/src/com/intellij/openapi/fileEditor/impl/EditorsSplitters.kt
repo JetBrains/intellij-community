@@ -32,7 +32,6 @@ import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.ui.Divider
@@ -1090,19 +1089,17 @@ private fun computeFileEntry(
   val fileProviderDeferred = compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
     // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
     if (notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
-      blockingContext {
-        ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
-          try {
-            notFullyPreparedFile.contentsToByteArray(true)
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (ignore: FileTooBigException) {
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-          }
+      ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
+        try {
+          notFullyPreparedFile.contentsToByteArray(true)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (ignore: FileTooBigException) {
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
         }
       }
     }

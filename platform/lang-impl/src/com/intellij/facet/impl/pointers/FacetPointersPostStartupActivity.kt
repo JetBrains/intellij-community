@@ -3,7 +3,6 @@ package com.intellij.facet.impl.pointers
 
 import com.intellij.facet.pointers.FacetPointersManager
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -12,10 +11,8 @@ private class FacetPointersPostStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val manager = project.serviceAsync<FacetPointersManager>()
     if (manager is FacetPointersManagerImpl) {
-      blockingContext {
-        DumbService.getInstance(project).smartInvokeLater {
-          manager.refreshPointers()
-        }
+      DumbService.getInstance(project).smartInvokeLater {
+        manager.refreshPointers()
       }
     }
   }

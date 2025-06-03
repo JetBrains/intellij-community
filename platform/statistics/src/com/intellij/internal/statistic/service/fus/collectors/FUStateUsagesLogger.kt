@@ -19,7 +19,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.*
@@ -116,15 +115,13 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
             val data = mergeWithEventData(groupData, metric.data)
             val eventData = data?.build() ?: emptyMap()
             launch {
-              blockingContext { logger.logAsync(group, metric.eventId, eventData, true) }.asDeferred().join()
+              logger.logAsync(group, metric.eventId, eventData, true).asDeferred().join()
             }
           }
         }
 
         launch {
-          blockingContext {
-            logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData(group.recorder).addProject(project).build(), true).join()
-          }
+          logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData(group.recorder).addProject(project).build(), true).join()
         }
       }
     }

@@ -14,7 +14,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
@@ -29,9 +28,7 @@ internal class ExternalSystemStartupActivity : ProjectActivity {
     val esProjectsManager = readAction {
       ExternalProjectsManagerImpl.getInstance(project)
     }
-    blockingContext {
-      esProjectsManager.init()
-    }
+    esProjectsManager.init()
 
     // do not compute in EDT
     val managers = ExternalSystemManager.EP_NAME.extensionList
@@ -39,9 +36,7 @@ internal class ExternalSystemStartupActivity : ProjectActivity {
       for (manager in managers) {
         runCatching {
           if (manager is StartupActivity) {
-            blockingContext {
-              manager.runActivity(project)
-            }
+            manager.runActivity(project)
           }
           else if (manager is ProjectActivity) {
             manager.execute(project)
@@ -54,16 +49,12 @@ internal class ExternalSystemStartupActivity : ProjectActivity {
       if (!isNewlyImportedProject && isNewlyCreatedProject) {
         for (manager in managers) {
           runCatching {
-            blockingContext {
-              ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, manager.systemId).createDirectoriesForEmptyContentRoots())
-            }
+            ExternalSystemUtil.refreshProjects(ImportSpecBuilder(project, manager.systemId).createDirectoriesForEmptyContentRoots())
           }.getOrLogException(logger<ExternalSystemStartupActivity>())
         }
       }
 
-      blockingContext {
-        ProjectRenameAware.beAware(project)
-      }
+      ProjectRenameAware.beAware(project)
     }
   }
 }

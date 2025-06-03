@@ -8,7 +8,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -87,9 +86,7 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
   override fun execute(command: Runnable) {
     childScope.coroutineContext.ensureActive()
     childScope.launch(ClientId.coroutineContext()) {
-      blockingContext {
-        command.run()
-      }
+      command.run()
     }
   }
 

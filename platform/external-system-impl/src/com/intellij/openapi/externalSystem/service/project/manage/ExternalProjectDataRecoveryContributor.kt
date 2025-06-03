@@ -5,7 +5,6 @@ import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -35,12 +34,10 @@ class ExternalProjectDataRecoveryContributor : ExternalSystemRecoveryContributor
   }
 
   private suspend fun invalidateLocalExternalSystemCache(recoveryScope: RecoveryScope) {
-    blockingContext {
-      val project = recoveryScope.project
-      for (manager in ExternalSystemApiUtil.getAllManagers()) {
-        val localSettings = manager.getLocalSettingsProvider().`fun`(project)
-        localSettings.invalidateCaches()
-      }
+    val project = recoveryScope.project
+    for (manager in ExternalSystemApiUtil.getAllManagers()) {
+      val localSettings = manager.getLocalSettingsProvider().`fun`(project)
+      localSettings.invalidateCaches()
     }
   }
 
@@ -52,16 +49,14 @@ class ExternalProjectDataRecoveryContributor : ExternalSystemRecoveryContributor
   }
 
   private suspend fun invalidateExternalSystemDataStorage(recoveryScope: RecoveryScope) {
-    blockingContext {
-      val project = recoveryScope.project
-      val dataStorage = ExternalProjectsDataStorage.getInstance(project)
-      for (manager in ExternalSystemApiUtil.getAllManagers()) {
-        val systemId = manager.getSystemId()
-        val settings = manager.getSettingsProvider().`fun`(project)
-        for (projectSettings in settings.linkedProjectsSettings) {
-          val externalProjectPath = projectSettings.externalProjectPath
-          dataStorage.remove(systemId, externalProjectPath)
-        }
+    val project = recoveryScope.project
+    val dataStorage = ExternalProjectsDataStorage.getInstance(project)
+    for (manager in ExternalSystemApiUtil.getAllManagers()) {
+      val systemId = manager.getSystemId()
+      val settings = manager.getSettingsProvider().`fun`(project)
+      for (projectSettings in settings.linkedProjectsSettings) {
+        val externalProjectPath = projectSettings.externalProjectPath
+        dataStorage.remove(systemId, externalProjectPath)
       }
     }
   }
