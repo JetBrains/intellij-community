@@ -26,6 +26,7 @@ import com.intellij.vcs.git.shared.widget.tree.*
 import git4idea.GitReference
 import git4idea.config.GitVcsSettings
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -131,11 +132,20 @@ class GitBranchesTreePopupStep private constructor(
   }
 
   companion object {
+    @VisibleForTesting
     fun create(
       project: Project,
-      selectedRepository: GitRepositoryFrontendModel?,
+      preferredSelection: GitRepositoryFrontendModel?,
       repositories: List<GitRepositoryFrontendModel>,
-    ): GitBranchesTreePopupStep = GitBranchesTreePopupStep(project, selectedRepository, repositories, true)
+    ): GitBranchesTreePopupStep {
+      val selectedRepoIfNeeded = when {
+        repositories.size <= 1 -> null
+        GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots() -> null
+        else -> preferredSelection
+      }
+
+      return GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true)
+    }
 
     /**
      * 2nd-level popup shown on repository click

@@ -4,12 +4,9 @@ package git4idea.ui.branch.popup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
-import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import org.apache.http.annotation.Obsolete
-import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Set of helper methods to create branches tree pop-up using backend-only [GitRepository] model
@@ -22,13 +19,9 @@ internal object GitBranchesTreePopupOnBackend {
    */
   @JvmStatic
   fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
-    return GitBranchesWidgetPopup.createPopup(project, selectedRepoIfNeeded(selectedRepository))
-  }
-
-  @VisibleForTesting
-  internal fun selectedRepoIfNeeded(selectedRepository: GitRepository?): GitRepositoryFrontendModel? = when {
-    selectedRepository == null -> null
-    GitVcsSettings.getInstance(selectedRepository.project).shouldExecuteOperationsOnAllRoots() -> null
-    else -> GitRepositoriesFrontendHolder.getInstance(selectedRepository.project).get(selectedRepository.rpcId)
+    val preferredSelection = selectedRepository?.let {
+      GitRepositoriesFrontendHolder.getInstance(project).get(selectedRepository.rpcId)
+    }
+    return GitBranchesWidgetPopup.createPopup(project, preferredSelection)
   }
 }

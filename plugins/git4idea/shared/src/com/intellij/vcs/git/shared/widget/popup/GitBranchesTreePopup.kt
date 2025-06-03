@@ -123,9 +123,9 @@ internal class GitBranchesTreePopup private constructor(
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
 
-    fun create(project: Project, selectedRepository: GitRepositoryFrontendModel?): GitBranchesTreePopup {
+    fun create(project: Project, preferredSelection: GitRepositoryFrontendModel?): GitBranchesTreePopup {
       val repositories = GitRepositoriesFrontendHolder.getInstance(project).getAll().sorted()
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep.create(project, selectedRepository, repositories)).also {
+      return GitBranchesTreePopup(project, GitBranchesTreePopupStep.create(project, preferredSelection, repositories)).also {
         it.setIsMovable(true)
       }
     }

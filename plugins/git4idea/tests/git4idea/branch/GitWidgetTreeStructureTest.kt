@@ -22,7 +22,6 @@ import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.popup.GitBranchesTreePopupOnBackend
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 
@@ -254,11 +253,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
       val repositories = holder.getAll().sorted()
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
-      popupStep = GitBranchesTreePopupStep.create(
-        project,
-        GitBranchesTreePopupOnBackend.selectedRepoIfNeeded(repo),
-        repositories,
-      )
+      popupStep = GitBranchesTreePopupStep.create(project, holder.get(repo.rpcId), repositories)
       tree.cellRenderer = GitBranchesTreePopupRenderer(popupStep)
       tree.model = popupStep.treeModel
       popupStep.updateTreeModelIfNeeded(tree, filter)
