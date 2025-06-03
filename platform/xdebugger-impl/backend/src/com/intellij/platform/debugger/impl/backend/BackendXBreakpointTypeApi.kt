@@ -120,55 +120,39 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
 
   override suspend fun toggleLineBreakpoint(projectId: ProjectId, request: XLineBreakpointInstallationRequest): XToggleLineBreakpointResponse? {
     val requestId = requestCounter.getAndIncrement()
-    if (LOG.isDebugEnabled) {
-      LOG.debug("[$requestId] Toggle line breakpoint request received for project: $projectId, file: ${request.position}, line: ${request.position.line}")
-      LOG.debug("[$requestId] Request details: hasOneBreakpoint=${request.hasOneBreakpoint}, isTemporary=${request.isTemporary}, isConditional=${request.isConditional}")
-    }
+    LOG.info("[$requestId] Toggle line breakpoint request received for project: $projectId, file: ${request.position}, line: ${request.position.line}" +
+             "Request details: hasOneBreakpoint=${request.hasOneBreakpoint}, isTemporary=${request.isTemporary}, isConditional=${request.isConditional}")
 
     val project = projectId.findProjectOrNull() ?: return null
     val position = request.position.sourcePosition()
     val lineTypes = request.types.mapNotNull { XBreakpointUtil.findType(it.id) as? XLineBreakpointType<*> }
 
-    if (LOG.isDebugEnabled) {
-      LOG.debug("[$requestId] Found ${lineTypes.size} line breakpoint types: ${lineTypes.map { it.id }}")
-    }
+    LOG.info("[$requestId] Found ${lineTypes.size} line breakpoint types: ${lineTypes.map { it.id }}")
 
     val variants = readAction { XDebuggerUtilImpl.getLineBreakpointVariants(project, lineTypes, position) }.await()
 
-    if (LOG.isDebugEnabled) {
-      LOG.debug("[$requestId] Found ${variants.size} breakpoint variants")
-    }
+    LOG.info("[$requestId] Found ${variants.size} breakpoint variants")
 
     if (variants.isEmpty()) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("[$requestId] No variants found, returning empty response")
-      }
+      LOG.info("[$requestId] No variants found, returning empty response")
       return XNoBreakpointPossibleResponse
     }
 
     val singleVariant = variants.singleOrNull()
     if (singleVariant != null) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("[$requestId] Single variant found: ${singleVariant.text}")
-      }
+      LOG.info("[$requestId] Single variant found: ${singleVariant.text}")
 
       if (request.hasOneBreakpoint) {
-        if (LOG.isDebugEnabled) {
-          LOG.debug("[$requestId] Breakpoint exists and can be removed, returning XRemoveBreakpointResponse")
-        }
+        LOG.info("[$requestId] Breakpoint exists, returning XRemoveBreakpointResponse")
         return XRemoveBreakpointResponse
       }
 
       val breakpoint = createBreakpointByVariant(project, singleVariant, position, request)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("[$requestId] Created breakpoint: $breakpoint, returning XLineBreakpointInstalledResponse")
-      }
+      LOG.info("[$requestId] Created breakpoint: $breakpoint, returning XLineBreakpointInstalledResponse")
       return XLineBreakpointInstalledResponse(breakpoint.toRpc())
     }
 
-    if (LOG.isDebugEnabled) {
-      LOG.debug("[$requestId] Multiple variants found (${variants.size}), creating selection dialog")
-    }
+    LOG.info("[$requestId] Multiple variants found (${variants.size}), creating selection dialog")
 
     val variantDtos = readAction {
       variants.map {
@@ -185,29 +169,19 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
       catch (_: ClosedReceiveChannelException) {
         return@launch
       }
-      if (LOG.isDebugEnabled) {
-        LOG.debug("[$requestId] Received variant selection: $receivedResponse")
-      }
 
       val (selectedVariantIndex, breakpointCallback) = receivedResponse
       breakpointCallback.use {
         val variant = variants[selectedVariantIndex]
-        if (LOG.isDebugEnabled) {
-          LOG.debug("[$requestId] Selected variant: ${variant.text}")
-        }
+        LOG.info("[$requestId] Received variant selection: $receivedResponse Selected variant: ${variant.text}")
 
         val breakpoint = createBreakpointByVariant(project, variant, position, request)
-        if (LOG.isDebugEnabled) {
-          LOG.debug("[$requestId] Created breakpoint from selected variant: $breakpoint")
-        }
+        LOG.info("[$requestId] Created breakpoint from selected variant: $breakpoint")
 
         it.send(breakpoint.toRpc())
       }
     }
 
-    if (LOG.isDebugEnabled) {
-      LOG.debug("[$requestId] Returning XLineBreakpointMultipleVariantResponse with ${variantDtos.size} variants")
-    }
     return XLineBreakpointMultipleVariantResponse(variantDtos, selectionCallback)
   }
 
