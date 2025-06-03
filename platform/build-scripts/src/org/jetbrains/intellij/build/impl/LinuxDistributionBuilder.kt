@@ -120,7 +120,7 @@ class LinuxDistributionBuilder(
               span.addEvent("skip")
             }
             else {
-              buildTarGz(arch, runtimeDir = null, osAndArchSpecificDistPath, NO_RUNTIME_SUFFIX + suffix(arch))
+              buildTarGz(arch, runtimeDir = null, osAndArchSpecificDistPath, NO_RUNTIME_SUFFIX + suffix(arch, targetLibcImpl))
             }
           }
         }
@@ -135,7 +135,7 @@ class LinuxDistributionBuilder(
           .setAttribute("runtimeDir", runtimeDir.toString()),
         "linux_tar_gz_${arch.name}"
       ) { _ ->
-        val suffix = suffix(arch) + if (targetLibcImpl == LinuxLibcImpl.MUSL) "-musl" else ""
+        val suffix = suffix(arch, targetLibcImpl)
         buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix)
       }
 
@@ -334,7 +334,7 @@ class LinuxDistributionBuilder(
   }
 
   override fun distributionFilesBuilt(arch: JvmArchitecture): List<Path> {
-    val archSuffix = suffix(arch)
+    val archSuffix = suffix(arch, targetLibcImpl)
     return sequenceOf("${archSuffix}.tar.gz", "${NO_RUNTIME_SUFFIX}${archSuffix}.tar.gz")
       .map { suffix -> context.productProperties.getBaseArtifactName(context) + suffix }
       .plus(getSnapArtifactName(arch))
@@ -468,5 +468,9 @@ class LinuxDistributionBuilder(
     val vmOptions = VmOptionsGenerator.generate(context).asSequence() + sequenceOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true")
     VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
     return vmOptionsPath
+  }
+
+  private fun suffix(arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl): String {
+    return suffix(arch) + if (targetLibcImpl == LinuxLibcImpl.MUSL) "-musl" else ""
   }
 }
