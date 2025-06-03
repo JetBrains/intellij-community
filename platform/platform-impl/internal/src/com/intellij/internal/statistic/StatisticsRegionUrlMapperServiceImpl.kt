@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic
 
 import com.intellij.ide.RegionSettings.RegionSettingsListener
@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.minutes
  *
  * If changed, please, update [StatisticsRegionUrlMapperService.Companion.getInstance]
  */
-private class StatisticsRegionUrlMapperServiceImpl(val scope: CoroutineScope) : StatisticsRegionUrlMapperService() {
+private class StatisticsRegionUrlMapperServiceImpl(private val scope: CoroutineScope) : StatisticsRegionUrlMapperService() {
   @Volatile
   private var url: String? = null
 
