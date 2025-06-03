@@ -106,8 +106,12 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
         }
     }
 
-    private fun loadGradleDefinitions(root: LightGradleBuildRoot) =
-        loadGradleDefinitions(root.workingDir, root.gradleHome, root.javaHome, project)
+    private fun loadGradleDefinitions(root: LightGradleBuildRoot) = loadGradleDefinitions(
+        workingDir = root.workingDir,
+        gradleHome = root.gradleHome,
+        javaHome = root.javaHome,
+        project = project
+    )
 
     private fun subscribeToGradleSettingChanges() {
         val listener = object : GradleSettingsListener {
@@ -143,12 +147,13 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             if (definitionsByRoots.isEmpty()) {
                 // can be empty in case when import wasn't done from IDE start up,
                 // otherwise KotlinDslSyncListener should run reloadIfNeeded for valid roots
-                GradleBuildRootsLocator.getInstance(project)?.getAllRoots()?.forEach {
+                GradleBuildRootsLocator.getInstance(project).getAllRoots().forEach {
                     val workingDir = it.pathPrefix
                     val (gradleHome, javaHome) = when (it) {
                         is Imported -> {
                             it.data.gradleHome to it.data.javaHome
                         }
+
                         is WithoutScriptModels -> {
                             val settings = ExternalSystemApiUtil.getExecutionSettings<GradleExecutionSettings>(
                                 project,

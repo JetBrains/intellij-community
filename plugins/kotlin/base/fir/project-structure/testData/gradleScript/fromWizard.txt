@@ -6,6 +6,8 @@ KaScriptModule:
     KaLibraryModule(annotations-13.0.jar, scriptDependency)
     KaLibraryModule(dependencies-accessors/932b97c9e0ae61a950d0c442ab66fbe219f5f218/classes, scriptDependency)
     KaLibraryModule(gradle-api-8.11.jar, scriptDependency)
+    KaLibraryModule(gradle-base-services-8.11.jar, scriptDependency)
+    KaLibraryModule(gradle-base-services-groovy-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-installation-beacon-8.11.jar, scriptDependency)
@@ -88,6 +90,30 @@ KaLibraryModule:
   description: Library gradle-api-8.11.jar
   targetPlatform: JVM (1.8)
   libraryName: gradle-api-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library gradle-base-services-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: gradle-base-services-8.11.jar
+  isSdk: false
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaLibraryModule:
+  description: Library gradle-base-services-groovy-8.11.jar
+  targetPlatform: JVM (1.8)
+  libraryName: gradle-base-services-groovy-8.11.jar
   isSdk: false
   regularDependencies:
     <empty>
@@ -702,6 +728,8 @@ KaScriptModule:
   regularDependencies:
     KaLibraryModule(SDK)
     KaLibraryModule(gradle-api-8.11.jar, scriptDependency)
+    KaLibraryModule(gradle-base-services-8.11.jar, scriptDependency)
+    KaLibraryModule(gradle-base-services-groovy-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-core-api-8.11.jar, scriptDependency)
     KaLibraryModule(gradle-installation-beacon-8.11.jar, scriptDependency)

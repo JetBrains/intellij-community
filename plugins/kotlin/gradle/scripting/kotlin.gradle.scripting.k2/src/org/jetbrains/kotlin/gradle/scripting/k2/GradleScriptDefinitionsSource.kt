@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDefinitionWrapper
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptRefinedConfigurationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
-import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
+import org.jetbrains.kotlin.idea.core.script.k2.*
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.script.experimental.api.ide
 
 class GradleScriptDefinitionsSource(val project: Project) : ScriptDefinitionsSource {
     override val definitions: Sequence<ScriptDefinition>
@@ -35,7 +38,7 @@ class GradleScriptDefinitionsStorage(val project: Project) :
             if (!initialized.get()) {
                 val state = state
                 if (state.workingDir != null) {
-                    loadGradleDefinitions(state.workingDir, state.gradleHome, state.javaHome, project).let {
+                    loadAndWrapDefinitions(state.workingDir, state.gradleHome, state.javaHome, state.gradleVersion).let {
                         definitions.set(it)
                     }
                 }
@@ -45,18 +48,54 @@ class GradleScriptDefinitionsStorage(val project: Project) :
         }
     }
 
-    fun loadDefinitionsFromDisk(workingDir: String, gradleHome: String?, javaHome: String?) {
-        definitions.set(loadGradleDefinitions(workingDir, gradleHome, javaHome, project))
+    fun loadDefinitionsFromDisk(workingDir: String, gradleHome: String?, javaHome: String?, gradleVersion: String?) {
+        definitions.set(loadAndWrapDefinitions(workingDir, gradleHome, javaHome, gradleVersion))
         updateState {
-            it.copy(workingDir = workingDir, gradleHome = gradleHome, javaHome = javaHome)
+            it.copy(workingDir = workingDir, gradleHome = gradleHome, javaHome = javaHome, gradleVersion = gradleVersion)
         }
         K2ScriptDefinitionProvider.getInstance(project).reloadDefinitionsFromSources()
+    }
+
+    private fun loadAndWrapDefinitions(
+        workingDir: String,
+        gradleHome: String?,
+        javaHome: String?,
+        gradleVersion: String?
+    ): List<ScriptDefinition> {
+        val definitions = loadGradleDefinitions(
+            workingDir = workingDir,
+            gradleHome = gradleHome,
+            javaHome = javaHome,
+            gradleVersion = gradleVersion,
+            project = project
+        )
+        return definitions.map {
+            if (it !is GradleScriptDefinitionWrapper) it
+            else {
+                it.with {
+                    ide {
+                        kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
+                            id = "gradle-kts"
+                            title = ".gradle.kts"
+                            templateName = "Kotlin Script Gradle"
+                        })
+                        configurationResolverDelegate {
+                            GradleScriptRefinedConfigurationProvider.getInstance(project)
+                        }
+                        scriptWorkspaceModelManagerDelegate {
+                            GradleScriptRefinedConfigurationProvider.getInstance(project)
+                        }
+                    }
+                }
+            }
+        }
     }
 
     data class State(
         @Attribute @JvmField val workingDir: String? = null,
         @Attribute @JvmField val gradleHome: String? = null,
-        @Attribute @JvmField val javaHome: String? = null
+        @Attribute @JvmField val javaHome: String? = null,
+        @Attribute @JvmField val gradleVersion: String? = null,
     )
 
     companion object {

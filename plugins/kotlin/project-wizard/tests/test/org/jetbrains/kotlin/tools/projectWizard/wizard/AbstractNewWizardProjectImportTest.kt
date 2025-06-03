@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -167,7 +166,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
             val psiFile = project.getKtFile(virtualFile) ?: error("Cannot find KtFile for $file")
             assertTrue(
                 "Configuration for ${file.path} is missing",
-                project.service<ScriptConfigurationManager>().hasConfiguration(psiFile)
+                ScriptConfigurationManager.getInstance(project).hasConfiguration(psiFile)
             )
 
             val bindingContext = psiFile.analyzeWithContent()

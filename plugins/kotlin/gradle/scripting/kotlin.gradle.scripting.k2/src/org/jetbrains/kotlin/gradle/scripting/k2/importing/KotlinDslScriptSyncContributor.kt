@@ -54,7 +54,12 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
         if (sync == null || sync.models.isEmpty()) return
 
-        GradleScriptDefinitionsStorage.getInstance(project).loadDefinitionsFromDisk(sync.workingDir, sync.gradleHome, sync.javaHome)
+        GradleScriptDefinitionsStorage.getInstance(project).loadDefinitionsFromDisk(
+            sync.workingDir,
+            sync.gradleHome,
+            sync.javaHome,
+            sync.gradleVersion
+        )
         val gradleScripts = sync.models.mapNotNullTo(mutableSetOf()) {
             val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
             GradleScriptModel(
