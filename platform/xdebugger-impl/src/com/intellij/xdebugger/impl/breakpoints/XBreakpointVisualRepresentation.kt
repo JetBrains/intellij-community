@@ -1,318 +1,288 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.impl.breakpoints;
+package com.intellij.xdebugger.impl.breakpoints
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LazyRangeMarkerFactory;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.ThreeState;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.ui.DebuggerColors;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragSource;
-import java.util.concurrent.ExecutorService;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diff.impl.DiffUtil
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LazyRangeMarkerFactory
+import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.DocumentUtil
+import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointInlayManager.Companion.getInstance
+import com.intellij.xdebugger.ui.DebuggerColors
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Cursor
+import java.awt.dnd.DnDConstants
+import java.awt.dnd.DragSource
+import java.util.concurrent.ExecutorService
 
 @ApiStatus.Internal
-public class XBreakpointVisualRepresentation {
-  private static final Logger LOG = Logger.getInstance(XBreakpointVisualRepresentation.class);
-  private final XLightLineBreakpointProxy myBreakpoint;
-  static final ExecutorService redrawInlaysExecutor =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
-  private final Project myProject;
-  private final XBreakpointManagerProxy myBreakpointManager;
-  private final boolean myIsEnabled;
+class XBreakpointVisualRepresentation(
+  private val myBreakpoint: XLightLineBreakpointProxy,
+  private val myIsEnabled: Boolean,
+  private val myBreakpointManager: XBreakpointManagerProxy,
+) {
+  private val myProject: Project = myBreakpoint.project
 
-  private @Nullable RangeMarker myRangeMarker;
+  var rangeMarker: RangeMarker? = null
+    private set
 
-  @ApiStatus.Internal
-  public XBreakpointVisualRepresentation(
-    XLightLineBreakpointProxy xBreakpoint,
-    boolean isEnabled,
-    XBreakpointManagerProxy breakpointManagerProxy
-  ) {
-    myBreakpoint = xBreakpoint;
-    myProject = xBreakpoint.getProject();
-    myBreakpointManager = breakpointManagerProxy;
-    myIsEnabled = isEnabled;
+  val highlighter: RangeHighlighter?
+    get() = rangeMarker as? RangeHighlighter
+
+
+  fun updateUI() {
+    myBreakpointManager.getLineBreakpointManager().queueBreakpointUpdateCallback(myBreakpoint) {
+      doUpdateUI {}
+    }
   }
 
-  public @Nullable RangeMarker getRangeMarker() {
-    return myRangeMarker;
-  }
 
-  public @Nullable RangeHighlighter getHighlighter() {
-    return myRangeMarker instanceof RangeHighlighter ? (RangeHighlighter)myRangeMarker : null;
-  }
-
-  @ApiStatus.Internal
-  public void updateUI() {
-    myBreakpointManager.getLineBreakpointManager().queueBreakpointUpdateCallback(myBreakpoint, () -> {
-      doUpdateUI(() -> {
-      });
-    });
-  }
-
-  @ApiStatus.Internal
   @RequiresBackgroundThread
-  public void doUpdateUI(@NotNull Runnable callOnUpdate) {
+  fun doUpdateUI(callOnUpdate: Runnable) {
     if (myBreakpoint.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
+      return
     }
     if (!myIsEnabled) {
-      return;
+      return
     }
 
-    VirtualFile file = myBreakpoint.getFile();
-    if (file == null) {
-      return;
-    }
+    val file = myBreakpoint.getFile() ?: return
 
-    ReadAction.nonBlocking(() -> {
-      if (myBreakpoint.isDisposed()) return;
-
+    ReadAction.nonBlocking {
+      if (myBreakpoint.isDisposed()) return@nonBlocking
       // try not to decompile files
-      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+      var document = FileDocumentManager.getInstance().getCachedDocument(file)
       if (document == null) {
         // currently LazyRangeMarkerFactory creates document for non binary files
-        if (file.getFileType().isBinary()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (myRangeMarker == null) {
-              myRangeMarker = LazyRangeMarkerFactory.getInstance(myProject).createRangeMarker(file, myBreakpoint.getLine(), 0, true);
-              callOnUpdate.run();
-            }
-          }, myProject.getDisposed());
-          return;
+        if (file.fileType.isBinary()) {
+          ApplicationManager.getApplication().invokeLater(
+            {
+              if (this.rangeMarker == null) {
+                this.rangeMarker = LazyRangeMarkerFactory.getInstance(myProject).createRangeMarker(file, myBreakpoint.getLine(), 0, true)
+                callOnUpdate.run()
+              }
+            }, myProject.getDisposed())
+          return@nonBlocking
         }
-        document = FileDocumentManager.getInstance().getDocument(file);
+        document = FileDocumentManager.getInstance().getDocument(file)
         if (document == null) {
-          return;
+          return@nonBlocking
         }
       }
 
       // TODO IJPL-185322 support XBreakpointTypeWithDocumentDelegation
-      if (myBreakpoint.getType() instanceof XBreakpointTypeWithDocumentDelegation) {
-        document = ((XBreakpointTypeWithDocumentDelegation)myBreakpoint.getType()).getDocumentForHighlighting(document);
+      if (myBreakpoint.type is XBreakpointTypeWithDocumentDelegation) {
+        document = (myBreakpoint.type as XBreakpointTypeWithDocumentDelegation).getDocumentForHighlighting(document)
       }
 
-      TextRange range = myBreakpoint.getHighlightRange();
+      val range = myBreakpoint.getHighlightRange()
 
-      Document finalDocument = document;
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myBreakpoint.isDisposed()) return;
-
-        if (myRangeMarker != null && !(myRangeMarker instanceof RangeHighlighter)) {
-          removeHighlighter();
-          assert getHighlighter() == null;
-        }
-
-        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
-
-        if (!myBreakpoint.isEnabled()) {
-          attributes = attributes.clone();
-          attributes.setBackgroundColor(null);
-        }
-
-        RangeHighlighter highlighter = getHighlighter();
-        if (highlighter != null &&
-            (!highlighter.isValid()
-             || range != null && !highlighter.getTextRange().equals(range)
-             //breakpoint range marker is out-of-sync with actual breakpoint text range
-             || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
-             || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
-             // it seems that this check is not needed - we always update line number from the highlighter
-             // and highlighter is removed on line and file change anyway
-              /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/)) {
-          removeHighlighter();
-          redrawInlineInlays();
-          highlighter = null;
-        }
-
-        myBreakpoint.updateIcon();
-
-        if (highlighter == null) {
-          int line = myBreakpoint.getLine();
-          if (line >= finalDocument.getLineCount()) {
-            callOnUpdate.run();
-            return;
+      val finalDocument: Document = document
+      ApplicationManager.getApplication().invokeLater(
+        {
+          if (myBreakpoint.isDisposed()) return@invokeLater
+          if (this.rangeMarker != null && this.rangeMarker !is RangeHighlighter) {
+            removeHighlighter()
+            assert(this.highlighter == null)
           }
-          MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, myProject, true);
-          if (range != null && !range.isEmpty()) {
-            TextRange lineRange = DocumentUtil.getLineTextRange(finalDocument, line);
-            if (range.intersectsStrict(lineRange)) {
-              highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                            DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
-                                                            HighlighterTargetArea.EXACT_RANGE);
+
+          var attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES)
+
+          if (!myBreakpoint.isEnabled()) {
+            attributes = attributes.clone()
+            attributes.backgroundColor = null
+          }
+
+          var highlighter = this.highlighter
+          if (highlighter != null &&
+              (!highlighter.isValid() || range != null && highlighter.textRange != range //breakpoint range marker is out-of-sync with actual breakpoint text range
+               || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument) || !Comparing.equal<TextAttributes?>(
+                highlighter.getTextAttributes(null),
+                attributes) // it seems that this check is not needed - we always update line number from the highlighter
+                // and highlighter is removed on line and file change anyway
+                /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/
+              )
+          ) {
+            removeHighlighter()
+            redrawInlineInlays()
+            highlighter = null
+          }
+
+          myBreakpoint.updateIcon()
+
+          if (highlighter == null) {
+            val line = myBreakpoint.getLine()
+            if (line >= finalDocument.getLineCount()) {
+              callOnUpdate.run()
+              return@invokeLater
+            }
+            val markupModel = DocumentMarkupModel.forDocument(finalDocument, myProject, true) as MarkupModelEx
+            if (range != null && !range.isEmpty) {
+              val lineRange = DocumentUtil.getLineTextRange(finalDocument, line)
+              if (range.intersectsStrict(lineRange)) {
+                highlighter = markupModel.addRangeHighlighter(range.startOffset, range.endOffset,
+                                                              DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                                                              HighlighterTargetArea.EXACT_RANGE)
+              }
+            }
+            if (highlighter == null) {
+              highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes)
+            }
+            if (highlighter == null) {
+              callOnUpdate.run()
+              return@invokeLater
+            }
+
+            highlighter.setGutterIconRenderer(myBreakpoint.createGutterIconRenderer())
+            highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, true)
+            highlighter.setEditorFilter(MarkupEditorFilter { editor -> isHighlighterAvailableIn(editor) })
+            this.rangeMarker = highlighter
+
+            redrawInlineInlays()
+          }
+          else {
+            val markupModel = DocumentMarkupModel.forDocument(finalDocument, myProject, false) as MarkupModelEx?
+            if (markupModel != null) {
+              // renderersChanged false - we don't change gutter size
+              val filter = highlighter.getEditorFilter()
+              highlighter.setEditorFilter(MarkupEditorFilter.EMPTY)
+              highlighter.setEditorFilter(filter) // to fireChanged
             }
           }
-          if (highlighter == null) {
-            highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
-          }
-          if (highlighter == null) {
-            callOnUpdate.run();
-            return;
-          }
-
-          highlighter.setGutterIconRenderer(myBreakpoint.createGutterIconRenderer());
-          highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
-          highlighter.setEditorFilter(XBreakpointVisualRepresentation::isHighlighterAvailableIn);
-          myRangeMarker = highlighter;
-
-          redrawInlineInlays();
-        }
-        else {
-          MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, myProject, false);
-          if (markupModel != null) {
-            // renderersChanged false - we don't change gutter size
-            MarkupEditorFilter filter = highlighter.getEditorFilter();
-            highlighter.setEditorFilter(MarkupEditorFilter.EMPTY);
-            highlighter.setEditorFilter(filter); // to fireChanged
-          }
-        }
-
-        callOnUpdate.run();
-      }, myProject.getDisposed());
-    }).executeSynchronously();
+          callOnUpdate.run()
+        }, myProject.getDisposed())
+    }.executeSynchronously()
   }
 
-  public void removeHighlighter() {
-    if (getHighlighter() != null) {
+  fun removeHighlighter() {
+    if (this.highlighter != null) {
       try {
-        getHighlighter().dispose();
+        this.highlighter!!.dispose()
       }
-      catch (Exception e) {
-        LOG.error(e);
+      catch (e: Exception) {
+        LOG.error(e)
       }
-      myRangeMarker = null;
+      this.rangeMarker = null
     }
   }
 
-  private void redrawInlineInlays() {
-    redrawInlineInlays(myBreakpoint.getFile(), myBreakpoint.getLine());
+  private fun redrawInlineInlays() {
+    redrawInlineInlays(myBreakpoint.getFile(), myBreakpoint.getLine())
   }
 
-  public void redrawInlineInlays(@Nullable VirtualFile file, int line) {
-    if (file == null) return;
-    if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return;
+  fun redrawInlineInlays(file: VirtualFile?, line: Int) {
+    if (file == null) return
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return
 
-    ReadAction.nonBlocking(() -> {
-        var document = FileDocumentManager.getInstance().getDocument(file);
-        if (document == null) return null;
+    ReadAction.nonBlocking<Document?> {
+      var document = FileDocumentManager.getInstance().getDocument(file)
+      if (document == null) return@nonBlocking null
 
-        if (myBreakpoint.getType() instanceof XBreakpointTypeWithDocumentDelegation) {
-          document = ((XBreakpointTypeWithDocumentDelegation)myBreakpoint.getType()).getDocumentForHighlighting(document);
-        }
-
-        return document;
-      })
+      if (myBreakpoint.type is XBreakpointTypeWithDocumentDelegation) {
+        document = (myBreakpoint.type as XBreakpointTypeWithDocumentDelegation).getDocumentForHighlighting(document)
+      }
+      document
+    }
       .expireWith(myProject)
       .submit(redrawInlaysExecutor)
-      .onSuccess(document -> {
-        if (document == null) return;
-        InlineBreakpointInlayManager.getInstance(myProject).redrawLine(document, line);
-      });
+      .onSuccess { document: Document? ->
+        if (document == null) return@onSuccess
+        getInstance(myProject).redrawLine(document, line)
+      }
   }
 
-  @ApiStatus.Internal
-  public @NotNull GutterDraggableObject createBreakpointDraggableObject() {
-    return new GutterDraggableObject() {
-      @Override
-      public boolean copy(int line, VirtualFile file, int actionId) {
+  fun createBreakpointDraggableObject(): GutterDraggableObject {
+    return object : GutterDraggableObject {
+      override fun copy(line: Int, file: VirtualFile?, actionId: Int): Boolean {
         if (canMoveTo(line, file)) {
-          XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject);
-          XBreakpointManagerImpl breakpointManager = debuggerManager.getBreakpointManager();
+          val debuggerManager = XDebuggerManager.getInstance(myProject) as XDebuggerManagerImpl
+          val breakpointManager = debuggerManager.breakpointManager
           // TODO IJPL-185322 implement DnD for light breakpoints?
-          if (!(myBreakpoint instanceof XLineBreakpointProxy breakpoint)) {
-            return false;
+          if (myBreakpoint !is XLineBreakpointProxy) {
+            return false
           }
-          if (isCopyAction(actionId) && breakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+          if (isCopyAction(actionId) && myBreakpoint is XLineBreakpointProxy.Monolith) {
             // TODO IJPL-185322 support copy through gutter DnD
-            breakpointManager.copyLineBreakpoint(monolithBreakpointProxy.getBreakpoint(), file.getUrl(), line);
+            breakpointManager.copyLineBreakpoint(myBreakpoint.breakpoint, file!!.url, line)
           }
           else {
-            breakpoint.setFileUrl(file.getUrl());
-            breakpoint.setLine(line);
-            XDebugSessionImpl session = debuggerManager.getCurrentSession();
-            if (session != null && breakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
+            myBreakpoint.setFileUrl(file!!.url)
+            myBreakpoint.setLine(line)
+            val session = debuggerManager.currentSession
+            if (session != null && myBreakpoint is XLineBreakpointProxy.Monolith) {
               // TODO IJPL-185322 support active breakpoint update on DnD
-              session.checkActiveNonLineBreakpointOnRemoval(monolithBreakpointProxy.getBreakpoint());
+              session.checkActiveNonLineBreakpointOnRemoval(myBreakpoint.breakpoint)
             }
-            return true;
+            return true
           }
         }
-        return false;
+        return false
       }
 
-      @Override
-      public void remove() {
+      override fun remove() {
         // TODO IJPL-185322 implement DnD remove for light breakpoints?
-        if (myBreakpoint instanceof XLineBreakpointProxy proxy) {
-          XDebuggerUtilImpl.removeBreakpointWithConfirmation(proxy);
+        if (myBreakpoint is XLineBreakpointProxy) {
+          XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint)
         }
       }
 
-      @Override
-      public Cursor getCursor(int line, VirtualFile file, int actionId) {
+      override fun getCursor(line: Int, file: VirtualFile?, actionId: Int): Cursor? {
         if (canMoveTo(line, file)) {
-          return isCopyAction(actionId) ? DragSource.DefaultCopyDrop : DragSource.DefaultMoveDrop;
+          return if (isCopyAction(actionId)) DragSource.DefaultCopyDrop else DragSource.DefaultMoveDrop
         }
 
-        return DragSource.DefaultMoveNoDrop;
+        return DragSource.DefaultMoveNoDrop
       }
 
-      private static boolean isCopyAction(int actionId) {
-        return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY;
+      fun isCopyAction(actionId: Int): Boolean {
+        return (actionId and DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY
       }
-    };
+    }
   }
 
-  private boolean canMoveTo(int line, VirtualFile file) {
-    if (file != null && myBreakpoint.getType().canPutAtFast(file, line, myProject) == ThreeState.YES) {
-      if (myBreakpoint instanceof XLineBreakpointProxy.Monolith monolithBreakpointProxy) {
-        XLineBreakpointImpl<?> monolithBreakpoint = monolithBreakpointProxy.getBreakpoint();
-        XLineBreakpoint<?> existing =
-          monolithBreakpoint.getBreakpointManager().findBreakpointAtLine(monolithBreakpoint.getType(), file, line);
-        return existing == null || existing == monolithBreakpoint;
+  private fun canMoveTo(line: Int, file: VirtualFile?): Boolean {
+    if (file != null && myBreakpoint.type.canPutAtFast(file, line, myProject) == ThreeState.YES) {
+      if (myBreakpoint is XLineBreakpointProxy.Monolith) {
+        val monolithBreakpoint = myBreakpoint.breakpoint
+        val existing = monolithBreakpoint.breakpointManager.findBreakpointAtLine(monolithBreakpoint.getType(), file, line)
+        return existing == null || existing === monolithBreakpoint
       }
       else {
         // TODO IJPL-185322 support findBreakpointAtLine check for split
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  private static boolean isHighlighterAvailableIn(Editor editor) {
-    if (editor instanceof EditorImpl editorImpl && editorImpl.isStickyLinePainting()) {
-      // suppress breakpoints on sticky lines panel
-      return false;
+  companion object {
+    private val LOG = Logger.getInstance(XBreakpointVisualRepresentation::class.java)
+    val redrawInlaysExecutor: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1)
+    private fun isHighlighterAvailableIn(editor: Editor): Boolean {
+      if (editor is EditorImpl && editor.isStickyLinePainting) {
+        // suppress breakpoints on sticky lines panel
+        return false
+      }
+      return !DiffUtil.isDiffEditor(editor)
     }
-    return !DiffUtil.isDiffEditor(editor);
   }
 }
