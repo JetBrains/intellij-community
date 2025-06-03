@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
-class EventStealer {
+public class EventStealer {
   private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
   private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
   private final @NotNull Consumer<? super InputEvent> myInputEventDispatcher;
@@ -45,7 +45,7 @@ class EventStealer {
   }
 
 
-  static boolean isUrgentInvocationEvent(AWTEvent event) {
+  public static boolean isUrgentInvocationEvent(AWTEvent event) {
     // LWCToolkit does 'invokeAndWait', which blocks native event processing until finished. The OS considers that blockage to be
     // app freeze, stops rendering UI and shows beach-ball cursor. We want the UI to act (almost) normally in write-action progresses,
     // so we let these specific events to be dispatched, hoping they wouldn't access project/code model.
@@ -53,13 +53,15 @@ class EventStealer {
     // problem (IDEA-192282): LWCToolkit event might be posted before PotemkinProgress appears,
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
     String eventString = event.toString();
+    // see IDEA-291469 Menu on macOS is invoked inside checkCanceled (PotemkinProgress)
+    if (eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda") ||
+        eventString.contains(",runnable=com.intellij.platform.ide.menu.MacNativeActionMenuKt$$Lambda")) {
+      return false;
+    }
     return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
            eventString.contains(",runnable=ForcedWriteActionRunnable") ||
            eventString.contains(",runnable=DispatchTerminationEvent") ||
-           (event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent") // see JBR-4208
-            // see IDEA-291469 Menu on macOS is invoked inside checkCanceled (PotemkinProgress)
-            && !(eventString.contains(",runnable=com.intellij.openapi.actionSystem.impl.ActionMenu$$Lambda") ||
-                 eventString.contains(",runnable=com.intellij.platform.ide.menu.MacNativeActionMenuKt$$Lambda")));
+           event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent"); // see JBR-4208
   }
 
 
