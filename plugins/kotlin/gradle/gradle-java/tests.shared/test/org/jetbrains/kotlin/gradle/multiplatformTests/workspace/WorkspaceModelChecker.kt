@@ -80,9 +80,7 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
             testConfiguration
         )
 
-        val actualProjectReport = buildProjectReport(
-            project, actualTestProjectRoot, testConfiguration, testProperties.kotlinVersion
-        )
+        val actualProjectReport = buildProjectReport(project, actualTestProjectRoot, testConfiguration, testProperties)
 
         val expectedProjectReport = if (expectedTestDataFile.exists())
             WorkspaceModelTestReportParser.parse(expectedTestDataFile.readText()) else null
@@ -103,9 +101,9 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         project: Project,
         projectRoot: File,
         testConfiguration: TestConfiguration,
-        kotlinGradlePluginVersion: KotlinToolingVersion
+        testProperties: KotlinTestProperties,
     ): ProjectReport {
-        val context = PrinterContext(project, projectRoot, testConfiguration, kotlinGradlePluginVersion)
+        val context = PrinterContext(project, projectRoot, testConfiguration, testProperties)
 
         val moduleReports = context.buildModulesReport()
         return ProjectReport(
