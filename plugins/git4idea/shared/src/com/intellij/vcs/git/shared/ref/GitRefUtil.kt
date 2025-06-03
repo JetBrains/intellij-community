@@ -24,15 +24,15 @@ object GitRefUtil {
     repositories.map { it.state.currentBranch }.distinct().singleOrNull()
 
   fun getCommonLocalBranches(repositories: Collection<GitRepositoryFrontendModel>): Collection<GitStandardLocalBranch> {
-    return findCommon(repositories.asSequence().map { repository -> repository.state.refs.localBranches })
+    return findCommon(repositories.asSequence().map { repository -> repository.state.localBranches })
   }
 
   fun getCommonRemoteBranches(repositories: Collection<GitRepositoryFrontendModel>): Collection<GitStandardRemoteBranch> {
-    return findCommon(repositories.asSequence().map { repository -> repository.state.refs.remoteBranches })
+    return findCommon(repositories.asSequence().map { repository -> repository.state.remoteBranches })
   }
 
   fun getCommonTags(repositories: Collection<GitRepositoryFrontendModel>): Collection<GitTag> {
-    return findCommon(repositories.asSequence().map { repository -> repository.state.refs.tags })
+    return findCommon(repositories.asSequence().map { repository -> repository.state.tags })
   }
 
   private fun <T> findCommon(collections: Sequence<Collection<T>>): Collection<T> =

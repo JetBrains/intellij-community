@@ -35,9 +35,9 @@ open class GitBranchesTreeSingleRepoModel(
   override fun getRecentBranches(): Collection<GitStandardLocalBranch> =
     if (GitVcsSettings.getInstance(project).showRecentBranches()) repository.state.recentBranches else emptyList()
 
-  override fun getRemoteBranches(): Collection<GitRemoteBranch> = repository.state.refs.remoteBranches
+  override fun getRemoteBranches(): Collection<GitRemoteBranch> = repository.state.remoteBranches
 
-  override fun getTags(): Set<GitTag> = repository.state.refs.tags
+  override fun getTags(): Set<GitTag> = repository.state.tags
 
   override fun getChildren(parent: Any?): List<Any> {
     if (parent == null || notHaveFilteredNodes()) return emptyList()

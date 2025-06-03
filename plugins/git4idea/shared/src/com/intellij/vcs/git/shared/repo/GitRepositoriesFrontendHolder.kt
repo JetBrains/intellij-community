@@ -6,22 +6,29 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.util.messages.Topic
+import com.intellij.vcs.git.shared.ref.GitCurrentRef
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
-import com.intellij.vcs.git.shared.ref.GitReferencesSet
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
+import com.intellij.vcs.git.shared.rpc.GitRepositoryStateDto
+import git4idea.GitStandardLocalBranch
+import git4idea.GitStandardRemoteBranch
+import git4idea.GitTag
+import git4idea.i18n.GitBundle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.ConcurrentHashMap
 
 // This class is temporarily moved to the shared module until the branch widget can be fully moved to the frontend.
@@ -115,7 +122,9 @@ class GitRepositoriesFrontendHolder(
           }
           is GitRepositoryEvent.RepositoryDeleted -> repositories.remove(event.repositoryId)
           is GitRepositoryEvent.SingleRepositoryUpdate -> handleSingleRepoUpdate(event)
-          GitRepositoryEvent.TagsHidden -> {}
+          GitRepositoryEvent.TagsHidden -> {
+            repositories.values.forEach { it.state.tags = emptySet() }
+          }
         }
 
         getUpdateType(event)?.let { project.messageBus.syncPublisher(UPDATES).afterUpdate(it) }
@@ -133,11 +142,10 @@ class GitRepositoriesFrontendHolder(
           info.favoriteRefs = event.favoriteRefs
         }
         is GitRepositoryEvent.RepositoryStateUpdated -> {
-          info.state = event.newState
+          info.state = convertToRepositoryState(event.newState)
         }
         is GitRepositoryEvent.TagsLoaded -> {
-          val refsSet = info.state.refs.copy(tags = event.tags)
-          info.state = info.state.copy(refs = refsSet)
+          info.state.tags = event.tags
         }
       }
 
@@ -174,9 +182,21 @@ class GitRepositoriesFrontendHolder(
       GitRepositoryFrontendModelImpl(
         repositoryId = repositoryDto.repositoryId,
         shortName = repositoryDto.shortName,
-        state = repositoryDto.state,
+        state = convertToRepositoryState(repositoryDto.state),
         favoriteRefs = repositoryDto.favoriteRefs,
         rootFileId = repositoryDto.root,
+      )
+
+    private fun convertToRepositoryState(repositoryStateDto: GitRepositoryStateDto) =
+      GitRepositoryStateImpl(
+        currentRef = repositoryStateDto.currentRef,
+        revision = repositoryStateDto.revision,
+        localBranches = repositoryStateDto.localBranches,
+        remoteBranches = repositoryStateDto.remoteBranches,
+        tags = repositoryStateDto.tags,
+        recentBranches = repositoryStateDto.recentBranches,
+        operationState = repositoryStateDto.operationState,
+        trackingInfo = repositoryStateDto.trackingInfo,
       )
 
     private fun getUpdateType(rpcEvent: GitRepositoryEvent): UpdateType? = when (rpcEvent) {
@@ -204,7 +224,7 @@ class GitRepositoriesFrontendHolder(
 private open class GitRepositoryFrontendModelImpl(
   override val repositoryId: RepositoryId,
   override val shortName: String,
-  override var state: GitRepositoryState,
+  override var state: GitRepositoryStateImpl,
   override var favoriteRefs: GitFavoriteRefs,
   private val rootFileId: VirtualFileId,
 ) : GitRepositoryFrontendModel {
@@ -212,9 +232,38 @@ private open class GitRepositoryFrontendModelImpl(
     get() = rootFileId.virtualFile()
 }
 
+private class GitRepositoryStateImpl(
+  override val currentRef: GitCurrentRef?,
+  override val revision: @NlsSafe GitHash?,
+  override val localBranches: Set<GitStandardLocalBranch>,
+  override val remoteBranches: Set<GitStandardRemoteBranch>,
+  override var tags: Set<GitTag>,
+  override val recentBranches: List<GitStandardLocalBranch>,
+  override val operationState: GitOperationState,
+  private val trackingInfo: Map<String, GitStandardRemoteBranch>,
+) : GitRepositoryState {
+  override fun getTrackingInfo(branch: GitStandardLocalBranch): GitStandardRemoteBranch? = trackingInfo[branch.name]
+
+  override fun getDisplayableBranchText(): @Nls String {
+    val branchOrEmpty = currentBranch?.name ?: ""
+    return when (operationState) {
+      GitOperationState.NORMAL -> branchOrEmpty
+      GitOperationState.REBASE -> GitBundle.message("git.status.bar.widget.text.rebase", branchOrEmpty)
+      GitOperationState.MERGE -> GitBundle.message("git.status.bar.widget.text.merge", branchOrEmpty)
+      GitOperationState.CHERRY_PICK -> GitBundle.message("git.status.bar.widget.text.cherry.pick", branchOrEmpty)
+      GitOperationState.REVERT -> GitBundle.message("git.status.bar.widget.text.revert", branchOrEmpty)
+      GitOperationState.DETACHED_HEAD -> getDetachedHeadDisplayableText()
+    }
+  }
+
+  private fun getDetachedHeadDisplayableText(): @Nls String =
+    if (currentRef is GitCurrentRef.Tag) currentRef.tag.name
+    else revision?.hash ?: GitBundle.message("git.status.bar.widget.text.unknown")
+}
+
 private class GitRepositoryFrontendModelStub(override val repositoryId: RepositoryId) : GitRepositoryFrontendModel {
   override val shortName = ""
-  override val state = GitRepositoryState(null, null, GitReferencesSet.EMPTY, emptyList(), GitOperationState.DETACHED_HEAD, emptyMap())
+  override val state = GitRepositoryStateImpl(null, null, emptySet(), emptySet(), emptySet(),  emptyList(), GitOperationState.DETACHED_HEAD, emptyMap())
   override val favoriteRefs = GitFavoriteRefs(emptySet(), emptySet(), emptySet())
   override val root = null
 }

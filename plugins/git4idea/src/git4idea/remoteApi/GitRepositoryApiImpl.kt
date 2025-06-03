@@ -81,7 +81,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
     }
   }
 
-  private inner class Synchronizer(
+  private class Synchronizer(
     private val project: Project,
     private val channel: SendChannel<GitRepositoryEvent>,
   ) : GitRepositoryFrontendSynchronizer {
@@ -92,10 +92,9 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       val dto = GitRepositoryToDtoConverter.convertToDto(repository)
 
       if (LOG.isDebugEnabled) {
-        val refsSet = dto.state.refs
-        val refsString = "${refsSet.localBranches.size} local branches, " +
-                         "${refsSet.remoteBranches.size} remote branches, " +
-                         "${refsSet.tags.size} tags"
+        val refsString = "${dto.state.localBranches.size} local branches, " +
+                         "${dto.state.remoteBranches.size} remote branches, " +
+                         "${dto.state.tags.size} tags"
         LOG.debug("Repository entity created for ${repository.root}\n" +
                   "Current ref: ${dto.state.currentRef}\n" +
                   "Refs: $refsString\n" +

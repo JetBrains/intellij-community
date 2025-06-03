@@ -59,7 +59,7 @@ internal class GitCompareWithBranchPopupStep(
 }
 
 private class GitCompareWithBranchesTreeModel(project: Project, repository: GitRepositoryFrontendModel) : GitBranchesTreeSingleRepoModel(project, repository, emptyList()) {
-  override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.refs.localBranches.skipCurrentBranch()
+  override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.localBranches.skipCurrentBranch()
   override fun getRecentBranches(): Collection<GitStandardLocalBranch> = super.getRecentBranches().skipCurrentBranch()
 
   private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> =

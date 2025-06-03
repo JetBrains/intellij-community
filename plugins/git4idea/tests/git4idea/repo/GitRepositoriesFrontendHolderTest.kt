@@ -8,11 +8,13 @@ import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
 import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import git4idea.GitStandardLocalBranch
+import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchesCollection
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.checkoutNew
 import git4idea.test.createSubRepository
+import git4idea.test.git
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
@@ -133,7 +135,31 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
     assertEquals("recent branches are updated", expectedRecentBranches, stateAfterUpdate.recentBranches)
   }
 
-  fun `test tags events are spawned`() {
+  fun `test tags can be hidden`() {
+    val tagName = "hello"
+    repo.git("tag $tagName")
+    repo.tagHolder.ensureUpToDateForTests()
+
+    val holder = GitRepositoriesFrontendHolder.getInstance(project)
+    runBlocking {
+      holder.init()
+    }
+
+    assertEquals(setOf(GitTag(tagName)), holder.getTestRepo().state.tags)
+
+    executeAndExpectEvent(
+      { GitUiSettingsApi.getInstance().setShowTags(project.projectId(), false) },
+      { event, _ -> event == GitRepositoriesFrontendHolder.UpdateType.TAGS_HIDDEN }
+    )
+
+    assertEquals(emptySet<GitTag>(), holder.getTestRepo().state.tags)
+  }
+
+  fun `test tags can be hidden and shown`() {
+    val tagName = "hello"
+    repo.git("tag $tagName")
+    repo.tagHolder.ensureUpToDateForTests()
+
     val holder = GitRepositoriesFrontendHolder.getInstance(project)
     runBlocking {
       holder.init()
@@ -148,8 +174,9 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
         events.contains(GitRepositoriesFrontendHolder.UpdateType.TAGS_HIDDEN) && events.contains(GitRepositoriesFrontendHolder.UpdateType.TAGS_LOADED)
       }
     )
-  }
 
+    assertEquals(setOf(GitTag(tagName)), holder.getTestRepo().state.tags)
+  }
 
   private fun GitRepositoriesFrontendHolder.getTestRepo(): GitRepositoryFrontendModel {
     val holderRepo = this.get(repo.rpcId)
