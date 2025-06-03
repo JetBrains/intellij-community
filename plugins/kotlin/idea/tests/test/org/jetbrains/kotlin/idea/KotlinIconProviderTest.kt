@@ -49,14 +49,14 @@ class KotlinIconProviderTest: KotlinLightCodeInsightFixtureTestCase() {
                suspend fun c<caret>ollect(): String = TODO()
             }
         """.trimIndent()
-        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/expui/suspendDeclaration.svg", "Public")
+        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/expui/suspendMethod.svg", "Public")
     }
 
     fun testSuspendFunction() {
         val fileBody = """
            suspend fun c<caret>ollect(): String = TODO()
         """.trimIndent()
-        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/expui/suspendDeclaration.svg", "Public")
+        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/expui/suspendFunction.svg", "Public")
     }
 
     fun testPrivateConstructorParameter() {
