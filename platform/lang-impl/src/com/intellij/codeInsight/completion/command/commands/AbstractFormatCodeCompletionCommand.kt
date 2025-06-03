@@ -23,10 +23,11 @@ abstract class AbstractFormatCodeCompletionCommandProvider :
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val psiFile = context.psiFile
     if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
-    return listOf(createCommand(context))
+    val element = createCommand(context) ?: return emptyList()
+    return listOf(element)
   }
 
-  abstract fun createCommand(context: CommandCompletionProviderContext): CompletionCommand
+  abstract fun createCommand(context: CommandCompletionProviderContext): CompletionCommand?
 }
 
 abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), CompletionCommandWithPreview {
