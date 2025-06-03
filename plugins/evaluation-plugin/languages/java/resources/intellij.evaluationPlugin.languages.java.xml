@@ -22,5 +22,6 @@
     <apiCallExtractor implementation="com.intellij.cce.java.chat.JavaApiCallExtractorProvider"/>
     <exposedApiExtractor implementation="com.intellij.cce.java.evaluable.JavaExposedApiExtractor"/>
     <testRunner implementation="com.intellij.cce.java.test.JavaTestRunnerForMaven"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.java.visitor.JavaSandboxFeatureVisitor"/>
   </extensions>
 </idea-plugin>

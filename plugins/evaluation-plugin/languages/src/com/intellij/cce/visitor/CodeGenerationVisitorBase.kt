@@ -26,3 +26,5 @@ abstract class EvaluationVisitorBase(override val language: Language, override v
 abstract class CodeGenerationVisitorBase(language: Language) : EvaluationVisitorBase(language, "code-generation")
 
 abstract class RenameVisitorBase(language: Language) : EvaluationVisitorBase(language, "rename")
+
+abstract class SandboxFeaturesVisitorBase(language: Language) : EvaluationVisitorBase(language, "sandbox-evaluation")

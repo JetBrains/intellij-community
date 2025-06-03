@@ -103,6 +103,12 @@ object Execution {
     )
   )
 
+  val REFERENCE: TrivialEvalData<String> = EvalDataDescription(
+    name = "Reference",
+    description = null,
+    DataPlacement.AdditionalText(REFERENCE_PROPERTY),
+  )
+
   val NAME: TrivialEvalData<String> = EvalDataDescription(
     name = "Name",
     description = "Some description of an evaluation case",

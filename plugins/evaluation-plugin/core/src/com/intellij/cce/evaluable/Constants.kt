@@ -9,6 +9,7 @@ const val INTERNAL_RELEVANT_FILES_PROPERTY = "internal_relevant_files"
 const val ORIGINAL_FILE = "original_file"
 
 const val METHOD_NAME_PROPERTY = "method_name"
+const val METHOD_BODY_PROPERTY = "method_body"
 
 const val REFERENCE_PROPERTY = "reference"
 const val CATEGORY_PROPERTY = "category"
