@@ -933,6 +933,38 @@ com.intellij.ui.TabbedPane
 - a:setTitleAt(I,java.lang.String):V
 - a:setToolTipTextAt(I,java.lang.String):V
 - a:updateUI():V
+f:com.intellij.ui.TextIcon
+- javax.swing.Icon
+- <init>(java.lang.String,java.awt.Color,java.awt.Color,I):V
+- <init>(java.lang.String,java.awt.Color,java.awt.Color,I,Z):V
+- <init>(java.lang.String,java.awt.Color,java.awt.Color,I,Z,I):V
+- <init>(java.lang.String,java.awt.Color,java.awt.Color,java.awt.Color,I,Z):V
+- equals(java.lang.Object):Z
+- getBackground():java.awt.Color
+- getBorderColor():java.awt.Color
+- getFont():java.awt.Font
+- getFontTransform():java.awt.geom.AffineTransform
+- getForeground():java.awt.Color
+- getIconHeight():I
+- getIconWidth():I
+- getInsets():java.awt.Insets
+- getRound():java.lang.Integer
+- getText():java.lang.String
+- getWithBorders():java.lang.Boolean
+- hashCode():I
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- setBackground(java.awt.Color):V
+- setBorderColor(java.awt.Color):V
+- setFont(java.awt.Font):V
+- setFontTransform(java.awt.geom.AffineTransform):V
+- setForeground(java.awt.Color):V
+- setInsets(I,I,I,I):V
+- setInsets(java.awt.Insets):V
+- setRound(I):V
+- setText(java.lang.String):V
+- setTextsForMinimumBounds(java.util.List):V
+- setWithBorders(Z):V
+- uiSettingsChanged():V
 com.intellij.ui.colorpicker.ColorPickerComponentProvider
 - a:createComponent(com.intellij.ui.colorpicker.ColorPickerModel):javax.swing.JComponent
 com.intellij.ui.colorpicker.ColorPipetteProvider

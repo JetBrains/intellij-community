@@ -270,4 +270,9 @@ public final class TextIcon implements Icon {
     if (fmHint == null) fmHint = RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT;
     return new FontRenderContext(null, aaHint, fmHint);
   }
+
+  public void uiSettingsChanged() {
+      myTextBounds = null;
+      myMinimumTextBounds = null;
+  }
 }

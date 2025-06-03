@@ -1,15 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.Font
 import java.awt.Insets
 import java.awt.geom.AffineTransform
 import javax.swing.Icon
 
-class CounterIcon(private val icon: TextIcon, initialNumber: Int) : Icon by icon {
+internal class CounterIcon(private val icon: TextIcon, initialNumber: Int) : Icon by icon {
   private var lastDigitNumber: Int = 0
   var number: Int = 0
     set(value) {
@@ -39,7 +39,7 @@ class CounterIcon(private val icon: TextIcon, initialNumber: Int) : Icon by icon
   companion object {
     fun createRoundIcon(number: Int, foreground: Color, background: Color): CounterIcon {
       val icon = CounterIcon(number, foreground, background)
-      icon.insets = JBUI.insets(4, 6)
+      icon.setInsets(JBUIScale.scale(4))
       icon.font = JBFont.regular()
       icon.round = icon.iconHeight
       return icon
@@ -55,4 +55,20 @@ class CounterIcon(private val icon: TextIcon, initialNumber: Int) : Icon by icon
   var withBorders: Boolean by icon::withBorders
   var font: Font? by icon::font
   var fontTransform: AffineTransform? by icon::fontTransform
+
+  fun setInsets(top: Int, left: Int, bottom: Int, right: Int) {
+    icon.setInsets(top, left, bottom, right)
+  }
+
+  fun setInsets(topBottom: Int, leftRight: Int) {
+    icon.setInsets(topBottom, leftRight, topBottom, leftRight)
+  }
+
+  fun setInsets(all: Int) {
+    setInsets(all, all, all, all)
+  }
+
+  fun uiSettingsChanged() {
+    icon.uiSettingsChanged()
+  }
 }
