@@ -12,7 +12,6 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.withCurrentJob
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -533,9 +532,8 @@ private class ProxyCommitCheck(val checkinHandler: CheckinHandler,
   override fun isEnabled(): Boolean = true
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
-    val result = blockingContext {
-      @Suppress("DEPRECATION") checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
-    }
+    @Suppress("DEPRECATION")
+    val result = checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
     if (result == null || result == CheckinHandler.ReturnResult.COMMIT) return null
     return UnknownCommitProblem(result)
   }

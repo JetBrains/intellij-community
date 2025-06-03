@@ -11,7 +11,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -61,10 +60,8 @@ abstract class AbstractOpenProjectProvider {
 
   protected open suspend fun linkProject(projectFile: VirtualFile, project: Project, ) {
     withContext(Dispatchers.EDT) {
-      blockingContext {
-        @Suppress("DEPRECATION")
-        linkToExistingProject(projectFile, project)
-      }
+      @Suppress("DEPRECATION")
+      linkToExistingProject(projectFile, project)
     }
   }
 

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.platform.externalSystem.impl.ExternalSystemImplCoroutineScope.esCoroutineScope
 import com.intellij.openapi.externalSystem.autolink.launch
 import com.intellij.openapi.externalSystem.service.ui.completion.cache.AsyncLocalCache
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
@@ -37,9 +36,7 @@ internal abstract class AsyncTextCompletionCollector<T> private constructor(
         collectCompletionVariants()
       }
       withContext(Dispatchers.EDT) {
-        blockingContext {
-          callback(completionVariants)
-        }
+        callback(completionVariants)
       }
     }
   }

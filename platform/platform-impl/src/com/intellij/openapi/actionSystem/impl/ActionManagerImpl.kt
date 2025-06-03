@@ -45,7 +45,6 @@ import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.UpdateResult
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.ProjectType
@@ -1228,9 +1227,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
         finally {
           if (!result.isProcessed) {
-            blockingContext {
-              result.setRejected()
-            }
+            result.setRejected()
           }
         }
       }

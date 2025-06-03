@@ -25,7 +25,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
@@ -44,6 +43,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Unmodifiable
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -301,11 +301,9 @@ internal class ActionUpdater @JvmOverloads constructor(
     val event = createActionEvent(opElement, updatedPresentations[group] ?: initialBgtPresentation(group))
     return try {
       retryOnAwaitSharedData(opElement, maxAwaitSharedDataRetries) {
-        blockingContext { // no data-context hence no RA, just blockingContext
-          val spanBuilder = Utils.getTracer(true).spanBuilder(opElement.operationName)
-          spanBuilder.use {
-            group.postProcessVisibleChildren(event, result)
-          }
+        val spanBuilder = Utils.getTracer(true).spanBuilder(opElement.operationName)
+        spanBuilder.use {
+          group.postProcessVisibleChildren(event, result)
         }
       }
     }

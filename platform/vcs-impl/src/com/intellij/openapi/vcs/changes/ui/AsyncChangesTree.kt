@@ -7,7 +7,6 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
@@ -202,13 +201,11 @@ abstract class AsyncChangesTree : ChangesTree {
     try {
       _pendingColors.resetReplayCache()
 
-      blockingContext {
-        if (treeStateStrategy != null) {
-          updateTreeModel(treeModel, treeStateStrategy)
-        }
-        else {
-          updateTreeModel(treeModel)
-        }
+      if (treeStateStrategy != null) {
+        updateTreeModel(treeModel, treeStateStrategy)
+      }
+      else {
+        updateTreeModel(treeModel)
       }
     }
     finally {
