@@ -534,9 +534,10 @@ internal class GHPRCreateViewModelImpl(
 private class MetadataListViewModel<T>(cs: CoroutineScope, itemsLoader: suspend () -> List<T>) : LabeledListPanelViewModel<T> {
   override val isEditingAllowed: Boolean = true
   override val items = MutableStateFlow(emptyList<T>())
+  // Eagerly load the data on creation, so that the reviewer panel is populated immediately.
   override val selectableItems: StateFlow<ComputedResult<List<T>>> =
     computationStateFlow(flowOf(Unit)) { itemsLoader() }
-      .stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+      .stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
   override val adjustmentProcessState: StateFlow<ComputedResult<Unit>?> = MutableStateFlow(null)
   override val editRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
