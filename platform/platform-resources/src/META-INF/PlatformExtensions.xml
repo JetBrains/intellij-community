@@ -750,9 +750,6 @@
                              treeRenderer="com.intellij.ide.plugins.PluginManagerConfigurableTreeRenderer"
                              bundle="messages.IdeBundle"
                              key="title.plugins"/>
-    <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy"
-                             bundle="messages.IdeBundle"
-                             key="http.proxy.configurable"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.gdpr.ConsentConfigurable" id="consents"
                              bundle="messages.IdeBundle"
@@ -763,14 +760,18 @@
                              bundle="messages.IdeBundle"
                              key="date.time.format.configurable"/>
 
-    <applicationConfigurable groupId="tools"
-                             bundle="messages.UIBundle"
-                             key="configurable.CertificateConfigurable.display.name"
-                             id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
+    <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy"
+                             bundle="messages.IdeBundle"
+                             key="http.proxy.configurable"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.ide.ui.LanguageAndRegionConfigurable"
                              id="preferences.language.and.region"
                              key="title.language.and.region" bundle="messages.IdeBundle"/>
+
+    <applicationConfigurable parentId="preferences.general"
+                             bundle="messages.UIBundle"
+                             key="configurable.CertificateConfigurable.display.name"
+                             id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
     <fileType name="ARCHIVE" implementationClass="com.intellij.ide.highlighter.ArchiveFileType" fieldName="INSTANCE"
               extensions="ane;apk;ear;egg;jar;swc;war;zip"/>
