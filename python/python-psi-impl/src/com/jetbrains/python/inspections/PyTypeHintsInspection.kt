@@ -276,6 +276,10 @@ class PyTypeHintsInspection : PyInspection() {
       checkForwardReferencesInBinaryExpression(annotationValue)
 
       checkRawConcatenateUsage(annotationValue)
+      val type = Ref.deref(PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext))
+      if (type is PyTupleType) {
+        checkTupleIsValid(annotationValue, type)
+      }
 
       fun PyAnnotation.findSelvesInAnnotation(context: TypeEvalContext): List<PyReferenceExpression> =
         PsiTreeUtil.findChildrenOfAnyType(this.value, false, PyReferenceExpression::class.java).filter { refExpr ->
@@ -318,6 +322,14 @@ class PyTypeHintsInspection : PyInspection() {
             registerProblemForSelves(message)
           }
         }
+      }
+    }
+
+    private fun checkTupleIsValid(annotationValue: PyExpression, type: PyTupleType) {
+      val elementTypes = type.elementTypes
+      val unpackedTuplesCount = elementTypes.count { it is PyUnpackedTupleType || it is PyTypeVarTupleType }
+      if (unpackedTuplesCount > 1) {
+        registerProblem(annotationValue, PyPsiBundle.message("INSP.type.hints.at.most.one.unpacked.tuple"))
       }
     }
 
