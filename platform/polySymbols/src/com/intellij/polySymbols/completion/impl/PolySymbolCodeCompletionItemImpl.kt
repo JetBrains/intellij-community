@@ -100,12 +100,8 @@ internal data class PolySymbolCodeCompletionItemImpl(
 
   private fun wrapSymbolForDocumentation(symbol: PolySymbol?, location: PsiElement) =
     when (symbol) {
-      is PsiSourcedPolySymbol -> symbol.getDocumentationTarget(location)?.let {
-        PsiSourcedCodeCompletionPolySymbolWithDocumentation(symbol, it)
-      }
-      is PolySymbol -> symbol.getDocumentationTarget(location)?.let {
-        CodeCompletionPolySymbolWithDocumentation(symbol, it)
-      }
+      is PsiSourcedPolySymbol -> PsiSourcedCodeCompletionPolySymbolWithDocumentation(symbol, location)
+      is PolySymbol -> CodeCompletionPolySymbolWithDocumentation(symbol, location)
       else -> null
     }
 
