@@ -10,31 +10,37 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.Graphics
 import java.awt.Rectangle
 import kotlin.random.Random
 
 @ApiStatus.Internal
-class InlineCompletionShortcutHintElement(val lineNumber: Int, val isMultiline: Boolean) : InlineCompletionElement {
-  override val text: String = ""
+sealed class InlineCompletionShortcutHintElementBase(val lineNumber: Int) : InlineCompletionElement {
 
-  private val hint = InlineCompletionShortcutHint.random(isMultiline)
+  override val text: String
+    get() = ""
 
-  override fun toPresentable(): InlineCompletionElement.Presentable {
-    return Presentable(this, hint)
+  protected val hint: InlineCompletionShortcutHint by lazy { chooseHint() }
+
+  protected abstract fun getHintWeight(hint: InlineCompletionShortcutHint): Int
+
+  private fun chooseHint(): InlineCompletionShortcutHint {
+    val entries = InlineCompletionShortcutHint.entries
+    var randomPoint = Random.nextInt(entries.sumOf { getHintWeight(it) }) + 1
+    return entries.firstOrNull {
+      randomPoint -= getHintWeight(it)
+      randomPoint <= 0
+    } ?: entries.last()
   }
 
-  class Presentable(
-    override val element: InlineCompletionShortcutHintElement,
-    private val hint: InlineCompletionShortcutHint
+  abstract class Presentable(
+    override val element: InlineCompletionShortcutHintElementBase,
+    protected val hint: InlineCompletionShortcutHint
   ) : InlineCompletionElement.Presentable {
-    private var shortcutInlay: Inlay<InlineCompletionShortcutHintRendererBase>? = null
-    private var suffixInlay: Inlay<InlineCompletionShortcutHintRendererBase>? = null
+    private var inlays: List<Inlay<InlineCompletionShortcutHintRendererBase>> = emptyList()
     private var offset: Int? = null
     private var currentShortcut = getShortcutRepresentation()
 
@@ -44,6 +50,13 @@ class InlineCompletionShortcutHintElement(val lineNumber: Int, val isMultiline: 
       }
     }
 
+    protected abstract fun renderShortcut(
+      editor: EditorImpl,
+      shortcut: String,
+    ): List<Inlay<InlineCompletionShortcutHintRendererBase>>
+
+    protected abstract fun additionalShouldRender(): Boolean
+
     override fun isVisible(): Boolean {
       return getBounds() != null
     }
@@ -52,9 +65,14 @@ class InlineCompletionShortcutHintElement(val lineNumber: Int, val isMultiline: 
       if (!hintShouldRender()) {
         return null
       }
-      val shortcutBounds = shortcutInlay?.bounds ?: return null
-      val suffixBounds = suffixInlay?.bounds ?: return null
-      return shortcutBounds.union(suffixBounds)
+      var bounds: Rectangle? = null
+      for (inlay in inlays) {
+        val currentBounds = inlay.bounds
+        if (currentBounds != null) {
+          bounds = bounds?.union(currentBounds) ?: currentBounds
+        }
+      }
+      return bounds
     }
 
     override fun startOffset(): Int? = offset
@@ -62,21 +80,20 @@ class InlineCompletionShortcutHintElement(val lineNumber: Int, val isMultiline: 
     override fun endOffset(): Int? = offset
 
     override fun dispose() {
-      shortcutInlay?.let(Disposer::dispose)
-      suffixInlay?.let(Disposer::dispose)
-      shortcutInlay = null
-      suffixInlay = null
+      for (inlay in inlays) {
+        Disposer.dispose(inlay)
+      }
+      inlays = emptyList()
       offset = null
     }
 
     override fun render(editor: Editor, offset: Int) {
+      val currentShortcut = getShortcutRepresentation()
       if (editor !is EditorImpl || currentShortcut == null || !InlineShortcutHintRendererBase.isAvailableForLine(editor, element.lineNumber)) {
         return
       }
       try {
-        val caretOffset = editor.caretModel.offset
-        shortcutInlay = editor.inlayModel.addAfterLineEndElement(caretOffset, true, getShortcutRenderer())
-        suffixInlay = editor.inlayModel.addAfterLineEndElement(caretOffset, true, getSuffixRenderer(editor))
+        inlays = renderShortcut(editor, currentShortcut)
         this.offset = offset
       }
       catch (e: Exception) {
@@ -84,35 +101,18 @@ class InlineCompletionShortcutHintElement(val lineNumber: Int, val isMultiline: 
       }
     }
 
-    private fun getSuffixRenderer(editor: EditorImpl): InlineCompletionShortcutHintRendererBase {
-      return object : InlineCompletionShortcutHintRendererBase(hint.suffixText) {
-
-        // We need to check it here to be able to re-draw if a user changes the setting during a session
-        override fun isEnabledAdditional(editor: Editor): Boolean = hintShouldRender()
-
-        override fun paintIfEnabled(inlay: Inlay<*>, g: Graphics, r: Rectangle, textAttributes: TextAttributes) {
-          paintLabel(g, editor, r, text, textAttributes.clearEffects())
-        }
-      }
-    }
-
-    private fun getShortcutRenderer(): InlineCompletionShortcutHintRendererBase {
-      return object : InlineCompletionShortcutHintRendererBase(currentShortcut) {
-
-        // We need to check it here to be able to re-draw if a user changes the setting during a session
-        override fun isEnabledAdditional(editor: Editor): Boolean = hintShouldRender()
-
-        override fun paintIfEnabled(inlay: Inlay<*>, g: Graphics, r: Rectangle, textAttributes: TextAttributes) {
-          paintHint(inlay, g, r, textAttributes.clearEffects())
-        }
-      }
-    }
-
     private fun rerender() {
       currentShortcut = getShortcutRepresentation()
-      shortcutInlay?.renderer?.text = currentShortcut
-      shortcutInlay?.update()
-      suffixInlay?.update()
+      val editor = inlays.firstNotNullOfOrNull { it.editor as? EditorImpl }
+      for (inlay in inlays) {
+        Disposer.dispose(inlay)
+      }
+      inlays = emptyList()
+
+      val shortcut = currentShortcut
+      if (shortcut != null && editor != null) {
+        inlays = renderShortcut(editor, shortcut)
+      }
     }
 
     private fun getShortcutRepresentation(): String? {
@@ -129,8 +129,8 @@ class InlineCompletionShortcutHintElement(val lineNumber: Int, val isMultiline: 
       }
     }
 
-    private fun hintShouldRender(): Boolean {
-      return currentShortcut != null && InlineCompletionShortcutHintState.getState() == InlineCompletionShortcutHintState.SHOW_HINT
+    protected fun hintShouldRender(): Boolean {
+      return currentShortcut != null && additionalShouldRender()
     }
 
     companion object {
@@ -146,40 +146,21 @@ enum class InlineCompletionShortcutHint {
       get() = IdeActions.ACTION_INSERT_INLINE_COMPLETION
     override val suffixText: String
       get() = MessageBundle.message("inline.completion.shortcut.hint.insert.text")
-    override val priority: Int
-      get() = 4
   },
   INSERT_WORD {
     override val actionId: String
       get() = IdeActions.ACTION_INSERT_INLINE_COMPLETION_WORD
     override val suffixText: String
       get() = MessageBundle.message("inline.completion.shortcut.hint.insert.word.text")
-    override val priority: Int
-      get() = 1
   },
   INSERT_LINE {
     override val actionId: String
       get() = IdeActions.ACTION_INSERT_INLINE_COMPLETION_LINE
     override val suffixText: String
       get() = MessageBundle.message("inline.completion.shortcut.hint.insert.line.text")
-    override val priority: Int
-      get() = 3
   };
 
   abstract val actionId: String
 
   abstract val suffixText: @Nls String
-
-  protected abstract val priority: Int
-
-  companion object {
-    fun random(isMultiline: Boolean): InlineCompletionShortcutHint {
-      val entries = if (isMultiline) entries else entries.filter { it !== INSERT_LINE }
-      var randomPoint = Random.nextInt(entries.sumOf { it.priority }) + 1
-      return entries.firstOrNull {
-        randomPoint -= it.priority
-        randomPoint <= 0
-      } ?: entries.last()
-    }
-  }
 }
