@@ -83,7 +83,7 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
 
     @Override
     public void reset() {
-        model.setDefinitions(manager.getAllDefinitions(), settings);
+        model.setDefinitions(manager.getDefinitions(), settings);
     }
 
     private boolean isScriptDefinitionsChanged() {
@@ -95,7 +95,7 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
                 return true;
             }
         }
-        return !model.getDefinitions().equals(manager.getAllDefinitions());
+        return !model.getDefinitions().equals(manager.getDefinitions());
     }
 
 

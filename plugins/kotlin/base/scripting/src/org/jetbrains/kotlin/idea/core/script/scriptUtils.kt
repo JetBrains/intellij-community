@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
@@ -15,17 +16,19 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
-import org.jetbrains.kotlin.idea.core.script.k2.K2ScriptDefinitionProvider
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptClassPathUtil
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import javax.swing.Icon
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
+import kotlin.script.experimental.util.PropertiesCollection
 
 val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
 
@@ -167,8 +170,45 @@ fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigura
     }
 }
 
-fun getAllDefinitions(project: Project): List<ScriptDefinition> = if (KotlinPluginModeProvider.isK2Mode()) {
-    K2ScriptDefinitionProvider.getInstance(project).getAllDefinitions().toList()
-} else {
-    ScriptDefinitionsManager.getInstance(project).allDefinitions
+fun getAllDefinitions(project: Project): List<ScriptDefinition> = IdeScriptDefinitionProvider.getInstance(project).getDefinitions()
+
+abstract class IdeScriptDefinitionProvider : LazyScriptDefinitionProvider() {
+    abstract fun getDefinitions(): List<ScriptDefinition>
+
+    companion object {
+        fun getInstance(project: Project): IdeScriptDefinitionProvider {
+            return project.service<ScriptDefinitionProvider>() as IdeScriptDefinitionProvider
+        }
+    }
 }
+
+fun loggingReporter(severity: ScriptDiagnostic.Severity, message: String) {
+    val log = Logger.getInstance("ScriptDefinitionsProviders")
+    when (severity) {
+        ScriptDiagnostic.Severity.FATAL, ScriptDiagnostic.Severity.ERROR -> log.error(message)
+
+        ScriptDiagnostic.Severity.WARNING, ScriptDiagnostic.Severity.INFO -> log.info(message)
+
+        else -> {}
+    }
+}
+
+
+class NewScriptFileInfo(
+    var id: String = "", var title: String = "", var templateName: String = "Kotlin Script", var icon: Icon = KotlinIcons.SCRIPT
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as NewScriptFileInfo
+
+        return id == other.id
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
+}
+
+val IdeScriptCompilationConfigurationKeys.kotlinScriptTemplateInfo: PropertiesCollection.Key<NewScriptFileInfo> by PropertiesCollection.key()

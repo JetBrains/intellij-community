@@ -10,9 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
@@ -27,17 +25,9 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
         override fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 
-            if (KotlinPluginModeProvider.isK2Mode()) {
-                if (ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getScriptConfigurationResult(file) == null) {
-                    status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
-                    status.errorAnalyzingFinished = false
-                }
-            } else {
-                val configurations = ScriptConfigurationManager.getInstance(project)
-                if (configurations.isConfigurationLoadingInProgress(file)) {
-                    status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
-                    status.errorAnalyzingFinished = false
-                }
+            if (ScriptConfigurationManager.getInstance(project).isConfigurationLoadingInProgress(file)) {
+                status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
+                status.errorAnalyzingFinished = false
             }
 
             return status

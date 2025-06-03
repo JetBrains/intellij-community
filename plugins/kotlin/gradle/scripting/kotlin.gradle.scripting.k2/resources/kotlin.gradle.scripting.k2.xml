@@ -2,6 +2,7 @@
   <dependencies>
     <module name="kotlin.gradle.scripting.shared"/>
     <module name="kotlin.gradle.gradle-java"/>
+    <module name="kotlin.base.scripting.k2"/>
     <plugin id="org.jetbrains.plugins.gradle"/>
   </dependencies>
 

@@ -54,9 +54,6 @@
             defaultValue="false"
             restartRequired="true"/>
 
-    <fileType name="script-definition-marker" fieldName="INSTANCE"
-              implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"/>
 
@@ -74,17 +71,18 @@
     <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
                     serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KotlinFe10CompilerPluginsProvider"/>
 
+    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
-
-    <idea.base.projectStructure.moduleInfoProviderExtension implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
-
     <scriptDefinitionsSource
             id="StandardScriptDefinitionContributor"
             order="last"
             implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
+
+    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
+
+    <idea.base.projectStructure.moduleInfoProviderExtension implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
     <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
     <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>

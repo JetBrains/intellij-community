@@ -41,9 +41,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <fileType name="script-definition-marker" fieldName="INSTANCE"
+              implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
+
     <psi.clsCustomNavigationPolicy
             implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
-    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
   </extensions>

@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="kotlin.base.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.statistics" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.api" scope="RUNTIME" />

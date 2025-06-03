@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.util.projectLibrary
 import java.io.File
 import java.nio.file.Paths
-import java.util.Locale
+import java.util.*
 import kotlin.script.dependencies.Environment
 import kotlin.script.experimental.api.ScriptDiagnostic
 
@@ -159,7 +159,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
 
         settings = KotlinScriptingSettings.getInstance(project).state
 
-        ScriptDefinitionsManager.getInstance(project).allDefinitions.forEach {
+        ScriptDefinitionsManager.getInstance(project).getDefinitions().forEach {
             KotlinScriptingSettings.getInstance(project).setEnabled(it, false)
         }
 

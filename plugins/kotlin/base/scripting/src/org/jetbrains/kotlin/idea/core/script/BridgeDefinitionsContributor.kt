@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.core.script.k2.loggingReporter
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource

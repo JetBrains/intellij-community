@@ -10,10 +10,10 @@ import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
-import org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptConfigurationHandler
-import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
-import org.jetbrains.kotlin.idea.core.script.k2.getConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources

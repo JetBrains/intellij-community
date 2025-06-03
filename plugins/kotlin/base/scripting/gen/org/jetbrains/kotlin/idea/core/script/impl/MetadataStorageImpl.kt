@@ -18,12 +18,12 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
 
         var typeMetadata: StorageTypeMetadata
 
-        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptConfigurationHandler\$DefaultScriptEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
+        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.k2.configuration.DefaultScriptConfigurationHandler\$DefaultScriptEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
 "org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource"))
 
         addMetadata(typeMetadata)
 
-        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptConfigurationProvider\$MainKtsKotlinScriptEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
+        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider\$MainKtsKotlinScriptEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource",
 "org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource"))
 
         addMetadata(typeMetadata)
@@ -79,8 +79,8 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId", metadataHash = -2068549764)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1946578919)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource", metadataHash = -998651648)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.DefaultScriptConfigurationHandler\$DefaultScriptEntitySource", metadataHash = -269097726)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.MainKtsScriptConfigurationProvider\$MainKtsKotlinScriptEntitySource", metadataHash = 1024193770)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configuration.DefaultScriptConfigurationHandler\$DefaultScriptEntitySource", metadataHash = -269097726)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider\$MainKtsKotlinScriptEntitySource", metadataHash = 1024193770)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntitySource", metadataHash = 236614476)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntitySource", metadataHash = 1353548779)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -1791994671)

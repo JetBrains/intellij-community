@@ -35,7 +35,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
         if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck) return null
 
-        val applicableDefinitions = ScriptDefinitionsManager.getInstance(project).allDefinitions.filter {
+        val applicableDefinitions = ScriptDefinitionsManager.getInstance(project).getDefinitions().filter {
                 !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettings.getInstance(project)
                     .isScriptDefinitionEnabled(it)
             }.toList()

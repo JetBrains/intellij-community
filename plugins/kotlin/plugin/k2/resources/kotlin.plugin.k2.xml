@@ -26,7 +26,6 @@
   <xi:include href="jvm-debugger-k2.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
   <xi:include href="scripting-base.xml"/>
-  <xi:include href="scripting-k2.xml"/>
   <xi:include href="native.xml"/>
   <xi:include href="native-k2.xml"/>
   <xi:include href="facets-base.xml"/>
@@ -249,6 +248,8 @@
 
     <module name="kotlin.jvm.shared"/>
     <module name="kotlin.jvm.k2"/>
+
+    <module name="kotlin.base.scripting.k2"/>
 
     <module name="kotlin.code-insight.intentions.shared"/>
     <module name="kotlin.code-insight.inspections.shared"/>

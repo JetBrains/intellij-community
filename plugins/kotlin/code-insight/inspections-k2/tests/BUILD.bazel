@@ -55,6 +55,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//plugins/kotlin/gradle/gradle-java",
     "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
+    "//plugins/kotlin/base/scripting.k2",
   ]
 )
 

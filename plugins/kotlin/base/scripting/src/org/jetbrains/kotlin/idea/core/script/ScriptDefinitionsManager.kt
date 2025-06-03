@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
@@ -48,7 +47,7 @@ import kotlin.script.experimental.api.SourceCode
  * **Note** that the class is `open` for inheritance only for the testing purpose. Its dependencies are cut via a set of `protected open`
  * methods.
  */
-open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinitionProvider(), Disposable {
+open class ScriptDefinitionsManager(private val project: Project) : IdeScriptDefinitionProvider(), Disposable {
 
     companion object {
         fun getInstance(project: Project): ScriptDefinitionsManager =
@@ -72,7 +71,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
      * Definitions disabled via [KotlinScriptingSettings.isScriptDefinitionEnabled] are filtered out.
      * The sequence is ordered according to the [KotlinScriptingSettings.getScriptDefinitionOrder] or, if the latter is missing,
      * conforms default by-source order (see [ScriptDefinitionsManager]).
-     * @see [allDefinitions]
+     * @see [getDefinitions]
      */
     public override val currentDefinitions: Sequence<ScriptDefinition>
         get() {
@@ -88,8 +87,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
      *  if the latter is missing, conforms default by-source order (see [ScriptDefinitionsManager]).
      *  @see [currentDefinitions]
      */
-    val allDefinitions: List<ScriptDefinition>
-        get() = getOrLoadDefinitions()
+    override fun getDefinitions(): List<ScriptDefinition> = getOrLoadDefinitions()
 
     /**
      * Searches script definition that best matches the specified [script].

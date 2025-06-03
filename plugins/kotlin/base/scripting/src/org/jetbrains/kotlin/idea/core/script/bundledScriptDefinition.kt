@@ -6,8 +6,6 @@ import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.core.script.k2.NewScriptFileInfo
-import org.jetbrains.kotlin.idea.core.script.k2.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.io.File
@@ -32,13 +30,13 @@ class BundledScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
     override val definitions: Sequence<ScriptDefinition> = sequenceOf(project.defaultDefinition)
 }
 
-private fun Project.javaHomePath(): File? {
+fun Project.javaHomePath(): File? {
     val sdk = ProjectRootManager.getInstance(this)?.projectSdk?.takeIf { it.sdkType is JavaSdkType }
     val anyJdk = PathUtilEx.getAnyJdk(this)
     return (sdk ?: anyJdk)?.homePath?.let { File(it) }
 }
 
-val Project.defaultDefinition: ScriptDefinition
+internal val Project.defaultDefinition: ScriptDefinition
     get() {
         val project = this
         val (compilationConfiguration, evaluationConfiguration) = createScriptDefinitionFromTemplate(
@@ -52,10 +50,6 @@ val Project.defaultDefinition: ScriptDefinition
                 displayName("Default Kotlin Script")
                 hostConfiguration(defaultJvmScriptingHostConfiguration)
                 ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
-                ide.kotlinScriptTemplateInfo(NewScriptFileInfo().apply {
-                    id = "default-kts"
-                    title = ".kts"
-                })
             }
         )
 

@@ -38,16 +38,6 @@ class IdeScriptReportSink(
     }
 }
 
-class KotlinScriptingReportsSink(
-    val project: Project,
-) : ScriptReportSink {
-    override fun attachReports(scriptFile: VirtualFile, reports: List<ScriptDiagnostic>) {
-        if (getScriptReports(scriptFile) == reports) return
-
-        scriptFile.scriptDiagnostics = reports
-    }
-}
-
 fun getScriptReports(file: VirtualFile): List<ScriptDiagnostic> {
     return file.scriptDiagnostics ?: emptyList()
 }
@@ -64,4 +54,4 @@ fun drainScriptReports(file: KtFile): List<ScriptDiagnostic> {
     return diagnostics
 }
 
-private var VirtualFile.scriptDiagnostics: List<ScriptDiagnostic>? by UserDataProperty(Key.create("KOTLIN_SCRIPT_DIAGNOSTICS"))
+var VirtualFile.scriptDiagnostics: List<ScriptDiagnostic>? by UserDataProperty(Key.create("KOTLIN_SCRIPT_DIAGNOSTICS"))

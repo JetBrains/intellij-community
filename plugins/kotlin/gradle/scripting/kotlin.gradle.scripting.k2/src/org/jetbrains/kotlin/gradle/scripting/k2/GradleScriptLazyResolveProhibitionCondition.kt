@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.script.k2.KotlinScripDeferredResolutionPolicy
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScripDeferredResolutionPolicy
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
