@@ -1636,7 +1636,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - f:findGroup(java.lang.String):com.intellij.ide.ProjectGroup
 - f:forceReopenProjects():V
 - f:getActivationTimestamp(java.lang.String):java.lang.Long
-- f:getCurrentBranchName(java.lang.String):java.lang.String
 - f:getDisplayName(java.lang.String):java.lang.String
 - getGroups():java.util.List
 - sf:getInstanceEx():com.intellij.ide.RecentProjectsManagerBase
@@ -4868,9 +4867,7 @@ f:com.intellij.ide.util.TipUIUtil
 - s:createBrowser():com.intellij.ide.util.TipUIUtil$Browser
 com.intellij.ide.vcs.RecentProjectsBranchesProvider
 - sf:Companion:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
-- a:getCurrentBranch(java.lang.String):java.lang.String
 f:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
-- f:getCurrentBranch(java.lang.String):java.lang.String
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.ide.wizard.AbstractNewProjectWizardBuilder
 - com.intellij.ide.util.projectWizard.ModuleBuilder

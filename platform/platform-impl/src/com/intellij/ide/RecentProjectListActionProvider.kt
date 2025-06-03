@@ -171,14 +171,13 @@ open class RecentProjectListActionProvider {
     var displayName = recentProjectManager.getDisplayName(path)
     val projectName = recentProjectManager.getProjectName(path)
     val activationTimestamp = recentProjectManager.getActivationTimestamp(path)
-
     var branch: String? = null
 
     if (displayName.isNullOrBlank()) {
-      displayName = if (duplicates.contains(ProjectNameOrPathIfNotYetComputed(projectName))) {
-        if (Registry.`is`("ide.welcome.screen.branch.name", true)) {
-          branch = recentProjectManager.getCurrentBranchName(path)
-        }
+      val nameIsDistinct = !duplicates.contains(ProjectNameOrPathIfNotYetComputed(projectName))
+      branch = recentProjectManager.getCurrentBranchIfShouldShow(path, nameIsDistinct)
+
+      displayName = if (!nameIsDistinct) {
         FileUtil.toSystemDependentName(path)
       }
       else {

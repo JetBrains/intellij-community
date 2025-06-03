@@ -339,6 +339,8 @@
     <advancedSetting id="vcs.commit.tool.window" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.non.modal.commit.toggle.ui" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.push.all.with.commits" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.recent.projects.show.branch" enumClass="git4idea.repo.RecentProjectsShowBranchMode" default="FOR_IDENTICAL"
+                     bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
 
     <notificationGroup id="External Executable Critical Failures" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.external.executable"/>
 

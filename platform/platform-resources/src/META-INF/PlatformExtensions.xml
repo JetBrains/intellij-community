@@ -190,10 +190,7 @@
         Enable new inspection widget experiment
       </description>
     </experimentalFeature>
-    <registryKey key="ide.welcome.screen.branch.name"
-                 restartRequired="true"
-                 description="Show current branch names for recent projects"
-                 defaultValue="true"/>
+
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentAvailabilityService"
