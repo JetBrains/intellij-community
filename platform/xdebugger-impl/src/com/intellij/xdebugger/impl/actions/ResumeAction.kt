@@ -18,6 +18,7 @@ open class ResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
       return
     }
     val session = DebuggerUIUtil.getSessionProxy(e)
+    // Do nothing when there is no session, so that LUX-ed action on frontend will delegate to the backend action
     if (session == null) {
       e.presentation.isEnabled = false
       return
