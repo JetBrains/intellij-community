@@ -1522,6 +1522,7 @@ public class AllIcons {
     /** 24x24 */ public static final @NotNull Icon OpenSelected = load("welcome/openSelected.svg", -720655450, 0);
 
     public static final class RecentProjects {
+      /** 16x16 */ public static final @NotNull Icon RemoteProject = load("welcome/recentProjects/remoteProject.svg", 1948055625, 2);
       /** 10x10 */ public static final @NotNull Icon RemoveHover = load("welcome/recentProjects/remove-hover.svg", -1249716707, 2);
       /** 10x10 */ public static final @NotNull Icon Remove = load("welcome/recentProjects/remove.svg", -1427151265, 2);
       /** 10x10 */ public static final @NotNull Icon RemoveDisabledHover = load("welcome/recentProjects/removeDisabled-hover.svg", -1439591680, 2);

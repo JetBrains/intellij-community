@@ -506,7 +506,7 @@ class RecentProjectFilteringTree(
         providerPathLabel.apply {
           text = providerPath ?: ""
           isVisible = providerPath != null
-          icon = providerIcon
+          icon = providerIcon ?: AllIcons.Welcome.RecentProjects.RemoteProject
           verticalTextPosition = SwingConstants.CENTER
         }
         projectPathLabel.apply {

@@ -1515,6 +1515,7 @@ public final class AllIconsKeys {
     /** 24x24 */ public static final @NotNull IntelliJIconKey OpenSelected = new IntelliJIconKey("welcome/openSelected.svg", "welcome/openSelected.svg", AllIconsKeys.class);
 
     public static final class RecentProjects {
+      /** 16x16 */ public static final @NotNull IntelliJIconKey RemoteProject = new IntelliJIconKey("welcome/recentProjects/remoteProject.svg", "welcome/recentProjects/remoteProject.svg", AllIconsKeys.class);
       /** 10x10 */ public static final @NotNull IntelliJIconKey RemoveHover = new IntelliJIconKey("welcome/recentProjects/remove-hover.svg", "welcome/recentProjects/remove-hover.svg", AllIconsKeys.class);
       /** 10x10 */ public static final @NotNull IntelliJIconKey Remove = new IntelliJIconKey("welcome/recentProjects/remove.svg", "welcome/recentProjects/remove.svg", AllIconsKeys.class);
       /** 10x10 */ public static final @NotNull IntelliJIconKey RemoveDisabledHover = new IntelliJIconKey("welcome/recentProjects/removeDisabled-hover.svg", "welcome/recentProjects/removeDisabled-hover.svg", AllIconsKeys.class);

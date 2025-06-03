@@ -55,6 +55,8 @@ org.jetbrains.jewel.ui.icon.IconKey
 - a:path(Z):java.lang.String
 org.jetbrains.jewel.ui.icon.NewUiChecker
 - a:isNewUi():Z
+f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Welcome$RecentProjects
+- sf:RemoteProject:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 org.jetbrains.jewel.ui.painter.PainterHint
 - sf:None:org.jetbrains.jewel.ui.painter.PainterHint$None
 - canApply(org.jetbrains.jewel.ui.painter.PainterProviderScope):Z

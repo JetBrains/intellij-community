@@ -1382,6 +1382,7 @@ f:com.intellij.icons.AllIcons$Welcome$LearnTab
 - sf:JetBrainsAcademy:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Welcome$RecentProjects
+- sf:RemoteProject:javax.swing.Icon
 - sf:Remove:javax.swing.Icon
 - sf:RemoveDisabled:javax.swing.Icon
 - sf:RemoveDisabledHover:javax.swing.Icon
