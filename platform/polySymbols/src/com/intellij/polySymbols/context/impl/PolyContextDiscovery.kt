@@ -451,6 +451,9 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
         }
       }
     })
+    WEB_SYMBOLS_CONTEXT_EP.point!!.addChangeListener(Runnable{
+      cachedData.clear()
+    }, project)
   }
 
   fun getProximityFromExtensions(dir: VirtualFile, kind: PolyContextKind, name: PolyContextName): Int? =
