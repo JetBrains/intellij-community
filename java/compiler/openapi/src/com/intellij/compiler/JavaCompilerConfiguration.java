@@ -36,7 +36,7 @@ final class JavaCompilerConfiguration extends JavaCompilerConfigurationProxy {
     @SuppressWarnings({"InjectedReferences", "LanguageMismatch"})
     @Override
     public @NotNull OptionController forContext(@NotNull PsiElement context) {
-      Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(context.getContainingFile()));
+      Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(context.getContainingFile().getOriginalFile()));
       Project project = module.getProject();
       String bindId = "additionalOptions";
       return OptionController.empty()
