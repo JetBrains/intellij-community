@@ -61,7 +61,7 @@ object SuvorovProgress {
       return
     }
 
-    FreezeUiUsageCollector.reportUiFreezePopupVisible(showingDelay)
+    FreezeUiUsageCollector.reportUiFreezePopupVisible()
 
     val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
       "None"

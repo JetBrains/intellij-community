@@ -12,20 +12,19 @@ internal object FreezeUiUsageCollector: CounterUsagesCollector() {
   private val GROUP = EventLogGroup(
     id = "freeze.ui",
     recorder = "FUS",
-    version = 1,
+    version = 2,
     description = "Group of events describing behavior of the IDE during UI freeze"
   )
 
   private val FREEZE_POPUP_SHOWN = GROUP.registerEvent(
     eventId = "freeze.popup.shown",
-    Int("delay_ms", description = "Delay until freeze popup starts being visible"),
     description = "Happens when the IDE shows a popup that indicates UI freeze",
   )
 
   @OptIn(DelicateCoroutinesApi::class)
-  internal fun reportUiFreezePopupVisible(durationMs: Int) {
+  internal fun reportUiFreezePopupVisible() {
     GlobalScope.launch { // we don't want to block EDT
-      FREEZE_POPUP_SHOWN.log(durationMs)
+      FREEZE_POPUP_SHOWN.log()
     }
   }
 
