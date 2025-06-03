@@ -367,8 +367,8 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     disposable2: Disposable,
   ) {
     assertNull(channel.receive())
-    Disposer.dispose(disposable2)
     assertTrue(channel.isEmpty) { "Expected no more events, but got ${channel.tryReceive().getOrNull()}" }
+    Disposer.dispose(disposable2)
   }
 
   private fun <T> CoroutineScope.addStatusListener(disposable: Disposable, channel: SendChannel<T>, selector: (CurrentSessionState?) -> T) {
