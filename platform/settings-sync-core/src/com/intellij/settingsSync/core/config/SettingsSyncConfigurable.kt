@@ -408,7 +408,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     }
   }
 
-  private fun disableCurrentSyncDialog() {
+  private fun disableCurrentSyncDialog() : Boolean {
     val code = MessagesService.getInstance().showMessageDialog(
       null, null, message("disable.active.sync.message"), message("disable.active.sync.title"),
       arrayOf(Messages.getCancelButton(), message("disable.dialog.disable.button")),
@@ -418,6 +418,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       enableCheckbox.isSelected = false
       disableSyncOption.set(DisableSyncType.DISABLE)
       handleDisableSync()
+      return true
+    } else {
+      return false
     }
   }
 
@@ -531,15 +534,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   private fun tryChangeAccount(selectedValue: UserProviderHolder) {
-    if (enableCheckbox.isSelected || SettingsSyncSettings.getInstance().syncEnabled) {
-      disableCurrentSyncDialog()
-    } else if (selectedValue == UserProviderHolder.addAccount) {
+    if (selectedValue == UserProviderHolder.addAccount) {
+      if (!disableCurrentSyncDialog()) {
+        return
+      }
       val syncTypeDialog = AddAccountDialog(configPanel)
       if (syncTypeDialog.showAndGet()) {
         val providerCode = syncTypeDialog.providerCode
         val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: return
         login(provider, syncConfigPanel)
       }
+    } else if (enableCheckbox.isSelected || SettingsSyncSettings.getInstance().syncEnabled) {
+      disableCurrentSyncDialog()
     } else {
       userDropDownLink.selectedItem = selectedValue
     }
