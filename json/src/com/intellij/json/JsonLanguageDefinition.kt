@@ -3,13 +3,14 @@ package com.intellij.json
 
 import com.intellij.json.syntax.JsonSyntaxElementTypes
 import com.intellij.json.syntax.JsonSyntaxLexer
+import com.intellij.platform.syntax.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.lexer.Lexer
-import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.util.runtime.SyntaxGeneratedParserRuntime
 import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.syntaxElementTypeSetOf
+import com.intellij.platform.syntax.util.runtime.GrammarKitLanguageDefinition
 
-class JsonLanguageDefinition : LanguageSyntaxDefinition {
+class JsonLanguageDefinition : LanguageSyntaxDefinition, GrammarKitLanguageDefinition {
   override fun getLexer(): Lexer {
     return JsonSyntaxLexer()
   }
