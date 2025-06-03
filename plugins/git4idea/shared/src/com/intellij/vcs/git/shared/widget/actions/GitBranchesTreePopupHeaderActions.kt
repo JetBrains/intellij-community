@@ -2,25 +2,25 @@
 package com.intellij.vcs.git.shared.widget.actions
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
-import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.ui.ExperimentalUI
+import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeFilters
+import git4idea.GitDisposable
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 internal class GitBranchesTreePopupSettings : DefaultActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   init {
@@ -68,28 +68,34 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : GitWidgetSett
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
-    changeSetting(project) { api ->
-      api.setSyncOperationsOnAllRepos(project.projectId(), state)
+    changeSetting(e) { settings ->
+      settings.syncSetting = if (state) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC
     }
   }
 }
 
-internal class GitBranchesTreePopupGroupByPrefixAction : GitWidgetSettingsToggleAction() {
-  override fun isSelected(project: Project, settings: GitVcsSettings): Boolean {
-    return settings.branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY)
+internal class GitBranchesTreePopupGroupByPrefixAction :
+  ToggleAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend, DumbAware {
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    val enabledAndVisible = e.project != null && e.getData(GitBranchesWidgetKeys.POPUP) != null
+    if (enabledAndVisible) {
+      super.update(e)
+    }
   }
+
+  override fun isSelected(e: AnActionEvent): Boolean =
+    e.getData(GitBranchesWidgetKeys.POPUP)?.groupByPrefix ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
     val widgetPopup = e.getData(GitBranchesWidgetKeys.POPUP) ?: return
 
-    changeSetting(project, refreshWidget = false) { api ->
-      api.setGroupingByPrefix(project.projectId(), state)
-      withContext(Dispatchers.EDT) {
-        widgetPopup.setGroupingByPrefix(state)
-      }
+    GitDisposable.getInstance(project).childScope("Git group by prefix").launch {
+      GitUiSettingsApi.getInstance().setGroupingByPrefix(project.projectId(), state)
     }
+    widgetPopup.groupByPrefix = state
   }
 }
 
@@ -99,9 +105,8 @@ internal class GitBranchesTreePopupShowRecentBranchesAction : GitWidgetSettingsT
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
-    changeSetting(project) { api ->
-      api.setShowRecentBranches(project.projectId(), state)
+    changeSetting(e) { settings ->
+      settings.setShowRecentBranches(state)
     }
   }
 }
@@ -130,21 +135,18 @@ internal class GitBranchesTreePopupFilterByAction : GitWidgetSettingsToggleActio
   override fun isSelected(project: Project, settings: GitVcsSettings): Boolean = GitBranchesTreeFilters.byActions(project)
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
-    changeSetting(project) { api ->
-      api.setFilteringByActions(project.projectId(), state)
+    changeSetting(e) { settings ->
+      settings.setFilterByActionInPopup(state)
     }
   }
-
 }
 
 internal class GitBranchesTreePopupFilterByRepository : GitWidgetSettingsToggleAction(requireMultiRoot = true) {
   override fun isSelected(project: Project, settings: GitVcsSettings): Boolean = GitBranchesTreeFilters.byRepositoryName(project)
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
-    changeSetting(project) { api ->
-      api.setFilteringByRepositories(project.projectId(), state)
+    changeSetting(e) { settings ->
+      settings.setFilterByRepositoryInPopup(state)
     }
   }
 }

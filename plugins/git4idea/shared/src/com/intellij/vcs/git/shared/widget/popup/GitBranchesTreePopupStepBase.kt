@@ -45,10 +45,6 @@ abstract class GitBranchesTreePopupStepBase(
     return createTreePathFor(treeModel, value)
   }
 
-  internal fun setPrefixGrouping(state: Boolean) {
-    treeModel.isPrefixGrouping = state
-  }
-
   fun setSearchPattern(pattern: String?) {
     if (pattern == null || pattern == "/") {
       treeModel.applyFilterAndRebuild(null)

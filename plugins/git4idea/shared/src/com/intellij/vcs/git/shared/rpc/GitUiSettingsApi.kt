@@ -13,14 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 interface GitUiSettingsApi: RemoteApi<Unit> {
   suspend fun setGroupingByPrefix(projectId: ProjectId, groupByPrefix: Boolean)
 
-  suspend fun setShowRecentBranches(projectId: ProjectId, displayRecent: Boolean)
-
-  suspend fun setFilteringByActions(projectId: ProjectId, allowFilteringByActions: Boolean)
-
-  suspend fun setFilteringByRepositories(projectId: ProjectId, allowFilteringByRepositories: Boolean)
-
-  suspend fun setSyncOperationsOnAllRepos(projectId: ProjectId, shouldSync: Boolean)
-
   suspend fun initBranchSyncPolicyIfNotInitialized(projectId: ProjectId)
 
   suspend fun setShowTags(projectId: ProjectId, showTags: Boolean)

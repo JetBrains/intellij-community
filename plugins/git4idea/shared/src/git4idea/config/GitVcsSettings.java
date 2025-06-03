@@ -27,9 +27,15 @@ import java.util.Objects;
 /**
  * Git VCS settings
  * <br>
- * Note that even though settings are located in a shared module, they are synced in the backend -> frontend direction only.
- * Even though setters are visible, they should not be called on the frontend.
- * See {@link git4idea.config.GitRemoteSettingsInfoProvider} for details
+ * The settings are synchronized in both (frontend <-> backend) directions.</br>
+ * However, to propagate changes
+ * {@link com.intellij.configurationStore.StoreUtilKt#saveSettingsForRemoteDevelopment(com.intellij.openapi.components.ComponentManager)}
+ * should be called or changes should be made in the settings dialog.</br>
+ * </br>
+ * Also note that besides simple manipulations over the state entity, some setters in this class invoke listeners.
+ * In cases when such behavior is unavoidable, please use {@link GitVcsSettingsListener} and backend/client-specific implementations.
+ *
+ * @see git4idea.config.GitRemoteSettingsInfoProvider
  */
 @State(name = GitVcsSettings.SETTINGS_KEY, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions> implements DvcsSyncSettings, DvcsCompareSettings {

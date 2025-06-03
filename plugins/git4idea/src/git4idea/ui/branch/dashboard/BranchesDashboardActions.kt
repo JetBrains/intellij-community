@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.getCommonCurrentBranch
@@ -506,6 +507,11 @@ internal object BranchesDashboardActions {
       e.presentation.text =
         if (GroupBranchByRepositoryAction.isEnabledAndVisible(e)) groupByDirectory.get() //NON-NLS
         else groupingSeparator() + " " + groupByDirectory.get() //NON-NLS
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      super.setSelected(e, state)
+      e.project?.let { saveSettingsForRemoteDevelopment(it) }
     }
   }
 

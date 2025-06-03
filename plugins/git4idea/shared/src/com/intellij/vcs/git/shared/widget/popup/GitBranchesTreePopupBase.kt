@@ -105,6 +105,12 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
   final override var userResized: Boolean
     private set
 
+  final override var groupByPrefix: Boolean
+    get() = treeStep.treeModel.isPrefixGrouping
+    set(value) {
+      treeStep.treeModel.isPrefixGrouping = value
+    }
+
   private val expandedPaths = HashSet<TreePath>()
 
   protected val am = ActionManager.getInstance()
@@ -702,12 +708,6 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
         }
       }
     }
-  }
-
-  override fun setGroupingByPrefix(groupByPrefix: Boolean) {
-    if (isDisposed) return
-
-    treeStep.setPrefixGrouping(groupByPrefix)
   }
 
   private fun runPreservingTreeState(action: () -> Unit) {

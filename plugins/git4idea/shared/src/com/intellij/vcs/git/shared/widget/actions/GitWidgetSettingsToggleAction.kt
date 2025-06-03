@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.shared.widget.actions
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -8,11 +9,8 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
-import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
-import git4idea.GitDisposable
 import git4idea.config.GitVcsSettings
-import kotlinx.coroutines.launch
 
 internal abstract class GitWidgetSettingsToggleAction(
   private val requireMultiRoot: Boolean = false,
@@ -36,17 +34,11 @@ internal abstract class GitWidgetSettingsToggleAction(
     }
   }
 
-  protected fun changeSetting(
-    project: Project,
-    refreshWidget: Boolean = true,
-    operation: suspend (GitUiSettingsApi) -> Unit,
-  ) {
-    GitDisposable.getInstance(project).childScope("Git widget settings change").launch {
-      operation(GitUiSettingsApi.getInstance())
-      if (refreshWidget) {
-        GitWidgetUpdatesNotifier.getInstance(project).refresh()
-      }
-    }
+  protected fun changeSetting(e: AnActionEvent, operation: (GitVcsSettings) -> Unit) {
+    val project = e.project ?: return
+    operation(GitVcsSettings.getInstance(project))
+    saveSettingsForRemoteDevelopment(project)
+    GitWidgetUpdatesNotifier.getInstance(project).refresh()
   }
 
   internal companion object {
