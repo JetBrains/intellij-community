@@ -219,9 +219,9 @@ final class UndoClientState implements Disposable {
     if (!currentCommandMerger.isTransparent() && currentCommandMerger.hasActions()) {
       clearRedoStacks(currentCommandMerger);
     }
-    boolean shouldMerge = commandMerger.shouldMerge(groupId, currentCommandMerger);
-    if (!shouldMerge) {
-      flushCurrentCommand();
+    UndoCommandFlushReason flushReason = commandMerger.shouldFlush(groupId, currentCommandMerger);
+    if (flushReason != null) {
+      flushCurrentCommand(flushReason);
       compactIfNeeded();
     }
     commandMerger.commandFinished(commandName, groupId, currentCommandMerger);
@@ -230,11 +230,11 @@ final class UndoClientState implements Disposable {
     this.currentCommandMerger = null;
   }
 
-  void flushCurrentCommand() {
+  void flushCurrentCommand(@NotNull UndoCommandFlushReason flushReason) {
     if (currentCommandMerger != null && !currentCommandMerger.hasActions() && commandMerger.hasActions()) {
       undoSpy.flushCommand(project);
     }
-    commandMerger.flushCurrentCommand(undoStacksHolder, nextCommandTimestamp());
+    commandMerger.flushCurrentCommand(undoStacksHolder, flushReason, nextCommandTimestamp());
   }
 
   boolean isInsideCommand() {
@@ -327,7 +327,7 @@ final class UndoClientState implements Disposable {
 
   void clearUndoRedoQueue(@NotNull DocumentReference docRef) {
     LOG.assertTrue(!isInsideCommand());
-    flushCurrentCommand();
+    flushCurrentCommand(UndoCommandFlushReason.CLEAR_QUEUE);
     currentCommandMerger = null;
     undoStacksHolder.clearStacks(false, Set.of(docRef));
     redoStacksHolder.clearStacks(false, Set.of(docRef));
@@ -449,7 +449,7 @@ final class UndoClientState implements Disposable {
   }
 
   private void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
-    flushCurrentCommand();
+    flushCurrentCommand(isUndo ? UndoCommandFlushReason.UNDO : UndoCommandFlushReason.REDO);
 
     // here we _undo_ (regardless 'isUndo' flag) and drop all 'transparent' actions made right after undoRedo/redo.
     // Such actions should not get into redo/undoRedo stacks.  Note that 'transparent' actions that have been merged with normal actions
@@ -553,7 +553,7 @@ final class UndoClientState implements Disposable {
       return null;
     }
     if (isUndo) {
-      flushCurrentCommand();
+      flushCurrentCommand(UndoCommandFlushReason.GET_LAST_GROUP);
     }
     UndoRedoStacksHolder stack = isUndo ? undoStacksHolder : redoStacksHolder;
     return stack.getLastAction(refs);
@@ -568,7 +568,7 @@ final class UndoClientState implements Disposable {
 
   private @NotNull Set<DocumentReference> clearStacks() {
     var affected = new HashSet<DocumentReference>();
-    commandMerger.flushCurrentCommand(undoStacksHolder, nextCommandTimestamp());
+    flushCurrentCommand(UndoCommandFlushReason.CLEAR_STACKS);
     redoStacksHolder.collectAllAffectedDocuments(affected);
     redoStacksHolder.clearStacks(true, affected);
     undoStacksHolder.collectAllAffectedDocuments(affected);

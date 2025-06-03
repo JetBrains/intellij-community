@@ -416,7 +416,7 @@ public class UndoManagerImpl extends UndoManager {
   public void flushCurrentCommandMerger() {
     UndoClientState state = getClientState();
     if (state != null) {
-      state.flushCurrentCommand();
+      state.flushCurrentCommand(UndoCommandFlushReason.MANAGER_FORCE);
     }
   }
 

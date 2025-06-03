@@ -31,6 +31,7 @@ final class UndoableGroup implements Dumpable {
   private final @Nullable @Command String commandName;
   private final @NotNull List<? extends UndoableAction> actions;
   private final @NotNull UndoConfirmationPolicy confirmationPolicy;
+  private final @Nullable UndoCommandFlushReason flushReason;
   private final int commandTimestamp;
   private final boolean isTransparent;
   private final boolean isGlobal;
@@ -49,6 +50,7 @@ final class UndoableGroup implements Dumpable {
     @NotNull UndoRedoStacksHolder stacksHolder,
     @Nullable EditorAndState stateBefore,
     @Nullable EditorAndState stateAfter,
+    @Nullable UndoCommandFlushReason flushReason,
     int commandTimestamp,
     boolean isTransparent,
     boolean isGlobal,
@@ -61,6 +63,7 @@ final class UndoableGroup implements Dumpable {
     this.originalContext = null;
     this.stateBefore = stateBefore;
     this.stateAfter = stateAfter;
+    this.flushReason = flushReason;
     this.commandTimestamp = commandTimestamp;
     this.isTransparent = isTransparent;
     this.isTemporary = isTransparent;
@@ -226,6 +229,10 @@ final class UndoableGroup implements Dumpable {
 
   @Nullable EditorAndState getStateAfter() {
     return stateAfter;
+  }
+
+  @Nullable UndoCommandFlushReason getFlushReason() {
+    return flushReason;
   }
 
   private void undoOrRedo(boolean isUndo) throws UnexpectedUndoException {

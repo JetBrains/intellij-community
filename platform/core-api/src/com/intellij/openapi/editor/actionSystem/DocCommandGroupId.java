@@ -46,9 +46,8 @@ public final class DocCommandGroupId {
 
   @Override
   public String toString() {
-    return "DocCommandGroupId{" +
-           "document=" + myDocument +
-           ", groupId=" + myGroupId +
+    return "DocCommandGroupId{" + myDocument +
+           ", " + myGroupId +
            '}';
   }
 }

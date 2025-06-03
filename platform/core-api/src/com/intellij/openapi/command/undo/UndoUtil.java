@@ -73,4 +73,11 @@ public final class UndoUtil {
   public static boolean isExperimentalFrontendUndoEnabled() {
     return Registry.is("ide.undo.frontend.if.possible", false);
   }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static boolean debugExperimentalFrontendUndo() {
+    return isExperimentalFrontendUndoEnabled() &&
+      Registry.is("ide.undo.frontend.if.possible.debug", true);
+  }
 }

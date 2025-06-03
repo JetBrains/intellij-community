@@ -16,6 +16,7 @@ internal class UndoDumpUnit(
   private val confirmationPolicy: UndoConfirmationPolicy,
   private val affectedDocuments: Collection<DocumentReference>,
   private val additionalAffectedDocuments: Collection<DocumentReference>,
+  private val flushReason: UndoCommandFlushReason?,
 ) {
 
   companion object {
@@ -32,6 +33,7 @@ internal class UndoDumpUnit(
         group.confirmationPolicy,
         group.affectedDocuments,
         emptyList(),
+        group.flushReason,
       )
     }
 
@@ -47,6 +49,7 @@ internal class UndoDumpUnit(
         merger.undoConfirmationPolicy,
         ArrayList(merger.allAffectedDocuments),
         ArrayList(merger.additionalAffectedDocuments),
+        null,
       )
     }
 
@@ -60,11 +63,9 @@ internal class UndoDumpUnit(
   }
 
   override fun toString(): String {
-    val actionsStr = actions.joinToString(
-      separator = ", ",
-      prefix = "[",
-      postfix = "]",
-    ) { action -> "($action)" }
+    val actionsStr = actions.joinToString(separator = ", ", prefix = "[", postfix = "]") { action ->
+      "($action)"
+    }
     val isGlobalStr = if (isGlobal) " global" else ""
     val isTransparentStr = if (isTransparent) " transparent" else ""
     val isTemporaryStr = if (isTemporary) " temp" else ""
@@ -72,7 +73,7 @@ internal class UndoDumpUnit(
     val confirmationPolicyStr = if (confirmationPolicy != UndoConfirmationPolicy.DEFAULT) " $confirmationPolicy" else ""
     val docs = if (affectedDocuments.size > 1) " affected: ${printDocs(affectedDocuments)}" else ""
     val addDocs = if (additionalAffectedDocuments.size > 1) " additional: ${printDocs(additionalAffectedDocuments)}" else ""
-    return "{$command with ${actions.size} actions: $actionsStr" +
+    return "{$command with ${actions.size} ${if (actions.size == 1) "action" else "actions"} $flushReason: $actionsStr" +
            "$isGlobalStr$isTransparentStr$isTemporaryStr$isValidStr$confirmationPolicyStr$docs$addDocs}"
   }
 
