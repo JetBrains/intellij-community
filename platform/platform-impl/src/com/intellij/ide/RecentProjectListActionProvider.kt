@@ -72,6 +72,9 @@ open class RecentProjectListActionProvider {
     return (projectGroups + mergedProjectsWithoutGroups).toList()
   }
 
+  @ApiStatus.Internal
+  open fun getActions(project: Project?): List<AnAction> = getActions()
+
   @JvmOverloads
   open fun getActions(addClearListItem: Boolean = false, useGroups: Boolean = false): List<AnAction> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase

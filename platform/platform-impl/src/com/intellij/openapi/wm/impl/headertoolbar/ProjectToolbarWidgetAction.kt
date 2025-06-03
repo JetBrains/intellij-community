@@ -64,7 +64,8 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
   }
 }
 
-class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
+@ApiStatus.Internal
+open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
   override fun createPopup(event: AnActionEvent): JBPopup? {
     val step = createStep(createActionGroup(event), event.dataContext)
@@ -167,7 +168,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val group = ActionManager.getInstance().getAction("ProjectWidget.Actions") as ActionGroup
     result.addAll(group.getChildren(initEvent).asList())
     val openProjectsPredicate = OpenProjectSelectionPredicateSupplier.getInstance().getPredicate()
-    val actionsMap = RecentProjectListActionProvider.getInstance().getActions()
+    val actionsMap = RecentProjectListActionProvider.getInstance().getActions(initEvent.project)
       .asSequence()
       .take(MAX_RECENT_COUNT)
       .groupBy { openProjectsPredicate.test(it) }
