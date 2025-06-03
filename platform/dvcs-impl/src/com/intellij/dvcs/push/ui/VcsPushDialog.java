@@ -88,6 +88,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     myMainAction = new ComplexPushAction(myPushActions.get(0), myPushActions.subList(1, myPushActions.size()));
     myMainAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
 
+    myController.startLoadingCommits();
     init();
     updateOkActions();
     setOKButtonText(DvcsBundle.message("action.push"));

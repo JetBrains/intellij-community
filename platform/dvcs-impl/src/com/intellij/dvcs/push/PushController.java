@@ -85,7 +85,6 @@ public final class PushController implements Disposable {
         myDialog.enableOkActions(!(Boolean)evt.getNewValue());
       }
     });
-    startLoadingCommits();
     Disposer.register(dialog.getDisposable(), this);
   }
 
@@ -106,7 +105,7 @@ public final class PushController implements Disposable {
     });
   }
 
-  private void startLoadingCommits() {
+  public void startLoadingCommits() {
     Map<RepositoryNode, MyRepoModel<?, ?, ?>> priorityLoading = new LinkedHashMap<>();
     Map<RepositoryNode, MyRepoModel<?, ?, ?>> others = new LinkedHashMap<>();
     RepositoryNode nodeForCurrentEditor = findNodeByRepo(myCurrentlyOpenedRepository);
