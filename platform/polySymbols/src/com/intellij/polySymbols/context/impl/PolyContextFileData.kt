@@ -51,10 +51,10 @@ internal class PolyContextFileData private constructor(
   )
 
   companion object {
-    private val WEB_SYMBOLS_CONTEXT_FILE_DATA = Key<VirtualFileCachedValue<PolyContextFileData>>("web-symbols-context-file-data")
+    private val POLY_SYMBOLS_CONTEXT_FILE_DATA = Key<VirtualFileCachedValue<PolyContextFileData>>("poly-symbols-context-file-data")
 
     fun getOrCreate(file: VirtualFile): PolyContextFileData =
-      file.getCachedValue(WEB_SYMBOLS_CONTEXT_FILE_DATA, provider = ::parseSafely)
+      file.getCachedValue(POLY_SYMBOLS_CONTEXT_FILE_DATA, provider = ::parseSafely)
 
     private fun parseSafely(file: VirtualFile, contents: CharSequence?): PolyContextFileData {
       if (!contents.isNullOrEmpty()) {

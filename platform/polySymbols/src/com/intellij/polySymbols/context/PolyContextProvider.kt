@@ -9,7 +9,7 @@ import com.intellij.psi.util.CachedValueProvider
 
 interface PolyContextProvider {
   /**
-   * Determines whether a particular, parsed file should have a particular web symbols context (like web framework) enabled.
+   * Determines whether a particular, parsed file should have a particular PolyContext (like web framework) enabled.
    * Such files will for example have dedicated JS expressions injected. This API serves for a purpose of enabling the
    * support in particular files, when the support should not be provided on a directory level.
    * It is a responsibility of the context provider to cache value if needed.
@@ -17,7 +17,7 @@ interface PolyContextProvider {
   fun isEnabled(file: PsiFile): Boolean = false
 
   /**
-   * Determines whether a particular file should have a particular web symbols context (like web framework) enabled.
+   * Determines whether a particular file should have a particular PolyContext (like web framework) enabled.
    * This method is used before creating a PsiFile, so it should not try to use PsiManager to find a PsiFile.
    * This API serves for a purpose of enabling the support in particular files, when the support should not be provided
    * on a directory level. It is a responsibility of the context provider to cache value if needed.
@@ -25,7 +25,7 @@ interface PolyContextProvider {
   fun isEnabled(file: VirtualFile, project: Project): Boolean = false
 
   /**
-   * Determines whether files within a particular folder should have a particular web symbols context (like web framework)
+   * Determines whether files within a particular folder should have a particular PolyContext (like web framework)
    * enabled. Amongst others, html files in such folders might be parsed with dedicated parser, so
    * JS expressions will be part of PSI tress instead of being injected.
    * It is a responsibility of the context provider to include all dependencies of the value.

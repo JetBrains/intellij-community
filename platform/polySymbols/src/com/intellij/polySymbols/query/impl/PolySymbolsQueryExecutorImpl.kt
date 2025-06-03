@@ -339,7 +339,7 @@ class PolySymbolsQueryExecutorImpl(
         nestingLevel--
       }
     } ?: run {
-      thisLogger().warn("Recursive Web Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
+      thisLogger().warn("Recursive Poly Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
                         "Root scope: " + rootScope.map {
         it.asSafely<PolySymbol>()?.let { symbol -> "${symbol.qualifiedKind}/${symbol.name}" } ?: it
       } + "\n" +

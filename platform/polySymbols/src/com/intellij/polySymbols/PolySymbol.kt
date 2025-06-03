@@ -38,7 +38,7 @@ import java.util.*
 import javax.swing.Icon
 
 /**
- * The core element of the Web Symbols framework - it represents an entity in the Web Symbols model.
+ * The core element of the Poly Symbols framework - it represents an entity in the Poly Symbols model.
  * It is identified through `namespace`, `kind` and `name` properties.
  *
  * The symbol lifecycle is a single read action. If you need it to survive between read actions, use [PolySymbol.createPointer] to create a symbol pointer.
@@ -46,7 +46,7 @@ import javax.swing.Icon
  * During write action, the symbol might not survive PSI tree commit, so you should create a pointer
  * before the commit and dereference it afterward.
  *
- * See also: [Implementing Web Symbols](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html)
+ * See also: [Implementing Poly Symbols](https://plugins.jetbrains.com/docs/intellij/websymbols-implementation.html)
  *
  */
 /*
@@ -147,8 +147,8 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
 
   /**
    * The pattern to match names against. As a result of pattern matching a [PolySymbolMatch] will be created.
-   * A pattern may specify that a reference to other Web Symbols is expected in some part of it.
-   * For such places, appropriate segments with referenced Web Symbols will be created and navigation,
+   * A pattern may specify that a reference to other Poly Symbols is expected in some part of it.
+   * For such places, appropriate segments with referenced Poly Symbols will be created and navigation,
    * validation and refactoring support is available out-of-the-box.
    */
   val pattern: PolySymbolsPattern?
@@ -278,7 +278,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
     get() = null
 
   /**
-   * Used by Web Symbols framework to get a [DocumentationTarget], which handles documentation
+   * Used by Poly Symbols framework to get a [DocumentationTarget], which handles documentation
    * rendering for the symbol. Default implementation will use [createDocumentation]
    * to render the documentation.
    */
@@ -290,7 +290,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
 
   /**
    * Returns [PolySymbolDocumentation] - an interface holding information required to render documentation for the symbol.
-   * By default, it's contents are build from the available Web Symbol information.
+   * By default, it's contents are build from the available Poly Symbol information.
    *
    * To customize symbols documentation, one can override the method, or implement [PolySymbolDocumentationCustomizer].
    *
@@ -329,7 +329,7 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
     this == symbol
 
   /**
-   * Web Symbols can have various naming conventions.
+   * Poly Symbols can have various naming conventions.
    * This method is used by the framework to determine a new name for a symbol based on its occurrence
    */
   fun adjustNameForRefactoring(queryExecutor: PolySymbolsQueryExecutor, newName: String, occurence: String): String =

@@ -26,7 +26,7 @@ interface PolyContext {
 
     @TestOnly
     @JvmField
-    val WEB_SYMBOLS_CONTEXT_EP: KeyedExtensionCollector<PolyContextProvider, String> =
+    val POLY_SYMBOLS_CONTEXT_EP: KeyedExtensionCollector<PolyContextProvider, String> =
       PolyContextProviderExtensionCollector(ExtensionPointName("com.intellij.polySymbols.context"))
 
     @JvmField
@@ -36,7 +36,7 @@ interface PolyContext {
     val VALUE_NONE: String = "none"
 
     @JvmField
-    val WEB_SYMBOLS_CONTEXT_FILE: String = ".ws-context"
+    val POLY_SYMBOLS_CONTEXT_FILE: String = ".ws-context"
 
     @JvmField
     val PKG_MANAGER_NODE_PACKAGES: String = "node-packages"

@@ -6,7 +6,7 @@ import com.intellij.polySymbols.html.impl.PolySymbolHtmlAttributeValueImpl
 import com.intellij.polySymbols.query.PolySymbolMatch
 
 /**
- * An interface holding information about Web Symbol HTML attribute value.
+ * An interface holding information about Poly Symbol HTML attribute value.
  *
  * It can provide information about:
  * - kind ([PolySymbolHtmlAttributeValue.Kind]: `PLAIN`, `EXPRESSION`, `NO_VALUE`),

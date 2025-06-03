@@ -57,8 +57,8 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-private val WEB_SYMBOLS_CONTEXT_EP get() = PolyContext.WEB_SYMBOLS_CONTEXT_EP as PolyContextProviderExtensionCollector
-private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("web.isContext.reloadMarker")
+private val POLY_SYMBOLS_CONTEXT_EP get() = PolyContext.POLY_SYMBOLS_CONTEXT_EP as PolyContextProviderExtensionCollector
+private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("polyContext.reloadMarker")
 private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(PolyContext::class.java)
 
@@ -139,7 +139,7 @@ private class LocationInfo(
 }
 
 private fun allKinds(rulesConfigInDir: ContextRulesConfigInDir?, fileConfigInDir: ContextFileConfigInDir?): Set<String> =
-  (rulesConfigInDir?.kinds ?: emptySet()) + (fileConfigInDir?.kinds ?: emptySet()) + WEB_SYMBOLS_CONTEXT_EP.allKinds()
+  (rulesConfigInDir?.kinds ?: emptySet()) + (fileConfigInDir?.kinds ?: emptySet()) + POLY_SYMBOLS_CONTEXT_EP.allKinds()
 
 private fun findContextInDirOrFileCached(kind: PolyContextKind, locationInfo: LocationInfo): PolyContextName? {
   val project = locationInfo.project
@@ -162,7 +162,7 @@ private fun findContextInDirOrFileCached(kind: PolyContextKind, locationInfo: Lo
     ?.let { return it }
 
   val proximityPerContextFromRulesConfig = rulesConfigInDir.getProximityPerContext(kind)
-  val proximityPerContextFromExtensions = WEB_SYMBOLS_CONTEXT_EP.allOf(kind).asSequence()
+  val proximityPerContextFromExtensions = POLY_SYMBOLS_CONTEXT_EP.allOf(kind).asSequence()
     .mapNotNull {
       val name = it.key
       val proximity = contextInfo.getProximityFromExtensions(dir, kind, name)
@@ -295,7 +295,7 @@ private fun loadContextFilesConfiguration(directory: VirtualFile): ContextFileCo
   val dependencies = mutableListOf<Any>(VFS_STRUCTURE_MODIFICATIONS)
   val contexts = generateSequence(Pair(directory, 0)) { (dir, proximity) -> dir.parent?.let { Pair(it, proximity - 1) } }
     .flatMap { (dir, proximity) ->
-      dir.findFile(PolyContext.WEB_SYMBOLS_CONTEXT_FILE)
+      dir.findFile(PolyContext.POLY_SYMBOLS_CONTEXT_FILE)
         ?.let {
           dependencies.add(it)
           PolyContextFileData.getOrCreate(it)
@@ -325,19 +325,19 @@ private fun isForbiddenFromProviders(kind: PolyContextKind,
                                      file: VirtualFile,
                                      project: Project,
                                      disableWhen: List<PolyContextKindRules.DisablementRules>?): Boolean =
-  WEB_SYMBOLS_CONTEXT_EP.allFor(kind, name).any { it.isForbidden(file, project) }
+  POLY_SYMBOLS_CONTEXT_EP.allFor(kind, name).any { it.isForbidden(file, project) }
   || disableWhen?.any { matchFileName(file.name, it.fileNamePatterns) || matchFileExt(file.name, it.fileExtensions) } == true
 
 private fun isAnyForbidden(kind: PolyContextKind, context: VirtualFile, project: Project): Boolean =
-  WEB_SYMBOLS_CONTEXT_EP.forAny(kind).any { it.isForbidden(context, project) }
+  POLY_SYMBOLS_CONTEXT_EP.forAny(kind).any { it.isForbidden(context, project) }
 
 private fun findEnabledFromProviders(kind: PolyContextKind, psiFile: PsiFile): PolyContextName? =
-  WEB_SYMBOLS_CONTEXT_EP.allOf(kind).entries
+  POLY_SYMBOLS_CONTEXT_EP.allOf(kind).entries
     .firstOrNull { (_, providers) -> providers.any { it.isEnabled(psiFile) } }
     ?.key
 
 private fun findEnabledFromProviders(kind: PolyContextKind, file: VirtualFile, project: Project): PolyContextName? =
-  WEB_SYMBOLS_CONTEXT_EP.allOf(kind).entries
+  POLY_SYMBOLS_CONTEXT_EP.allOf(kind).entries
     .firstOrNull { (_, providers) -> providers.any { it.isEnabled(file, project) } }
     ?.key
 
@@ -347,7 +347,7 @@ private fun webContextProximityFromProviders(kind: PolyContextKind,
                                              directory: VirtualFile): CachedValueProvider.Result<Int?> {
   val dependencies = mutableSetOf<Any>()
   var proximity: Int? = null
-  for (provider in WEB_SYMBOLS_CONTEXT_EP.allFor(kind, name)) {
+  for (provider in POLY_SYMBOLS_CONTEXT_EP.allFor(kind, name)) {
     val result = provider.isEnabled(project, directory)
     result.value?.let {
       if (proximity == null) {
@@ -396,7 +396,7 @@ private fun reloadProject(kind: PolyContextKind, prevState: PolyContextName, new
     }
     project.putUserData(CONTEXT_RELOAD_MARKER_KEY, true)
   }
-  LOG.info("Reloading project ${project.name} on Web Symbols $kind context change (${prevState} -> ${newState}) in file ${file.path}.")
+  LOG.info("Reloading project ${project.name} on PolyContext $kind change (${prevState} -> ${newState}) in file ${file.path}.")
   ApplicationManager.getApplication().invokeLater(
     Runnable {
       WriteAction.run<RuntimeException> {
@@ -433,7 +433,7 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
       override fun rootsChanged(event: ModuleRootEvent) {
         previousContext.clear()
         cachedData.clear()
-        thisLogger().info("Notifying that Web Symbol context may have changed due to roots changes.")
+        thisLogger().info("Notifying that PolyContext may have changed due to roots changes.")
         project.messageBus.syncPublisher(PolyContextChangeListener.TOPIC).contextMayHaveChanged()
       }
     })
@@ -442,16 +442,16 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
     })
     messageBus.subscribe(VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
-        val wsFile = events.find { it.file?.name == PolyContext.WEB_SYMBOLS_CONTEXT_FILE }
+        val wsFile = events.find { it.file?.name == PolyContext.POLY_SYMBOLS_CONTEXT_FILE }
         if (wsFile != null) {
-          thisLogger().info("Notifying that Web Symbol context may have changed due to changes in ${wsFile.path}.")
+          thisLogger().info("Notifying that PolyContext may have changed due to changes in ${wsFile.path}.")
           cs.launch {
             project.messageBus.syncPublisher(PolyContextChangeListener.TOPIC).contextMayHaveChanged()
           }
         }
       }
     })
-    WEB_SYMBOLS_CONTEXT_EP.point!!.addChangeListener(Runnable{
+    POLY_SYMBOLS_CONTEXT_EP.point!!.addChangeListener(Runnable{
       cachedData.clear()
     }, project)
   }

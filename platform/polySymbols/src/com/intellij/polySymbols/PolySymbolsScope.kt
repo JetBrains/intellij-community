@@ -13,12 +13,12 @@ import com.intellij.polySymbols.utils.toCodeCompletionItems
 import com.intellij.util.containers.Stack
 
 /**
- * Web Symbols are contained within a loose model built from Web Symbols scopes, each time anew for a particular context.
- * Each Web Symbol is also a [PolySymbolsScope] and it can contain other Web Symbols.
+ * Poly Symbols are contained within a loose model built from Poly Symbols scopes, each time anew for a particular context.
+ * Each Poly Symbol is also a [PolySymbolsScope] and it can contain other Poly Symbols.
  * For instance an HTML element symbol would contain some HTML attributes symbols,
  * or a JavaScript class symbol would contain fields and methods symbols.
  *
- * When configuring queries, Web Symbols scope are added to the list to create an initial scope for symbols resolve.
+ * When configuring queries, Poly Symbols scope are added to the list to create an initial scope for symbols resolve.
  *
  * When implementing a scope, which contains many elements you should extend [com.intellij.polySymbols.utils.PolySymbolsScopeWithCache],
  * which caches the list of symbols and uses efficient cache to speed up queries. When extending the class,
@@ -34,7 +34,7 @@ interface PolySymbolsScope : ModificationTracker {
 
   /**
    * Returns symbols within the scope, which matches provided namespace, kind and name.
-   * Use [PolySymbol.match] to match Web Symbols in the scope against provided name.
+   * Use [PolySymbol.match] to match Poly Symbols in the scope against provided name.
    *
    * If the scope contains many symbols, or results should be cached consider extending [com.intellij.polySymbols.utils.PolySymbolsScopeWithCache].
    *

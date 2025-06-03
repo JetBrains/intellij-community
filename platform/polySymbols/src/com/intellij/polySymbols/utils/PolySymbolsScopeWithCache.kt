@@ -115,7 +115,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
       initialize(
         {
           if (!provides(it.qualifiedKind))
-            throw IllegalArgumentException("Web Symbol with unsupported kind: ${it.qualifiedKind} added. $it")
+            throw IllegalArgumentException("Poly Symbol with unsupported kind: ${it.qualifiedKind} added. $it")
           map.add(it)
         }, dependencies)
       if (dependencies.isEmpty()) {

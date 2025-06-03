@@ -30,7 +30,7 @@ class PsiSourcedPolySymbolRequestResultProcessor(private val targetElement: PsiE
     }
     if (element is PsiExternalReferenceHost) {
       val targetSymbol = targetSymbols.asSingleSymbol() ?: myTargetSymbol
-      // Web symbol references
+      // Poly symbol references
       mySymbolReferenceService.getReferences(element, PolySymbolReferenceHints(targetSymbol, offsetInElement))
         .asSequence()
         .filterIsInstance<PolySymbolReference>()
