@@ -16,6 +16,23 @@ public final class org/jetbrains/jewel/intui/core/theme/IntUiLightTheme : org/je
 	public fun isDark ()Z
 }
 
+public final class org/jetbrains/jewel/intui/standalone/IntUiTypography : org/jetbrains/jewel/ui/Typography {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/IntUiTypography;
+	public fun getConsoleTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getEditorTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH0TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH1TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH2TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH3TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getH4TextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getLabelTextSize (Landroidx/compose/runtime/Composer;I)J
+	public fun getLabelTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getMedium (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getRegular (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+	public fun getSmall (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
+}
+
 public final class org/jetbrains/jewel/intui/standalone/InterFontKt {
 	public static final fun getInter (Landroidx/compose/ui/text/font/FontFamily$Companion;)Landroidx/compose/ui/text/font/FontFamily;
 }
@@ -784,6 +801,7 @@ public final class org/jetbrains/jewel/intui/standalone/theme/IntUiThemeKt {
 }
 
 public final class org/jetbrains/jewel/intui/standalone/theme/TextStylesKt {
+	public static final field EditorLineHeightMultiplier F
 	public static final fun createDefaultTextStyle-8YS_zAE (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/ui/graphics/Brush;FJLandroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontSynthesis;Landroidx/compose/ui/text/font/FontFamily;Ljava/lang/String;JLandroidx/compose/ui/text/style/BaselineShift;Landroidx/compose/ui/text/style/TextGeometricTransform;Landroidx/compose/ui/text/intl/LocaleList;JLandroidx/compose/ui/text/style/TextDecoration;Landroidx/compose/ui/graphics/Shadow;Landroidx/compose/ui/graphics/drawscope/DrawStyle;IIJLandroidx/compose/ui/text/style/TextIndent;Landroidx/compose/ui/text/PlatformTextStyle;Landroidx/compose/ui/text/style/LineHeightStyle;IILandroidx/compose/ui/text/style/TextMotion;)Landroidx/compose/ui/text/TextStyle;
 	public static synthetic fun createDefaultTextStyle-8YS_zAE$default (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/ui/graphics/Brush;FJLandroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontSynthesis;Landroidx/compose/ui/text/font/FontFamily;Ljava/lang/String;JLandroidx/compose/ui/text/style/BaselineShift;Landroidx/compose/ui/text/style/TextGeometricTransform;Landroidx/compose/ui/text/intl/LocaleList;JLandroidx/compose/ui/text/style/TextDecoration;Landroidx/compose/ui/graphics/Shadow;Landroidx/compose/ui/graphics/drawscope/DrawStyle;IIJLandroidx/compose/ui/text/style/TextIndent;Landroidx/compose/ui/text/PlatformTextStyle;Landroidx/compose/ui/text/style/LineHeightStyle;IILandroidx/compose/ui/text/style/TextMotion;ILjava/lang/Object;)Landroidx/compose/ui/text/TextStyle;
 	public static final fun createDefaultTextStyle-E8vpBtw (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;JJLandroidx/compose/ui/text/font/FontWeight;Landroidx/compose/ui/text/font/FontStyle;Landroidx/compose/ui/text/font/FontSynthesis;Landroidx/compose/ui/text/font/FontFamily;Ljava/lang/String;JLandroidx/compose/ui/text/style/BaselineShift;Landroidx/compose/ui/text/style/TextGeometricTransform;Landroidx/compose/ui/text/intl/LocaleList;JLandroidx/compose/ui/text/style/TextDecoration;Landroidx/compose/ui/graphics/Shadow;Landroidx/compose/ui/graphics/drawscope/DrawStyle;IIJLandroidx/compose/ui/text/style/TextIndent;Landroidx/compose/ui/text/PlatformTextStyle;Landroidx/compose/ui/text/style/LineHeightStyle;IILandroidx/compose/ui/text/style/TextMotion;)Landroidx/compose/ui/text/TextStyle;

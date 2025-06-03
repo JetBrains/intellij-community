@@ -16,6 +16,22 @@ org.jetbrains.jewel.ui.MenuItemShortcutProvider
 - a:getShortcutKeyStroke(org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction):javax.swing.KeyStroke
 f:org.jetbrains.jewel.ui.MenuItemShortcutProviderKt
 - sf:getLocalMenuItemShortcutProvider():androidx.compose.runtime.ProvidableCompositionLocal
+org.jetbrains.jewel.ui.Typography
+- a:getConsoleTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getEditorTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getH0TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getH1TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getH2TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getH3TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getH4TextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getLabelTextSize(androidx.compose.runtime.Composer,I):J
+- a:getLabelTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getMedium(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getRegular(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- a:getSmall(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+f:org.jetbrains.jewel.ui.TypographyKt
+- sf:getLocalTypography():androidx.compose.runtime.ProvidableCompositionLocal
+- sf:getTypography(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.Typography
 e:org.jetbrains.jewel.ui.component.AutoHideBehavior
 - java.lang.Enum
 - sf:Long:org.jetbrains.jewel.ui.component.AutoHideBehavior
@@ -121,6 +137,8 @@ f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:rememberPopupPositionProviderAtFixedPosition-7KAyTs4(J,J,androidx.compose.ui.Alignment,F,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.window.PopupPositionProvider
+f:org.jetbrains.jewel.ui.component.TypographyKt
+- sf:computeLineHeightPx(java.awt.Font):I
 org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - a:getExpandAnimationDuration-UwyO8pc():J
 - a:getLingerDuration-UwyO8pc():J

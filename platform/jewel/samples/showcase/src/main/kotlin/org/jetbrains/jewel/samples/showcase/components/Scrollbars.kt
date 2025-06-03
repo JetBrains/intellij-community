@@ -40,7 +40,6 @@ import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
@@ -49,6 +48,7 @@ import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
+import org.jetbrains.jewel.ui.typography
 import org.jetbrains.skiko.OS
 import org.jetbrains.skiko.hostOs
 
@@ -138,7 +138,7 @@ private fun SettingsRow(
 @Composable
 private fun LazyColumnWithScrollbar(style: ScrollbarStyle, modifier: Modifier) {
     Column(modifier) {
-        Text("LazyColumn", style = Typography.h2TextStyle())
+        Text("LazyColumn", style = JewelTheme.typography.h2TextStyle)
 
         Spacer(Modifier.height(8.dp))
 

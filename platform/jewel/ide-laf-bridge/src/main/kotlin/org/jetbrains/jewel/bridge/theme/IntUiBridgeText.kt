@@ -27,7 +27,7 @@ private const val KEY_LABEL_FONT = "Label.font"
  *
  * This is the font set in _Settings | Appearance & Behavior | Appearance_, and defaults to 13px Inter.
  */
-public fun retrieveDefaultTextStyle(): TextStyle = retrieveTextStyle(KEY_LABEL_FONT, "Label.foreground")
+public fun retrieveDefaultTextStyle(): TextStyle = retrieveDefaultTextStyle(1.0f)
 
 /**
  * Retrieves the default text style from the Swing LaF, applying a line height multiplier.
@@ -39,8 +39,15 @@ public fun retrieveDefaultTextStyle(lineHeightMultiplier: Float): TextStyle {
     val lafFont = UIManager.getFont(KEY_LABEL_FONT) ?: keyNotFound(KEY_LABEL_FONT, "Font")
     val font = JBFont.create(lafFont, false)
     val baseLineHeight = computeBaseLineHeightFor(font)
-    return retrieveDefaultTextStyle().copy(lineHeight = (baseLineHeight * lineHeightMultiplier).sp)
+    val textStyle = retrieveTextStyle(KEY_LABEL_FONT, "Label.foreground")
+    return textStyle.copy(lineHeight = (baseLineHeight * lineHeightMultiplier).sp)
 }
+
+/**
+ * Compensates for some difference in how line height is applied between Skia and Swing. Matches perfectly with the
+ * default editor font.
+ */
+private const val EDITOR_LINE_HEIGHT_FACTOR = 0.85f
 
 /**
  * Retrieves the editor style from the Swing LaF.
@@ -54,12 +61,13 @@ public fun retrieveEditorTextStyle(): TextStyle {
 
     val font = editorColorScheme.getFont(EditorFontType.PLAIN)
     val baseLineHeight = computeBaseLineHeightFor(font)
+    val computedLineHeight = baseLineHeight * editorColorScheme.lineSpacing
     return retrieveDefaultTextStyle()
         .copy(
             color = editorColorScheme.defaultForeground.toComposeColor(),
             fontFamily = font.asComposeFontFamily(),
             fontSize = editorColorScheme.editorFontSize.sp,
-            lineHeight = (baseLineHeight * editorColorScheme.lineSpacing).coerceAtLeast(1f).sp,
+            lineHeight = (computedLineHeight * EDITOR_LINE_HEIGHT_FACTOR).coerceAtLeast(1f).sp,
             fontFeatureSettings = if (!editorColorScheme.isUseLigatures) "liga 0" else "liga 1",
         )
 }
@@ -98,7 +106,7 @@ private val image = ImageUtil.createImage(1, 1, TYPE_INT_ARGB)
  * Computes the "base" line height with the same logic used by
  * [com.intellij.openapi.editor.impl.view.EditorView.initMetricsIfNeeded].
  */
-private fun computeBaseLineHeightFor(font: Font): Int {
+internal fun computeBaseLineHeightFor(font: Font): Int {
     // We need to create a Graphics2D to get its FontRendererContext. The only way we have is
     // by requesting a BufferedImage to create one for us. We can't reuse it because the FRC
     // instance is cached inside the Graphics2D and may lead to incorrect scales being applied.

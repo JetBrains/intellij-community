@@ -73,7 +73,6 @@ import org.jetbrains.jewel.ui.component.SuccessInlineBanner
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
-import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.WarningDefaultBanner
 import org.jetbrains.jewel.ui.component.WarningInlineBanner
@@ -85,6 +84,7 @@ import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.painter.hints.Stroke
 import org.jetbrains.jewel.ui.theme.colorPalette
 import org.jetbrains.jewel.ui.theme.inlineBannerStyle
+import org.jetbrains.jewel.ui.typography
 
 @Composable
 internal fun ComponentShowcaseTab(project: Project) {
@@ -112,7 +112,7 @@ private fun RowScope.ColumnOne() {
         Text(
             "Here is a selection of our finest components(activated: $activated):",
             Modifier.onActivated { activated = it },
-            style = Typography.h3TextStyle(),
+            style = JewelTheme.typography.h3TextStyle,
         )
 
         var selectedItem by remember { mutableIntStateOf(-1) }

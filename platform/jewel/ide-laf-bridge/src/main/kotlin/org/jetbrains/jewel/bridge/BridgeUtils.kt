@@ -44,7 +44,6 @@ import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.UIManager
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.ui.component.Typography
 
 private val logger = Logger.getInstance("JewelBridge")
 
@@ -218,9 +217,7 @@ public fun retrieveTextStyle(
 ): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
     val resolvedStyle = retrieveTextStyle(fontKey, color = baseColor, lineHeight, bold, fontStyle, size)
-    return resolvedStyle.copy(
-        lineHeight = lineHeight.takeOrElse { resolvedStyle.fontSize * Typography.DefaultLineHeightMultiplier }
-    )
+    return resolvedStyle.copy(lineHeight = lineHeight.takeOrElse { resolvedStyle.lineHeight })
 }
 
 @OptIn(ExperimentalTextApi::class)
@@ -232,9 +229,7 @@ public fun retrieveTextStyle(
     fontStyle: FontStyle = FontStyle.Normal,
     size: TextUnit = TextUnit.Unspecified,
 ): TextStyle {
-    val lafFont = UIManager.getFont(key) ?: keyNotFound(key, "Font")
-    val jbFont = JBFont.create(lafFont, false)
-
+    val jbFont = retrieveJBFont(key)
     val derivedFont =
         jbFont
             .let { if (bold) it.asBold() else it.asPlain() }
@@ -254,6 +249,11 @@ public fun retrieveTextStyle(
         lineHeight = safeLineHeight,
         platformStyle = retrievePlatformTextStyle(),
     )
+}
+
+internal fun retrieveJBFont(key: String): JBFont {
+    val lafFont = UIManager.getFont(key) ?: keyNotFound(key, "Font")
+    return JBFont.create(lafFont, false)
 }
 
 @OptIn(ExperimentalTextApi::class)
