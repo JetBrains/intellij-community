@@ -105,6 +105,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
   private final Set<TaskRepository> myBadRepositories = ConcurrentCollectionFactory.createConcurrentSet();
 
+  @ApiStatus.Internal
   public TaskManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     this.coroutineScope = coroutineScope;

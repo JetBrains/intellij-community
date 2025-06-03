@@ -105,7 +105,6 @@ f:com.intellij.tasks.impl.TaskManagerImpl
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.components.PersistentStateComponent
 - sf:TASK_UPDATE_COMPARATOR:java.util.Comparator
-- <init>(com.intellij.openapi.project.Project):V
 - activateTask(com.intellij.tasks.Task,Z):com.intellij.tasks.LocalTask
 - activateTask(com.intellij.tasks.Task,Z,Z):com.intellij.tasks.LocalTask
 - s:addBranches(com.intellij.tasks.LocalTask,com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo[],Z):V

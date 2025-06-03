@@ -25,7 +25,7 @@ com.intellij.ide.RecentProjectsManager
 - setLastProjectCreationLocation(java.nio.file.Path):V
 - a:suggestNewProjectLocation():java.lang.String
 - a:updateLastProjectPath():V
-- a:willReopenProjectOnStart():Z
+- willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.ide.dnd.DnDDropHandler
 - a:drop(com.intellij.ide.dnd.DnDEvent):V
 com.intellij.ide.dnd.DnDDropHandler$WithResult

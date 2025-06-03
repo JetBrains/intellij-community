@@ -150,6 +150,8 @@ com.intellij.ide.ProtocolHandler
 - sf:PLEASE_QUIT:I
 - a:getScheme():java.lang.String
 - a:process(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.ide.RecentProjectsManagerBase
+- willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.ide.actions.CloseAction$CloseTarget
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - a:close():V

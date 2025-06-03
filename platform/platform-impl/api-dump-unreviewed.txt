@@ -1673,7 +1673,6 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - suggestNewProjectLocation():java.lang.String
 - updateLastProjectPath():V
 - f:updateRecentMetadata(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
-- willReopenProjectOnStart():Z
 f:com.intellij.ide.RecentProjectsManagerBase$Companion
 - f:getInstanceEx():com.intellij.ide.RecentProjectsManagerBase
 c:com.intellij.ide.ReopenProjectAction
