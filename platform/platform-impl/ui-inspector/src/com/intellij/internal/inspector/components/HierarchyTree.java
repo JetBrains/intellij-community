@@ -496,7 +496,8 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
               ));
             }
           }
-          myToolTipText = InternalActionsBundle.message("ui.inspector.accessibility.audit.tooltip", count.getTotal(), count.getErrors(),
+          myToolTipText =
+            InternalActionsBundle.message("ui.inspector.accessibility.audit.tree.tooltip", count.getTotal(), count.getErrors(),
                                                         count.getWarnings(), count.getRecommendations());
         }
       }

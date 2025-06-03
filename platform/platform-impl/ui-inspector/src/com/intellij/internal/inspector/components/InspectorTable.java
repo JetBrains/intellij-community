@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -478,17 +479,19 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
           for (UiInspectorAccessibilityInspection failedInspection : myFailedInspections) {
             if (failedInspection.getPropertyName().equalsIgnoreCase(selectedProperty.trim())) {
               inspectionCount++;
-
               JPanel inspectionPanel = new JPanel(new BorderLayout());
-              inspectionPanel.setBorder(JBUI.Borders.empty(10));
+              inspectionPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
               JTextArea textArea = new JTextArea(failedInspection.getDescription());
               textArea.setEditable(false);
               textArea.setLineWrap(true);
               textArea.setWrapStyleWord(true);
-              textArea.setBorder(null);
-              textArea.setMinimumSize(JBUI.size(200, 100));
+              textArea.setBorder(new JBEmptyBorder(4, 10, 4, 4));
+              textArea.setMinimumSize(JBUI.size(20, 10));
+              textArea.setOpaque(true);
+              // Set the color similar to the preview component, which is a console view
+              textArea.setBackground(
+                EditorColorsManager.getInstance().getGlobalScheme().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
               inspectionPanel.add(textArea, BorderLayout.CENTER);
-
               myAccessibilityInspectionTabs.addTab(
                 InternalActionsBundle.message("ui.inspector.accessibility.audit.inspection.tab.text", inspectionCount), inspectionPanel);
             }
@@ -691,9 +694,11 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
           if (failedInspection.getPropertyName().equalsIgnoreCase(propertyName.trim())) {
             this.setIcon(failedInspection.getIcon());
             this.setHorizontalTextPosition(LEFT);
+            this.setToolTipText(InternalActionsBundle.message("ui.inspector.accessibility.audit.table.property.name.tooltip"));
             break;
           }
           else {
+            this.setToolTipText(null);
             this.setIcon(null);
           }
         }
