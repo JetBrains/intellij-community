@@ -16,7 +16,6 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilt
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -29,9 +28,7 @@ class SeFilesTab(private val delegate: SeTabDelegate): SeTab {
     SeTargetsFilterEditor (delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates())
   }
 
-  override fun getItems(params: SeParams): Flow<SeResultEvent> =
-    if (params.inputQuery.isEmpty()) emptyFlow()
-    else delegate.getItems(params)
+  override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
 
   override suspend fun getFilterEditor(): SeFilterEditor? =
     filterEditor.getValue()

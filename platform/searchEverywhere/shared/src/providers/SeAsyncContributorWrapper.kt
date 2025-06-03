@@ -16,6 +16,8 @@ class SeAsyncContributorWrapper<I : Any>(val contributor: SearchEverywhereContri
     progressIndicator: ProgressIndicator,
     consumer: AsyncProcessor<I>,
   ) {
+    if (pattern.isEmpty() && !contributor.isEmptyPatternSupported) return
+
     contributor.fetchElements(pattern, progressIndicator) { t ->
       runBlockingCancellable {
         SeLog.log(SeLog.ITEM_EMIT) {
