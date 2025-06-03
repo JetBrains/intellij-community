@@ -43,6 +43,10 @@ class JComboBoxUiComponent(data: ComponentData) : UiComponent(data) {
     fixture.select(text)
   }
 
+  fun enterText(text: String): JComboBoxFixtureRef {
+    return fixture.enterText(text)
+  }
+
   fun selectItemContains(text: String) {
     if (fixture.listValues().singleOrNull { it.contains(text) } == null) {
       click()
@@ -64,5 +68,6 @@ interface JComboBoxFixtureRef {
   fun selectedText(): String
   fun listValues(): List<String>
   fun select(text: String)
+  fun enterText(text: String): JComboBoxFixtureRef
   fun replaceCellRendererReader(reader: CellRendererReader)
 }
