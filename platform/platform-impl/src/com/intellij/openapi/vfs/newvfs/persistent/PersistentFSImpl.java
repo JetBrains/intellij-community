@@ -1135,35 +1135,25 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static void runSuppressing(@NotNull Runnable r1, @NotNull Runnable r2, @NotNull Runnable r3) {
+  private static void runSuppressing(Runnable r1, Runnable r2, Runnable r3) {
     Throwable t = null;
     try {
       r1.run();
     }
     catch (Throwable e) {
-      t = e;
+      t = Suppressions.addSuppressed(t, e);
     }
     try {
       r2.run();
     }
     catch (Throwable e) {
-      if (t == null) {
-        t = e;
-      }
-      else {
-        t.addSuppressed(e);
-      }
+      t = Suppressions.addSuppressed(t, e);
     }
     try {
       r3.run();
     }
     catch (Throwable e) {
-      if (t == null) {
-        t = e;
-      }
-      else {
-        t.addSuppressed(e);
-      }
+      t = Suppressions.addSuppressed(t, e);
     }
     if (t != null) {
       ExceptionUtilRt.rethrowUnchecked(t);
@@ -1175,7 +1165,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   // E.g., "change(a/b/c/x.txt)" and "delete(a/b/c)" are conflicting because "a/b/c/x.txt" is under the "a/b/c" directory from the other event.
   //
   // returns index after the last grouped event.
-  private static int groupByPath(@NotNull List<? extends CompoundVFileEvent> events,
+  private static int groupByPath(@NotNull List<CompoundVFileEvent> events,
                                  int startIndex,
                                  @NotNull MostlySingularMultiMap<String, VFileEvent> filesInvolved,
                                  @NotNull Set<? super String> middleDirsInvolved,
@@ -1316,7 +1306,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   // The `outValidatedEvents` will contain events for which `VFileEvent#isValid` is true.
   //
   // return index after the last processed event
-  private int groupAndValidate(@NotNull List<? extends CompoundVFileEvent> events,
+  private int groupAndValidate(@NotNull List<CompoundVFileEvent> events,
                                int startIndex,
                                @NotNull List<? super Runnable> outApplyActions,
                                @NotNull List<? super VFileEvent> outValidatedEvents,
@@ -1384,7 +1374,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // Finds all `VFileDeleteEvent` instances in [`start`..`end`), groups them by parent directory (can be null),
   // filters out files which parent dir is to be deleted too, and returns `applyDeletions()` runnable.
-  private void groupDeletions(@NotNull List<? extends CompoundVFileEvent> events,
+  private void groupDeletions(@NotNull List<CompoundVFileEvent> events,
                               int start,
                               int end,
                               @NotNull List<? super VFileEvent> outValidated,
@@ -1416,7 +1406,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // Finds events other than `VFileCreateEvent` or `VFileDeleteEvent` in [`start`..`end`), validates,
   // and returns `applyEvent()` runnable for each event because it's assumed there won't be too many of them.
-  private void groupOthers(@NotNull List<? extends CompoundVFileEvent> events,
+  private void groupOthers(@NotNull List<CompoundVFileEvent> events,
                            int start,
                            int end,
                            @NotNull List<? super VFileEvent> outValidated,
@@ -1432,7 +1422,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static final int INNER_ARRAYS_THRESHOLD = 1024; // max initial size, to avoid OOM on million-events processing
 
   @ApiStatus.Internal
-  public void processEventsImpl(@NotNull List<? extends CompoundVFileEvent> events, boolean excludeAsyncListeners) {
+  public void processEventsImpl(@NotNull List<CompoundVFileEvent> events, boolean excludeAsyncListeners) {
     ThreadingAssertions.assertWriteAccess();
 
     int startIndex = 0;
@@ -1512,16 +1502,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private static void fireBeforeEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
+  private static void fireBeforeEvents(BulkFileListener publisher, List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> publisher.before(toSend),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend),
-      () -> {
-      }
+      () -> { }
     );
   }
 
-  private static void fireAfterEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
+  private static void fireAfterEvents(BulkFileListener publisher, List<? extends VFileEvent> toSend) {
     runSuppressing(
       () -> CachedFileType.clearCache(),
       () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
@@ -1569,7 +1558,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void applyCreateEventsInDirectory(@NotNull VirtualDirectoryImpl parent,
-                                            @NotNull Collection<? extends VFileCreateEvent> createEvents) {
+                                            @NotNull Collection<VFileCreateEvent> createEvents) {
     int parentId = fileId(parent);
     NewVirtualFile vf = findFileById(parentId);
     if (!(vf instanceof VirtualDirectoryImpl)) {
@@ -1597,7 +1586,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
   }
 
-  private void saveScannedChildrenRecursively(@NotNull Collection<? extends VFileCreateEvent> createEvents,
+  private void saveScannedChildrenRecursively(@NotNull Collection<VFileCreateEvent> createEvents,
                                               @NotNull NewVirtualFileSystem fs,
                                               boolean isCaseSensitive) {
     for (VFileCreateEvent createEvent : createEvents) {
@@ -2034,7 +2023,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
               if (dirByIdCache.getCachedDir(rootFileId) == null) {
                 String rootName = vfsPeer.getName(rootFileId);
-                nonCachedRootsPerLine.append("\t" + rootFileId + ": [name:'" + rootName + "'][url:'" + rootUrl + "']\n");
+                nonCachedRootsPerLine.append("\t").append(rootFileId).append(": [name:'").append(rootName).append("'][url:'").append(rootUrl).append("']\n");
               }
             });
           }
