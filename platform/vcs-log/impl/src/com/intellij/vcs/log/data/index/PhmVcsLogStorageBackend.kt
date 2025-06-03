@@ -31,7 +31,6 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
 import java.nio.file.Files
-import java.util.*
 import java.util.function.IntConsumer
 import java.util.function.IntFunction
 import java.util.function.ObjIntConsumer
@@ -45,16 +44,34 @@ internal class PhmVcsLogStorageBackend(
   useDurableEnumerator: Boolean,
   disposable: Disposable,
 ) : VcsLogStorageBackend, Disposable {
-  private val messages: PersistentHashMap<VcsLogCommitStorageIndex, String>
-  private val parents: PersistentHashMap<VcsLogCommitStorageIndex, IntArray>
-  private val committers: PersistentHashMap<VcsLogCommitStorageIndex, Int>
-  private val timestamps: PersistentHashMap<VcsLogCommitStorageIndex, LongArray>
+  private class StorageContainer(
+    val messages: PersistentHashMap<VcsLogCommitStorageIndex, String>,
+    val parents: PersistentHashMap<VcsLogCommitStorageIndex, IntArray>,
+    val committers: PersistentHashMap<VcsLogCommitStorageIndex, Int>,
+    val timestamps: PersistentHashMap<VcsLogCommitStorageIndex, LongArray>,
 
-  private val renames: PersistentHashMap<IntArray, IntArray>
+    val renames: PersistentHashMap<IntArray, IntArray>,
 
-  private val trigrams: VcsLogMessagesTrigramIndex
-  private val paths: VcsLogPathsIndex
-  private val users: VcsLogUserIndex
+    val trigrams: VcsLogMessagesTrigramIndex,
+    val paths: VcsLogPathsIndex,
+    val users: VcsLogUserIndex,
+  )
+
+  // we have to nullize references on disposal to ensure that backing files can be closed and deleted
+  private var _container: StorageContainer?
+  private val container: StorageContainer
+    get() = _container ?: error("Storage is closed: ${storageId}")
+
+  private val messages get() = container.messages
+  private val parents get() = container.parents
+  private val committers get() = container.committers
+  private val timestamps get() = container.timestamps
+
+  private val renames get() = container.renames
+
+  private val trigrams get() = container.trigrams
+  private val paths get() = container.paths
+  private val users get() = container.users
 
   @Volatile
   override var isFresh = false
@@ -69,7 +86,7 @@ internal class PhmVcsLogStorageBackend(
       val messagesStorage = storageId.getStorageFile("messages")
       isFresh = !Files.exists(messagesStorage)
 
-      messages = PersistentHashMap(
+      val messages = PersistentHashMap(
         /* file = */ messagesStorage,
         /* keyDescriptor = */ EnumeratorIntegerDescriptor.INSTANCE,
         /* valueExternalizer = */ EnumeratorStringDescriptor.INSTANCE,
@@ -79,7 +96,7 @@ internal class PhmVcsLogStorageBackend(
       Disposer.register(this, Disposable { catchAndWarn(messages::close) })
 
       val parentsStorage = storageId.getStorageFile("parents")
-      parents = PersistentHashMap(
+      val parents = PersistentHashMap(
         /* file = */ parentsStorage,
         /* keyDescriptor = */ EnumeratorIntegerDescriptor.INSTANCE,
         /* valueExternalizer = */ IntListDataExternalizer(),
@@ -90,7 +107,7 @@ internal class PhmVcsLogStorageBackend(
       Disposer.register(this, Disposable { catchAndWarn(parents::close) })
 
       val committerStorage = storageId.getStorageFile("committers")
-      committers = PersistentHashMap(
+      val committers = PersistentHashMap(
         /* file = */ committerStorage,
         /* keyDescriptor = */ EnumeratorIntegerDescriptor.INSTANCE,
         /* valueExternalizer = */ EnumeratorIntegerDescriptor.INSTANCE,
@@ -101,7 +118,7 @@ internal class PhmVcsLogStorageBackend(
       Disposer.register(this, Disposable { catchAndWarn(committers::close) })
 
       val timestampsStorage = storageId.getStorageFile("timestamps")
-      timestamps = PersistentHashMap(
+      val timestamps = PersistentHashMap(
         /* file = */ timestampsStorage,
         /* keyDescriptor = */ EnumeratorIntegerDescriptor.INSTANCE,
         /* valueExternalizer = */ LongPairDataExternalizer(),
@@ -112,7 +129,7 @@ internal class PhmVcsLogStorageBackend(
       Disposer.register(this, Disposable { catchAndWarn(timestamps::close) })
 
       val storageFile = storageId.getStorageFile(VcsLogPathsIndex.RENAMES_MAP)
-      renames = PersistentHashMap(/* file = */ storageFile,
+      val renames = PersistentHashMap(/* file = */ storageFile,
                                   /* keyDescriptor = */ IntPairKeyDescriptor,
                                   /* valueExternalizer = */ CollectionDataExternalizer,
                                   /* initialSize = */ AbstractStorage.PAGE_SIZE,
@@ -120,10 +137,20 @@ internal class PhmVcsLogStorageBackend(
                                   /* lockContext = */ storageLockContext)
       Disposer.register(this, Disposable { catchAndWarn(renames::close) })
 
-      paths = VcsLogPathsIndex.create(storageId, storageLockContext, storage, roots, renames, useDurableEnumerator, errorHandler, this)
-      users = VcsLogUserIndex.create(storageId, storageLockContext, userRegistry, errorHandler, this)
-      trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, this)
+      val paths = VcsLogPathsIndex.create(storageId, storageLockContext, storage, roots, renames, useDurableEnumerator, errorHandler, this)
+      val users = VcsLogUserIndex.create(storageId, storageLockContext, userRegistry, errorHandler, this)
+      val trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, this)
 
+      _container = StorageContainer(
+        messages,
+        parents,
+        committers,
+        timestamps,
+        renames,
+        trigrams,
+        paths,
+        users,
+      )
       reportEmpty()
     }
     catch (t: Throwable) {
@@ -337,7 +364,9 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    _container = null
+  }
 
   companion object {
     private val LOG = Logger.getInstance(PhmVcsLogStorageBackend::class.java)
