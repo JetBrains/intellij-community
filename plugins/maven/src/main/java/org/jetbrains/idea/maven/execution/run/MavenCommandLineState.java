@@ -31,6 +31,7 @@ import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.terminal.TerminalExecutionConsole;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter;
@@ -57,6 +58,10 @@ import java.util.function.Function;
 
 import static org.jetbrains.idea.maven.server.MavenDistributionKt.isMaven4;
 
+/**
+ * use MavenShCommandLineState or MavenTargetShCommandLineState instead
+ */
+@ApiStatus.Obsolete
 public class MavenCommandLineState extends JavaCommandLineState implements RemoteConnectionCreator {
 
   private final MavenRunConfiguration myConfiguration;

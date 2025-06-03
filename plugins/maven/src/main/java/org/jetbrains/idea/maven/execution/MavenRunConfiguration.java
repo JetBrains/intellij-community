@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.run.MavenCommandLineState;
 import org.jetbrains.idea.maven.execution.run.MavenExtRemoteConnectionCreator;
 import org.jetbrains.idea.maven.execution.run.MavenShCommandLineState;
+import org.jetbrains.idea.maven.execution.run.MavenTargetShCommandLineState;
 import org.jetbrains.idea.maven.execution.run.configuration.MavenRunConfigurationSettingsEditor;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeType;
@@ -123,11 +124,16 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @Override
   public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
-    if (env.getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
-      if (Registry.is("maven.use.scripts")) {
+    if (Registry.is("maven.use.scripts")) {
+      if (env.getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
         return new MavenShCommandLineState(env, this);
       }
+      else {
+        return new MavenTargetShCommandLineState(env, this);
+      }
     }
+
+
     return new MavenCommandLineState(env, this);
   }
 
