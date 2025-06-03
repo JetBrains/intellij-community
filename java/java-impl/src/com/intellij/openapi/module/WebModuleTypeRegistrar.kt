@@ -2,28 +2,33 @@
 package com.intellij.openapi.module
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Registers [WebModuleType] in IDEs which don't register neither [WebModuleType] nor [com.intellij.webcore.moduleType.PlatformWebModuleType]
  * but still need to use [WebModuleTypeBase] because they have Java plugin installed.
  */
-internal class WebModuleTypeRegistrar : Disposable {
-  private val webModuleType: WebModuleType?
+private class WebModuleTypeRegistrar(coroutineScope: CoroutineScope) : Disposable {
+  private val webModuleTypeRef = AtomicReference<WebModuleType>()
 
   init {
-    val moduleTypeManager = ModuleTypeManager.getInstance()
-    if (moduleTypeManager.findByID(WebModuleTypeBase.WEB_MODULE) is UnknownModuleType) {
-      webModuleType = WebModuleType()
-      moduleTypeManager.registerModuleType(webModuleType)
-    }
-    else {
-      webModuleType = null
+    coroutineScope.launch {
+      val moduleTypeManager = serviceAsync<ModuleTypeManager>()
+      if (moduleTypeManager.findByID(WebModuleTypeBase.WEB_MODULE) is UnknownModuleType) {
+        val webModuleType = WebModuleType()
+        moduleTypeManager.registerModuleType(webModuleType)
+        webModuleTypeRef.set(webModuleType)
+      }
     }
   }
 
   override fun dispose() {
-    if (webModuleType != null) {
-      ModuleTypeManager.getInstance().unregisterModuleType(webModuleType)
+    webModuleTypeRef.getAndSet(null)?.let {
+      serviceIfCreated<ModuleTypeManager>()?.unregisterModuleType(it)
     }
   }
 }
