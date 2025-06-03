@@ -9,6 +9,7 @@ import com.intellij.psi.PsiManager
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsStorage
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModel
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptModelData
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptRefinedConfigurationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.kotlinDslSyncListenerInstance
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.processScriptModel
@@ -61,11 +62,10 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
                 it.classPath,
                 it.sourcePath,
                 it.imports,
-                sync.javaHome
             )
         }
 
-        GradleScriptRefinedConfigurationProvider.getInstance(project).processScripts(gradleScripts, storage)
+        GradleScriptRefinedConfigurationProvider.getInstance(project).processScripts(GradleScriptModelData(gradleScripts, sync.javaHome), storage)
 
         val ktFiles = gradleScripts.mapNotNull {
             readAction { PsiManager.getInstance(project).findFile(it.virtualFile) as? KtFile }

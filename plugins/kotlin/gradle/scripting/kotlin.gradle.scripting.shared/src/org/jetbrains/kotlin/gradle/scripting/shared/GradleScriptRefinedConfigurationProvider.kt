@@ -3,11 +3,10 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdkType
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
@@ -43,13 +42,12 @@ class GradleScriptRefinedConfigurationProvider(
 
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data.get()[virtualFile]
 
-    suspend fun processScripts(scripts: Iterable<GradleScriptModel>, storageToUpdate: MutableEntityStorage? = null) {
-        val configurations = scripts.associate { it: GradleScriptModel ->
-            val sourceCode = VirtualFileScriptSource(it.virtualFile)
+    suspend fun processScripts(scriptsData: GradleScriptModelData, storageToUpdate: MutableEntityStorage? = null) {
+        val configurations = scriptsData.models.associate { gradleScript: GradleScriptModel ->
+            val sourceCode = VirtualFileScriptSource(gradleScript.virtualFile)
             val definition = findScriptDefinition(project, sourceCode)
 
-            val sdk = project.serviceAsync<ProjectRootManager>().projectSdk?.takeIf { it.sdkType is JavaSdkType }
-                ?: it.javaHome?.let { ExternalSystemJdkUtil.lookupJdkByPath(it) }
+            val sdk = scriptsData.javaHome.resolveSdk()
 
             val javaHomePath = sdk?.homePath?.let { Path.of(it) }
 
@@ -57,14 +55,14 @@ class GradleScriptRefinedConfigurationProvider(
                 javaHomePath?.let {
                     jvm.jdkHome(it.toFile())
                 }
-                defaultImports(it.imports)
-                dependencies(JvmDependency(it.classPath.map { File(it) }))
-                ide.dependenciesSources(JvmDependency(it.sourcePath.map { File(it) }))
+                defaultImports(gradleScript.imports)
+                dependencies(JvmDependency(gradleScript.classPath.map { File(it) }))
+                ide.dependenciesSources(JvmDependency(gradleScript.sourcePath.map { File(it) }))
             }.adjustByDefinition(definition)
 
             val updatedConfiguration = refineScriptCompilationConfiguration(sourceCode, definition, project, configuration)
 
-            it.virtualFile to ScriptConfigurationWithSdk(updatedConfiguration, sdk)
+            gradleScript.virtualFile to ScriptConfigurationWithSdk(updatedConfiguration, sdk)
         }
 
         if (storageToUpdate == null) {
@@ -78,6 +76,16 @@ class GradleScriptRefinedConfigurationProvider(
         }
 
         data.set(configurations)
+    }
+
+    private fun String?.resolveSdk(): Sdk? {
+        if (this == null) {
+            LOG.warn("[KOTLIN_SCRIPTING] Gradle javaHome is null")
+            return null
+        }
+        return ExternalSystemJdkUtil.lookupJdkByPath(this).also {
+            LOG.info("[KOTLIN_SCRIPTING] resolved sdk=$it, javaHome=$this")
+        }
     }
 
     override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {}
@@ -262,6 +270,8 @@ class GradleScriptRefinedConfigurationProvider(
     }
 
     companion object {
+        private val LOG = Logger.getInstance(GradleScriptRefinedConfigurationProvider::class.java)
+
         @JvmStatic
         fun getInstance(project: Project): GradleScriptRefinedConfigurationProvider = project.service()
     }

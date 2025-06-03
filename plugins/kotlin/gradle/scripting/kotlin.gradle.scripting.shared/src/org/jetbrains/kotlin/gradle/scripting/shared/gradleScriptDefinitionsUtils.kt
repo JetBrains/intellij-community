@@ -277,10 +277,14 @@ val GradleScriptCompilationConfigurationKeys.externalProjectPath: PropertiesColl
 
 data class KotlinGradleScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl) : KotlinScriptEntitySource(virtualFileUrl)
 
+class GradleScriptModelData(
+    val models: Collection<GradleScriptModel>,
+    val javaHome: String? = null,
+)
+
 class GradleScriptModel(
     val virtualFile: VirtualFile,
     val classPath: List<String>,
     val sourcePath: List<String>,
     val imports: List<String>,
-    val javaHome: String? = null,
 )
