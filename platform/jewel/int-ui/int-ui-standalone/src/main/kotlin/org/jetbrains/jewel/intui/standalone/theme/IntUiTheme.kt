@@ -14,6 +14,7 @@ import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTypography
 import org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
 import org.jetbrains.jewel.intui.standalone.icon.StandaloneNewUiChecker
 import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneMenuItemShortcutHintProvider
@@ -28,6 +29,7 @@ import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.DefaultComponentStyling
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
 import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
+import org.jetbrains.jewel.ui.LocalTypography
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -55,6 +57,7 @@ import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
+import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
@@ -173,7 +176,7 @@ public fun ComponentStyling.dark(
     simpleListItemStyle: SimpleListItemStyle = SimpleListItemStyle.dark(),
     textAreaStyle: TextAreaStyle = TextAreaStyle.dark(),
     textFieldStyle: TextFieldStyle = TextFieldStyle.dark(),
-    tooltipStyle: TooltipStyle = TooltipStyle.dark(),
+    tooltipStyle: TooltipStyle = TooltipStyle.dark(autoHideBehavior = TooltipAutoHideBehavior.Normal),
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.dark(),
 ): ComponentStyling =
     with(
@@ -244,7 +247,7 @@ public fun ComponentStyling.light(
     simpleListItemStyle: SimpleListItemStyle = SimpleListItemStyle.light(),
     textAreaStyle: TextAreaStyle = TextAreaStyle.light(),
     textFieldStyle: TextFieldStyle = TextFieldStyle.light(),
-    tooltipStyle: TooltipStyle = TooltipStyle.light(),
+    tooltipStyle: TooltipStyle = TooltipStyle.light(autoHideBehavior = TooltipAutoHideBehavior.Normal),
     undecoratedDropdownStyle: DropdownStyle = DropdownStyle.Undecorated.light(),
 ): ComponentStyling =
     with(
@@ -316,6 +319,7 @@ public fun IntUiTheme(
             LocalNewUiChecker provides StandaloneNewUiChecker,
             LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
             LocalMenuItemShortcutHintProvider provides StandaloneMenuItemShortcutHintProvider,
+            LocalTypography provides IntUiTypography,
         ) {
             content()
         }

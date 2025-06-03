@@ -9,3 +9,9 @@ f:org.jetbrains.jewel.samples.showcase.components.ComposableSingletons$TooltipsK
 - f:getLambda$-1070103804$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$-186585630$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 - f:getLambda$-408485079$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
+f:org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons$Components
+- f:getTypography():org.jetbrains.jewel.ui.icon.PathIconKey
+f:org.jetbrains.jewel.samples.showcase.components.TypographyKt
+- sf:TypographyShowcase(androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I,I):V
+f:org.jetbrains.jewel.samples.showcase.views.ComposableSingletons$ComponentsViewModelKt
+- f:getLambda$-1329667844$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2

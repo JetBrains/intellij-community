@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.ActionButton
 import org.jetbrains.jewel.ui.component.DefaultButton
@@ -32,7 +33,6 @@ import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableIconActionButton
 import org.jetbrains.jewel.ui.component.ToggleableIconButton
-import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.items
 import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
@@ -41,6 +41,7 @@ import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 import org.jetbrains.jewel.ui.painter.hints.Badge
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.hints.Stroke
+import org.jetbrains.jewel.ui.typography
 
 @Composable
 public fun Buttons() {
@@ -81,7 +82,7 @@ private fun IconButtons(selected: Boolean, onSelectableClick: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("IconButton", style = Typography.h4TextStyle())
+        Text("IconButton", style = JewelTheme.typography.h4TextStyle)
 
         Text("Focusable:")
 
@@ -125,7 +126,7 @@ private fun IconActionButtons(selected: Boolean, onSelectableClick: () -> Unit) 
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("IconActionButton", style = Typography.h4TextStyle())
+        Text("IconActionButton", style = JewelTheme.typography.h4TextStyle)
 
         Text("With tooltip:")
         IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconActionButton", onClick = {}) {
@@ -161,7 +162,7 @@ private fun ActionButtons() {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("ActionButton", style = Typography.h4TextStyle())
+        Text("ActionButton", style = JewelTheme.typography.h4TextStyle)
 
         Text("With tooltip:")
 
