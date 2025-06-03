@@ -408,16 +408,17 @@ public final class LoadTextUtil {
     write(project, file, requestor, newText, -1);
   }
 
-  /**
-   * Normally, one should not use this method.
-   */
+  @ApiStatus.Internal
   public static void write(@Nullable Project project,
                            @NotNull VirtualFile virtualFile,
                            @NotNull Object requestor,
                            @NotNull String text,
-                           long newModificationStamp) throws IOException {
+                           long newModificationStamp,
+                           boolean applyTextTransformer) throws IOException {
     Charset existing = virtualFile.getCharset();
-    text = TextPresentationTransformers.toPersistent(text, virtualFile).toString();
+    if (applyTextTransformer) {
+      text = TextPresentationTransformers.toPersistent(text, virtualFile).toString();
+    }
     Pair.NonNull<Charset, byte[]> chosen = charsetForWriting(project, virtualFile, text, existing);
     Charset charset = chosen.first;
     byte[] buffer = chosen.second;
@@ -431,6 +432,17 @@ public final class LoadTextUtil {
     try (OutputStream stream = virtualFile.getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       stream.write(buffer);
     }
+  }
+
+  /**
+   * Normally, one should not use this method.
+   */
+  public static void write(@Nullable Project project,
+                           @NotNull VirtualFile virtualFile,
+                           @NotNull Object requestor,
+                           @NotNull String text,
+                           long newModificationStamp) throws IOException {
+    write(project, virtualFile, requestor, text, newModificationStamp, true);
   }
 
   public static @NotNull Pair.NonNull<Charset, byte[]> charsetForWriting(@Nullable Project project,

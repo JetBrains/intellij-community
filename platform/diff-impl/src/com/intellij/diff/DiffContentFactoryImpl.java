@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -394,7 +395,10 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (project == null || project.isDefault()) return null;
     if (fileType != null && fileType.isBinary()) return null;
 
-    LightVirtualFile file = new MyLightVirtualFile(lightFilePath, fileType, content);
+    // Here we need a dummy originalFile to pass it to [TextPresentationTransformers.fromPersistent]
+    LightVirtualFile originalFile = new MyLightVirtualFile(lightFilePath, fileType, content);
+    String convertedText = TextPresentationTransformers.fromPersistent(content, originalFile).toString();
+    LightVirtualFile file = new MyLightVirtualFile(lightFilePath, fileType, convertedText);
     file.setWritable(!readOnly);
 
     return ReadAction.compute(() -> {
@@ -402,6 +406,7 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
       if (document == null) {
         return null;
       }
+
       PsiDocumentManager.getInstance(project).getPsiFile(document);
       return document;
     });
@@ -884,8 +889,10 @@ public final class DiffContentFactoryImpl extends DiffContentFactoryEx {
       @Override
       public @Nullable FileType guessContentType() {
         VirtualFile file = myFilePath.getVirtualFile();
-        if (file != null) return file.getFileType();
-        return null;
+        if (file == null) {
+          return FileTypeManager.getInstance().getFileTypeByFileName(myFilePath.getName());
+        }
+        return file.getFileType();
       }
     }
 
