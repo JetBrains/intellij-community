@@ -110,7 +110,8 @@ public final class PyDefUseUtil {
                                   }
                                   if (instruction instanceof ReadWriteInstruction rwInstruction) {
                                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                                    if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {
+                                    if (access.isWriteAccess() || 
+                                        acceptTypeAssertions && access.isAssertTypeAccess() && isNotBackEdge(instruction.num(), startNum)) {
                                       final String name = elementName(element);
                                       if (Comparing.strEqual(name, varName)) {
                                         if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {

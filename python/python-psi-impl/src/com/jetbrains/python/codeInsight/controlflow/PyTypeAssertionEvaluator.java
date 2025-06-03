@@ -201,6 +201,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                                                           @Nullable PyType suggested,
                                                           boolean positive,
                                                           @NotNull TypeEvalContext context) {
+    if (suggested == null) return null;
     if (positive) {
       List<PyType> initialSubtypes = PyTypeUtil.toStream(initial)
         .filter(initialSubtype -> match(suggested, initialSubtype, context))
