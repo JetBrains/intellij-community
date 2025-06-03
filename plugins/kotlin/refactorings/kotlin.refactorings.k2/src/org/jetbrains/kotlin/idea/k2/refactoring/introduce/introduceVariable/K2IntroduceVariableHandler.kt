@@ -420,7 +420,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     }
 
     override fun KtExpression.findOccurrences(occurrenceContainer: KtElement): List<KtExpression> =
-        analyzeInModalWindow(contextElement = this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+        analyzeInModalWindow(contextElement = extractableSubstringInfo?.template ?: this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             K2SemanticMatcher.findMatches(patternElement = this@findOccurrences, scopeElement = occurrenceContainer)
                 .filterNot { it.isAssignmentLHS() }
                 .mapNotNull { match ->
