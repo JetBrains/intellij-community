@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.updater
 
 import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.StatisticsNotificationManager
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProviders
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProvidersHolder
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
@@ -76,7 +77,7 @@ private class StatisticsJobsScheduler : ApplicationActivity {
   private suspend fun runEventLogStatisticsService() {
     delay(1.minutes)
 
-    val providers = getEventLogProviders()
+    val providers = serviceAsync<StatisticsEventLogProvidersHolder>().getEventLogProviders().toList()
     coroutineScope {
       for (provider in providers) {
         launchStatisticsSendJob(provider, this)
