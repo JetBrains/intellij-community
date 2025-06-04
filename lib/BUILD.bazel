@@ -1786,26 +1786,26 @@ java_library(
 java_library(
   name = "grpc-core",
   exports = [
-    ":grpc-core-1_71_0_http_import",
-    ":grpc-api-1_71_0_http_import",
+    ":grpc-core-1_73_0_http_import",
+    ":grpc-api-1_73_0_http_import",
     ":annotations-4_1_1_4_http_import",
     ":animal-sniffer-annotations-1_24_http_import",
     ":perfmark-api-0_27_0_http_import",
-    ":grpc-context-1_71_0_http_import",
+    ":grpc-context-1_73_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "grpc-core-1_71_0_http_import",
-  jar = "@grpc-core-1_71_0_http//file",
-  source_jar = "@grpc-core-1_71_0-sources_http//file"
+  name = "grpc-core-1_73_0_http_import",
+  jar = "@grpc-core-1_73_0_http//file",
+  source_jar = "@grpc-core-1_73_0-sources_http//file"
 )
 
 jvm_import(
-  name = "grpc-api-1_71_0_http_import",
-  jar = "@grpc-api-1_71_0_http//file",
-  source_jar = "@grpc-api-1_71_0-sources_http//file"
+  name = "grpc-api-1_73_0_http_import",
+  jar = "@grpc-api-1_73_0_http//file",
+  source_jar = "@grpc-api-1_73_0-sources_http//file"
 )
 
 jvm_import(
@@ -1827,53 +1827,53 @@ jvm_import(
 )
 
 jvm_import(
-  name = "grpc-context-1_71_0_http_import",
-  jar = "@grpc-context-1_71_0_http//file",
-  source_jar = "@grpc-context-1_71_0-sources_http//file"
+  name = "grpc-context-1_73_0_http_import",
+  jar = "@grpc-context-1_73_0_http//file",
+  source_jar = "@grpc-context-1_73_0-sources_http//file"
 )
 
 jvm_import(
   name = "grpc-kotlin-stub",
-  jar = "@grpc-kotlin-stub-1_4_1_http//file",
-  source_jar = "@grpc-kotlin-stub-1_4_1-sources_http//file",
+  jar = "@grpc-kotlin-stub-1_4_3_http//file",
+  source_jar = "@grpc-kotlin-stub-1_4_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "grpc-netty-shaded",
   exports = [
-    ":grpc-netty-shaded-1_71_0_http_import",
-    ":grpc-util-1_71_0_http_import",
+    ":grpc-netty-shaded-1_73_0_http_import",
+    ":grpc-util-1_73_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "grpc-netty-shaded-1_71_0_http_import",
-  jar = "@grpc-netty-shaded-1_71_0_http//file",
-  source_jar = "@grpc-netty-shaded-1_71_0-sources_http//file"
+  name = "grpc-netty-shaded-1_73_0_http_import",
+  jar = "@grpc-netty-shaded-1_73_0_http//file",
+  source_jar = "@grpc-netty-shaded-1_73_0-sources_http//file"
 )
 
 jvm_import(
-  name = "grpc-util-1_71_0_http_import",
-  jar = "@grpc-util-1_71_0_http//file",
-  source_jar = "@grpc-util-1_71_0-sources_http//file"
+  name = "grpc-util-1_73_0_http_import",
+  jar = "@grpc-util-1_73_0_http//file",
+  source_jar = "@grpc-util-1_73_0-sources_http//file"
 )
 
 java_library(
   name = "grpc-protobuf",
   exports = [
-    ":grpc-protobuf-1_71_0_http_import",
+    ":grpc-protobuf-1_73_0_http_import",
     ":proto-google-common-protos-2_51_0_http_import",
-    ":grpc-protobuf-lite-1_71_0_http_import",
+    ":grpc-protobuf-lite-1_73_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "grpc-protobuf-1_71_0_http_import",
-  jar = "@grpc-protobuf-1_71_0_http//file",
-  source_jar = "@grpc-protobuf-1_71_0-sources_http//file"
+  name = "grpc-protobuf-1_73_0_http_import",
+  jar = "@grpc-protobuf-1_73_0_http//file",
+  source_jar = "@grpc-protobuf-1_73_0-sources_http//file"
 )
 
 jvm_import(
@@ -1883,15 +1883,15 @@ jvm_import(
 )
 
 jvm_import(
-  name = "grpc-protobuf-lite-1_71_0_http_import",
-  jar = "@grpc-protobuf-lite-1_71_0_http//file",
-  source_jar = "@grpc-protobuf-lite-1_71_0-sources_http//file"
+  name = "grpc-protobuf-lite-1_73_0_http_import",
+  jar = "@grpc-protobuf-lite-1_73_0_http//file",
+  source_jar = "@grpc-protobuf-lite-1_73_0-sources_http//file"
 )
 
 jvm_import(
   name = "grpc-stub",
-  jar = "@grpc-stub-1_71_0_http//file",
-  source_jar = "@grpc-stub-1_71_0-sources_http//file",
+  jar = "@grpc-stub-1_73_0_http//file",
+  source_jar = "@grpc-stub-1_73_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2002,8 +2002,8 @@ java_library(
 
 jvm_import(
   name = "icu4j",
-  jar = "@icu4j-73_2_http//file",
-  source_jar = "@icu4j-73_2-sources_http//file",
+  jar = "@icu4j-77_1_http//file",
+  source_jar = "@icu4j-77_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3197,23 +3197,23 @@ jvm_import(
 java_library(
   name = "kaml",
   exports = [
-    ":kaml-jvm-0_66_0_http_import",
-    ":snakeyaml-engine-kmp-jvm-3_0_3_http_import",
+    ":kaml-jvm-0_80_1_http_import",
+    ":snakeyaml-engine-kmp-jvm-3_1_1_http_import",
     ":urlencoder-lib-jvm-1_6_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "kaml-jvm-0_66_0_http_import",
-  jar = "@kaml-jvm-0_66_0_http//file",
-  source_jar = "@kaml-jvm-0_66_0-sources_http//file"
+  name = "kaml-jvm-0_80_1_http_import",
+  jar = "@kaml-jvm-0_80_1_http//file",
+  source_jar = "@kaml-jvm-0_80_1-sources_http//file"
 )
 
 jvm_import(
-  name = "snakeyaml-engine-kmp-jvm-3_0_3_http_import",
-  jar = "@snakeyaml-engine-kmp-jvm-3_0_3_http//file",
-  source_jar = "@snakeyaml-engine-kmp-jvm-3_0_3-sources_http//file"
+  name = "snakeyaml-engine-kmp-jvm-3_1_1_http_import",
+  jar = "@snakeyaml-engine-kmp-jvm-3_1_1_http//file",
+  source_jar = "@snakeyaml-engine-kmp-jvm-3_1_1-sources_http//file"
 )
 
 jvm_import(

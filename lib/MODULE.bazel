@@ -2274,17 +2274,17 @@ http_file(
 )
 
 http_file(
-  name = "grpc-core-1_71_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-core/1.71.0/grpc-core-1.71.0.jar",
-  sha256 = "03099494c60cb9fea5802ebba8d767e44697062ec05e5207b5ae897e09bd38e9",
-  downloaded_file_path = "grpc-core-1.71.0.jar"
+  name = "grpc-core-1_73_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-core/1.73.0/grpc-core-1.73.0.jar",
+  sha256 = "cffb55f1e7268e160647e88da142c09c6175ff72970c64f7cb411d78eb661663",
+  downloaded_file_path = "grpc-core-1.73.0.jar"
 )
 
 http_file(
-  name = "grpc-api-1_71_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-api/1.71.0/grpc-api-1.71.0.jar",
-  sha256 = "49771bad244de122f05780c12f3e74ba9a301be125d0941a85e649212f4a8a01",
-  downloaded_file_path = "grpc-api-1.71.0.jar"
+  name = "grpc-api-1_73_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-api/1.73.0/grpc-api-1.73.0.jar",
+  sha256 = "bae13d4e4716a0955d316b5fcb75582504325e5b11ac946b13b64b4fce19bc6e",
+  downloaded_file_path = "grpc-api-1.73.0.jar"
 )
 
 http_file(
@@ -2309,24 +2309,24 @@ http_file(
 )
 
 http_file(
-  name = "grpc-context-1_71_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-context/1.71.0/grpc-context-1.71.0.jar",
-  sha256 = "dd0484ac5d0baf7ee810331504dc6202c7b426bc88dce24100e77f576904dd52",
-  downloaded_file_path = "grpc-context-1.71.0.jar"
+  name = "grpc-context-1_73_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-context/1.73.0/grpc-context-1.73.0.jar",
+  sha256 = "d8d6911e225b55501692651272ce961ba5be1f76662ceb7f0aa79ecce8f63f25",
+  downloaded_file_path = "grpc-context-1.73.0.jar"
 )
 
 http_file(
-  name = "grpc-core-1_71_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-core/1.71.0/grpc-core-1.71.0-sources.jar",
-  sha256 = "7415a0e85bb4dff26d8bf17d6ea406b78393247a85cfb3dd9a24a06dbb567c51",
-  downloaded_file_path = "grpc-core-1.71.0-sources.jar"
+  name = "grpc-core-1_73_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-core/1.73.0/grpc-core-1.73.0-sources.jar",
+  sha256 = "a95a804203868e418a2bcab5620829a57647dbe1ae0d811644a4737782ae72a1",
+  downloaded_file_path = "grpc-core-1.73.0-sources.jar"
 )
 
 http_file(
-  name = "grpc-api-1_71_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-api/1.71.0/grpc-api-1.71.0-sources.jar",
-  sha256 = "5f072127209c65b512bce8ff057a704b62c078142f455ab623afb787bb7f8ffb",
-  downloaded_file_path = "grpc-api-1.71.0-sources.jar"
+  name = "grpc-api-1_73_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-api/1.73.0/grpc-api-1.73.0-sources.jar",
+  sha256 = "fc7fa4405f7ce2d3c1001c94aba1d9ea9d0dfdb54e9a3738e87666997217649e",
+  downloaded_file_path = "grpc-api-1.73.0-sources.jar"
 )
 
 http_file(
@@ -2351,59 +2351,59 @@ http_file(
 )
 
 http_file(
-  name = "grpc-context-1_71_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-context/1.71.0/grpc-context-1.71.0-sources.jar",
-  sha256 = "47e751ce954b3cbfef3ab5eac8a8326162c9235d4f5c0e0c3b8f9057da30ccb2",
-  downloaded_file_path = "grpc-context-1.71.0-sources.jar"
+  name = "grpc-context-1_73_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-context/1.73.0/grpc-context-1.73.0-sources.jar",
+  sha256 = "dde30e64fb8e9422d865269f9baba7bd377539abe935e93e92a6d43d2d7950b6",
+  downloaded_file_path = "grpc-context-1.73.0-sources.jar"
 )
 
 http_file(
-  name = "grpc-kotlin-stub-1_4_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-kotlin-stub/1.4.1/grpc-kotlin-stub-1.4.1.jar",
-  sha256 = "9403d4c826039dc869f036087569cc686b3c901da2d5be3db75d154ddd3f8209",
-  downloaded_file_path = "grpc-kotlin-stub-1.4.1.jar"
+  name = "grpc-kotlin-stub-1_4_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-kotlin-stub/1.4.3/grpc-kotlin-stub-1.4.3.jar",
+  sha256 = "4b5705f8cabd07e82c81dbce36f1554aa9d1740f03e369fd049a71f375dac2f0",
+  downloaded_file_path = "grpc-kotlin-stub-1.4.3.jar"
 )
 
 http_file(
-  name = "grpc-kotlin-stub-1_4_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-kotlin-stub/1.4.1/grpc-kotlin-stub-1.4.1-sources.jar",
-  sha256 = "bd19ada6494a7917af870d1115f77f52949eea435e7a04a321181d11e9078e1c",
-  downloaded_file_path = "grpc-kotlin-stub-1.4.1-sources.jar"
+  name = "grpc-kotlin-stub-1_4_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-kotlin-stub/1.4.3/grpc-kotlin-stub-1.4.3-sources.jar",
+  sha256 = "85ad373dffdab1e8b52aeb2a03adc2a64b3259dc63b4fa5eac221d1522d088f1",
+  downloaded_file_path = "grpc-kotlin-stub-1.4.3-sources.jar"
 )
 
 http_file(
-  name = "grpc-netty-shaded-1_71_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-netty-shaded/1.71.0/grpc-netty-shaded-1.71.0.jar",
-  sha256 = "ee375e534c0d63bd1e9256765610319b9ce9b399588ec408dcf1c7ea7c3f25ef",
-  downloaded_file_path = "grpc-netty-shaded-1.71.0.jar"
+  name = "grpc-netty-shaded-1_73_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0.jar",
+  sha256 = "8328289ba6b73445e982a1cadf8e651ea65354e288c825a43e7c77f16da8a056",
+  downloaded_file_path = "grpc-netty-shaded-1.73.0.jar"
 )
 
 http_file(
-  name = "grpc-util-1_71_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-util/1.71.0/grpc-util-1.71.0.jar",
-  sha256 = "32a9197c541bb072dc2f728e235347c3c0f7cf8062abf3de58c50b4fc70f31b1",
-  downloaded_file_path = "grpc-util-1.71.0.jar"
+  name = "grpc-util-1_73_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0.jar",
+  sha256 = "b7df6cbcc30b7a3219f06483a9a9d320a431beda8a1ace5b16d879f84112373f",
+  downloaded_file_path = "grpc-util-1.73.0.jar"
 )
 
 http_file(
-  name = "grpc-netty-shaded-1_71_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-netty-shaded/1.71.0/grpc-netty-shaded-1.71.0-sources.jar",
-  sha256 = "47e751ce954b3cbfef3ab5eac8a8326162c9235d4f5c0e0c3b8f9057da30ccb2",
-  downloaded_file_path = "grpc-netty-shaded-1.71.0-sources.jar"
+  name = "grpc-netty-shaded-1_73_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-netty-shaded/1.73.0/grpc-netty-shaded-1.73.0-sources.jar",
+  sha256 = "dde30e64fb8e9422d865269f9baba7bd377539abe935e93e92a6d43d2d7950b6",
+  downloaded_file_path = "grpc-netty-shaded-1.73.0-sources.jar"
 )
 
 http_file(
-  name = "grpc-util-1_71_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-util/1.71.0/grpc-util-1.71.0-sources.jar",
-  sha256 = "6b5e95351580a8fb704f2d4e48c7c3d349985dfe1a3c8087af713046234c559e",
-  downloaded_file_path = "grpc-util-1.71.0-sources.jar"
+  name = "grpc-util-1_73_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-util/1.73.0/grpc-util-1.73.0-sources.jar",
+  sha256 = "389d6934884e5cd8a27cd88adf7038bb8e23dede661294e8391b3ca8a389f12d",
+  downloaded_file_path = "grpc-util-1.73.0-sources.jar"
 )
 
 http_file(
-  name = "grpc-protobuf-1_71_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-protobuf/1.71.0/grpc-protobuf-1.71.0.jar",
-  sha256 = "7eba0625fba8e176c0fc1b80610fc2c52c036d95805ffdd3f6985a51c968de94",
-  downloaded_file_path = "grpc-protobuf-1.71.0.jar"
+  name = "grpc-protobuf-1_73_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-protobuf/1.73.0/grpc-protobuf-1.73.0.jar",
+  sha256 = "5c0ca9e321c02845c47dc6edcef9f22e49015cef7753c54012f5398425163c08",
+  downloaded_file_path = "grpc-protobuf-1.73.0.jar"
 )
 
 http_file(
@@ -2414,17 +2414,17 @@ http_file(
 )
 
 http_file(
-  name = "grpc-protobuf-lite-1_71_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-protobuf-lite/1.71.0/grpc-protobuf-lite-1.71.0.jar",
-  sha256 = "ffad977400b49649fa2d5404abaadfca66c7e5956974f192411e8946a12e5f53",
-  downloaded_file_path = "grpc-protobuf-lite-1.71.0.jar"
+  name = "grpc-protobuf-lite-1_73_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-protobuf-lite/1.73.0/grpc-protobuf-lite-1.73.0.jar",
+  sha256 = "de8ce5309713e72bb57d5ff2dabdb4c173ae4872bd1439b9c3d3f93430b407d9",
+  downloaded_file_path = "grpc-protobuf-lite-1.73.0.jar"
 )
 
 http_file(
-  name = "grpc-protobuf-1_71_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-protobuf/1.71.0/grpc-protobuf-1.71.0-sources.jar",
-  sha256 = "f56c4b166cfb083a2108857cb80eabb6a79a7856c0674490e4fa9849b29a7ff8",
-  downloaded_file_path = "grpc-protobuf-1.71.0-sources.jar"
+  name = "grpc-protobuf-1_73_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-protobuf/1.73.0/grpc-protobuf-1.73.0-sources.jar",
+  sha256 = "1e60dc89fd231fe418fccc4a2d5b6d329f6591752bf7923b2152b528dec6e2ed",
+  downloaded_file_path = "grpc-protobuf-1.73.0-sources.jar"
 )
 
 http_file(
@@ -2435,24 +2435,24 @@ http_file(
 )
 
 http_file(
-  name = "grpc-protobuf-lite-1_71_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-protobuf-lite/1.71.0/grpc-protobuf-lite-1.71.0-sources.jar",
-  sha256 = "5cbc25c897d26e0cdeca771a79ad2d990b558957319cdc3856f13b8753f2a69a",
-  downloaded_file_path = "grpc-protobuf-lite-1.71.0-sources.jar"
+  name = "grpc-protobuf-lite-1_73_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-protobuf-lite/1.73.0/grpc-protobuf-lite-1.73.0-sources.jar",
+  sha256 = "2d40c25cb46b334120711883cca8f83653a87cdfceae63bbc9dbb334d422c660",
+  downloaded_file_path = "grpc-protobuf-lite-1.73.0-sources.jar"
 )
 
 http_file(
-  name = "grpc-stub-1_71_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-stub/1.71.0/grpc-stub-1.71.0.jar",
-  sha256 = "51912e612b28db65eec0332a8be494b3c54d347ecd2c5f6a7fdd2cb994fab360",
-  downloaded_file_path = "grpc-stub-1.71.0.jar"
+  name = "grpc-stub-1_73_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-stub/1.73.0/grpc-stub-1.73.0.jar",
+  sha256 = "050fe139de47d8937e6b0080e8dff3d0f42df6782f147c10bb298c0e9cd94b2f",
+  downloaded_file_path = "grpc-stub-1.73.0.jar"
 )
 
 http_file(
-  name = "grpc-stub-1_71_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-stub/1.71.0/grpc-stub-1.71.0-sources.jar",
-  sha256 = "0cb35ee903b8bf016a719bcd00362c7dc8f25600bd0732192c7c95f1cec16e20",
-  downloaded_file_path = "grpc-stub-1.71.0-sources.jar"
+  name = "grpc-stub-1_73_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/grpc/grpc-stub/1.73.0/grpc-stub-1.73.0-sources.jar",
+  sha256 = "7c8f954442692aaa5192591d5bfa6caea2de2838b5671ac9c4761aac3c032334",
+  downloaded_file_path = "grpc-stub-1.73.0-sources.jar"
 )
 
 http_file(
@@ -2596,17 +2596,17 @@ http_file(
 )
 
 http_file(
-  name = "icu4j-73_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/ibm/icu/icu4j/73.2/icu4j-73.2.jar",
-  sha256 = "29280822f4b0796acef1f79b90b1d0c1edd86c10e876a848e04b8a6298a16bf9",
-  downloaded_file_path = "icu4j-73.2.jar"
+  name = "icu4j-77_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar",
+  sha256 = "b3640b9f416a4411fd33c59abbeea8fd57d024c23e1819bf9673220a97499fe3",
+  downloaded_file_path = "icu4j-77.1.jar"
 )
 
 http_file(
-  name = "icu4j-73_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/ibm/icu/icu4j/73.2/icu4j-73.2-sources.jar",
-  sha256 = "271aa1bb3c4bdffb2af6f55dfbeb8351e53a2e5618ac41d1afd563528323f90a",
-  downloaded_file_path = "icu4j-73.2-sources.jar"
+  name = "icu4j-77_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/ibm/icu/icu4j/77.1/icu4j-77.1-sources.jar",
+  sha256 = "2dd9da85182efca525aa269db573e0ed54943767d6af3afc50d0ede51e63d01a",
+  downloaded_file_path = "icu4j-77.1-sources.jar"
 )
 
 http_file(
@@ -4437,17 +4437,17 @@ http_file(
 )
 
 http_file(
-  name = "kaml-jvm-0_66_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.66.0/kaml-jvm-0.66.0.jar",
-  sha256 = "b7e94d0f2d8a5c4d826cfc31d4a1475e96fc1244228fb41e121bf005bb9f7f28",
-  downloaded_file_path = "kaml-jvm-0.66.0.jar"
+  name = "kaml-jvm-0_80_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.80.1/kaml-jvm-0.80.1.jar",
+  sha256 = "7e346b94d47fb4e4495ebd6161fd5c6d01659687e93c460bbfd320ba47bea852",
+  downloaded_file_path = "kaml-jvm-0.80.1.jar"
 )
 
 http_file(
-  name = "snakeyaml-engine-kmp-jvm-3_0_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.0.3/snakeyaml-engine-kmp-jvm-3.0.3.jar",
-  sha256 = "f1a11e3ad9525cb7f300b4174b74e1fe4a89d619a54a1fba75747f8c854b5856",
-  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.0.3.jar"
+  name = "snakeyaml-engine-kmp-jvm-3_1_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.1.1/snakeyaml-engine-kmp-jvm-3.1.1.jar",
+  sha256 = "733e1347e3ec909e8a7ee199e48a64d0180569461b3bc08c8a6bb1335f5ce1bd",
+  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.1.1.jar"
 )
 
 http_file(
@@ -4458,17 +4458,17 @@ http_file(
 )
 
 http_file(
-  name = "kaml-jvm-0_66_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.66.0/kaml-jvm-0.66.0-sources.jar",
-  sha256 = "37e2c6a800abdbf630e8ab30ab3319a3b6e0f926bf3b1e8a27033b42256ac900",
-  downloaded_file_path = "kaml-jvm-0.66.0-sources.jar"
+  name = "kaml-jvm-0_80_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/charleskorn/kaml/kaml-jvm/0.80.1/kaml-jvm-0.80.1-sources.jar",
+  sha256 = "8fb6a48590169c34894f2bb41c9be86069cb4c2f6de5af7123753bf7f6b10818",
+  downloaded_file_path = "kaml-jvm-0.80.1-sources.jar"
 )
 
 http_file(
-  name = "snakeyaml-engine-kmp-jvm-3_0_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.0.3/snakeyaml-engine-kmp-jvm-3.0.3-sources.jar",
-  sha256 = "cb69b1223da83915f9fca19a9f0f39989cfd9484c1763a01ed31dc4fb150f214",
-  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.0.3-sources.jar"
+  name = "snakeyaml-engine-kmp-jvm-3_1_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/it/krzeminski/snakeyaml-engine-kmp-jvm/3.1.1/snakeyaml-engine-kmp-jvm-3.1.1-sources.jar",
+  sha256 = "8b256b041ae886c593e978db2367139bc47e612de4cf4346292cc8a8d32019c3",
+  downloaded_file_path = "snakeyaml-engine-kmp-jvm-3.1.1-sources.jar"
 )
 
 http_file(
