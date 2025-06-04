@@ -90,30 +90,29 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun setLine(line: Int) {
-    return setLine(line, true)
-  }
-
-  fun setLine(line: Int, visualLineMightBeChanged: Boolean) {
     if (getLine() != line) {
       // TODO IJPL-185322 support type.lineShouldBeChanged()
-      val oldLine = getLine()
-      updateLineBreakpointState { it.copy(line = line) }
-      lineSourcePosition = null
-      if (visualLineMightBeChanged) {
-        visualRepresentation.removeHighlighter()
-      }
 
-      // We try to redraw inlays every time,
-      // due to lack of synchronization between inlay redrawing and breakpoint changes.
-      visualRepresentation.redrawInlineInlays(getFile(), oldLine)
-      visualRepresentation.redrawInlineInlays(getFile(), line)
-
-      onBreakpointChange()
+      visualRepresentation.removeHighlighter()
+      onLineChanged(line)
 
       project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
         XBreakpointApi.getInstance().setLine(id, line)
       }
     }
+  }
+
+  private fun onLineChanged(line: Int) {
+    val oldLine = getLine()
+    updateLineBreakpointState { it.copy(line = line) }
+    lineSourcePosition = null
+
+    // We try to redraw inlays every time,
+    // due to lack of synchronization between inlay redrawing and breakpoint changes.
+    visualRepresentation.redrawInlineInlays(getFile(), oldLine)
+    visualRepresentation.redrawInlineInlays(getFile(), line)
+
+    onBreakpointChange()
   }
 
   override fun getHighlightRange(): TextRange? {
@@ -124,7 +123,13 @@ internal class FrontendXLineBreakpointProxy(
     val highlighter: RangeMarker? = visualRepresentation.rangeMarker
     if (highlighter != null && highlighter.isValid()) {
       lineSourcePosition = null // reset the source position even if the line number has not changed, as the offset may be cached inside
-      setLine(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), visualLineMightBeChanged = false)
+      project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+        XBreakpointApi.getInstance().updatePosition(id)
+      }
+      val newLine = highlighter.getDocument().getLineNumber(highlighter.getStartOffset())
+      if (getLine() != newLine) {
+        onLineChanged(newLine)
+      }
     }
   }
 
