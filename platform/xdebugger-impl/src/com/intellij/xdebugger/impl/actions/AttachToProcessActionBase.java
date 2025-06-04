@@ -176,12 +176,16 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
 
     for (XAttachHostProvider hostProvider : getAvailableHosts()) {
       indicator.checkCanceled();
-      //noinspection unchecked
-      Set<XAttachHost> hosts = new HashSet<>(hostProvider.getAvailableHosts(project));
-
-      for (XAttachHost host : hosts) {
+      try {
         //noinspection unchecked
-        currentItems.add(new AttachHostItem(hostProvider.getPresentationGroup(), false, host, project, dataHolder));
+        Set<XAttachHost> hosts = new HashSet<>(hostProvider.getAvailableHosts(project));
+
+        for (XAttachHost host : hosts) {
+          //noinspection unchecked
+          currentItems.add(new AttachHostItem(hostProvider.getPresentationGroup(), false, host, project, dataHolder));
+        }
+      } catch(Exception e) {
+        LOG.error("Error getting available hosts from the hostProvider " + hostProvider + ": " + e.getMessage());
       }
     }
 
