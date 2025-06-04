@@ -152,6 +152,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspections/publicApiImplicitType", pattern = pattern)
             model("${idea}/inspections/replaceArrayEqualityOpWithArraysEquals", pattern = pattern)
             model("${idea}/inspections/memberVisibilityCanBePrivate", pattern = pattern)
+            model("${idea}/inspections/canConvertToMultiDollarString", pattern = pattern)
             model("${idea}/intentions/removeExplicitTypeArguments", pattern = pattern)
         }
 

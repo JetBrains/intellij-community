@@ -68,6 +68,7 @@ class CanConvertToMultiDollarStringInspection :
                 element: KtStringTemplateExpression,
                 updater: ModPsiUpdater
             ) {
+                if (element.interpolationPrefix != null) return
                 val multiDollarVersion = convertToMultiDollarString(element, context)
                 simplifyDollarEntries(multiDollarVersion)
             }

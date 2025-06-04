@@ -2,11 +2,16 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
+
+private object PrefixedStringTemplateUtils
+private val LOG: Logger = logger<PrefixedStringTemplateUtils>()
 
 private const val DEFAULT_INTERPOLATION_PREFIX_LENGTH: Int = 2
 private const val INTERPOLATION_PREFIX_LENGTH_THRESHOLD: Int = 5
@@ -286,7 +291,13 @@ private fun findSuitablePrefixLength(element: KtStringTemplateExpression, useFal
  * Convert a plain string to a multi-dollar string with the specified prefix length
  */
 fun convertToMultiDollarString(element: KtStringTemplateExpression, contextInfo: MultiDollarConversionInfo): KtStringTemplateExpression {
-    require(element.interpolationPrefix == null) { "Can't convert the string which already has a prefix to multi-dollar string" }
+    if (element.interpolationPrefix != null) {
+        LOG.error("""
+            The string passed for multi-dollar conversion already has an interpolation prefix and won't be changed: ${element.text}.
+            This function should only be used for strings without an interpolation prefix. 
+            """.trimIndent())
+        return element
+    }
     replaceExpressionEntries(element, contextInfo.prefixLength)
 
     val replaced = element.replace(

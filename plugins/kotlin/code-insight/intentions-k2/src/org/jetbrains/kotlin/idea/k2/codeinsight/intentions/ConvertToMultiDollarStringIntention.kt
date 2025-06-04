@@ -31,6 +31,7 @@ internal class ConvertToMultiDollarStringIntention :
         elementContext: MultiDollarConversionInfo,
         updater: ModPsiUpdater
     ) {
+        if (element.interpolationPrefix != null) return
         val replaced = convertToMultiDollarString(element, elementContext)
         simplifyDollarEntries(replaced)
     }
