@@ -908,6 +908,7 @@ public final class org/jetbrains/jewel/foundation/theme/JewelTheme$Companion {
 	public final fun getEditorTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun getGlobalColors (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
+	public final fun getInstanceUuid (Landroidx/compose/runtime/Composer;I)Ljava/util/UUID;
 	public final fun getName (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
 	public final fun isDark (Landroidx/compose/runtime/Composer;I)Z
 	public final fun isSwingCompatMode (Landroidx/compose/runtime/Composer;I)Z
@@ -923,6 +924,7 @@ public final class org/jetbrains/jewel/foundation/theme/JewelThemeKt {
 	public static final fun getLocalEditorTextStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalIconData ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalTextStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getLocalThemeInstanceUuid ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalThemeName ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 

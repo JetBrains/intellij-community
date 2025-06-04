@@ -17,4 +17,8 @@ import kotlin.RequiresOptIn.Level
     AnnotationTarget.TYPEALIAS,
     AnnotationTarget.VALUE_PARAMETER,
 )
+/**
+ * APIs annotated as internal Jewel API are not meant for usage in client code; there are no guarantees about the binary
+ * nor source compatibility, and the behavior can change at any time. **Do not use** these APIs in client code!
+ */
 public annotation class InternalJewelApi
