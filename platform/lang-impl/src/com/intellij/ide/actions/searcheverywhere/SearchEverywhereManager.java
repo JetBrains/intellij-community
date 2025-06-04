@@ -53,4 +53,7 @@ public interface SearchEverywhereManager {
 
   // todo remove
   boolean isEverywhere();
+
+  @ApiStatus.Internal
+  boolean isSplit();
 }

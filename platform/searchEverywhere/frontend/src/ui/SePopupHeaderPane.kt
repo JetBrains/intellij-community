@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeFilterComponentPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
+import com.intellij.platform.searchEverywhere.frontend.vm.SeTabVm
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.*
@@ -97,6 +98,13 @@ class SePopupHeaderPane(
     add(panel)
 
     tabbedPane.bindSelectedTabIn(selectedTabState, coroutineScope)
+
+    tabbedPane.addChangeListener {
+      val tabId = tabInfos[tabbedPane.selectedIndex].reportableId
+      SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(project,
+                                                             SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(tabId),
+                                                             SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(true))
+    }
   }
 
   fun setFilterPresentation(filterPresentation: SeFilterPresentation?) {
@@ -143,7 +151,9 @@ class SePopupHeaderPane(
     toolbar.updateActionsAsync()
   }
 
-  class Tab(val name: @Nls String, val id: String)
+  class Tab(val name: @Nls String, val id: String, val reportableId: String) {
+    constructor(tabVm: SeTabVm) : this(tabVm.name, tabVm.tabId, tabVm.reportableTabId)
+  }
 
   companion object {
     private const val MAX_FILTER_WIDTH = 100

@@ -5,7 +5,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -65,7 +67,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   val searchFieldDocument: Document get() = textField.document
 
   private val headerPane: SePopupHeaderPane = SePopupHeaderPane(
-    project, vm.tabVms.map { SePopupHeaderPane.Tab(it.name, it.tabId) }, vm.currentTabIndex, vm.coroutineScope
+    project, vm.tabVms.map { SePopupHeaderPane.Tab(it) }, vm.currentTabIndex, vm.coroutineScope
   )
   private val textField: SeTextField = SeTextField()
 
@@ -195,7 +197,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.coroutineScope.launch {
       vm.deferredTabVms.collect { tabVm ->
         withContext(Dispatchers.EDT) {
-          headerPane.addTab(SePopupHeaderPane.Tab(tabVm.name, tabVm.tabId))
+          headerPane.addTab(SePopupHeaderPane.Tab(tabVm))
         }
       }
     }
@@ -305,13 +307,23 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   }
 
   private suspend fun elementsSelected(indexes: IntArray, modifiers: Int) {
+    var nonItemDataCount = 0
+
+    // Calculate items with indexes considering some non-item rows on top (for example, notification row).
+    // The index is necessary for event logging
     val itemDataList = indexes.map {
-      resultListModel[it]
-    }.mapNotNull {
-      (it as? SeResultListItemRow)?.item
+      it to resultListModel[it]
+    }.mapNotNull { (originalIndex, row) ->
+      if (row is SeResultListItemRow) {
+        (originalIndex - nonItemDataCount) to row.item
+      }
+      else {
+        nonItemDataCount++
+        null
+      }
     }
 
-    if (vm.itemsSelected(itemDataList, modifiers)) {
+    if (vm.itemsSelected(itemDataList, nonItemDataCount == 0, modifiers)) {
       closePopup()
     }
     else {
@@ -362,12 +374,14 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
     ScrollingUtil.redirectExpandSelection(resultList, textField)
 
-    val nextTabAction: (AnActionEvent) -> Unit = { _ ->
+    val nextTabAction: (AnActionEvent) -> Unit = { e ->
       vm.selectNextTab()
+      logTabSwitchedEvent(e)
       updateExtendedInfoContainer()
     }
-    val prevTabAction: (AnActionEvent) -> Unit = { _ ->
+    val prevTabAction: (AnActionEvent) -> Unit = { e ->
       vm.selectPreviousTab()
+      logTabSwitchedEvent(e)
       updateExtendedInfoContainer()
     }
 
@@ -377,19 +391,17 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     registerAction(IdeActions.ACTION_PREVIOUS_TAB, prevTabAction)
     registerAction(IdeActions.ACTION_SWITCHER) { e ->
       if (e.inputEvent?.isShiftDown == true) {
-        prevTabAction
+        prevTabAction(e)
       }
       else {
-        nextTabAction
+        nextTabAction(e)
       }
     }
     registerAction(SeActions.NAVIGATE_TO_NEXT_GROUP) { _ ->
       shiftSelectedIndexAndEnsureIsVisible(1)
-      vm.usageLogger.groupNavigate()
     }
     registerAction(SeActions.NAVIGATE_TO_PREV_GROUP) { _ ->
       shiftSelectedIndexAndEnsureIsVisible(-1)
-      vm.usageLogger.groupNavigate()
     }
 
     val escape = ActionManager.getInstance().getAction("EditorEscape")
@@ -552,6 +564,13 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
         resultList.emptyText.appendText(text, attrs, listener)
       }
     }
+  }
+
+  private fun logTabSwitchedEvent(e: AnActionEvent) {
+    SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(project,
+                                                           SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(vm.currentTab.tabId),
+                                                           EventFields.InputEventByAnAction.with(e),
+                                                           SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(true))
   }
 
   override fun uiDataSnapshot(sink: DataSink) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.providers
 
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
@@ -29,6 +30,11 @@ class SeLocalItemDataProvider(private val provider: SeItemsProvider,
   val displayName: @Nls String
     get() = provider.displayName
 
+  private val infoWithReportableId = mapOf(
+    SeItemDataKeys.REPORTABLE_PROVIDER_ID to
+      (if (SearchEverywhereUsageTriggerCollector.isReportable(provider)) provider.id else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID)
+  )
+
   @OptIn(ExperimentalAtomicApi::class)
   fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
@@ -38,7 +44,7 @@ class SeLocalItemDataProvider(private val provider: SeItemsProvider,
         provider.collectItems(params, object : SeItemsProvider.Collector {
           override suspend fun put(item: SeItem): Boolean {
             val itemData = SeItemData.createItemData(
-              sessionRef, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), emptyList()
+              sessionRef, UUID.randomUUID().toString(), item, id, item.weight(), item.presentation(), infoWithReportableId, emptyList()
             ) ?: return coroutineContext.isActive
 
             SeLog.log(SeLog.ITEM_EMIT) {

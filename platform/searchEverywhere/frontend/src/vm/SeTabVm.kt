@@ -2,37 +2,29 @@
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.SeFilterState
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
-import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
-import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
-import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import kotlin.collections.firstOrNull
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
 @ApiStatus.Internal
 class SeTabVm(
-  project: Project?,
+  private val project: Project?,
   coroutineScope: CoroutineScope,
   private val tab: SeTab,
   searchPattern: StateFlow<String>,
@@ -41,6 +33,9 @@ class SeTabVm(
   val name: String get() = tab.name
   val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val tabId: String get() = tab.id
+  val reportableTabId: String =
+    if (SearchEverywhereUsageTriggerCollector.isReportable(tab)) tabId
+    else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID
 
   private val shouldLoadMoreFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
   var shouldLoadMore: Boolean
@@ -115,8 +110,35 @@ class SeTabVm(
     isActiveFlow.value = isActive
   }
 
-  suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
-    return tab.itemSelected(item, modifiers, searchText)
+  suspend fun itemSelected(itemWithIndex: Pair<Int, SeItemData>, isIndexOriginal: Boolean, modifiers: Int, searchText: String): Boolean {
+    logItemSelectedEvent(itemWithIndex, isIndexOriginal)
+    return tab.itemSelected(itemWithIndex.second, modifiers, searchText)
+  }
+
+  private fun logItemSelectedEvent(itemWithIndex: Pair<Int, SeItemData>, isIndexOriginal: Boolean) {
+    val (index, itemData) = itemWithIndex
+    val data = mutableListOf<EventPair<*>>()
+
+    data.add(SearchEverywhereUsageTriggerCollector.CURRENT_TAB_FIELD.with(reportableTabId))
+    data.add(SearchEverywhereUsageTriggerCollector.SELECTED_ITEM_NUMBER.with(index))
+    data.add(SearchEverywhereUsageTriggerCollector.HAS_ONLY_SIMILAR_ELEMENT.with(isIndexOriginal))
+    data.add(SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(true))
+
+    itemData.additionalInfo[SeItemDataKeys.REPORTABLE_PROVIDER_ID]?.let { reportableContributorID ->
+      data.add(SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(reportableContributorID))
+    }
+
+    itemData.additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.let { isSemantic ->
+      data.add(SearchEverywhereUsageTriggerCollector.IS_ELEMENT_SEMANTIC.with(isSemantic.toBoolean()))
+    }
+
+    itemData.additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID]?.let { languageId ->
+      Language.findLanguageByID(languageId)?.let { language ->
+        data.add(EventFields.Language.with(language))
+      }
+    }
+
+    SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ITEM_SELECTED.log(project, data)
   }
 
   suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {

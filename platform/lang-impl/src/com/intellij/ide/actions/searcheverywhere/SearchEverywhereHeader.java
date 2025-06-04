@@ -146,7 +146,8 @@ public final class SearchEverywhereHeader {
           SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
                                                                  SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(
                                                                    tab.getReportableID()),
-                                                                 EventFields.InputEventByMouseEvent.with(e));
+                                                                 EventFields.InputEventByMouseEvent.with(e),
+                                                                 SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(false));
         }
       });
       contributorsPanel.add(tabLabel);
@@ -168,7 +169,9 @@ public final class SearchEverywhereHeader {
         SETab selectedTab = myTabs.get(newUIHeaderView.tabbedPane.getSelectedIndex());
         switchToTab(selectedTab);
         SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(
-          myProject, SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(selectedTab.getReportableID()));
+          myProject,
+          SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(selectedTab.getReportableID()),
+          SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(false));
         if (SearchEverywhereUI.isExtendedInfoEnabled()) {
           ApplicationManager.getApplication().getMessageBus().syncPublisher(SETabSwitcherListener.Companion.getSE_TAB_TOPIC())
             .tabSwitched(new SETabSwitcherListener.SETabSwitchedEvent(selectedTab));

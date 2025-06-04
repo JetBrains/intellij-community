@@ -8,10 +8,10 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatistic
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.internal.statistic.utils.StartMoment;
-import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -30,7 +30,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -109,7 +112,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setCancelCallback(() -> {
         saveSearchText();
         savePrevSelection(mySearchEverywhereUI.getSelectedTabID(), mySearchEverywhereUI.getSelectionIdentity());
-        DIALOG_CLOSED.log(myProject);
+        DIALOG_CLOSED.log(myProject, false);
         return true;
       })
       .setResizable(true)
@@ -268,6 +271,12 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
   public void setEverywhere(boolean everywhere) {
     myEverywhere = everywhere;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean isSplit() {
+    return false;
   }
 
   @Override

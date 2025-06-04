@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.vm
 
-import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.actions.searcheverywhere.HistoryIterator
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
@@ -9,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.SeUsageEventsLogger
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.util.SystemProperties
@@ -51,8 +49,6 @@ class SePopupVm(
       return field
     }
 
-  val usageLogger: SeUsageEventsLogger = SeUsageEventsLogger()
-
   init {
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
 
@@ -90,51 +86,30 @@ class SePopupVm(
     }
   }
 
-  suspend fun itemSelected(item: SeItemData, modifiers: Int): Boolean {
-    logItemSelected()
-    return currentTab.itemSelected(item, modifiers, searchPattern.value)
-  }
-
-  suspend fun itemsSelected(items: List<SeItemData>, modifiers: Int): Boolean {
-    logItemSelected()
+  suspend fun itemsSelected(indexedItems: List<Pair<Int, SeItemData>>, areIndexesOriginal: Boolean, modifiers: Int): Boolean {
     val currentTab = currentTab
 
     return coroutineScope {
-      items.map { item ->
+      indexedItems.map { item ->
         async {
-          currentTab.itemSelected(item, modifiers, searchPattern.value)
+          currentTab.itemSelected(item, areIndexesOriginal, modifiers, searchPattern.value)
         }
       }.awaitAll().any { it }
     }
   }
 
   fun selectNextTab() {
-    val oldIndex = currentTabIndex.value
     currentTabIndex.value = (currentTabIndex.value + 1) % tabVms.size
-
-    if (oldIndex != currentTabIndex.value) usageLogger.tabSwitched()
   }
 
   fun selectPreviousTab() {
-    val oldIndex = currentTabIndex.value
     currentTabIndex.value = (currentTabIndex.value - 1 + tabVms.size) % tabVms.size
-
-    if (oldIndex != currentTabIndex.value) usageLogger.tabSwitched()
   }
 
   fun showTab(tabId: String) {
     tabVms.indexOfFirst { it.tabId == tabId }.takeIf { it >= 0 }?.let {
       currentTabIndex.value = it
     }
-  }
-
-  private fun logItemSelected() {
-    val searchText = searchPattern.value
-    if (searchText.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && searchText.contains(" ")) {
-      usageLogger.commandUsed()
-    }
-
-    usageLogger.contributorItemSelected()
   }
 
   fun closePopup() {

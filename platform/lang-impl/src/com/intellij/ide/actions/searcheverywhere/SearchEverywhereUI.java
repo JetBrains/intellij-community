@@ -1168,7 +1168,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
                                                            SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(id),
-                                                           EventFields.InputEventByAnAction.with(e));
+                                                           EventFields.InputEventByAnAction.with(e),
+                                                           SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(false));
   }
 
   private void scrollList(boolean down) {
@@ -1304,6 +1305,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       data.add(SearchEverywhereUsageTriggerCollector.IS_ELEMENT_SEMANTIC.with(
         effectiveContributor instanceof SemanticSearchEverywhereContributor semanticContributor &&
         semanticContributor.isElementSemantic(value)));
+      data.add(SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(false));
       PsiElement psi = toPsi(value);
       if (psi != null) {
         data.add(EventFields.Language.with(psi.getLanguage()));

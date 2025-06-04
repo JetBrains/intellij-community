@@ -29,8 +29,12 @@ jvm_library(
     "//platform/util/text-matching",
     "//platform/usageView",
     "//platform/execution-impl",
+    "//platform/statistics",
   ],
-  exports = ["//platform/lang-impl"],
+  exports = [
+    "//platform/lang-impl",
+    "//platform/statistics",
+  ],
   runtime_deps = [":searchEverywhere_resources"]
 )
 ### auto-generated section `build intellij.platform.searchEverywhere` end
