@@ -6,9 +6,9 @@ import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -124,13 +124,6 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     return withContext(Dispatchers.EDT) {
       val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
       backendDocument.bindToFrontend(frontendDocumentId)
-    }
-  }
-
-  override suspend fun removeBreakpoint(breakpointId: XBreakpointId) {
-    val breakpoint = breakpointId.findValue() ?: return
-    edtWriteAction {
-      XDebuggerManager.getInstance(breakpoint.project).breakpointManager.removeBreakpoint(breakpoint)
     }
   }
 }

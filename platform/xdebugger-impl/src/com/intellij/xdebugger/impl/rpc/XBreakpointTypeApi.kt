@@ -37,6 +37,8 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
       return RemoteApiProviderService.resolve(remoteApiDescriptor<XBreakpointTypeApi>())
     }
   }
+
+  suspend fun removeBreakpoint(breakpointId: XBreakpointId)
 }
 
 @ApiStatus.Internal

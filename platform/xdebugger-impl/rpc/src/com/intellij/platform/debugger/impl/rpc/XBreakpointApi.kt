@@ -47,8 +47,6 @@ interface XBreakpointApi : RemoteApi<Unit> {
 
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId?
 
-  suspend fun removeBreakpoint(breakpointId: XBreakpointId)
-
   companion object {
     @JvmStatic
     suspend fun getInstance(): XBreakpointApi {
