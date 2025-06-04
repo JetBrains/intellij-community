@@ -10,15 +10,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.RemoteValueHint
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.intellij.platform.project.projectId
-import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
-import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -69,24 +67,10 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       if (frontendType is FrontendType.RemoteDev && Registry.`is`("xdebugger.lux.evaluation.popup")) {
         RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo)
       }
-      else if (useFeProxy() || frontendType is FrontendType.RemoteDev) {
+      else {
         val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value ?: return@async null
         val frontendEvaluator = currentSession.currentEvaluator ?: return@async null
-        val valueMarkers = currentSession.valueMarkers
-        val editorsProvider = currentSession.editorsProvider
-        val sourcePosition = currentSession.sourcePosition.value
-        XValueHint(project, editorsProvider, editor, point, type, adjustedOffset, expressionInfo, frontendEvaluator, valueMarkers, sourcePosition, false)
-      }
-      else {
-        val session = XDebuggerManager.getInstance(project).getCurrentSession()
-        if (session == null) {
-          return@async null
-        }
-        val evaluator = session.getDebugProcess().getEvaluator()
-        if (evaluator == null) {
-          return@async null
-        }
-        XValueHint(project, editor, point, type, adjustedOffset, expressionInfo, evaluator, session, false)
+        XValueHint(project, editor, point, type, adjustedOffset, expressionInfo, frontendEvaluator, currentSession, false)
       }
     }
     hintDeferred.invokeOnCompletion {
