@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -43,8 +43,11 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
+  private static final ExtensionPointName<ModuleConfigurationEditorProvider> EP_NAME =
+    new ExtensionPointName<>("com.intellij.moduleConfigurationEditorProvider");
+
   private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
-  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
+  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = new ExtensionPointName<>("com.intellij.moduleConfigurable");
   public static final String SELECTED_EDITOR_NAME = "selectedEditor";
 
   private final Project myProject;
@@ -159,7 +162,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (module == null) return;
 
     ModuleConfigurationState state = createModuleConfigurationState();
-    for (ModuleConfigurationEditorProvider provider : ModuleConfigurationEditorProvider.EP_NAME.getExtensionList(module)) {
+    for (ModuleConfigurationEditorProvider provider : EP_NAME.getExtensionList(module)) {
       ModuleConfigurationEditor[] editors = provider.createEditors(state);
       if (editors.length > 0 && provider instanceof ModuleConfigurationEditorProviderEx &&
           ((ModuleConfigurationEditorProviderEx)provider).isCompleteEditorSet()) {
