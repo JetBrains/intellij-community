@@ -6,6 +6,7 @@ import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
+import git4idea.fetch.GitFetchTagsMode
 import git4idea.push.GitPushTagMode
 import git4idea.reset.GitResetMode
 
@@ -72,6 +73,9 @@ class GitVcsOptions : BaseState() {
   var resetMode by enum<GitResetMode>()
   @get:OptionTag("PUSH_TAGS")
   var pushTags by property<GitPushTagMode>()
+
+  @get:OptionTag("FETCH_TAGS_MODE")
+  var fetchTagsMode by enum<GitFetchTagsMode>(GitFetchTagsMode.DEFAULT)
 
   @get:OptionTag("INCOMING_CHECK_STRATEGY")
   var incomingCheckStrategy by enum(GitIncomingCheckStrategy.Auto)
