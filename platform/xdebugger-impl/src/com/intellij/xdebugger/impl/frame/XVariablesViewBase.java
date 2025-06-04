@@ -94,7 +94,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     DebuggerUIUtil.freezePaintingToReduceFlickering(myTreePanel.getContentComponent());
     tree.setSourcePosition(position);
     createNewRootNode(stackFrame);
-    XVariablesView.InlineVariablesInfo.set(getSession(tree), new XVariablesView.InlineVariablesInfo());
+    XVariablesView.InlineVariablesInfo.set(getSessionProxy(tree), new XVariablesView.InlineVariablesInfo());
     clearInlays(tree);
     Object newEqualityObject = stackFrame.getEqualityObject();
     if (newEqualityObject != null) {
