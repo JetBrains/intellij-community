@@ -57,18 +57,15 @@ class SeProvidersHolder(
       logLabel: String,
       providerIds: List<SeProviderId>? = null,
     ): SeProvidersHolder {
-      val allContributors = mutableMapOf<String, SearchEverywhereContributor<Any>>()
-      val separateTabContributors = mutableMapOf<String, SearchEverywhereContributor<Any>>()
+      val legacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
+      val separateTabLegacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
 
-      initializeLegacyContributors(initEvent, project, allContributors, separateTabContributors)
+      initializeLegacyContributors(initEvent, project, legacyContributors, separateTabLegacyContributors)
 
       val dataContext = initEvent.dataContext
 
       val providers = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
       val separateTabProviders = mutableMapOf<SeProviderId, SeLocalItemDataProvider>()
-
-      val legacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
-      val separateTabLegacyContributors = mutableMapOf<SeProviderId, SearchEverywhereContributor<Any>>()
 
       SeItemsProviderFactory.EP_NAME.extensionList.filter {
         providerIds == null || SeProviderId(it.id) in providerIds
@@ -77,15 +74,15 @@ class SeProvidersHolder(
         val separateTabProvider: SeItemsProvider?
 
         val providerFactoryId = providerFactory.id.let {
-          if (it.startsWith(SeProviderIdUtils.TOP_HIT_ID)) SeProviderIdUtils.TOP_HIT_ID else it
+          SeProviderId(if (it.startsWith(SeProviderIdUtils.TOP_HIT_ID)) SeProviderIdUtils.TOP_HIT_ID else it)
         }
 
         if (providerFactory is SeWrappedLegacyContributorItemsProviderFactory) {
-          provider = allContributors[providerFactoryId]?.let {
+          provider = legacyContributors[providerFactoryId]?.let {
             providerFactory.getItemsProviderCatchingOrNull(project, it)
           }
-          separateTabProvider = separateTabContributors[providerFactoryId]?.let {
-            providerFactory.getItemsProviderCatchingOrNull(project,it)
+          separateTabProvider = separateTabLegacyContributors[providerFactoryId]?.let {
+            providerFactory.getItemsProviderCatchingOrNull(project, it)
           }
         }
         else {
@@ -97,23 +94,17 @@ class SeProvidersHolder(
           }
         }
 
-        provider?.let { provider ->
-          providers[SeProviderId(provider.id)] = SeLocalItemDataProvider(provider, sessionRef, logLabel)
-          allContributors[providerFactoryId]?.let { contributor ->
-            legacyContributors[SeProviderId(provider.id)] = contributor
-          }
+        provider?.let {
+          providers[SeProviderId(it.id)] = SeLocalItemDataProvider(it, sessionRef, logLabel)
         }
 
-        separateTabProvider?.let { provider ->
-          separateTabProviders[SeProviderId(provider.id)] = SeLocalItemDataProvider(provider, sessionRef, logLabel)
-          separateTabContributors[providerFactoryId]?.let { contributor ->
-            separateTabLegacyContributors[SeProviderId(provider.id)] = contributor
-          }
+        separateTabProvider?.let {
+          separateTabProviders[SeProviderId(it.id)] = SeLocalItemDataProvider(it, sessionRef, logLabel)
         }
       }
 
-      allContributors.disposeAndFilterOutUnnecessaryLegacyContributors(providers.keys)
-      separateTabContributors.disposeAndFilterOutUnnecessaryLegacyContributors(separateTabProviders.keys)
+      legacyContributors.disposeAndFilterOutUnnecessaryLegacyContributors(providers.keys)
+      separateTabLegacyContributors.disposeAndFilterOutUnnecessaryLegacyContributors(separateTabProviders.keys)
 
       return SeProvidersHolder(providers,
                                separateTabProviders,
@@ -121,8 +112,8 @@ class SeProvidersHolder(
                                separateTabLegacyContributors)
     }
 
-    private fun MutableMap<String, SearchEverywhereContributor<Any>>.disposeAndFilterOutUnnecessaryLegacyContributors(providerIds: Set<SeProviderId>) {
-      val contributorsToDispose = filter { !providerIds.contains(SeProviderId(it.key)) }
+    private fun MutableMap<SeProviderId, SearchEverywhereContributor<Any>>.disposeAndFilterOutUnnecessaryLegacyContributors(providerIds: Set<SeProviderId>) {
+      val contributorsToDispose = filter { !providerIds.contains(it.key) }
 
       contributorsToDispose.forEach {
         Disposer.dispose(it.value)
@@ -133,13 +124,13 @@ class SeProvidersHolder(
     private suspend fun initializeLegacyContributors(
       initEvent: AnActionEvent,
       project: Project?,
-      allContributors: MutableMap<String, SearchEverywhereContributor<Any>>,
-      separateTabContributors: MutableMap<String, SearchEverywhereContributor<Any>>,
+      allContributors: MutableMap<SeProviderId, SearchEverywhereContributor<Any>>,
+      separateTabContributors: MutableMap<SeProviderId, SearchEverywhereContributor<Any>>,
     ) {
       withContext(Dispatchers.EDT) {
         SearchEverywhereManagerImpl.createContributors(initEvent, project)
       }.filterIsInstance<SearchEverywhereContributor<Any>>().forEach {
-        allContributors[it.searchProviderId] = it
+        allContributors[SeProviderId(it.searchProviderId)] = it
       }
 
       // From com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.createTabs
@@ -147,7 +138,7 @@ class SeProvidersHolder(
         withContext(Dispatchers.EDT) {
           TabsCustomizationStrategy.getInstance().getSeparateTabContributors(allContributors.values.toList())
             .filterIsInstance<SearchEverywhereContributor<Any>>()
-            .associateBy { it.searchProviderId }
+            .associateBy { SeProviderId(it.searchProviderId) }
         }
       }
       catch (e: Exception) {
