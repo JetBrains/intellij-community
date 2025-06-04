@@ -246,7 +246,7 @@ public abstract class XVariablesViewBase extends XDebugView {
         XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
         if (evaluator == null) return;
         TextRange range = e.getNewRange();
-        ExpressionInfo info = new ExpressionInfo(range);
+        ExpressionInfo info = new ExpressionInfo(range, null, null, true);
         int offset = range.getStartOffset();
         LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
         Point point = myEditor.logicalPositionToXY(pos);
