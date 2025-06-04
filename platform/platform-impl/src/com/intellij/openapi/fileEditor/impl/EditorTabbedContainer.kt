@@ -566,6 +566,7 @@ private class EditorTabs(
     source.templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
     source.templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
     _entryPointActionGroup = DefaultActionGroup(java.util.List.of(source))
+    InternalUICustomization.getInstance()?.installEditorBackground(this)
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
