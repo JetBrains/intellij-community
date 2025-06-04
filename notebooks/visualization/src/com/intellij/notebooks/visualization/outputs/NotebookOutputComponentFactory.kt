@@ -1,8 +1,10 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.outputs
 
 import com.intellij.notebooks.visualization.ui.EditorCellOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.Nls
 import java.awt.Graphics
@@ -50,6 +52,7 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
     val resizable: Boolean,
     val collapsedTextSupplier: () -> @Nls String,
     val disposable: Disposable? = component as? Disposable,
+    val gutterRenderer: GutterIconRenderer? = null,
   )
 
   val componentClass: Class<C>
