@@ -9,7 +9,7 @@ public interface Pass {
   int EXTERNAL_TOOLS = 8;                                     // ExternalToolPassFactory
   int WOLF = 9;                                               // WolfPassFactory
   int LINE_MARKERS = 11;                                      // LineMarkersPassFactory
-  @Deprecated int WHOLE_FILE_LOCAL_INSPECTIONS = 12;          // outdated, not used anymore
+  @Deprecated(forRemoval = true) int WHOLE_FILE_LOCAL_INSPECTIONS = 12;          // outdated, not used anymore
   int SLOW_LINE_MARKERS = 13;                                 // SlowLineMarkersPassFactory
   int INJECTED_GENERAL = 14;                                  // InjectedGeneralHighlightingPassFactory
 

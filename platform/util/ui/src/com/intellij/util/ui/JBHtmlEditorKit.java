@@ -252,7 +252,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
    * @see HTMLEditorKitBuilder
    * @deprecated in favor of {@link ExtendableHTMLViewFactory}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static class JBHtmlFactory extends HTMLFactory {
 
     private final ViewFactory myDelegate = ExtendableHTMLViewFactory.DEFAULT;

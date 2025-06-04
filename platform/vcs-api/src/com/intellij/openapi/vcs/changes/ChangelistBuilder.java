@@ -48,7 +48,7 @@ public interface ChangelistBuilder {
    * @param file a file to process
    * @deprecated use {@link #processUnversionedFile(FilePath)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void processUnversionedFile(VirtualFile file) {
     if (file != null) {
       processUnversionedFile(VcsUtil.getFilePath(file));

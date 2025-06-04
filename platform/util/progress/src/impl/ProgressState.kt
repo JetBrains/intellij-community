@@ -3,7 +3,9 @@ package com.intellij.platform.util.progress.impl
 
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Unused")
 data class ProgressState(
   val text: @ProgressText String?,

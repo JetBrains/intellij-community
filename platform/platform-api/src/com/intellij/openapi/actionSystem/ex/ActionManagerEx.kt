@@ -28,6 +28,7 @@ abstract class ActionManagerEx : ActionManager() {
     @JvmStatic
     fun getInstanceEx(): ActionManagerEx = getInstance() as ActionManagerEx
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use [KeymapUtil.getKeyStroke(s)]",
                 ReplaceWith("KeymapUtil.getKeyStroke(s)"),
                 DeprecationLevel.ERROR)

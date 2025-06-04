@@ -1542,7 +1542,7 @@ public abstract class DiffRequestProcessor
    * @deprecated use {@link OpenInEditorAction}
    */
   @SuppressWarnings("InnerClassMayBeStatic") // left non-static for plugin compatibility
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected class MyOpenInEditorAction extends OpenInEditorAction {
     public MyOpenInEditorAction() {
     }

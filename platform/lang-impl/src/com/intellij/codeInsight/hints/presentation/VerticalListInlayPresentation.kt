@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.markup.TextAttributes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.Point
@@ -63,6 +64,7 @@ class VerticalListInlayPresentation(
     changePresentationUnderCursor(null)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("No longer needed. Presentation's size remains relevant.")
   fun calcDimensions() {
     width = presentations.maxByOrNull { it.width }!!.width

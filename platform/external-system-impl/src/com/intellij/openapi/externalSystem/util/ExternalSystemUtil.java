@@ -676,7 +676,7 @@ public final class ExternalSystemUtil {
   /**
    * @deprecated Use {@link ExternalSystemTrustedProjectDialog} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     @NotNull Collection<ProjectSystemId> systemIds

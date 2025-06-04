@@ -52,7 +52,7 @@ public abstract class VcsRootChecker {
   /**
    * @deprecated Override {@link #validateRoot(VirtualFile)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean validateRoot(@NotNull String path) {
     return isRoot(path);
   }

@@ -287,6 +287,7 @@ private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation
  * @see com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers
  * @see com.intellij.openapi.vcs.history.VcsDiffUtil.putFilePathsIntoChangeContext
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Path of changed files is shown via DiffTitleFilePathCustomizer")
 fun RefComparisonChange.buildChangeContext(): Map<Key<*>, Any> {
   val titleLeft = VcsDiffUtil.getRevisionTitle(revisionNumberBefore.toShortString(), filePathBefore, filePathAfter)

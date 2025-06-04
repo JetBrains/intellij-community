@@ -180,6 +180,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     getPointImpl(areaInstance).addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Pass CoroutineScope to addChangeListener")
   fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
     getPointImpl(null).removeExtensionPointListener(listener)

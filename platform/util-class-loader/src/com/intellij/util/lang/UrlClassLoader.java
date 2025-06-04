@@ -94,6 +94,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   /** @deprecated use {@link #build()} (left for compatibility with `java.system.class.loader` setting) */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(createDefaultBuilderForJdk(parent), null, isParallelCapable);

@@ -86,7 +86,7 @@ public abstract class VcsTreeModelData {
   /**
    * @deprecated use {@link #iterateNodes()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final @NotNull Stream<ChangesBrowserNode<?>> nodesStream() {
     return iterateNodes().toStream();
   }
@@ -94,7 +94,7 @@ public abstract class VcsTreeModelData {
   /**
    * @deprecated use {@link #iterateUserObjects(Class)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final @NotNull <U> Stream<U> userObjectsStream(@NotNull Class<U> clazz) {
     return iterateUserObjects(clazz).toStream();
   }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
@@ -31,6 +32,7 @@ object CodeReviewTabs {
       .launchIn(this)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Deprecated with the move to the new design")
   fun CoroutineScope.bindTabUi(
     tabs: JBTabsImpl,

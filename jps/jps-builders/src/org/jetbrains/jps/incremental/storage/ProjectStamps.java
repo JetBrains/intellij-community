@@ -27,7 +27,7 @@ public final class ProjectStamps implements StorageOwner {
    * @deprecated Please use {@link #ProjectStamps(Path, BuildTargetStateManager)}
    */
   @SuppressWarnings("unused")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public ProjectStamps(@NotNull File dataStorageRoot, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
     this(dataStorageRoot.toPath(), targetsState.impl);

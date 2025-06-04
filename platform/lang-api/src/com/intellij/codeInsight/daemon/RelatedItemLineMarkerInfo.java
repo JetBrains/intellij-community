@@ -24,7 +24,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
   /**
    * @deprecated Use {@link #RelatedItemLineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, NotNullFactory)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
                                    @Nullable Function<? super T, String> tooltipProvider,
                                    @Nullable GutterIconNavigationHandler<T> navHandler,

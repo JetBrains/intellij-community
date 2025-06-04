@@ -74,6 +74,7 @@ class EditorWindow internal constructor(
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")
 
     @JvmField
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use SINGLETON_EDITOR_IN_WINDOW instead")
     val HIDE_TABS: Key<Boolean> = FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW
 

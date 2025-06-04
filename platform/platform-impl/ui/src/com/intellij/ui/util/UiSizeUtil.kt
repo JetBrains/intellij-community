@@ -3,6 +3,7 @@ package com.intellij.ui.util
 
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.JComponent
@@ -14,12 +15,14 @@ val Insets.height: Int
 
 var JBPopup.width: Int
   get() = size.width
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Prefer using [JBPopup.setSize] explicitly")
   set(newValue) {
     size = Dimension(newValue, size.height)
   }
 var JBPopup.height: Int
   get() = size.height
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Prefer using [JBPopup.setSize] explicitly")
   set(newValue) {
     size = Dimension(size.width, newValue)

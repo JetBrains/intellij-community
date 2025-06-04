@@ -156,6 +156,7 @@ object ExecUtil {
     else "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(
     "It is an oversimplified quoting. Prefer CommandLineUtil.posixQuote instead.",
     ReplaceWith("CommandLineUtil.posixQuote(arg)", "com.intellij.execution.CommandLineUtil.posixQuote"),
