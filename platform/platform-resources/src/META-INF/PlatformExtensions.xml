@@ -911,6 +911,7 @@
     <editorFloatingToolbarProvider
       implementation="com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider"
       id="DefaultFloatingToolbarProvider"/>
+    <actionPromoter implementation="com.intellij.ui.codeFloatingToolbar.FloatingToolbarTabActionPromoter"/>
 
     <bundledKeymap file="$default.xml"/>
     <bundledKeymap file="Mac OS X 10.5+.xml"/>

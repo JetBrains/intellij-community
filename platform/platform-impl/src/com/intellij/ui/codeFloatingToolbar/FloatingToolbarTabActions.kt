@@ -7,11 +7,14 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Key
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Unmodifiable
 
 internal sealed class FloatingToolbarTabAction : AnAction() {
   init {
     isEnabledInModalContext = true
+    templatePresentation.putClientProperty(FLOATING_TOOLBAR_ACTION_MARKER, true)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -32,6 +35,22 @@ internal class GotoPreviousFloatingToolbarMenu: FloatingToolbarTabAction() {
     showNextMenu(e, isForwardDirection = false)
   }
 }
+
+internal class FloatingToolbarTabActionPromoter : ActionPromoter {
+  override fun promote(actions: @Unmodifiable List<AnAction>, context: DataContext): @Unmodifiable List<AnAction> {
+    return actions.sortedWith { action1, action2 ->
+      val isTabAction1 = action1.templatePresentation.getClientProperty(FLOATING_TOOLBAR_ACTION_MARKER) == true
+      val isTabAction2 = action2.templatePresentation.getClientProperty(FLOATING_TOOLBAR_ACTION_MARKER) == true
+      when {
+        isTabAction1 && !isTabAction2 -> -1
+        !isTabAction1 && isTabAction2 -> 1
+        else -> 0
+      } 
+    }
+  }
+}
+
+private val FLOATING_TOOLBAR_ACTION_MARKER = Key.create<Boolean>("FLOATING_TOOLBAR_ACTION_MARKER")
 
 private fun showNextMenu(event: AnActionEvent, isForwardDirection: Boolean) {
   val project = event.project ?: return
