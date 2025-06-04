@@ -17,12 +17,13 @@ import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
 
 internal class PyAddNewEnvironmentPanel internal constructor(existingSdks: List<Sdk>, newProjectPath: String?, preferredInterpreterType: PythonInterpreterSelectionMode? = null) : PyAddSdkPanel() {
-
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use constructor without ignored")
   constructor(existingSdks: List<Sdk>, newProjectPath: String?, @Suppress("UNUSED_PARAMETER") ignored: String?) : this(existingSdks, newProjectPath, preferredInterpreterType = null)
 

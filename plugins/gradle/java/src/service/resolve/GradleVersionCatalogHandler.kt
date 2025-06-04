@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -47,6 +47,7 @@ fun getVersionCatalogFiles(module: Module) : Map<String, VirtualFile> {
   return container
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Doesn't work for included builds of a composite build", ReplaceWith("getVersionCatalogFiles(module)"))
 fun getGradleStaticallyHandledExtensions(project: Project) : Set<String> {
   val container = mutableSetOf<String>()

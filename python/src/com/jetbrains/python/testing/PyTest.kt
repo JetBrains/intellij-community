@@ -15,6 +15,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.execution.ParametersListUtil
 import com.jetbrains.python.PyBundle
@@ -22,7 +23,7 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
-import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Pytest runner
@@ -131,6 +132,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
 }
 
 class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyTestConfiguration>(type) {
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Obtain instance from PythonTestConfigurationType")
   constructor() : this(PythonTestConfigurationType.getInstance())
 

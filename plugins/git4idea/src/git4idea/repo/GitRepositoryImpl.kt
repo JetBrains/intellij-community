@@ -223,6 +223,7 @@ class GitRepositoryImpl private constructor(
     private val LOG = Logger.getInstance(GitRepositoryImpl::class.java)
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.")
     fun getInstance(
       root: VirtualFile,

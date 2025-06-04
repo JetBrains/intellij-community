@@ -3,8 +3,6 @@ package com.intellij.javaee
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.ArrayList
-import java.util.HashMap
 
 class ResourceRegistrarImpl : ResourceRegistrar {
   private val resources = HashMap<String, MutableMap<String, ExternalResource>>()
@@ -40,6 +38,7 @@ class ResourceRegistrarImpl : ResourceRegistrar {
     ignored.add(url)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Pass class loader explicitly", level = DeprecationLevel.ERROR)
   fun addInternalResource(resource: @NonNls String, fileName: @NonNls String?) {
     addStdResource(

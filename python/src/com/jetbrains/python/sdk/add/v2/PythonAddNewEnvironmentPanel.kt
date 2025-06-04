@@ -16,7 +16,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bindText
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
@@ -40,6 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * If `onlyAllowedInterpreterTypes` then only these types are displayed. All types displayed otherwise
@@ -156,6 +160,7 @@ internal class PythonAddNewEnvironmentPanel(
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use one with module or project")
   fun getSdk(): Sdk {
     val moduleOrProject = ModuleOrProject.ProjectOnly(ProjectManager.getInstance().defaultProject)
