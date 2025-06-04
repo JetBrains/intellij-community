@@ -2,24 +2,21 @@
 package git4idea.remoteApi
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.project.findProject
+import com.intellij.platform.project.findProjectOrNull
 import com.intellij.vcs.git.shared.branch.GitInOutProjectState
 import com.intellij.vcs.git.shared.rpc.GitIncomingOutgoingStateApi
 import git4idea.GitDisposable
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class GitIncomingOutgoingStateApiImpl: GitIncomingOutgoingStateApi {
   @OptIn(FlowPreview::class)
   override suspend fun syncState(projectId: ProjectId): Flow<GitInOutProjectState> {
-    val project = projectId.findProject()
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
 
     return flowWithMessageBus(project, GitDisposable.getInstance(project).coroutineScope) { connection ->
       val inOutManager = GitBranchIncomingOutgoingManager.getInstance(project)
