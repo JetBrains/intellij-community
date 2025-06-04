@@ -69,7 +69,7 @@ public class GitAskPassApp implements ExternalApp, ExternalCli {
         return 0;
       }
 
-      entry.getStderr().println(ans);
+      entry.getStdout().println(ans);
       return 0;
     }
     catch (Throwable t) {
