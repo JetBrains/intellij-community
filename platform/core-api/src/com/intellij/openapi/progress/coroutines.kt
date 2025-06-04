@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
 
@@ -46,30 +45,25 @@ suspend fun checkCanceled() {
 }
 
 /**
- * The method has same semantics as [runBlocking], and additionally [action] gets canceled
- * when [the current progress indicator][ProgressManager.getGlobalProgressIndicator] is cancelled,
- * or [the current job][Cancellation.currentJob] is cancelled.
+ * Same as [runBlocking], but installs [coroutineContext] of the calling code into [action].
+ * This is the recommended way for invoking suspending code from blocking code in IntelliJ Platform.
  *
- * This is a bridge for invoking suspending code from blocking code.
- *
- * ### IMPORTANT
- *
- * Coroutines use [currentCoroutineContext] to handle cancellation or to pass [ModalityState] around.
- * [ProgressManager.checkCanceled], [ModalityState.defaultModalityState]
- * (and [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait] by extension),
- * and many other platform methods **DO NOT work in a coroutine**.
- * - Instead of [ProgressManager.checkCanceled] use [ensureActive] in a coroutine.
- * - [ModalityState] is not expected to be used explicitly. Instead of `invokeAndWait` or `invokeLater` use
- *   `withContext(`[Dispatchers.EDT][com.intellij.openapi.application.EDT]`) {}` in a coroutine.
- *   If actually needed (think twice), use [contextModality] to obtain the context [ModalityState].
- * - To invoke older code, which cannot be modified but relies on [ProgressManager.checkCanceled] or
- *   [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait],
- *   use [blockingContext] to switch from a coroutine to the blocking context.
+ * One of the main differences with [runBlocking] is that this function is _cancellable_:
+ * ```kotlin
+ * val job = launch {
+ *   runBlockingCancellable {
+ *     while (true) {
+ *       coroutineContext.ensureActive()
+ *     }
+ *   }
+ * }
+ * job.cancelAndJoin() // this will resume quickly, because the `Job` inside `launch` is propagated to `runBlockingCancellable`
+ * ```
  *
  * ### EDT
  *
  * This method is **forbidden on EDT** because it does not pump the event queue.
- * Switch to a BGT, or use [runWithModalProgressBlocking][com.intellij.openapi.progress.runWithModalProgressBlocking].
+ * Switch to a BGT, or use [runWithModalProgressBlocking][com.intellij.platform.ide.progress.runWithModalProgressBlocking].
  *
  * ### Non-cancellable `runBlocking`
  *
@@ -77,8 +71,6 @@ suspend fun checkCanceled() {
  * To prevent such a usage, an exception is logged.
  *
  * What to do with that exception? Options:
- * - Make sure this method is called under a context job.
- *   If it's run from a coroutine somewhere deeper in the trace, use [blockingContext] in the latest possible frame.
  * - Make sure this method is called under an indicator by installing one as a thread indicator via [ProgressManager.runProcess].
  * - Fall back to [runBlockingMaybeCancellable]. **It may freeze because nobody can cancel it from outside**.
  *
@@ -114,8 +106,6 @@ suspend fun checkCanceled() {
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
  * or [current job][Cancellation.currentJob] is cancelled
  * @see coroutineToIndicator
- * @see blockingContext
- * @see blockingContextToIndicator
  * @see runBlocking
  */
 @RequiresBackgroundThread(generateAssertion = false)
@@ -255,15 +245,14 @@ suspend fun <T> blockingContext(action: () -> T): T {
 }
 
 /**
- * Executes the given [action] in a blocking context and suspends the coroutine until all the children computations,
+ * Executes the given [action] and suspends the coroutine until all the children computations,
  * spawned during the execution of [action], are completed.
  *
- * This function is a combination of [blockingContext] and [coroutineScope], providing both their functionalities.
- * It ensures proper tracking of children computations that are executed in different environments,
+ * This function ensures proper tracking of children computations that are executed in different environments,
  * such as different threads (like [com.intellij.openapi.application.Application.invokeLater])
  * or after a certain period of time (like [com.intellij.util.Alarm.addRequest]).
  *
- * If any child throws an exception that is not [CancellationException] or [ProcessCanceledException],
+ * If any child throws an exception that is not [CancellationException],
  * then [blockingContextScope] cancels the whole tree of spawned children
  * and resumes with this exception when every remaining child completes exceptionally.
  *
@@ -281,14 +270,13 @@ suspend fun <T> blockingContext(action: () -> T): T {
  *   print("E")
  * }
  * ```
- * The execution of the snippet above prints `"ABCDE"` or `"ABDCE"`, but never `"ABDEC"`.
+ * The execution of the snippet above prints `"ABCDE"` or `"ABDCE"`, but **never** `"ABDEC"`.
  *
  * @param action The function to execute in the blocking context.
  * @return The result of [action] after all its children are completed.
  *
  * @throws Exception if any of the children computations throw an exception.
  *
- * @see [blockingContext]
  * @see [coroutineScope]
  */
 suspend fun <T> blockingContextScope(action: () -> T): T {
@@ -364,6 +352,8 @@ private fun getFixThreadScopeElements(context: CoroutineContext): ThreadScopeChe
  * This method should be the default choice for initiating coroutines in blocking code.
  * This coroutine scope binds the spawned coroutines to the first checkpoint defined by the caller code.
  * For example, you can use this function to launch coroutines in `AnAction.actionPerformed`.
+ *
+ * The [coroutineContext] of this scope is the same as at the moment of invocation of [blockingContextScope] or [withCurrentThreadCoroutineScope]
  *
  * To enable usage of [currentThreadCoroutineScope], consider using either [blockingContextScope] or [withCurrentThreadCoroutineScopeBlocking]
  *

@@ -159,7 +159,7 @@ sealed interface ReadAndWriteScope {
 /**
  * This method is renamed. Consider using [readAndEdtWriteAction].
  */
-@Deprecated(message = "This method is renamed to clarify its semantics", replaceWith = ReplaceWith("com.intellij.openapi.application.readAndEdtWriteAction(action)", "com.intellij.openapi.application.readAndEdtWriteAction"))
+@Deprecated(message = "This method is renamed because it has unclear threading semantics", replaceWith = ReplaceWith("com.intellij.openapi.application.readAndEdtWriteAction(action)", "com.intellij.openapi.application.readAndEdtWriteAction"))
 suspend fun <T> readAndWriteAction(action: ReadAndWriteScope.() -> ReadResult<T>): T {
   return constrainedReadAndWriteAction(action = action)
 }
@@ -281,7 +281,7 @@ private object RunInBackgroundWriteActionMarker
   override val key: CoroutineContext.Key<*> get() = this
 }
 
-@Experimental
+@Internal
 @ApiStatus.Obsolete
 fun CoroutineContext.isBackgroundWriteAction(): Boolean =
   currentThreadContext()[RunInBackgroundWriteActionMarker] != null
@@ -303,7 +303,6 @@ fun CoroutineContext.isBackgroundWriteAction(): Boolean =
  * @see com.intellij.openapi.command.writeCommandAction
  */
 @Experimental
-@Internal
 suspend fun <T> backgroundWriteAction(action: () -> T): T {
   val context = if (useBackgroundWriteAction) {
     Dispatchers.Default + RunInBackgroundWriteActionMarker

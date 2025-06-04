@@ -737,6 +737,12 @@ com.intellij.openapi.options.SchemeElement
 - a:setGroupName(java.lang.String):V
 com.intellij.openapi.options.SchemeMetaInfo
 - a:getMetaProperties():java.util.Properties
+f:com.intellij.openapi.progress.CoroutinesKt
+- sf:blockingContext(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:blockingContextScope(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- sf:checkCanceled(kotlin.coroutines.Continuation):java.lang.Object
+- sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
+- sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
 com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:ALWAYS_BACKGROUND:com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:DEAF:com.intellij.openapi.progress.PerformInBackgroundOption
