@@ -126,8 +126,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     override fun visitPyTypeParameter(typeParameter: PyTypeParameter) {
-      val defaultExpression = typeParameter.defaultExpression
-      if (defaultExpression == null) return
+      val defaultExpression = typeParameter.defaultExpression ?: return
       when(typeParameter.kind) {
         PyAstTypeParameter.Kind.TypeVar -> {
           val typeVarType = PyTypingTypeProvider.getTypeParameterTypeFromTypeParameter(typeParameter, myTypeEvalContext) as? PyTypeVarType
@@ -1439,8 +1438,7 @@ class PyTypeHintsInspection : PyInspection() {
     private fun validateTypeVarDefaultType(typeVarType: PyTypeVarType, defaultType: PyType?, defaultExpression: PyExpression) {
       val defaultTypes = when (defaultType) {
         is PyTypeVarType -> defaultType.constraints.ifEmpty {
-          val objectType = PyBuiltinCache.getInstance(defaultExpression).objectType ?: return
-          listOf(defaultType.bound ?: objectType)
+          listOf(defaultType.bound ?: PyBuiltinCache.getInstance(defaultExpression).objectType)
         }
         else -> listOf(defaultType)
       }
