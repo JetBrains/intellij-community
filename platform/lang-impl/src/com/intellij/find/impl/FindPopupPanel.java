@@ -1498,6 +1498,10 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   private @Nullable("null means OK") ValidationInfo getValidationInfo(@NotNull FindModel model) {
+    ValidationInfo scopeValidationInfo = myScopeUI.validate(model, mySelectedScope);
+    if (scopeValidationInfo != null) {
+      return scopeValidationInfo;
+    }
     if (!myHelper.canSearchThisString()) {
       return new ValidationInfo(FindBundle.message("find.empty.search.text.error"), mySearchComponent);
     }
@@ -1555,9 +1559,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), header.fileMaskField);
       }
     }
-    ValidationInfo scopeValidationInfo = myScopeUI.validate(model, mySelectedScope);
-    if (scopeValidationInfo != null) {
-      return scopeValidationInfo;
+    if (FindKey.isEnabled() && !isBackendValidationFinished()) {
+      return new ValidationInfo(FindBundle.message("find.directory.validation.in.progress")).asWarning();
     }
     return null;
   }
