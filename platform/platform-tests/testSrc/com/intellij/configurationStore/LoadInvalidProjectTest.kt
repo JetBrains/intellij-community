@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.ConfigurationErrorDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
@@ -160,9 +159,7 @@ class LoadInvalidProjectTest {
   }
 
   private suspend fun checkUntrustedModuleIsNotLoaded(project: Project, moduleName: String) {
-    val moduleEntities = blockingContext {
-      WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java)
-    }
+    val moduleEntities = WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java)
 
     assertThat(moduleEntities.find { module -> module.name == moduleName }).isNull()
   }

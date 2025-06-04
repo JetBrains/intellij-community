@@ -9,7 +9,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLayeredPane
@@ -149,9 +148,7 @@ open class LoadingDecorator @JvmOverloads constructor(
       startRequestJob = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
         delay((startDelayMs - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          blockingContext {
-            doStartLoading(takeSnapshot)
-          }
+          doStartLoading(takeSnapshot)
         }
       }
     }

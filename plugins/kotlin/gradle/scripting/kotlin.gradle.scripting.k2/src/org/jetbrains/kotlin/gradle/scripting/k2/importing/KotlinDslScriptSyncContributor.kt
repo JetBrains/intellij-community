@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.gradle.scripting.k2.importing
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.psi.PsiManager
@@ -32,27 +31,25 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
         val tasks = kotlinDslSyncListenerInstance?.tasks ?: return
         val sync = synchronized(tasks) { tasks[taskId] }
 
-        blockingContext {
-            for (buildModel in context.allBuilds) {
-                for (projectModel in buildModel.projects) {
-                    val projectIdentifier = projectModel.projectIdentifier.projectPath
-                    if (projectIdentifier == ":") {
-                        if (kotlinDslScriptsModelImportSupported(context.projectGradleVersion)) {
-                            val model = context.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
-                            if (model != null) {
-                                if (!processScriptModel(context, sync, model, projectIdentifier)) {
-                                    continue
-                                }
-                            }
-                        }
-
-                        saveGradleBuildEnvironment(context)
-                    }
+      for (buildModel in context.allBuilds) {
+        for (projectModel in buildModel.projects) {
+          val projectIdentifier = projectModel.projectIdentifier.projectPath
+          if (projectIdentifier == ":") {
+            if (kotlinDslScriptsModelImportSupported(context.projectGradleVersion)) {
+              val model = context.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
+              if (model != null) {
+                if (!processScriptModel(context, sync, model, projectIdentifier)) {
+                  continue
                 }
+              }
             }
-        }
 
-        if (sync == null || sync.models.isEmpty()) return
+            saveGradleBuildEnvironment(context)
+          }
+        }
+      }
+
+      if (sync == null || sync.models.isEmpty()) return
 
         GradleScriptDefinitionsStorage.getInstance(project).loadDefinitionsFromDisk(
             sync.workingDir,
