@@ -41,9 +41,6 @@
   <xi:include href="/META-INF/PolySymbolsExtensionPoints.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/xml.xml">
-    <xi:fallback/>
-  </xi:include>
 
   <xi:include href="/META-INF/IdeCore.xml"/>
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
