@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.core.auth
 
+import com.intellij.settingsSync.core.SettingsSyncStatusTracker
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import java.awt.Component
 import javax.swing.Icon
@@ -46,4 +47,6 @@ interface SettingsSyncAuthService {
    * Indicates whether the current provider supports cross-IDE sync
    */
   fun crossSyncSupported(): Boolean = true
+
+  fun getPendingUserAction(userId:String): SettingsSyncStatusTracker.SyncStatus.ActionRequired? = null
 }

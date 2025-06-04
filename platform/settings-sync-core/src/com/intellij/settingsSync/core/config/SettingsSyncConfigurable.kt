@@ -43,7 +43,6 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
-import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
@@ -474,7 +473,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       private var stepSelectedValue: UserProviderHolder? = null
       override fun onChosen(selectedValue: UserProviderHolder, finalChoice: Boolean): PopupStep<*>? {
         stepSelectedValue = selectedValue
-        return PopupStep.FINAL_CHOICE
+        return FINAL_CHOICE
       }
 
       override fun getTextFor(value: UserProviderHolder?): String {
@@ -565,6 +564,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         }
       }
       userDropDownLink.selectedItem = selectedValue
+      refreshActionRequired()
       if (wasEnabled && !enableCheckbox.isSelected) {
         enableCheckbox.doClick()
       }
@@ -575,8 +575,8 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
   private fun updateUserAccountsList() {
     userAccountsList.clear()
-    val providersMap = RemoteCommunicatorHolder.getAvailableProviders().map { it.providerCode to it }.toMap()
-    providersMap.forEach { providerId, communicator ->
+    val providersMap = RemoteCommunicatorHolder.getAvailableProviders().associateBy { it.providerCode }
+    providersMap.forEach { (_, communicator) ->
       val authService = communicator.authService
       val providerName = authService.providerName
       authService.getAvailableUserAccounts().forEachIndexed { idx, account ->
@@ -669,12 +669,19 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
   private fun refreshActionRequired() {
     val currentStatus = SettingsSyncStatusTracker.getInstance().currentStatus
-    actionRequired.set(currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
-    if (currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired) {
-      actionRequiredAction = { currentStatus.execute(syncConfigPanel) }
-      actionRequiredLabel.text = currentStatus.message
-      actionRequiredButton.text = currentStatus.actionTitle
-      cellDropDownLink.comment?.text = message("sync.status.action.required.comment", currentStatus.actionTitle, currentStatus.message)
+    val userActionRequired: SettingsSyncStatusTracker.SyncStatus.ActionRequired? = userDropDownLink.selectedItem?.let {
+      RemoteCommunicatorHolder.getProvider(it.providerCode)?.authService?.getPendingUserAction(it.userId)
+    }
+    actionRequired.set(currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired || userActionRequired != null)
+    if (actionRequired.get()) {
+      val action = userActionRequired ?: currentStatus as? SettingsSyncStatusTracker.SyncStatus.ActionRequired ?: return
+      actionRequiredAction = {
+        action.execute(syncConfigPanel)
+        refreshActionRequired()
+      }
+      actionRequiredLabel.text = action.message
+      actionRequiredButton.text = action.actionTitle
+      cellDropDownLink.comment?.text = message("sync.status.action.required.comment", action.actionTitle, action.message)
     }
     else {
       cellDropDownLink.comment?.text = ""
@@ -726,7 +733,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         return true
       }
       is Error -> {
-        if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
+        if (updateResult != State.CANCELLED) {
           showErrorOnEDT(updateResult.message)
           return false
         }
