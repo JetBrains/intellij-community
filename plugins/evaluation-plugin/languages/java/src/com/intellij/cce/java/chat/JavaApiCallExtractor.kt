@@ -112,10 +112,8 @@ fun extractCalledExternalApiMethodsQualifiedNames(psiElement: PsiElement): List<
     val psiMethodCall = (it as? PsiMethodCallExpression) ?: return@forEach
     val referenceName = psiMethodCall.methodExpression.referenceName ?: return@forEach
     val method = it.resolveMethod()
-    if (method != null && (
-        isInternalApiMethod(method, psiElement) ||
-        isFromStandardLibrary(method)
-                          )) {
+    if (method != null && (isInternalApiMethod(method, psiElement) ||
+                           isFromStandardLibrary(method))) {
       return@forEach
     }
     externalApiMethodsQualifiedNames.add(referenceName)
