@@ -521,7 +521,7 @@ public final class PyResolveUtil {
     return rate;
   }
 
-  public static @Nullable PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+  public static @Nullable List<PsiElement> multiResolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
     final PsiElement element = reference.getElement();
 
     final var context = resolveContext.getTypeEvalContext();
@@ -538,12 +538,23 @@ public final class PyResolveUtil {
         );
 
         if (constructor != null) {
-          return constructor;
+          return List.of(constructor);
         }
       }
     }
 
-    return reference.resolve();
+    if (reference instanceof PsiPolyVariantReference multiReference) {
+      return Stream.of(multiReference.multiResolve(false)).map(result -> result.getElement()).toList();
+    }
+    final var result = reference.resolve();
+    if (result == null) return null;
+    return List.of(result);
+  }
+
+  public static @Nullable PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+    final var result = multiResolveDeclaration(reference, resolveContext);
+    if (result == null || result.isEmpty()) return null;
+    return result.get(0);
   }
 
   private static @NotNull List<RatedResolveResult> resolveTypeParameters(@NotNull PyTypeParameterListOwner typeParameterListOwner,
