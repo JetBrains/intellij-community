@@ -25,7 +25,7 @@ internal class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
 
   companion object {
     fun createToolWindowBorder(component: JComponent) {
-      component.border = IslandsRoundedBorder { JBUI.CurrentTheme.ToolWindow.background() }
+      component.border = IslandsRoundedBorder { it.background }
     }
 
     fun createEditorBorder(editorsSplitters: EditorsSplitters, editorTabPainter: TabPainterAdapter) {

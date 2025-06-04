@@ -56,6 +56,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimerUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -480,7 +481,7 @@ class StructureViewWrapperImpl(
       if (myModuleStructureComponent == null && myStructureView == null) {
         val panel: JBPanelWithEmptyText = object : JBPanelWithEmptyText() {
           override fun getBackground(): Color {
-            return UIUtil.getTreeBackground()
+            return JBUI.CurrentTheme.ToolWindow.background()
           }
         }
         panel.emptyText.setText(LangBundle.message("panel.empty.text.no.structure"))
@@ -548,7 +549,7 @@ class StructureViewWrapperImpl(
 
   private fun createContentPanel(component: JComponent): ContentPanel {
     val panel = ContentPanel()
-    panel.background = UIUtil.getTreeBackground()
+    panel.background = JBUI.CurrentTheme.ToolWindow.background()
     panel.add(component, BorderLayout.CENTER)
     return panel
   }

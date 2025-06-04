@@ -61,9 +61,10 @@ internal class IslandsUICustomization : InternalUICustomization() {
   override val shouldPaintEditorFadeout: Boolean = !isIslandsEnabled
 
   private val toolWindowDecorator = object : ToolWindowUIDecorator() {
-    override fun decorateAndReturnHolder(divider: JComponent, child: JComponent): JComponent? {
+    override fun decorateAndReturnHolder(divider: JComponent, child: JComponent): JComponent {
       return XNextIslandHolder().apply {
         layout = BorderLayout()
+        background = JBUI.CurrentTheme.ToolWindow.background()
         add(divider, BorderLayout.NORTH)
         add(child, BorderLayout.CENTER)
 
