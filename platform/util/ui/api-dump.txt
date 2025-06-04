@@ -1582,7 +1582,7 @@ f:com.intellij.openapi.util.IconLoader
 - f:clearCacheInTests():V
 - sf:createLazy(java.util.function.Supplier):javax.swing.Icon
 - sf:deactivate():V
-- f:detachClassLoader(java.lang.ClassLoader):V
+- sf:detachClassLoader(java.lang.ClassLoader):V
 - sf:findIcon(java.lang.String):javax.swing.Icon
 - sf:findIcon(java.lang.String,java.lang.Class):javax.swing.Icon
 - sf:findIcon(java.lang.String,java.lang.Class,Z,Z):javax.swing.Icon

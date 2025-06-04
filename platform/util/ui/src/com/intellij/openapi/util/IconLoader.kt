@@ -319,6 +319,10 @@ object IconLoader {
     return replacer.replaceIcon(icon)
   }
 
+  /**
+   * Used from java in MPS.
+   */
+  @JvmStatic
   fun detachClassLoader(classLoader: ClassLoader) {
     iconCache.asMap().entries.removeIf { (key, icon) ->
       icon.detachClassLoader(classLoader) || key.second === classLoader
