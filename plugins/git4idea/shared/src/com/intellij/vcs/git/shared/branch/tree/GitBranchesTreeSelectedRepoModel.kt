@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.tree
+package com.intellij.vcs.git.shared.branch.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupBase
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
 /**
@@ -25,8 +25,8 @@ internal class GitBranchesTreeSelectedRepoModel(
   private val allProjectRepositories: List<GitRepositoryModel>,
   topLevelActions: List<Any>
 ) : GitBranchesTreeSingleRepoModel(project, selectedRepository, topLevelActions) {
-  private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
-  private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
+  private val actionsSeparator = GitBranchesPopupBase.createTreeSeparator()
+  private val branchesSubtreeSeparator = GitBranchesPopupBase.createTreeSeparator()
 
   private lateinit var repositoriesTree: LazyRepositoryHolder
 

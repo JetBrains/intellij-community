@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.actions
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.ui.DvcsBundle
@@ -15,8 +15,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
 import com.intellij.ui.ExperimentalUI
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeFilters
 import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeFilters
 import git4idea.GitDisposable
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
@@ -46,7 +46,7 @@ internal class GitBranchesTreePopupResizeAction : DumbAwareAction(), ActionRemot
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val popup = e.getData(GitBranchesWidgetKeys.POPUP)
+    val popup = e.getData(GitBranchesPopupKeys.POPUP)
 
     val enabledAndVisible = project != null && popup != null
     e.presentation.isEnabledAndVisible = enabledAndVisible
@@ -54,11 +54,11 @@ internal class GitBranchesTreePopupResizeAction : DumbAwareAction(), ActionRemot
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getData(GitBranchesWidgetKeys.POPUP)?.restoreDefaultSize()
+    e.getData(GitBranchesPopupKeys.POPUP)?.restoreDefaultSize()
   }
 }
 
-internal class GitBranchesTreePopupTrackReposSynchronouslyAction : GitWidgetSettingsToggleAction(requireMultiRoot = true) {
+internal class GitBranchesTreePopupTrackReposSynchronouslyAction : GitBranchesPopupSettingsToggleAction(requireMultiRoot = true) {
   init {
     templatePresentation.text = DvcsBundle.message("sync.setting")
   }
@@ -79,18 +79,18 @@ internal class GitBranchesTreePopupGroupByPrefixAction :
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val enabledAndVisible = e.project != null && e.getData(GitBranchesWidgetKeys.POPUP) != null
+    val enabledAndVisible = e.project != null && e.getData(GitBranchesPopupKeys.POPUP) != null
     if (enabledAndVisible) {
       super.update(e)
     }
   }
 
   override fun isSelected(e: AnActionEvent): Boolean =
-    e.getData(GitBranchesWidgetKeys.POPUP)?.groupByPrefix ?: false
+    e.getData(GitBranchesPopupKeys.POPUP)?.groupByPrefix ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
-    val widgetPopup = e.getData(GitBranchesWidgetKeys.POPUP) ?: return
+    val widgetPopup = e.getData(GitBranchesPopupKeys.POPUP) ?: return
 
     GitDisposable.getInstance(project).coroutineScope.launch {
       GitUiSettingsApi.getInstance().setGroupingByPrefix(project.projectId(), state)
@@ -99,7 +99,7 @@ internal class GitBranchesTreePopupGroupByPrefixAction :
   }
 }
 
-internal class GitBranchesTreePopupShowRecentBranchesAction : GitWidgetSettingsToggleAction() {
+internal class GitBranchesTreePopupShowRecentBranchesAction : GitBranchesPopupSettingsToggleAction() {
   override fun isSelected(project: Project, settings: GitVcsSettings): Boolean {
     return settings.showRecentBranches()
   }
@@ -120,11 +120,11 @@ internal class GitBranchesTreePopupFilterSeparatorWithText :
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = GitWidgetSettingsToggleAction.isEnabledAndVisible(e, requireMultiRoot = true)
+    e.presentation.isEnabledAndVisible = GitBranchesPopupSettingsToggleAction.Companion.isEnabledAndVisible(e, requireMultiRoot = true)
   }
 }
 
-internal class GitBranchesTreePopupFilterByAction : GitWidgetSettingsToggleAction() {
+internal class GitBranchesTreePopupFilterByAction : GitBranchesPopupSettingsToggleAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
     if (!isEnabledAndVisible(e, requireMultiRoot = true)) {
@@ -141,7 +141,7 @@ internal class GitBranchesTreePopupFilterByAction : GitWidgetSettingsToggleActio
   }
 }
 
-internal class GitBranchesTreePopupFilterByRepository : GitWidgetSettingsToggleAction(requireMultiRoot = true) {
+internal class GitBranchesTreePopupFilterByRepository : GitBranchesPopupSettingsToggleAction(requireMultiRoot = true) {
   override fun isSelected(project: Project, settings: GitVcsSettings): Boolean = GitBranchesTreeFilters.byRepositoryName(project)
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

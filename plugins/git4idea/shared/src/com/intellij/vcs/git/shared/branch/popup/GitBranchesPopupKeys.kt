@@ -1,11 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.actions
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupKeys.AFFECTED_REPOSITORIES
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupKeys.SELECTED_REPOSITORY
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys.AFFECTED_REPOSITORIES
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys.SELECTED_REPOSITORY
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -18,8 +17,8 @@ import org.jetbrains.annotations.ApiStatus
  * In the monolith mode [com.intellij.openapi.actionSystem.UiDataRule] is used to provide the backend repositories context.
  */
 @ApiStatus.Internal
-object GitBranchesWidgetKeys {
-  val POPUP: DataKey<GitBranchesWidgetPopup> = DataKey.create("GIT_BRANCHES_TREE_POPUP")
+object GitBranchesPopupKeys {
+  val POPUP: DataKey<GitBranchesPopup> = DataKey.create("GIT_BRANCHES_TREE_POPUP")
 
   val SELECTED_REPOSITORY: DataKey<GitRepositoryModel> = DataKey.create("Git.Widget.Selected.Repository")
   val AFFECTED_REPOSITORIES: DataKey<List<GitRepositoryModel>> = DataKey.create("Git.Frontend.Repositories")

@@ -35,9 +35,9 @@ import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
 import com.intellij.vcs.git.shared.branch.calcTooltip
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager

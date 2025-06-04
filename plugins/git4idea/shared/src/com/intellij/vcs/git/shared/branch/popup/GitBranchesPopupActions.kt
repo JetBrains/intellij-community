@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.actions
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 @ApiStatus.Internal
-object GitBranchesWidgetActions {
+object GitBranchesPopupActions {
   @Language("devkit-action-id")
   const val NEW_UI_TOP_LEVEL_ACTIONS_ACTION_GROUP: @NonNls String = "Git.Experimental.Branch.Popup.Actions"
 

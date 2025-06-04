@@ -14,6 +14,6 @@ internal class GitDataHoldersInitializer : ProjectActivity {
 
     GitRepositoriesHolder.getInstance(project).init()
     GitInOutStateHolder.getInstance(project)
-    GitWidgetStateHolder.getInstance(project).initStateUpdate(selectedFile = null)
+    GitWidgetStateHolder.getInstance(project).init()
   }
 }

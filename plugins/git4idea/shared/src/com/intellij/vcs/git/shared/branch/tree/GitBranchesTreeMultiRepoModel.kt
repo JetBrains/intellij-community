@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.tree
+package com.intellij.vcs.git.shared.branch.tree
 
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupBase
 import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import git4idea.GitReference
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
@@ -18,7 +18,7 @@ internal class GitBranchesTreeMultiRepoModel(
 ) : GitBranchesTreeModel(project, topLevelActions, repositories) {
   private val repositoriesNodes = this.repositories.map { RepositoryNode(it, isLeaf = true) }
 
-  private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
+  private val branchesSubtreeSeparator = GitBranchesPopupBase.createTreeSeparator()
 
   override fun getLocalBranches() = GitRefUtil.getCommonLocalBranches(repositories)
 

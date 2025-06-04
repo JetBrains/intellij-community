@@ -5,13 +5,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.UiDataRule
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupKeys
 import git4idea.repo.GitRepositoryIdCache
 
 internal class GitBackendBranchesWidgetUiDataRule: UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
-    val affectedRepositories = snapshot[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES]
-    val selectedRepository = snapshot[GitBranchesWidgetKeys.SELECTED_REPOSITORY]
+    val affectedRepositories = snapshot[GitBranchesPopupKeys.AFFECTED_REPOSITORIES]
+    val selectedRepository = snapshot[GitBranchesPopupKeys.SELECTED_REPOSITORY]
 
     if (affectedRepositories == null && selectedRepository == null) return
 

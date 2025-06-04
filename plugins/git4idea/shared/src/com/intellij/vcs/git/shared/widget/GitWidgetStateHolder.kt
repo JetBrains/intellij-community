@@ -32,7 +32,9 @@ internal class GitWidgetStateHolder(private val project: Project, private val cs
       })
   }
 
-  internal fun initStateUpdate(selectedFile: VirtualFile?) {
+  fun init() = initStateUpdate(null)
+
+  private fun initStateUpdate(selectedFile: VirtualFile?) {
     synchronized(this) {
       stateUpdateJob?.cancel()
       stateUpdateJob = cs.launch {

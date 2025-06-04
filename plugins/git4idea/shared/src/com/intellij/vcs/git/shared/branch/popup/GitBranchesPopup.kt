@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.popup
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -10,7 +10,7 @@ import org.jetbrains.concurrency.Promise
 
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-interface GitBranchesWidgetPopup: JBPopup {
+interface GitBranchesPopup: TreePopup {
   val userResized: Boolean
 
   var groupByPrefix: Boolean
@@ -24,7 +24,7 @@ interface GitBranchesWidgetPopup: JBPopup {
   fun getExpandedPathsSize(): Int
 
   companion object {
-    fun createPopup(project: Project, preferredSelection: GitRepositoryModel?): GitBranchesWidgetPopup =
-      GitBranchesTreePopup.create(project, preferredSelection)
+    fun createDefaultPopup(project: Project, preferredSelection: GitRepositoryModel?): GitBranchesPopup =
+      GitDefaultBranchesPopup.create(project, preferredSelection)
   }
 }

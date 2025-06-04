@@ -7,28 +7,30 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupActions
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupBase
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupStepBase
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeRenderer
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeSingleRepoModel
+import com.intellij.vcs.git.shared.branch.tree.createTreePathFor
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupMinimalRenderer
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStepBase
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeSingleRepoModel
-import com.intellij.vcs.git.shared.widget.tree.createTreePathFor
 import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import java.util.function.Consumer
 import javax.swing.JComponent
+import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 internal class GitCompareWithBranchPopupStep(
   project: Project,
   private val repository: GitRepositoryModel,
   private val onRefSelected: Consumer<GitReference>,
-) : GitBranchesTreePopupStepBase(project = project, selectedRepository = null, repositories = listOf(repository)) {
+) : GitBranchesPopupStepBase(project = project, selectedRepository = null, repositories = listOf(repository)) {
   private var finalRunnable: Runnable? = null
 
   override fun getFinalRunnable() = finalRunnable
@@ -73,11 +75,11 @@ private class GitCompareWithBranchesTreeModel(project: Project, repository: GitR
 internal class GitCompareWithBranchPopup(
   project: Project,
   step: GitCompareWithBranchPopupStep,
-) : GitBranchesTreePopupBase<GitCompareWithBranchPopupStep>(project = project,
-                                                            step = step,
-                                                            parent = null,
-                                                            parentValue = null,
-                                                            dimensionServiceKey = DIMENSION_SERVICE_KEY) {
+) : GitBranchesPopupBase<GitCompareWithBranchPopupStep>(project = project,
+                                                        step = step,
+                                                        parent = null,
+                                                        parentValue = null,
+                                                        dimensionServiceKey = DIMENSION_SERVICE_KEY) {
   init {
     minimumSize = JBDimension(350, 400)
   }
@@ -90,14 +92,14 @@ internal class GitCompareWithBranchPopup(
   override fun getTreeEmptyText(searchPattern: String?): String = GitBundle.message("git.compare.with.branch.search.not.found", searchPattern)
 
   override fun createRenderer(): GitBranchesTreeRenderer =
-    GitBranchesTreePopupMinimalRenderer(treeStep)
+    GitBranchesTreeMinimalRenderer(treeStep)
 
   override fun getOldUiHeaderComponent(c: JComponent?): JComponent? =
     super.getNewUiHeaderComponent(c)
 
   override fun getHeaderToolbar(): ActionToolbar {
     val settingsGroup = am.getAction(HEADER_SETTINGS_ACTION_GROUP)
-    return am.createActionToolbar(GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE, DefaultActionGroup(settingsGroup), true)
+    return am.createActionToolbar(GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE, DefaultActionGroup(settingsGroup), true)
       .apply {
         targetComponent = content
         setReservePlaceAutoPopupIcon(false)
@@ -108,5 +110,24 @@ internal class GitCompareWithBranchPopup(
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Compare.With.Branch.Popup"
     private const val HEADER_SETTINGS_ACTION_GROUP = "Git.Compare.With.Branch.Popup.Settings"
+  }
+}
+
+private class GitBranchesTreeMinimalRenderer(step: GitBranchesPopupStepBase) :
+  GitBranchesTreeRenderer(step, favoriteToggleOnClickSupported = false) {
+
+  override val mainPanel: BorderLayoutPanel =
+    JBUI.Panels.simplePanel(mainTextComponent).addToLeft(mainIconComponent).andTransparent()
+
+  override fun configureTreeCellComponent(
+    tree: JTree,
+    userObject: Any?,
+    value: Any?,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean,
+  ) {
   }
 }

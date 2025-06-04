@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.popup
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
@@ -15,10 +15,10 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
 import com.intellij.vcs.git.shared.branch.GitInOutStateHolder
 import com.intellij.vcs.git.shared.branch.calcTooltip
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeRenderer
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
 import org.jetbrains.annotations.ApiStatus
@@ -32,7 +32,7 @@ import javax.swing.JTree
 import javax.swing.SwingConstants
 
 @ApiStatus.Internal
-class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupStepBase) : GitBranchesTreeRenderer(treePopupStep) {
+class GitDefaultBranchesTreeRenderer(treePopupStep: GitBranchesPopupStepBase) : GitBranchesTreeRenderer(treePopupStep) {
   private val secondaryLabel = JLabel().apply {
     border = JBUI.Borders.emptyLeft(10)
     horizontalAlignment = SwingConstants.RIGHT

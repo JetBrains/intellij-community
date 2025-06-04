@@ -12,11 +12,11 @@ import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupStepBase
+import com.intellij.vcs.git.shared.branch.popup.GitDefaultBranchesPopupStep
+import com.intellij.vcs.git.shared.branch.popup.GitDefaultBranchesTreeRenderer
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeRenderer
 import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupRenderer
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStep
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStepBase
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
 import git4idea.GitUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
@@ -32,7 +32,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
   private lateinit var repo: GitRepository
   private lateinit var broRepoPath: Path
 
-  private lateinit var popupStep: GitBranchesTreePopupStepBase
+  private lateinit var popupStep: GitBranchesPopupStepBase
 
   override fun setUp() {
     super.setUp()
@@ -254,8 +254,8 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
       val preferredSelection = checkNotNull(holder.get(repo.rpcId))
-      popupStep = GitBranchesTreePopupStep.create(project, preferredSelection, repositories)
-      tree.cellRenderer = GitBranchesTreePopupRenderer(popupStep)
+      popupStep = GitDefaultBranchesPopupStep.create(project, preferredSelection, repositories)
+      tree.cellRenderer = GitDefaultBranchesTreeRenderer(popupStep)
       tree.model = popupStep.treeModel
       popupStep.updateTreeModelIfNeeded(tree, filter)
       popupStep.setSearchPattern(filter)

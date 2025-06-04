@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.tree
+package com.intellij.vcs.git.shared.branch.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupBase
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
@@ -20,7 +20,7 @@ open class GitBranchesTreeSingleRepoModel(
   val repository: GitRepositoryModel,
   topLevelActions: List<Any>,
 ) : GitBranchesTreeModel(project, topLevelActions, listOf(repository)) {
-  private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
+  private val actionsSeparator = GitBranchesPopupBase.createTreeSeparator()
 
   override fun rebuild(matcher: MinusculeMatcher?) {
     super.rebuild(matcher)

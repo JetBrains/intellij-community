@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.popup
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.ui.DvcsBundle
@@ -11,14 +11,13 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.platform.project.projectId
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeFilters
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel.RefUnderRepository
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeRenderer
 import com.intellij.vcs.git.shared.ref.GitReferenceName
 import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeFilters
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel.RefUnderRepository
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
 import git4idea.GitReference
 import git4idea.i18n.GitBundle
 import org.intellij.lang.annotations.Language
@@ -27,12 +26,12 @@ import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
-internal class GitBranchesTreePopup private constructor(
+internal class GitDefaultBranchesPopup private constructor(
   project: Project,
-  step: GitBranchesTreePopupStep,
+  step: GitDefaultBranchesPopupStep,
   parent: JBPopup? = null,
   parentValue: Any? = null,
-) : GitBranchesTreePopupBase<GitBranchesTreePopupStep>(project, step, parent, parentValue, DIMENSION_SERVICE_KEY) {
+) : GitBranchesPopupBase<GitDefaultBranchesPopupStep>(project, step, parent, parentValue, DIMENSION_SERVICE_KEY) {
   init {
     installGeneralShortcutActions()
     if (!isNestedPopup()) {
@@ -98,7 +97,7 @@ internal class GitBranchesTreePopup private constructor(
     val settingsGroup = am.getAction(GitBranchesTreePopupActions.HEADER_SETTINGS_GROUP)
     val fetchAction = am.getAction(GitBranchesTreePopupActions.FETCH)
     val toolbarGroup = DefaultActionGroup(fetchAction, settingsGroup)
-    return am.createActionToolbar(GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE, toolbarGroup, true)
+    return am.createActionToolbar(GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE, toolbarGroup, true)
       .apply {
         targetComponent = content
         setReservePlaceAutoPopupIcon(false)
@@ -107,25 +106,25 @@ internal class GitBranchesTreePopup private constructor(
   }
 
   override fun createNextStepPopup(nextStep: PopupStep<*>?, parentValue: Any): WizardPopup =
-    if (nextStep is GitBranchesTreePopupStep) GitBranchesTreePopup(project, nextStep, this, parentValue)
+    if (nextStep is GitDefaultBranchesPopupStep) GitDefaultBranchesPopup(project, nextStep, this, parentValue)
     else super.createPopup(this, nextStep, parentValue)
 
   override fun createRenderer(): GitBranchesTreeRenderer {
-    return GitBranchesTreePopupRenderer(treeStep)
+    return GitDefaultBranchesTreeRenderer(treeStep)
   }
 
   override fun createWarning(text: String): JComponent {
     return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
   }
 
-  override fun getShortcutActionPlace(): String = if (isNestedPopup()) GitBranchesWidgetActions.NESTED_POPUP_ACTION_PLACE else GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE
+  override fun getShortcutActionPlace(): String = if (isNestedPopup()) GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE else GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE
 
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
 
-    fun create(project: Project, preferredSelection: GitRepositoryModel?): GitBranchesTreePopup {
+    fun create(project: Project, preferredSelection: GitRepositoryModel?): GitDefaultBranchesPopup {
       val repositories = GitRepositoriesHolder.getInstance(project).getAll().sorted()
-      return GitBranchesTreePopup(project, GitBranchesTreePopupStep.create(project, preferredSelection, repositories)).also {
+      return GitDefaultBranchesPopup(project, GitDefaultBranchesPopupStep.create(project, preferredSelection, repositories)).also {
         it.setIsMovable(true)
       }
     }

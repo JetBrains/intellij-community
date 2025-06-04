@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.popup
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.DataManager
@@ -18,11 +18,9 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.vcs.git.shared.GitDisplayName
 import com.intellij.vcs.git.shared.actions.GitSingleRefActions
+import com.intellij.vcs.git.shared.branch.tree.*
 import com.intellij.vcs.git.shared.ref.GitRefUtil
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
-import com.intellij.vcs.git.shared.widget.tree.*
 import git4idea.GitReference
 import git4idea.config.GitVcsSettings
 import org.jetbrains.annotations.ApiStatus
@@ -30,12 +28,12 @@ import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.JComponent
 
 @ApiStatus.Internal
-class GitBranchesTreePopupStep private constructor(
+class GitDefaultBranchesPopupStep private constructor(
   project: Project,
   selectedRepository: GitRepositoryModel?,
   repositories: List<GitRepositoryModel>,
   private val isFirstStep: Boolean,
-) : GitBranchesTreePopupStepBase(project, selectedRepository, repositories) {
+) : GitBranchesPopupStepBase(project, selectedRepository, repositories) {
   private var finalRunnable: Runnable? = null
 
   private val topLevelItems: List<Any> = buildList {
@@ -44,17 +42,17 @@ class GitBranchesTreePopupStep private constructor(
     val dataContext = createDataContext(project, selectedRepository, repositories)
 
     if (ExperimentalUI.isNewUI() && isFirstStep) {
-      val actions = GitBranchesWidgetActions.createTopLevelActionItems(dataContext, GitBranchesWidgetActions.NEW_UI_TOP_LEVEL_ACTIONS_ACTION_GROUP, presentationFactory)
+      val actions = GitBranchesPopupActions.createTopLevelActionItems(dataContext, GitBranchesPopupActions.NEW_UI_TOP_LEVEL_ACTIONS_ACTION_GROUP, presentationFactory)
       if (actions.isNotEmpty()) {
         addAll(actions)
-        add(GitBranchesTreePopupBase.createTreeSeparator())
+        add(GitBranchesPopupBase.createTreeSeparator())
       }
     }
 
-    val actions = GitBranchesWidgetActions.createTopLevelActionItems(dataContext, GitBranchesWidgetActions.TOP_LEVEL_ACTIONS_ACTION_GROUP, presentationFactory)
+    val actions = GitBranchesPopupActions.createTopLevelActionItems(dataContext, GitBranchesPopupActions.TOP_LEVEL_ACTIONS_ACTION_GROUP, presentationFactory)
     if (actions.isNotEmpty()) {
       addAll(actions)
-      add(GitBranchesTreePopupBase.createTreeSeparator())
+      add(GitBranchesPopupBase.createTreeSeparator())
     }
   }
 
@@ -103,7 +101,7 @@ class GitBranchesTreePopupStep private constructor(
       }
       else {
         finalRunnable = Runnable {
-          val place = if (isFirstStep) GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE else GitBranchesWidgetActions.NESTED_POPUP_ACTION_PLACE
+          val place = if (isFirstStep) GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE else GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE
           val dataContext = createDataContext(project, selectedRepository, affectedRepositories)
           ActionUtil.invokeAction(action, dataContext, place, null, null)
         }
@@ -137,21 +135,21 @@ class GitBranchesTreePopupStep private constructor(
       project: Project,
       preferredSelection: GitRepositoryModel?,
       repositories: List<GitRepositoryModel>,
-    ): GitBranchesTreePopupStep {
+    ): GitDefaultBranchesPopupStep {
       val selectedRepoIfNeeded = when {
         repositories.size <= 1 -> null
         GitVcsSettings.getInstance(project).shouldExecuteOperationsOnAllRoots() -> null
         else -> preferredSelection
       }
 
-      return GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true)
+      return GitDefaultBranchesPopupStep(project, selectedRepoIfNeeded, repositories, true)
     }
 
     /**
      * 2nd-level popup shown on repository click
      */
-    private fun createPopupStepForSelectedRepo(project: Project, repository: GitRepositoryModel): GitBranchesTreePopupStep =
-      GitBranchesTreePopupStep(project, repository, listOf(repository), false)
+    private fun createPopupStepForSelectedRepo(project: Project, repository: GitRepositoryModel): GitDefaultBranchesPopupStep =
+      GitDefaultBranchesPopupStep(project, repository, listOf(repository), false)
 
     private fun createActionStep(actionGroup: ActionGroup,
                                  project: Project,
@@ -160,14 +158,14 @@ class GitBranchesTreePopupStep private constructor(
                                  reference: GitReference? = null): ListPopupStep<*> {
       val dataContext = createDataContext(project, selectedRepository, repositories, reference)
       return JBPopupFactory.getInstance()
-        .createActionsStep(actionGroup, dataContext, GitBranchesWidgetActions.NESTED_POPUP_ACTION_PLACE, false, true, null, null, false, 0, false)
+        .createActionsStep(actionGroup, dataContext, GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE, false, true, null, null, false, 0, false)
     }
 
     private fun List<PopupFactoryImpl.ActionItem>.addSeparators(): List<Any> {
       val actionsWithSeparators = mutableListOf<Any>()
       for (action in this) {
         if (action.isPrependWithSeparator) {
-          actionsWithSeparators.add(GitBranchesTreePopupBase.createTreeSeparator(action.separatorText))
+          actionsWithSeparators.add(GitBranchesPopupBase.createTreeSeparator(action.separatorText))
         }
         actionsWithSeparators.add(action)
       }
@@ -184,8 +182,8 @@ class GitBranchesTreePopupStep private constructor(
       CustomizedDataContext.withSnapshot(DataManager.getInstance().getDataContext(component)) { sink ->
         sink[CommonDataKeys.PROJECT] = project
         sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = reference
-        sink[GitBranchesWidgetKeys.SELECTED_REPOSITORY] = selectedRepository
-        sink[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES] = repositories
+        sink[GitBranchesPopupKeys.SELECTED_REPOSITORY] = selectedRepository
+        sink[GitBranchesPopupKeys.AFFECTED_REPOSITORIES] = repositories
       }
   }
 }

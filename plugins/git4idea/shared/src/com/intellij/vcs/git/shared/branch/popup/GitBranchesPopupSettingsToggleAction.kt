@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.actions
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -8,11 +8,11 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUpdater
 import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
-import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
 import git4idea.config.GitVcsSettings
 
-internal abstract class GitWidgetSettingsToggleAction(
+internal abstract class GitBranchesPopupSettingsToggleAction(
   private val requireMultiRoot: Boolean = false,
 ) : ToggleAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend, DumbAware {
   final override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -26,7 +26,7 @@ internal abstract class GitWidgetSettingsToggleAction(
 
   override fun update(e: AnActionEvent) {
     val enabledAndVisible = e.project != null &&
-                            e.getData(GitBranchesWidgetKeys.POPUP) != null
+                            e.getData(GitBranchesPopupKeys.POPUP) != null
 
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(e, requireMultiRoot)
     if (enabledAndVisible) {
@@ -38,13 +38,13 @@ internal abstract class GitWidgetSettingsToggleAction(
     val project = e.project ?: return
     operation(GitVcsSettings.getInstance(project))
     saveSettingsForRemoteDevelopment(project)
-    GitWidgetUpdatesNotifier.getInstance(project).refresh()
+    GitBranchesTreeUpdater.getInstance(project).refresh()
   }
 
   internal companion object {
     fun isEnabledAndVisible(e: AnActionEvent, requireMultiRoot: Boolean): Boolean {
       val project = e.project ?: return false
-      return e.getData(GitBranchesWidgetKeys.POPUP) != null && (!requireMultiRoot || isMultiRoot(project))
+      return e.getData(GitBranchesPopupKeys.POPUP) != null && (!requireMultiRoot || isMultiRoot(project))
     }
 
     fun isMultiRoot(project: Project): Boolean {

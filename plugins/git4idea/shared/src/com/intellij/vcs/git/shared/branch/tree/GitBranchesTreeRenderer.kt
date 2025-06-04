@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.tree
+package com.intellij.vcs.git.shared.branch.tree
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -18,12 +18,12 @@ import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.branch.GitBranchesClippedNamesCache
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupBase
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupStepBase
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel.RefUnderRepository
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.canHighlight
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStepBase
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel.RefUnderRepository
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.canHighlight
 import git4idea.GitBranch
 import git4idea.GitReference
 import org.jetbrains.annotations.ApiStatus
@@ -37,7 +37,7 @@ import javax.swing.tree.TreePath
 
 @ApiStatus.Internal
 abstract class GitBranchesTreeRenderer(
-  protected val treePopupStep: GitBranchesTreePopupStepBase,
+  protected val treePopupStep: GitBranchesPopupStepBase,
   private val favoriteToggleOnClickSupported: Boolean = true,
 ) : TreeCellRenderer {
   private val updateScaleHelper = UpdateScaleHelper()
@@ -128,7 +128,7 @@ abstract class GitBranchesTreeRenderer(
     }
 
     if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
-      tree.rowHeight = GitBranchesTreePopupBase.treeRowHeight
+      tree.rowHeight = GitBranchesPopupBase.treeRowHeight
     }
 
     return mainPanel

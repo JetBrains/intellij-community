@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.popup
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.project.Project
@@ -10,13 +10,13 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel.RefUnderRepository
+import com.intellij.vcs.git.shared.branch.tree.createTreePathFor
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.ui.getCommonText
 import com.intellij.vcs.git.shared.ui.getInRepoText
 import com.intellij.vcs.git.shared.ui.getText
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel.RefUnderRepository
-import com.intellij.vcs.git.shared.widget.tree.createTreePathFor
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.branch.GitRefType
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
 @ApiStatus.Internal
-abstract class GitBranchesTreePopupStepBase(
+abstract class GitBranchesPopupStepBase(
   val project: Project,
   internal val selectedRepository: GitRepositoryModel?,
   internal val repositories: List<GitRepositoryModel>,

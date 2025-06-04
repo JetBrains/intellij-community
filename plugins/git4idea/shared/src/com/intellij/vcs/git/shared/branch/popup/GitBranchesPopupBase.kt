@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.git.shared.widget.popup
+package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.ide.util.treeView.TreeState
@@ -15,7 +15,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
-import com.intellij.openapi.ui.popup.TreePopup
 import com.intellij.openapi.util.*
 import com.intellij.platform.project.projectId
 import com.intellij.ui.*
@@ -37,20 +36,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.git.shared.branch.tree.*
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel.*
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.overrideBuiltInAction
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.selectFirst
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.selectLast
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.selectNext
+import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.selectPrev
 import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
-import com.intellij.vcs.git.shared.widget.GitWidgetUpdate
-import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel.*
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeSingleRepoModel
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.overrideBuiltInAction
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.selectFirst
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.selectLast
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.selectNext
-import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeUtil.selectPrev
 import git4idea.GitBranch
 import git4idea.GitDisposable
 import git4idea.GitReference
@@ -84,13 +77,13 @@ import kotlin.reflect.KClass
 
 @OptIn(FlowPreview::class)
 @ApiStatus.Internal
-abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
+abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
   project: Project,
   step: T,
   parent: JBPopup? = null,
   parentValue: Any? = null,
   dimensionServiceKey: String,
-) : WizardPopup(project, parent, step), TreePopup, NextStepHandler, GitBranchesWidgetPopup {
+) : WizardPopup(project, parent, step), NextStepHandler, GitBranchesPopup {
   protected lateinit var tree: Tree
     private set
 
@@ -131,9 +124,9 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     }
 
     setUiDataProvider { sink ->
-      sink[GitBranchesWidgetKeys.POPUP] = this@GitBranchesTreePopupBase
-      sink[GitBranchesWidgetKeys.AFFECTED_REPOSITORIES] = treeStep.affectedRepositories
-      sink[GitBranchesWidgetKeys.SELECTED_REPOSITORY] = treeStep.selectedRepository
+      sink[GitBranchesPopupKeys.POPUP] = this@GitBranchesPopupBase
+      sink[GitBranchesPopupKeys.AFFECTED_REPOSITORIES] = treeStep.affectedRepositories
+      sink[GitBranchesPopupKeys.SELECTED_REPOSITORY] = treeStep.selectedRepository
     }
 
     val widgetScope = GitDisposable.getInstance(project).childScope("Git Branches Tree Popup")
@@ -329,7 +322,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
       speedSearch.updatePattern(textInEditor)
       onSpeedSearchPatternChanged()
     }
-    val group = am.getAction(GitBranchesWidgetActions.SPEED_SEARCH_ACTION_GROUP) as DefaultActionGroup
+    val group = am.getAction(GitBranchesPopupActions.SPEED_SEARCH_ACTION_GROUP) as DefaultActionGroup
     for (action in group.getChildren(am)) {
       registerAction(am.getId(action),
                      KeymapUtil.getKeyStroke(action.shortcutSet),
@@ -373,7 +366,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
           parent.cancel()
         }
       }
-      val resultContext = GitBranchesTreePopupStep.createDataContext(
+      val resultContext = GitDefaultBranchesPopupStep.createDataContext(
         project, treeStep.selectedRepository, treeStep.affectedRepositories, component = contextComponent,
       )
       val actionPlace = getShortcutActionPlace()
@@ -381,7 +374,7 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
     }
   }
 
-  protected open fun getShortcutActionPlace(): String = GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE
+  protected open fun getShortcutActionPlace(): String = GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
     val topBorder = if (step.title.isNullOrEmpty()) JBUIScale.scale(5) else 0
@@ -696,13 +689,13 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
 
   private fun subscribeOnUpdates(scope: CoroutineScope, project: Project, step: T) {
     scope.launch(context = Dispatchers.EDT) {
-      GitWidgetUpdatesNotifier.getInstance(project).updates.collect {
+      GitBranchesTreeUpdater.getInstance(project).updates.collect {
         when (it) {
-          GitWidgetUpdate.REFRESH_TAGS -> runPreservingTreeState {
+          GitBranchesTreeUpdate.REFRESH_TAGS -> runPreservingTreeState {
             step.treeModel.updateTags()
           }
-          GitWidgetUpdate.REPAINT -> tree.repaint()
-          GitWidgetUpdate.REFRESH -> runPreservingTreeState {
+          GitBranchesTreeUpdate.REPAINT -> tree.repaint()
+          GitBranchesTreeUpdate.REFRESH -> runPreservingTreeState {
             refresh()
           }
         }

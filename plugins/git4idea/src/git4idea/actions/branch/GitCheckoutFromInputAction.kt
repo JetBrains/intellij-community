@@ -5,7 +5,7 @@ import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupActions
 import git4idea.actions.branch.GitBranchActionsUtil.getRepositoriesForTopLevelActions
 import git4idea.branch.GitBrancher
 import git4idea.i18n.GitBundle
@@ -16,7 +16,7 @@ class GitCheckoutFromInputAction
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE }
+    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE }
     e.presentation.isEnabledAndVisible = project != null && !repositories.isEmpty()
 
     disableActionIfAnyRepositoryIsFresh(e, repositories.orEmpty(), GitBundle.message("action.not.possible.in.fresh.repo.checkout"))
@@ -28,7 +28,7 @@ class GitCheckoutFromInputAction
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesWidgetActions.MAIN_POPUP_ACTION_PLACE }
+    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE }
 
     // TODO: on type check ref validity, on OK check ref existence.
     val dialog = GitRefDialog(project, repositories,

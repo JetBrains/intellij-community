@@ -15,9 +15,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.ui.RowIcon
+import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopup
 import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
-import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import git4idea.i18n.GitBundle
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.ApiStatus
@@ -48,7 +48,7 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
       }
       is GitWidgetState.OnRepository -> {
         val repo = GitRepositoriesHolder.getInstance(project).get(state.repository)
-        GitBranchesWidgetPopup.createPopup(project, repo)
+        GitBranchesPopup.createDefaultPopup(project, repo)
       }
       GitWidgetState.UnknownGitRepository -> getPopupForUnknownGitRepo(project, event)
     }
