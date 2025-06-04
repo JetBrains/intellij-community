@@ -315,8 +315,8 @@ public final class PyTypeHintGenerationUtil {
         type instanceof PyTypeParameterType) {
       return;
     }
-    else if (type instanceof PyUnionType) {
-      for (PyType memberType : ((PyUnionType)type).getMembers()) {
+    else if (type instanceof PyUnionType unionType) {
+      for (PyType memberType : unionType.getMembers()) {
         checkPep484Compatibility(memberType, context);
       }
     }

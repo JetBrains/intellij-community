@@ -116,8 +116,8 @@ public class PyUnionType implements PyType {
         defaultResult = PyNeverType.NEVER;
         continue;
       }
-      if (member instanceof PyUnionType) {
-        newMembers.addAll(((PyUnionType)member).getMembers());
+      if (member instanceof PyUnionType unionType) {
+        newMembers.addAll(unionType.getMembers());
       }
       else {
         newMembers.add(member);

@@ -75,8 +75,8 @@ public final class PyTypeUtil {
     if (type instanceof UserDataHolder) {
       return ((UserDataHolder)type).getUserData(key);
     }
-    if (type instanceof PyUnionType) {
-      for (final PyType memberType : ((PyUnionType)type).getMembers()) {
+    if (type instanceof PyUnionType unionType) {
+      for (final PyType memberType : unionType.getMembers()) {
         if (memberType == null) {
           continue;
         }
@@ -115,8 +115,8 @@ public final class PyTypeUtil {
    * It allows to process types received as the result of multiresolve uniformly with the others.
    */
   public static @NotNull StreamEx<PyType> toStream(@Nullable PyType type) {
-    if (type instanceof PyUnionType) {
-      return StreamEx.of(((PyUnionType)type).getMembers());
+    if (type instanceof PyUnionType unionType) {
+      return StreamEx.of(unionType.getMembers());
     }
     return StreamEx.of(type);
   }
