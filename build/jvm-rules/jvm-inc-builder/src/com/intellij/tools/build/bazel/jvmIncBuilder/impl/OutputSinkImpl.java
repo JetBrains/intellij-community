@@ -20,6 +20,12 @@ import java.io.IOException;
 import java.util.*;
 
 public class OutputSinkImpl implements OutputSink {
+
+  // Temporary put kotlin-produced bytecode into the ABI output as-is, without any instrumentation,
+  // until the issue "KT-78038 Make ABI compiler plugin output classloader-friendly" is not resolved. As soon as kotlin-produced ABI classes are made compatible with class-loaders, we can switch to using them.
+
+  public static boolean USE_KOTLIN_ABI_BYTECODE = false; // todo
+
   private static final String IMPORT_WILDCARD_SUFFIX = ".*";
   private final ZipOutputBuilder myOut;
   private @Nullable final ZipOutputBuilder myAbiOut;
@@ -37,8 +43,9 @@ public class OutputSinkImpl implements OutputSink {
 
   public OutputSinkImpl(StorageManager sm) throws IOException {
     myOut = sm.getOutputBuilder();
-    myAbiOut = sm.getAbiOutputBuilder();
-    myJavaAbiOut = myAbiOut != null? new JavaAbiFilter(myAbiOut, sm.getInstrumentationClassFinder()) : null;
+    ZipOutputBuilderImpl abiOut = sm.getAbiOutputBuilder();
+    myAbiOut = abiOut;
+    myJavaAbiOut = abiOut != null? new JavaAbiFilter(abiOut, sm.getInstrumentationClassFinder()) : null;
   }
 
   @Override
@@ -77,11 +84,18 @@ public class OutputSinkImpl implements OutputSink {
     // make file content immediately available so that the instrumenter ClassFinder are able to access the original version
     myOut.putEntry(outFile.getPath(), content);
 
-    ZipOutputBuilder abiOutput = origin.getKind() == OutputOrigin.Kind.java? myJavaAbiOut : myAbiOut;
-    if (abiOutput != null) {
-      // todo: for kotlin put kotlin-produced ABI output
-      abiOutput.putEntry(outFile.getPath(), content);
+    if (origin.getKind() == OutputOrigin.Kind.java && myJavaAbiOut != null) {
+      // for kotlin the ABI output is produced separately by the dedicated compiler plugin
+      myJavaAbiOut.putEntry(outFile.getPath(), content);
     }
+
+    if (!USE_KOTLIN_ABI_BYTECODE) {
+      // temporary: include kotlin-produced classes without any instrumentation
+      if (origin.getKind() == OutputOrigin.Kind.kotlin && myAbiOut != null) {
+        myAbiOut.putEntry(outFile.getPath(), content);
+      }
+    }
+
 
     if (outFile.getKind() == OutputFile.Kind.bytecode) {
       // todo: parse/instrument files and create nodes asynchronously?

@@ -37,7 +37,7 @@ public interface Message {
   }
 
   static Message create(Runner reporter, Kind messageKind, String text) {
-    return create(reporter, messageKind, text, null);
+    return create(reporter, messageKind, text, (String)null);
   }
 
   static Message create(Runner reporter, Kind messageKind, String text, @Nullable String srcPath) {
@@ -65,7 +65,11 @@ public interface Message {
   }
   
   static Message create(Runner reporter, Kind kind, Throwable ex) {
-    StringBuilder buf = new StringBuilder(ex.getMessage());
+    return create(reporter, kind, ex.getMessage(), ex);
+  }
+
+  static Message create(Runner reporter, Kind kind, String message, Throwable ex) {
+    StringBuilder buf = new StringBuilder(message != null? message : ex.getMessage());
     if (kind == Kind.ERROR) {
       StringWriter trace = new StringWriter();
       ex.printStackTrace(new PrintWriter(trace));

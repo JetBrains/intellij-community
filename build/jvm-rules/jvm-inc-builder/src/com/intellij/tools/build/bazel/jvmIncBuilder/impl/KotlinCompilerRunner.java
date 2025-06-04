@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot;
 import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline;
+import org.jetbrains.kotlin.compiler.plugin.CliOptionValue;
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor;
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar;
 import org.jetbrains.kotlin.config.CompilerConfiguration;
@@ -113,8 +114,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   @Override
-  public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out)
-    throws Exception {
+  public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out) throws Exception {
     try {
       K2JVMCompilerArguments kotlinArgs = buildKotlinCompilerArguments(myContext, sources);
       KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources), myModuleEntryPath, myLastGoodModuleEntryContent);
@@ -281,19 +281,22 @@ public class KotlinCompilerRunner implements CompilerRunner {
     return builder.build();
   }
 
-  private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline(OutputSink out, Consumer<GeneratedFile> outputItemCollector) {
+  private AbstractCliPipeline<K2JVMCompilerArguments> createPipeline(OutputSink out, Consumer<GeneratedFile> outputItemCollector) throws IOException {
     return new BazelJvmCliPipeline(createCompilerConfigurationUpdater(out), createOutputConsumer(out, outputItemCollector));
   }
 
-  private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(OutputSink out) {
+  private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(OutputSink out) throws IOException {
+    var abiConsumer = createAbiOutputConsumer(myStorageManager.getAbiOutputBuilder());
     return configuration -> {
       OutputFileSystem outputFileSystem = new OutputFileSystem(new KotlinVirtualFileProvider(out));
       configuration.add(CLIConfigurationKeys.CONTENT_ROOTS, new VirtualJvmClasspathRoot(outputFileSystem.root, false, true));
-      configurePlugins(myPluginIdToPluginClasspath, myContext.getBaseDir(), registeredPluginInfo -> {
-        assert registeredPluginInfo.getCompilerPluginRegistrar() != null;
-        configuration.add(CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(), registeredPluginInfo.getCompilerPluginRegistrar());
-        if (!registeredPluginInfo.getPluginOptions().isEmpty()) {
-          processCompilerPluginOptions((CommandLineProcessor)registeredPluginInfo.getCompilerPluginRegistrar(), registeredPluginInfo.getPluginOptions(), configuration);
+      configurePlugins(myPluginIdToPluginClasspath, myContext.getBaseDir(), abiConsumer, registeredPluginInfo -> {
+        CompilerPluginRegistrar registrar = Objects.requireNonNull(registeredPluginInfo.getCompilerPluginRegistrar());
+        configuration.add(CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(), registrar);
+        List<CliOptionValue> pluginOptions = registeredPluginInfo.getPluginOptions();
+        if (!pluginOptions.isEmpty()) {
+          CommandLineProcessor clProcessor = Objects.requireNonNull(registeredPluginInfo.getCommandLineProcessor());
+          processCompilerPluginOptions(clProcessor, pluginOptions, configuration);
         }
         return Unit.INSTANCE;
       });
@@ -326,6 +329,16 @@ public class KotlinCompilerRunner implements CompilerRunner {
         );
       }
 
+      return Unit.INSTANCE;
+    };
+  }
+
+  private static @Nullable Function1<? super @NotNull OutputFileCollection, @NotNull Unit> createAbiOutputConsumer(@Nullable ZipOutputBuilder abiOutput) {
+    return abiOutput == null || !OutputSinkImpl.USE_KOTLIN_ABI_BYTECODE? null : outputCollection -> {
+      for (OutputFile generatedOutput : outputCollection.asList()) {
+        String relativePath = generatedOutput.getRelativePath().replace(File.separatorChar, '/');
+        abiOutput.putEntry(relativePath, generatedOutput.asByteArray());
+      }
       return Unit.INSTANCE;
     };
   }

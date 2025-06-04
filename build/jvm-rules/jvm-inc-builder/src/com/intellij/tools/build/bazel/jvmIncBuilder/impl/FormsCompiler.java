@@ -135,8 +135,11 @@ public class FormsCompiler implements CompilerRunner {
     }
     catch (AlienFormFileException ignored) {
     }
-    catch (Exception/*UnexpectedFormElementException | UIDesignerException*/ e) {
-      myContext.report(Message.create(this, Message.Kind.ERROR, "Error applying instrumentation for the form " + formPath + ":\n" + e.getMessage()));
+    catch (UnexpectedFormElementException | UIDesignerException e) {
+      myContext.report(Message.create(this, Message.Kind.ERROR, "Error applying form instrumentation: " + e.getMessage(), formPath.toString()));
+    }
+    catch (Throwable e) {
+      myContext.report(Message.create(this, Message.Kind.ERROR, "Error applying instrumentation for the form " + formPath, e));
     }
   }
 
