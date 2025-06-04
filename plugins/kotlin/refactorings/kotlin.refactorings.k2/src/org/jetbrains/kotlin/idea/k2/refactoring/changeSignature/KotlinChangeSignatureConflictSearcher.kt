@@ -70,6 +70,7 @@ class KotlinChangeSignatureConflictSearcher(
                 val ktParameter = when {
                     parameter.isNewParameter -> null
                     parameter.wasContextParameter -> function.modifierList?.contextReceiverList?.contextParameters()?.getOrNull(parameter.oldIndex)
+                    originalInfo.oldReceiverInfo != null && parameter.oldIndex == 0 -> null // it's a former receiver
                     else -> function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)]
                 }
                 if (ktParameter != null) {
