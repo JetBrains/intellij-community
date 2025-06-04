@@ -930,13 +930,16 @@ private suspend fun buildAsset(
     val sourceToMetadata = HashMap<Source, SizeAndHash>()
     for (sources in includedModules.values) {
       for (source in sources) {
-        if (source is DirSource) {
-          sourceToMetadata.computeIfAbsent(source) {
-            SizeAndHash(size = 0, hash = computeHashForModuleOutput(it as DirSource))
+        when (source) {
+          is DirSource -> {
+            sourceToMetadata.computeIfAbsent(source) {
+              SizeAndHash(size = 0, hash = computeHashForModuleOutput(it as DirSource))
+            }
           }
-        }
-        else {
-          error("Unexpected source: $source")
+          is InMemoryContentSource -> {
+            // ignore
+          }
+          else -> error("Unexpected source: $source")
         }
       }
     }
