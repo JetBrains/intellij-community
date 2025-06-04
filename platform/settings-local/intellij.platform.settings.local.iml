@@ -52,19 +52,19 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module-library">
       <library name="jackson-dataformat-cbor" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.16.0">
+        <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.19.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.16.0/jackson-dataformat-cbor-2.16.0.jar">
-              <sha256sum>c6496d54e2dfcf3397dad550c56564475e6880a5e6f1bb3219c8da3c067148c0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0.jar">
+              <sha256sum>ce27bf04655ac4a9f703ebf340782cf6836fc36c569a2daf25077c32532c88be</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.16.0/jackson-dataformat-cbor-2.16.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.16.0/jackson-dataformat-cbor-2.16.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-cbor/2.19.0/jackson-dataformat-cbor-2.19.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

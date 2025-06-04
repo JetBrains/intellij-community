@@ -8218,8 +8218,8 @@ jvm_import(
 
 jvm_import(
   name = "platform-settings-local-jackson-dataformat-cbor",
-  jar = "@jackson-dataformat-cbor-2_16_0_http//file",
-  source_jar = "@jackson-dataformat-cbor-2_16_0-sources_http//file",
+  jar = "@jackson-dataformat-cbor-2_19_0_http//file",
+  source_jar = "@jackson-dataformat-cbor-2_19_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
