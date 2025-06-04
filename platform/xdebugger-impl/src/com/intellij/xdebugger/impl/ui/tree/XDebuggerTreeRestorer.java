@@ -120,10 +120,10 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   private static boolean checkExtendedModified(RestorableStateNode treeNode) {
-    if (treeNode instanceof XValueNodeImpl) {
-      XValuePresentation presentation = ((XValueNodeImpl)treeNode).getValuePresentation();
-      if (presentation instanceof XValueExtendedPresentation) {
-        if (((XValueExtendedPresentation)presentation).isModified()) {
+    if (treeNode instanceof XValueNodeImpl node) {
+      XValuePresentation presentation = node.getValuePresentation();
+      if (presentation instanceof XValueExtendedPresentation extendedPresentation) {
+        if (extendedPresentation.isModified()) {
           treeNode.markChanged();
         }
         return true;

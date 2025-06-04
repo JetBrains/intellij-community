@@ -13,22 +13,29 @@ sealed interface XValueSerializedPresentation {
   @ApiStatus.Internal
   @Serializable
   data class SimplePresentation(
-    @JvmField val icon: IconId?,
-    @JvmField val presentationType: String?,
-    @JvmField val value: String,
-    @JvmField val hasChildren: Boolean,
+    val icon: IconId?,
+    val presentationType: String?,
+    val value: String,
+    val hasChildren: Boolean,
   ) : XValueSerializedPresentation
 
   @ApiStatus.Internal
   @Serializable
   data class AdvancedPresentation(
-    @JvmField val icon: IconId?,
-    @JvmField val hasChildren: Boolean,
-    @JvmField val separator: String,
-    @JvmField val isShownName: Boolean,
-    @JvmField val presentationType: String?,
-    @JvmField val isAsync: Boolean,
-    @JvmField val parts: List<XValueAdvancedPresentationPart>,
+    val icon: IconId?,
+    val hasChildren: Boolean,
+    val separator: String,
+    val isShownName: Boolean,
+    val presentationType: String?,
+    val isAsync: Boolean,
+    val parts: List<XValueAdvancedPresentationPart>,
+  ) : XValueSerializedPresentation
+
+  @ApiStatus.Internal
+  @Serializable
+  data class ExtendedPresentation(
+    val presentation: AdvancedPresentation,
+    val isModified: Boolean,
   ) : XValueSerializedPresentation
 }
 

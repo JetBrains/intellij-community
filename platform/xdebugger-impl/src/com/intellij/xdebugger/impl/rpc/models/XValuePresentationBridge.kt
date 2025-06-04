@@ -13,6 +13,7 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
 import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
+import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
@@ -46,11 +47,18 @@ internal fun XValue.computePresentation(
           fileLogger().debug("[assertPresentation] valueText='$valueText', type='${presentation.type}', thread = ${Thread.currentThread().name}")
         }
 
-        presentationHandler(XValueSerializedPresentation.AdvancedPresentation(
+        val advancedPresentation = XValueSerializedPresentation.AdvancedPresentation(
           icon?.rpcId(), hasChildren,
           presentation.separator, presentation.isShowName, presentation.type, presentation.isAsync,
           partsCollector.parts
-        ))
+        )
+        val serializedPresentation = if (presentation is XValueExtendedPresentation) {
+          XValueSerializedPresentation.ExtendedPresentation(advancedPresentation, presentation.isModified)
+        }
+        else {
+          advancedPresentation
+        }
+        presentationHandler(serializedPresentation)
       }
 
       override fun setFullValueEvaluator(fullValueEvaluator: XFullValueEvaluator) {

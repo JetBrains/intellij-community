@@ -17,12 +17,8 @@ import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import com.intellij.xdebugger.impl.rpc.XSourcePositionDto
-import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
-import com.intellij.xdebugger.impl.rpc.XValueMarkerDto
-import com.intellij.xdebugger.impl.rpc.XValueSerializedPresentation
-import com.intellij.xdebugger.impl.rpc.sourcePosition
-import com.intellij.xdebugger.impl.rpc.xExpression
+import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -175,6 +171,10 @@ class FrontendXValue private constructor(
       is XValueSerializedPresentation.AdvancedPresentation -> {
         setPresentation(presentation.icon?.icon(), FrontendXValuePresentation(presentation), presentation.hasChildren)
       }
+      is XValueSerializedPresentation.ExtendedPresentation -> {
+        val advancedPresentation = presentation.presentation
+        setPresentation(advancedPresentation.icon?.icon(), FrontendXValueExtendedPresentation(advancedPresentation, presentation.isModified), advancedPresentation.hasChildren)
+      }
     }
   }
 
@@ -196,44 +196,36 @@ class FrontendXValue private constructor(
 
   private class FrontendXValuePresentation(private val advancedPresentation: XValueSerializedPresentation.AdvancedPresentation) : XValuePresentation() {
     override fun renderValue(renderer: XValueTextRenderer) {
-      for (part in advancedPresentation.parts) {
-        when (part) {
-          is XValueAdvancedPresentationPart.Comment -> {
-            renderer.renderComment(part.text)
-          }
-          is XValueAdvancedPresentationPart.Error -> {
-            renderer.renderError(part.text)
-          }
-          is XValueAdvancedPresentationPart.KeywordValue -> {
-            renderer.renderKeywordValue(part.text)
-          }
-          is XValueAdvancedPresentationPart.NumericValue -> {
-            renderer.renderNumericValue(part.text)
-          }
-          is XValueAdvancedPresentationPart.SpecialSymbol -> {
-            renderer.renderSpecialSymbol(part.text)
-          }
-          is XValueAdvancedPresentationPart.StringValue -> {
-            renderer.renderStringValue(part.text)
-          }
-          is XValueAdvancedPresentationPart.StringValueWithHighlighting -> {
-            renderer.renderStringValue(part.text, part.additionalSpecialCharsToHighlight, part.maxLength)
-          }
-          is XValueAdvancedPresentationPart.Value -> {
-            renderer.renderValue(part.text)
-          }
-          is XValueAdvancedPresentationPart.ValueWithAttributes -> {
-            // TODO[IJPL-160146]: support [TextAttributesKey] serialization
-            val attributesKey = part.key
-            if (attributesKey != null) {
-              renderer.renderValue(part.text, attributesKey)
-            }
-            else {
-              renderer.renderValue(part.text)
-            }
-          }
-        }
-      }
+      renderAdvancedPresentation(renderer, advancedPresentation)
+    }
+
+    override fun getSeparator(): @NlsSafe String {
+      return advancedPresentation.separator
+    }
+
+    override fun isShowName(): Boolean {
+      return advancedPresentation.isShownName
+    }
+
+    override fun getType(): @NlsSafe String? {
+      return advancedPresentation.presentationType
+    }
+
+    override fun isAsync(): Boolean {
+      return advancedPresentation.isAsync
+    }
+  }
+
+  private class FrontendXValueExtendedPresentation(
+    private val advancedPresentation: XValueSerializedPresentation.AdvancedPresentation,
+    private val isModified: Boolean,
+  ) : XValueExtendedPresentation() {
+    override fun renderValue(renderer: XValueTextRenderer) {
+      renderAdvancedPresentation(renderer, advancedPresentation)
+    }
+
+    override fun isModified(): Boolean {
+      return isModified
     }
 
     override fun getSeparator(): @NlsSafe String {
@@ -265,6 +257,47 @@ class FrontendXValue private constructor(
       val cs = evaluatorCoroutineScope.childScope("FrontendXValue")
       val presentation = xValueDto.presentation.toFlow().stateIn(cs)
       return FrontendXValue(project, cs, xValueDto, hasParentValue, presentation)
+    }
+  }
+}
+
+private fun renderAdvancedPresentation(renderer: XValuePresentation.XValueTextRenderer, advancedPresentation: XValueSerializedPresentation.AdvancedPresentation) {
+  for (part in advancedPresentation.parts) {
+    when (part) {
+      is XValueAdvancedPresentationPart.Comment -> {
+        renderer.renderComment(part.text)
+      }
+      is XValueAdvancedPresentationPart.Error -> {
+        renderer.renderError(part.text)
+      }
+      is XValueAdvancedPresentationPart.KeywordValue -> {
+        renderer.renderKeywordValue(part.text)
+      }
+      is XValueAdvancedPresentationPart.NumericValue -> {
+        renderer.renderNumericValue(part.text)
+      }
+      is XValueAdvancedPresentationPart.SpecialSymbol -> {
+        renderer.renderSpecialSymbol(part.text)
+      }
+      is XValueAdvancedPresentationPart.StringValue -> {
+        renderer.renderStringValue(part.text)
+      }
+      is XValueAdvancedPresentationPart.StringValueWithHighlighting -> {
+        renderer.renderStringValue(part.text, part.additionalSpecialCharsToHighlight, part.maxLength)
+      }
+      is XValueAdvancedPresentationPart.Value -> {
+        renderer.renderValue(part.text)
+      }
+      is XValueAdvancedPresentationPart.ValueWithAttributes -> {
+        // TODO[IJPL-160146]: support [TextAttributesKey] serialization
+        val attributesKey = part.key
+        if (attributesKey != null) {
+          renderer.renderValue(part.text, attributesKey)
+        }
+        else {
+          renderer.renderValue(part.text)
+        }
+      }
     }
   }
 }
