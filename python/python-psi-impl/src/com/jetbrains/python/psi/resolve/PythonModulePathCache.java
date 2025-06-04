@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-
 public final class PythonModulePathCache extends PythonPathCache implements Disposable {
   public static PythonPathCache getInstance(Module module) {
     return module.getService(PythonPathCache.class);
@@ -49,7 +48,7 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
     updateCacheForSdk(module);
   }
 
-  private class WorkspaceListener implements WorkspaceModelChangeListener {
+  private final class WorkspaceListener implements WorkspaceModelChangeListener {
     private final Module myModule;
 
     WorkspaceListener(Module module) {
