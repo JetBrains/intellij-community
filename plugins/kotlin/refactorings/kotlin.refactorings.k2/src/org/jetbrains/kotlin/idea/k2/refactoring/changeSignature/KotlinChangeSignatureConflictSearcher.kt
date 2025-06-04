@@ -12,22 +12,24 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
-import org.jetbrains.kotlin.idea.refactoring.conflicts.*
+import org.jetbrains.kotlin.idea.refactoring.conflicts.checkNewPropertyConflicts
+import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
+import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
+import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.types.Variance
 import kotlin.math.max
 
 class KotlinChangeSignatureConflictSearcher(
@@ -138,35 +140,53 @@ class KotlinChangeSignatureConflictSearcher(
     }
 
     context(KaSession)
-    private fun KtPsiFactory.createContextType(text: String, context: KtElement): KaType? {
-        // FIXME: KTIJ-34281
-        @OptIn(KaImplementationDetail::class)
-        return KaBaseIllegalPsiException.allowIllegalPsiAccess {
-            createTypeCodeFragment(text, context).getContentElement()?.type
-        }
-    }
-
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun filterCandidates(function: KtCallableDeclaration, candidateSymbol: KaDeclarationSymbol): Boolean {
-        val factory = KtPsiFactory(function.project)
-        val newReceiverType = originalInfo.receiverParameterInfo?.currentType?.text?.let {
-            factory.createContextType(it, function)
+        if (candidateSymbol !is KaFunctionSymbol) return false
+
+        val newReceiverTypeText = originalInfo.receiverParameterInfo?.currentType?.text
+        val candidateReceiverTypeText =
+            candidateSymbol.receiverType?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
+
+        // Check if receiver types match
+        if ((newReceiverTypeText == null) != (candidateReceiverTypeText == null)) return false
+        if (newReceiverTypeText != null && candidateReceiverTypeText != null && !areTypesTheSame(
+                newReceiverTypeText,
+                candidateReceiverTypeText,
+                function
+            )
+        ) return false
+
+        // Check if parameters' types match
+        val newParameterTypeTexts = originalInfo.getNonReceiverParameters().mapNotNull { it.currentType.text }
+        val candidateParameterTypeTexts =
+            candidateSymbol.valueParameters.map { it.returnType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT) }
+        if (newParameterTypeTexts.size != candidateParameterTypeTexts.size) return false
+        if (!newParameterTypeTexts.zip(candidateParameterTypeTexts)
+                .all { (newTypeText, candidateTypeText) -> areTypesTheSame(newTypeText, candidateTypeText, function) }
+        ) return false
+
+        // Check if context receivers match
+        val functionContextReceivers = (function.symbol as? KaFunctionSymbol)?.contextReceivers ?: emptyList()
+        val candidateContextReceivers = candidateSymbol.contextReceivers
+        if (functionContextReceivers.size != candidateContextReceivers.size) return false
+        if (!functionContextReceivers.zip(candidateContextReceivers)
+                .all { (functionReceiver, candidateReceiver) -> functionReceiver.type.semanticallyEquals(candidateReceiver.type) }
+        ) return false
+
+        return true
+    }
+
+    private fun areTypesTheSame(type1: String, type2: String, context: KtElement): Boolean {
+        val function =
+            KtPsiFactory(context.project).createExpressionCodeFragment("fun m(a: $type1, b: $type2) {})", context)
+                .getContentElement() as KtFunction
+        return analyze(function) {
+            val valueParameters = function.valueParameters
+            val kaType1 = valueParameters[0].returnType
+            val kaType2 = valueParameters[1].returnType
+            kaType1.semanticallyEquals(kaType2)
         }
-        val newParameterTypes = originalInfo.getNonReceiverParameters().mapNotNull {
-            it.currentType.text?.let {
-                factory.createContextType(it, function)
-            }
-        }
-        return candidateSymbol is KaFunctionSymbol &&
-                areSameSignatures(
-                    newReceiverType,
-                    candidateSymbol.receiverType,
-                    newParameterTypes,
-                    candidateSymbol.valueParameters.map { it.returnType }, //todo currently context receiver can't be changed
-                    (function.symbol as? KaFunctionSymbol)?.contextReceivers ?: emptyList(),
-                    candidateSymbol.contextReceivers
-                )
     }
 
     private fun checkParametersToDelete(
