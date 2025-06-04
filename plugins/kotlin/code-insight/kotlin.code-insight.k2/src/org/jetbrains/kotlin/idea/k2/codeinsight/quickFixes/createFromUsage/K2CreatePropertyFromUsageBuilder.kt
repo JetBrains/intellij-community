@@ -246,7 +246,7 @@ object K2CreatePropertyFromUsageBuilder {
 
         private var declarationText: String = computeDeclarationText()
 
-        @OptIn(KaExperimentalApi::class)
+        @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
         private fun computeDeclarationText(): String {
             val container = pointer.element ?: return ""
 
@@ -272,13 +272,15 @@ object K2CreatePropertyFromUsageBuilder {
                 append(request.fieldName.quoteIfNeeded())
                 append(": ")
 
-                analyze(container) {
-                    val expectedType = request.fieldType.firstOrNull()
-                    val type = when (expectedType) {
-                        is ExpectedKotlinType -> expectedType.kaType
-                        else -> (expectedType?.theType as? PsiType)?.asKaType(container)
+                allowAnalysisOnEdt {
+                    analyze(container) {
+                        val expectedType = request.fieldType.firstOrNull()
+                        val type = when (expectedType) {
+                            is ExpectedKotlinType -> expectedType.kaType
+                            else -> (expectedType?.theType as? PsiType)?.asKaType(container)
+                        }
+                        type?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.IN_VARIANCE)
                     }
-                    type?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.IN_VARIANCE)
                 }?.let { append(it) }
 
                 val requestInitializer = request.initializer
