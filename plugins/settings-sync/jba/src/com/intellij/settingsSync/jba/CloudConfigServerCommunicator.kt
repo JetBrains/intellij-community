@@ -8,6 +8,7 @@ import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncEvents
 import com.intellij.settingsSync.core.SettingsSyncStatusTracker
+import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.cloudconfig.CloudConfigFileClientV2
@@ -171,12 +172,12 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
   private fun setAuthActionRequired() {
     if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
       return
-    SettingsSyncStatusTracker.getInstance().setActionRequired(
+    jbaAuthService.authRequiredAction = SettingsSyncAuthService.PendingUserAction(
       SettingsSyncJbaBundle.message("action.settingsSync.authRequired"),
       SettingsSyncBundle.message("config.button.login")) {
       val userData = jbaAuthService.login(it)
       if (userData != null) {
-        SettingsSyncStatusTracker.getInstance().clearActionRequired()
+        jbaAuthService.authRequiredAction = null
         SettingsSyncStatusTracker.getInstance().updateOnSuccess()
       }
     }
