@@ -40,28 +40,46 @@ import com.jetbrains.python.pyi.PyiUtil
  */
 class PyGotoDeclarationHandler : GotoDeclarationHandlerBase() {
   override fun getGotoDeclarationTarget(sourceElement: PsiElement?, editor: Editor?): PsiElement? {
+    return getGotoDeclarationTargets(sourceElement, -1, editor)?.firstOrNull()
+  }
+
+  override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor?): Array<out PsiElement>? {
     sourceElement ?: return null
     val context =
       PyResolveContext.defaultContext(TypeEvalContext.userInitiated(sourceElement.project, sourceElement.containingFile))
 
     val parent = sourceElement.parent
-    return (sourceElement as? PyReferenceOwner ?: parent as? PyReferenceOwner)?.let { referenceOwner ->
-      val resolved = PyResolveUtil.resolveDeclaration(referenceOwner.getReference(context), context)
-      if (resolved != null && PyiUtil.isInsideStub(resolved) && !PyiUtil.isInsideStub(FileContextUtil.getContextFile(sourceElement)!!)) {
-        PyiUtil.getOriginalElement(resolved as PyElement) ?: resolved
-      }
-      else resolved.takeIf { it !== referenceOwner }
-    }
-           // If element is not ref owner, it still may have provided references, lets find some
-           ?: findProvidedReferenceAndResolve(sourceElement)
-           ?: parent?.let { findProvidedReferenceAndResolve(it) }
-  }
+    val referenceOwner = sourceElement as? PyReferenceOwner ?: parent as? PyReferenceOwner
+    if (referenceOwner != null) {
+      val resolved = PyResolveUtil.multiResolveDeclaration(referenceOwner.getReference(context), context)
+      if (resolved != null) {
+        val stubResults =
+          resolved
+            .filter {
+              PyiUtil.isInsideStub(it) && !PyiUtil.isInsideStub(FileContextUtil.getContextFile(sourceElement)!!)
+            }
+            .map {
+              PyiUtil.getOriginalElement(it as PyElement) ?: it
+            }
+        if (stubResults.isNotEmpty()) {
+          return stubResults.toTypedArray()
+        }
 
-  companion object {
-    private fun findProvidedReferenceAndResolve(sourceElement: PsiElement): PsiElement? {
-      return sourceElement.references.firstNotNullOfOrNull { ref ->
-        (ref as? PyUserInitiatedResolvableReference)?.userInitiatedResolve()?.takeIf { it !== sourceElement }
+        val results = resolved.filter { it !== referenceOwner }
+        if (results.isNotEmpty()) {
+          return results.toTypedArray()
+        }
       }
     }
+
+    // If element is not ref owner, it still may have provided references, lets find some
+    return sourceElement.findProvidedReferenceAndResolve() ?: parent?.findProvidedReferenceAndResolve()
   }
 }
+
+private fun PsiElement.findProvidedReferenceAndResolve(): Array<PsiElement>? =
+  references
+    .firstNotNullOfOrNull { ref ->
+      (ref as? PyUserInitiatedResolvableReference)?.userInitiatedResolve()?.takeIf { it !== this }
+    }
+    ?.let { arrayOf(it) }

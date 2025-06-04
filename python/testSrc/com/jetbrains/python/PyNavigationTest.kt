@@ -5,6 +5,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.jetbrains.python.codeInsight.PyTypedDictGoToDeclarationProvider
 import com.jetbrains.python.fixtures.PyTestCase
@@ -332,6 +333,56 @@ class PyNavigationTest : PyTestCase() {
     }
   }
 
+  // PY-80931
+  fun testUnionAttribute() {
+    val (a, b) = checkMulti(
+      """
+        class A:
+            x: int
+        class B:
+            x: int
+        class C:
+            x: int
+        ab: A | B
+        ab.<caret>x
+        """.trimIndent()
+    ).also {
+      assertSize(2, it)
+    }
+
+    assertInstanceOf<PyTargetExpression>(a)
+    assertEquals("A", a.parentOfType<PyClass>()!!.name)
+
+    assertInstanceOf<PyTargetExpression>(b)
+    assertEquals("B", b.parentOfType<PyClass>()!!.name)
+  }
+
+  // PY-53288
+  fun testOperators() {
+    val (a, b) = checkMulti(
+      """
+        class A:
+            def __add__(self, other): ...
+            def __radd__(self, other): ...
+        class B:
+            def __add__(self, other): ...
+            def __radd__(self, other): ...
+        A() +<caret> B()
+      """.trimIndent()
+    ).also {
+      assertSize(2, it)
+    }
+
+    assertInstanceOf<PyFunction>(a)
+    assertEquals("__add__", a.name)
+    assertEquals("A", a.parentOfType<PyClass>()!!.name)
+
+    assertInstanceOf<PyFunction>(b)
+    assertEquals("__radd__", b.name)
+    assertEquals("B", b.parentOfType<PyClass>()!!.name)
+
+  }
+
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
@@ -360,6 +411,14 @@ class PyNavigationTest : PyTestCase() {
     myFixture.copyDirectoryToProject(dirName, "")
     myFixture.configureByFile("test.py")
     assertTrue(myFixture.elementAtCaret is PyiFile)
+  }
+
+
+  private fun checkMulti(text: String): List<PsiElement> {
+    myFixture.configureByText("test.py", text)
+    return PyGotoDeclarationHandler()
+      .getGotoDeclarationTargets(elementAtCaret, -1, myFixture.editor)!!
+      .toList()
   }
 
   private fun checkPyNotPyi(file: PsiElement?) {
