@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -288,7 +287,7 @@ internal class GitCommitTemplateTracker(
   }
 
   internal class GitCommitTemplateTrackerStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project): Unit = blockingContext {
+    override suspend fun execute(project: Project) {
       ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
         getInstance(project).start()
       }

@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicatorModel
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.BridgeTaskSupport
 import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.project.Project
@@ -334,9 +333,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
           component
         }
         val item = WidgetBean(widget = widget, position = Position.RIGHT, component = component, order = anchor)
-        blockingContext {
-          widget.install(this@IdeStatusBarImpl)
-        }
+        widget.install(this@IdeStatusBarImpl)
         Disposer.register(parentDisposable, widget)
         item
       }

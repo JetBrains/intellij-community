@@ -15,7 +15,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassLoaderUtil
@@ -114,7 +113,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
   override fun update(prevState: GrazieConfig.State, newState: GrazieConfig.State) {
     configurationScope.launch {
-      checkers = blockingContext { heavyInit() }
+      checkers = heavyInit()
     }
   }
 

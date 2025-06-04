@@ -8,7 +8,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -158,7 +157,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       return
     }
 
-    if (blockingContext { skipGeneration(project, projectConfigDirVFile, projectConfigDirPath) }) {
+    if (skipGeneration(project, projectConfigDirVFile, projectConfigDirPath)) {
       return
     }
 
@@ -216,9 +215,8 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       }
 
       val ignoredGroupDescription = gitIgnoreContentProvider.buildIgnoreGroupDescription(ignoredFileProvider)
-      blockingContext {
-        addNewElementsToIgnoreBlock(project, gitIgnoreFile, ignoredGroupDescription, gitVcsKey, *ignoresInStoreDir.toTypedArray())
-      }
+      addNewElementsToIgnoreBlock(project, gitIgnoreFile, ignoredGroupDescription, gitVcsKey,
+                                  *ignoresInStoreDir.toTypedArray<IgnoredFileDescriptor>())
     }
 
     markGenerated(project, projectConfigDirVFile)

@@ -14,7 +14,6 @@ import com.intellij.grazie.utils.filterFor
 import com.intellij.lang.Language
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
@@ -93,9 +92,7 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     return tokens.flatMap {
       TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text ->
         runBlocking {
-          blockingContext {
-            LanguageToolChecker().check(text)
-          }
+          LanguageToolChecker().check(text)
         }
       }
     }

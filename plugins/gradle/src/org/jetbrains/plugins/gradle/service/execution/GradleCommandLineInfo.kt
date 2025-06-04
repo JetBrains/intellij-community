@@ -7,9 +7,9 @@ import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTab
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.observable.util.createTextModificationTracker
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsSafe
 import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices
@@ -46,23 +46,19 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
       workingDirectoryField.createTextModificationTracker()
 
     override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {
-      return blockingContext {
-        val indices = GradleTasksIndices.getInstance(project)
-        indices.getTasksCompletionVariances(workingDirectoryField.workingDirectory)
-          .map { TextCompletionInfo(it.key, it.value.first().description) }
-          .sortedWith(Comparator.comparing({ it.text }, GRADLE_COMPLETION_COMPARATOR))
-      }
+      val indices = GradleTasksIndices.getInstance(project)
+      return indices.getTasksCompletionVariances(workingDirectoryField.workingDirectory)
+        .map { TextCompletionInfo(it.key, it.value.first().description) }
+        .sortedWith(Comparator.comparing({ it.text }, GRADLE_COMPLETION_COMPARATOR))
     }
 
     override suspend fun collectTableCompletionInfo(): List<TextCompletionInfo> {
-      return blockingContext {
-        val indices = GradleTasksIndices.getInstance(project)
-        indices.findTasks(workingDirectoryField.workingDirectory)
-          .filterNot { it.isInherited }
-          .groupBy { it.name }
-          .map { TextCompletionInfo(it.key, it.value.first().description) }
-          .sortedWith(Comparator.comparing({ it.text }, GRADLE_COMPLETION_COMPARATOR))
-      }
+      val indices = GradleTasksIndices.getInstance(project)
+      return indices.findTasks(workingDirectoryField.workingDirectory)
+        .filterNot { it.isInherited }
+        .groupBy { it.name }
+        .map { TextCompletionInfo(it.key, it.value.first().description) }
+        .sortedWith(Comparator.comparing({ it.text }, GRADLE_COMPLETION_COMPARATOR))
     }
   }
 
@@ -76,15 +72,13 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
     override val descriptionColumnName: String = GradleBundle.message("gradle.run.configuration.command.line.description.column")
 
     private suspend fun collectOptionCompletion(isLongOption: Boolean): List<TextCompletionInfo> {
-      return blockingContext {
-        val prefix = if (isLongOption) "--" else "-"
-        fun Option.getName(): String? = if (isLongOption) longOpt else opt
-        GradleCommandLineOptionsProvider.getSupportedOptions().options
-          .filterIsInstance<Option>()
-          .filter { it.getName() != null }
-          .map { TextCompletionInfo(prefix + it.getName(), it.description) }
-          .sortedBy { it.text }
-      }
+      val prefix = if (isLongOption) "--" else "-"
+      fun Option.getName(): String? = if (isLongOption) longOpt else opt
+      return GradleCommandLineOptionsProvider.getSupportedOptions().options
+        .filterIsInstance<Option>()
+        .filter { it.getName() != null }
+        .map { TextCompletionInfo(prefix + it.getName(), it.description) }
+        .sortedBy { it.text }
     }
 
     override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {

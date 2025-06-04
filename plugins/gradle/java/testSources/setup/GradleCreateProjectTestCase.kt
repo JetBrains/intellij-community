@@ -21,7 +21,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
@@ -110,12 +109,10 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   ): Module? {
     val wizard = createAndConfigureWizard(group, project, configure)
     return awaitProjectConfiguration(project, numProjectSyncs) {
-      blockingContext {
-        invokeAndWaitIfNeeded {
-          val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
-          PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-          module
-        }
+      invokeAndWaitIfNeeded {
+        val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        module
       }
     }
   }
@@ -125,23 +122,21 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     project: Project?,
     configure: NewProjectWizardStep.() -> Unit
   ): AbstractProjectWizard {
-    return blockingContext {
-      invokeAndWaitIfNeeded {
-        val modulesProvider = DefaultModulesProvider.createForProject(project)
-        val wizard = NewProjectWizard(project, modulesProvider, null)
-        try {
-          wizard.runWizard {
-            this as ProjectTypeStep
-            Assertions.assertTrue(setSelectedTemplate(group, null))
-            val step = customStep as NewProjectWizardStep
-            step.configure()
-          }
+    return invokeAndWaitIfNeeded {
+      val modulesProvider = DefaultModulesProvider.createForProject(project)
+      val wizard = NewProjectWizard(project, modulesProvider, null)
+      try {
+        wizard.runWizard {
+          this as ProjectTypeStep
+          Assertions.assertTrue(setSelectedTemplate(group, null))
+          val step = customStep as NewProjectWizardStep
+          step.configure()
         }
-        finally {
-          Disposer.dispose(wizard.disposable)
-        }
-        wizard
       }
+      finally {
+        Disposer.dispose(wizard.disposable)
+      }
+      wizard
     }
   }
 

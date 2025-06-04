@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.navigateAndSelectEditor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -170,9 +169,7 @@ private suspend fun navigateNonSource(project: Project, request: NavigationReque
   return when (request) {
     is DirectoryNavigationRequest -> {
       withContext(Dispatchers.EDT) {
-        blockingContext {
-          PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, options.requestFocus)
-        }
+        PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, options.requestFocus)
       }
     }
     is RawNavigationRequest -> {
@@ -214,7 +211,7 @@ private suspend fun navigateToSourceImpl(
   val type = if (file.isDirectory) null else FileTypeManager.getInstance().getKnownFileTypeOrAssociate(file, project)
   if (type != null && file.isValid) {
     if (type is INativeFileType) {
-      if (blockingContext { type.openFileInAssociatedApplication(project, file) }) {
+      if (type.openFileInAssociatedApplication(project, file)) {
         return
       }
     }
