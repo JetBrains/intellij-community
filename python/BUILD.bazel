@@ -249,7 +249,6 @@ jvm_library(
     "//platform/backend/workspace",
     "@lib//:python-community-impl-completion-ranking-python-with-full-line",
     "//platform/backend/observation",
-    "//platform/ml-impl",
     "//platform/ml-api:ml",
     "//platform/util/coroutines",
     "//python/python-syntax:syntax",
