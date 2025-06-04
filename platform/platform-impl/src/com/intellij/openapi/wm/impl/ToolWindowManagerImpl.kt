@@ -24,10 +24,7 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -1194,7 +1191,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         toolWindow.windowInfoDuringInit = null
       }
 
-      coroutineScope.launch {
+      (task.pluginDescriptor?.pluginClassLoader?.let { (project as ComponentManagerEx).pluginCoroutineScope(it) } ?: coroutineScope).launch {
         factory.manage(toolWindow = toolWindow, toolWindowManager = this@ToolWindowManagerImpl)
       }.cancelOnDispose(toolWindow.disposable)
     }
