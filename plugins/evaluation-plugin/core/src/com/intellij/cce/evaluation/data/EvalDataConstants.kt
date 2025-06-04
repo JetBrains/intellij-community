@@ -95,6 +95,16 @@ object Execution {
     )
   )
 
+  val EXTRACTED_SNIPPETS_FROM_LLM_RESPONSE: TrivialEvalData<List<String>> = EvalDataDescription(
+    name = "Code snippets from llm response",
+    description = "Bind with code snippets extracted with regular expressions from llm response",
+    DataPlacement.AdditionalConcatenatedLines(AIA_EXTRACTED_CODE_SNIPPETS),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      DataRenderer.Lines
+    )
+  )
+
   val LLM_CHAT_DUMP: TrivialEvalData<String> = EvalDataDescription(
     name = "LLM chat dump",
     description = "Full dump of the chat session including system context, messages, and metadata",
@@ -184,6 +194,16 @@ object Analysis {
     problemIndicators = listOf(
       ProblemIndicator.FromMetric { Metrics.PRESERVED_API }
     )
+  )
+
+  val CONTEXT_COLLECTION_DURATION: TrivialEvalData<Double> = EvalDataDescription(
+    name = "Context collection duration",
+    description = "Bind with the sum of durations of all context collection components",
+    DataPlacement.AdditionalDouble(AIA_CONTEXT_COLLECTION_DURATION_MS),
+    presentation = EvalDataPresentation(
+      PresentationCategory.ANALYSIS,
+      DataRenderer.InlineDouble,
+    ),
   )
 
   val GROUND_TRUTH_API_CALLS: TrivialEvalData<List<String>> = EvalDataDescription(
