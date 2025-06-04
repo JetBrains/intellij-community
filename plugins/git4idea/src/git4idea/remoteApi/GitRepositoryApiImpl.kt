@@ -11,12 +11,10 @@ import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import com.intellij.vcs.git.shared.ref.GitReferenceName
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
-import com.intellij.vcs.git.shared.rpc.GitRepositoryDto
 import com.intellij.vcs.git.shared.rpc.GitRepositoryEvent
 import git4idea.GitDisposable
 import git4idea.branch.GitRefType
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.channels.SendChannel
@@ -29,24 +27,6 @@ import kotlin.time.Duration.Companion.seconds
 private typealias SharedRefUtil = com.intellij.vcs.git.shared.ref.GitRefUtil
 
 class GitRepositoryApiImpl : GitRepositoryApi {
-  override suspend fun getRepositories(projectId: ProjectId): List<GitRepositoryDto> {
-    val project = projectId.findProjectOrNull() ?: return emptyList()
-
-    val repositories = getAllRepositories(project)
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Known repositories: $repositories")
-    }
-    return repositories.map { GitRepositoryToDtoConverter.convertToDto(it) }
-  }
-
-  override suspend fun getRepository(repositoryId: RepositoryId): GitRepositoryDto? {
-    val project = repositoryId.projectId.findProjectOrNull() ?: return null
-
-    return GitRepositoryIdCache.getInstance(project).get(repositoryId)?.let {
-      GitRepositoryToDtoConverter.convertToDto(it)
-    }
-  }
-
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     return flowWithMessageBus(project, GitDisposable.getInstance(project).coroutineScope) { connection ->
@@ -56,12 +36,17 @@ class GitRepositoryApiImpl : GitRepositoryApi {
       connection.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
 
       val allRepositories = getAllRepositories(project).map { GitRepositoryToDtoConverter.convertToDto(it) }
-      send(GitRepositoryEvent.InitialState(allRepositories))
+      send(GitRepositoryEvent.ReloadState(allRepositories))
       while (isActive) {
         delay(SYNC_INTERVAL)
         send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
       }
     }
+  }
+
+  override suspend fun forceSync(projectId: ProjectId) {
+    val project = projectId.findProjectOrNull() ?: return
+    project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).forceSync()
   }
 
   override suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean) {
@@ -158,6 +143,12 @@ class GitRepositoryApiImpl : GitRepositoryApi {
         LOG.debug("Notifying repository disposed: $repository")
         channel.trySend(GitRepositoryEvent.RepositoryDeleted(repository.rpcId))
       })
+    }
+
+    override fun forceSync() {
+      LOG.debug("Synchronization forced")
+      val state = getAllRepositories(project).map { GitRepositoryToDtoConverter.convertToDto(it) }
+      channel.trySend(GitRepositoryEvent.ReloadState(state))
     }
   }
 

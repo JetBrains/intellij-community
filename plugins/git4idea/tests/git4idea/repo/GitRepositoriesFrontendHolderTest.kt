@@ -6,6 +6,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
+import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import git4idea.GitStandardLocalBranch
 import git4idea.GitTag
@@ -178,8 +179,38 @@ class GitRepositoriesFrontendHolderTest : GitSingleRepoTest() {
     assertEquals(setOf(GitTag(tagName)), holder.getTestRepo().state.tags)
   }
 
+  fun `test force state sync`() {
+    val holder = GitRepositoriesHolder.getInstance(project)
+    runBlocking {
+      holder.init()
+    }
+
+    executeAndExpectEvent(
+      { GitRepositoryApi.getInstance().forceSync(project.projectId()) },
+      { event, _ -> event == GitRepositoriesHolder.UpdateType.RELOAD_STATE }
+    )
+  }
+
+  fun `test update of unknown repo forces sync`() {
+    val holder = GitRepositoriesHolder.getInstance(project)
+    runBlocking {
+      holder.init()
+    }
+
+    executeAndExpectEvent(
+      {
+        holder.clearRepositories()
+        assertTrue(holder.getAll().isEmpty())
+        repo.checkoutNew("whatever")
+      },
+      { event, _ -> event == GitRepositoriesHolder.UpdateType.RELOAD_STATE }
+    )
+
+    holder.getTestRepo()
+  }
+
   private fun GitRepositoriesHolder.getTestRepo(): GitRepositoryModel {
-    val holderRepo = this.get(repo.rpcId)
+    val holderRepo = checkNotNull(get(repo.rpcId))
     assertEquals(holderRepo.root, repo.root)
     return holderRepo
   }

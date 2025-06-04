@@ -52,6 +52,7 @@ internal class GitWidgetUpdatesNotifier(project: Project, cs: CoroutineScope) {
         GitRepositoriesHolder.UpdateType.REPOSITORY_STATE_UPDATED -> GitWidgetUpdate.REFRESH
         GitRepositoriesHolder.UpdateType.TAGS_LOADED -> GitWidgetUpdate.REFRESH_TAGS
         GitRepositoriesHolder.UpdateType.TAGS_HIDDEN -> GitWidgetUpdate.REFRESH
+        GitRepositoriesHolder.UpdateType.RELOAD_STATE -> GitWidgetUpdate.REFRESH
       }
 
       if (LOG.isDebugEnabled) {

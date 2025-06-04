@@ -29,6 +29,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
@@ -50,18 +51,9 @@ class GitRepositoriesHolder(
     return repositories.values.toList()
   }
 
-  fun get(repositoryId: RepositoryId): GitRepositoryModel {
+  fun get(repositoryId: RepositoryId): GitRepositoryModel? {
     logErrorIfNotInitialized()
-    val repo = repositories[repositoryId]
-    if (repo != null) return repo
-
-    cs.launch {
-      if (fixDesynchronizedRepo(repositoryId)) {
-        project.messageBus.syncPublisher(UPDATES).afterUpdate(UpdateType.REPOSITORY_STATE_UPDATED)
-      }
-    }
-
-    return GitRepositoryModelStub(repositoryId)
+    return repositories[repositoryId]
   }
 
   /**
@@ -84,23 +76,22 @@ class GitRepositoriesHolder(
     }
   }
 
-  private suspend fun fetchAllRepositories(): Map<RepositoryId, GitRepositoryModelImpl> = GitRepositoryApi.getInstance().getRepositories(project.projectId()).associate { repositoryDto ->
-    repositoryDto.repositoryId to convertToRepositoryInfo(repositoryDto)
-  }
-
   /**
-   * @return once the connection is established and [GitRepositoryEvent.InitialState] is received
+   * @return once the connection is established and the first [GitRepositoryEvent.ReloadState] is received
    */
   private suspend fun subscribeToRepoEvents() {
-    val initialized = CompletableDeferred<Unit>()
+    val initDeferred = CompletableDeferred<Unit>()
     cs.childScope("Git repository state synchronization").launch() {
       GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
         LOG.debug("Received repository event: $event")
         when (event) {
-          is GitRepositoryEvent.InitialState -> {
-            if (!initialized.isCompleted) {
-              repositories.putAll(event.repositories.associate { it.repositoryId to convertToRepositoryInfo(it) })
-              initialized.complete(Unit)
+          is GitRepositoryEvent.ReloadState -> {
+            val newState = event.repositories.associate { it.repositoryId to convertToRepositoryInfo(it) }
+            repositories.keys.retainAll(newState.keys)
+            repositories.putAll(newState)
+
+            if (!initDeferred.isCompleted) {
+              initDeferred.complete(Unit)
             }
           }
           is GitRepositoryEvent.RepositoriesSync -> {
@@ -108,10 +99,7 @@ class GitRepositoriesHolder(
               LOG.warn("State of repositories is not synchronized. " +
                        "Received repositories: ${event.repositories.joinToString { it.toString() }}. " +
                        "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
-              val allRepositories = fetchAllRepositories()
-              val reposToRemove = repositories.keys - allRepositories.keys
-              repositories.putAll(allRepositories)
-              reposToRemove.forEach { repositories.remove(it) }
+              GitRepositoryApi.getInstance().forceSync(project.projectId())
             } else {
               LOG.debug("Repositories state is synchronized")
             }
@@ -126,10 +114,12 @@ class GitRepositoriesHolder(
           }
         }
 
-        getUpdateType(event)?.let { project.messageBus.syncPublisher(UPDATES).afterUpdate(it) }
+        if (initialized) {
+          getUpdateType(event)?.let { project.messageBus.syncPublisher(UPDATES).afterUpdate(it) }
+        }
       }
     }
-    initialized.await()
+    initDeferred.await()
   }
 
   private suspend fun handleSingleRepoUpdate(event: GitRepositoryEvent.SingleRepositoryUpdate) {
@@ -152,21 +142,16 @@ class GitRepositoriesHolder(
     }
 
     if (repoInfo == null) {
-      fixDesynchronizedRepo(repoId)
+      LOG.warn("State of repository $repoId is not synchronized. " +
+               "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
+      GitRepositoryApi.getInstance().forceSync(project.projectId())
     }
   }
 
-  private suspend fun fixDesynchronizedRepo(repoId: RepositoryId): Boolean {
-    LOG.warn("State of repository $repoId is not synchronized. " +
-             "Known repositories are: ${repositories.keys.joinToString { it.toString() }}")
-    val repositoryDto = GitRepositoryApi.getInstance().getRepository(repoId)
-    if (repositoryDto != null) {
-      repositories[repoId] = convertToRepositoryInfo(repositoryDto)
-    }
-    else {
-      LOG.warn("Failed to fetch repository status $repoId")
-    }
-    return repositoryDto != null
+  @TestOnly
+  @ApiStatus.Internal
+  fun clearRepositories() {
+    repositories.clear()
   }
 
   companion object {
@@ -205,7 +190,8 @@ class GitRepositoriesHolder(
       is GitRepositoryEvent.RepositoryStateUpdated -> UpdateType.REPOSITORY_STATE_UPDATED
       GitRepositoryEvent.TagsHidden -> UpdateType.TAGS_HIDDEN
       is GitRepositoryEvent.TagsLoaded -> UpdateType.TAGS_LOADED
-      is GitRepositoryEvent.RepositoriesSync, is GitRepositoryEvent.InitialState -> null
+      is GitRepositoryEvent.ReloadState -> UpdateType.RELOAD_STATE
+      is GitRepositoryEvent.RepositoriesSync -> null
     }
   }
 
@@ -216,7 +202,7 @@ class GitRepositoriesHolder(
 
   @ApiStatus.Internal
   enum class UpdateType {
-    REPOSITORY_CREATED, REPOSITORY_DELETED, FAVORITE_REFS_UPDATED, REPOSITORY_STATE_UPDATED, TAGS_LOADED, TAGS_HIDDEN
+    REPOSITORY_CREATED, REPOSITORY_DELETED, FAVORITE_REFS_UPDATED, REPOSITORY_STATE_UPDATED, TAGS_LOADED, TAGS_HIDDEN, RELOAD_STATE
   }
 }
 
@@ -258,11 +244,4 @@ private class GitRepositoryStateImpl(
   private fun getDetachedHeadDisplayableText(): @Nls String =
     if (currentRef is GitCurrentRef.Tag) currentRef.tag.name
     else revision?.hash ?: GitBundle.message("git.status.bar.widget.text.unknown")
-}
-
-private class GitRepositoryModelStub(override val repositoryId: RepositoryId) : GitRepositoryModel {
-  override val shortName = ""
-  override val state = GitRepositoryStateImpl(null, null, emptySet(), emptySet(), emptySet(),  emptyList(), GitOperationState.DETACHED_HEAD, emptyMap())
-  override val favoriteRefs = GitFavoriteRefs(emptySet(), emptySet(), emptySet())
-  override val root = null
 }

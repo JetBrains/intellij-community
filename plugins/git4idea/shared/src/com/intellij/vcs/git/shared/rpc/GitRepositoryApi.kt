@@ -26,16 +26,18 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 @ApiStatus.Internal
 interface GitRepositoryApi : RemoteApi<Unit> {
-  suspend fun getRepositories(projectId: ProjectId): List<GitRepositoryDto>
-
-  suspend fun getRepository(repositoryId: RepositoryId): GitRepositoryDto?
-
   /**
    * Subscription to repositories' updates in the given project.
    * [GitRepositoryEvent] is sent produced on corresponding updates.
    * However, [GitRepositoryEvent.RepositoriesSync] is sent periodically and once the connection is established
    */
   suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent>
+
+  /**
+   * Forces synchronization of all repository states.
+   * State is sent in [getRepositoriesEvents] flow as [GitRepositoryEvent.ReloadState]
+   */
+  suspend fun forceSync(projectId: ProjectId)
 
   suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean)
 
@@ -59,11 +61,17 @@ sealed interface GitRepositoryEvent {
 
   @Serializable
   @ApiStatus.Internal
-  class InitialState(val repositories: List<GitRepositoryDto>) : GitRepositoryEvent
+  class ReloadState(val repositories: List<GitRepositoryDto>) : GitRepositoryEvent {
+    override fun toString(): String = "Full state of ${repositories.size} repositories: " +
+                                      repositories.joinToString(", ") { it.repositoryId.toString() }
+  }
 
   @Serializable
   @ApiStatus.Internal
-  class RepositoriesSync(val repositories: List<RepositoryId>) : GitRepositoryEvent
+  class RepositoriesSync(val repositories: List<RepositoryId>) : GitRepositoryEvent {
+    override fun toString(): String = "Sync for ${repositories.size} repositories: " +
+                                      repositories.joinToString(", ") { it.toString() }
+  }
 
   @Serializable
   @ApiStatus.Internal

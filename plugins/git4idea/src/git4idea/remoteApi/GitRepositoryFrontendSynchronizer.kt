@@ -18,6 +18,8 @@ internal interface GitRepositoryFrontendSynchronizer {
 
   fun favoriteRefsUpdated(repository: GitRepository?)
 
+  fun forceSync()
+
   companion object {
     @JvmField
     @Topic.ProjectLevel

@@ -253,7 +253,8 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
       val repositories = holder.getAll().sorted()
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()
-      popupStep = GitBranchesTreePopupStep.create(project, holder.get(repo.rpcId), repositories)
+      val preferredSelection = checkNotNull(holder.get(repo.rpcId))
+      popupStep = GitBranchesTreePopupStep.create(project, preferredSelection, repositories)
       tree.cellRenderer = GitBranchesTreePopupRenderer(popupStep)
       tree.model = popupStep.treeModel
       popupStep.updateTreeModelIfNeeded(tree, filter)
