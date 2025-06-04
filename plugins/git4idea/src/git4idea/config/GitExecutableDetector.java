@@ -18,6 +18,7 @@ import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.fs.EelFileSystemApiKt;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -94,10 +95,11 @@ public class GitExecutableDetector {
   }
 
   public static @NotNull GitExecutable getGitExecutable(@Nullable Project project, @NotNull String pathToGit) {
-    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, Path.of(pathToGit));
+    Path pathToGitParsed = Path.of(pathToGit);
+    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, pathToGitParsed);
 
-    if (eel != null) {
-      return new GitExecutable.Eel(pathToGit, eel);
+    if (eel != null && pathToGitParsed.isAbsolute()) {
+      return new GitExecutable.Eel(EelNioBridgeServiceKt.asEelPath(pathToGitParsed).toString(), eel);
     }
 
     WslPath wslPath = WslPath.parseWindowsUncPath(pathToGit);

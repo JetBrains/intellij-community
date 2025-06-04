@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.where
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 @Service(Service.Level.APP)
 internal class GitEelExecutableDetectionHelper private constructor(private val scope: CoroutineScope) {
@@ -33,7 +35,7 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
     return synchronized(myLock) {
       myCache.computeIfAbsent(rootDir) {
         scope.async {
-          eelApi.exec.where("git")?.toString()
+          eelApi.exec.where("git")?.asNioPath()?.pathString
         }
       }
     }
