@@ -34,6 +34,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
@@ -434,6 +435,10 @@ public final class WelcomeScreenComponentFactory {
   }
 
   static @Nullable JComponent getSinglePromotion(boolean isEmptyState) {
+    // Welcome screen promotions are not desirable in MPS and/or IDEs built with MPS
+    if (PlatformUtils.isMPS()) {
+      return null;
+    }
     StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
     List<StartPagePromoter> promoters = new ArrayList<>();
     int maxPriorityLevel = Integer.MIN_VALUE;
