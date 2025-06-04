@@ -13,24 +13,24 @@ import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.XValueMarkerProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.BothRunning
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.BothStopped
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.Exited
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelPositionReached
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelRunToAddress
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighRun
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighStarted
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelPositionReached
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelRunToAddress
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowRun
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.MixedStepRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.MixedStepType
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.PauseRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.ResumeRequested
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.StepType
-import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.Stop
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.BothRunning
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.BothStopped
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.Exited
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighLevelDebuggerStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighLevelPositionReached
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighRun
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.HighStarted
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.LowLevelPositionReached
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.LowLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.LowLevelStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.LowRun
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.MixedStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.MixedStepType
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.PauseRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.ResumeRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.StepType
+import com.intellij.xdebugger.impl.mixedmode.MixedModeDotnetOnWinProcessTransitionStateMachine.Stop
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
@@ -62,7 +62,7 @@ class XMixedModeCombinedDebugProcess(
   private var myProcessHandler: XMixedModeProcessHandler? = null
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
   private val coroutineScope get() = session.coroutineScope
-  private val stateMachine = MixedModeProcessTransitionStateMachine(low, high, coroutineScope)
+  private val stateMachine = MixedModeDotnetOnWinProcessTransitionStateMachine(low, high, coroutineScope)
   private var myAttract : Boolean = false // being accessed on EDT
   private var highLevelDebugProcessReady : Boolean = false
   private val lowExtension get() = low.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
@@ -73,11 +73,11 @@ class XMixedModeCombinedDebugProcess(
       while (true) {
         when(val newState = stateMachine.stateChannel.receive()) {
           is BothStopped -> {
-            //val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
+            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
             withContext(Dispatchers.EDT) {
               positionReachedInProgress = true
               try {
-                session.positionReached(newState.high, myAttract)
+                session.positionReached(ctx, myAttract)
               }
               finally {
                 positionReachedInProgress = false
@@ -316,6 +316,6 @@ class XMixedModeCombinedDebugProcess(
 
   fun setNextStatement(position: XSourcePosition) {
     assert(highExtension.belongsToMe(position.file)) // this operation isn't implemented for a low-level debug process
-    stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelSetNextStatementRequested(position))
+    stateMachine.set(MixedModeDotnetOnWinProcessTransitionStateMachine.HighLevelSetNextStatementRequested(position))
   }
 }
