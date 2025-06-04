@@ -74,6 +74,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
             workspace.reportsDirectory(),
             filter.name,
             comparisonStorage.reportName,
+            configs.firstOrNull()?.reports?.openTelemetrySpanFilter
           ),
         )
         if (ApplicationManager.getApplication().isUnitTestMode) reportGenerators.add(

@@ -9,6 +9,7 @@ import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.util.getAs
 import com.intellij.cce.util.getIfExists
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
+import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.openapi.diagnostic.logger
 import org.apache.commons.lang3.text.StrSubstitutor
@@ -169,6 +170,19 @@ object ConfigFactory {
     if (map.containsKey("defaultMetrics")) {
       builder.defaultMetrics = map.getAs("defaultMetrics")
     }
+
+    if (System.getProperty("idea.diagnostic.opentelemetry.file") != null) {
+      map.getIfExists<Map<String, Any>?>("openTelemetrySpanFilter")?.let { filterMap ->
+        val filterType = SpanFilter.FilterType.entries.firstOrNull { it.name == filterMap.getAs<String>("filterType") }
+        check(filterType != null) { "Not existing span filter type $filterType in config" }
+        val spanNames = filterMap.getAs<List<String>>("spanNames")
+        when (filterType) {
+          SpanFilter.FilterType.contains -> builder.openTelemetrySpanFilter = SpanFilter(SpanFilter.FilterType.contains, spanNames)
+          SpanFilter.FilterType.equals -> builder.openTelemetrySpanFilter = SpanFilter(SpanFilter.FilterType.equals, spanNames)
+        }
+      }
+    }
+
     val filtersList = map.getIfExists<List<Map<String, Any>>>("sessionsFilters")
     val filters = mutableListOf<SessionsFilter>()
     filtersList?.forEach {

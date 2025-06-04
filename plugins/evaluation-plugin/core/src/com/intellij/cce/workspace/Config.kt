@@ -5,6 +5,7 @@ import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.interpreter.InterpretationOrder
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
+import com.intellij.cce.workspace.filter.SpanFilter
 import com.intellij.cce.workspace.filter.NamedFilter
 import com.intellij.cce.workspace.filter.SessionsFilter
 import java.nio.file.Paths
@@ -137,6 +138,7 @@ data class Config private constructor(
     val defaultMetrics: List<String>?,
     val sessionsFilters: List<SessionsFilter>,
     val comparisonFilters: List<CompareSessionsFilter>,
+    val openTelemetrySpanFilter: SpanFilter?,
   )
 
   class Builder internal constructor() {
@@ -166,6 +168,7 @@ data class Config private constructor(
     var featuresForReordering = mutableListOf<String>()
     val filters: MutableMap<String, EvaluationFilter> = mutableMapOf()
     var defaultMetrics: List<String>? = null
+    var openTelemetrySpanFilter: SpanFilter? = null
     private val sessionsFilters: MutableList<SessionsFilter> = mutableListOf()
     private val comparisonFilters: MutableList<CompareSessionsFilter> = mutableListOf()
 
@@ -192,6 +195,7 @@ data class Config private constructor(
       featuresForReordering.addAll(config.reorder.features)
       evaluationTitle = config.reports.evaluationTitle
       defaultMetrics = config.reports.defaultMetrics
+      openTelemetrySpanFilter = config.reports.openTelemetrySpanFilter
       mergeFilters(config.reports.sessionsFilters)
       mergeComparisonFilters(config.reports.comparisonFilters)
     }
@@ -244,7 +248,8 @@ data class Config private constructor(
         evaluationTitle,
         defaultMetrics,
         sessionsFilters,
-        comparisonFilters
+        comparisonFilters,
+        openTelemetrySpanFilter
       )
     )
   }

@@ -28,6 +28,10 @@ jvm_library(
     "//platform/statistics/uploader",
     "//platform/util-ex",
     "//platform/projectModel-api:projectModel",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
+    "//platform/diagnostic/telemetry-impl",
+    "@lib//:opentelemetry",
+    "//platform/diagnostic/telemetry",
   ],
   runtime_deps = [
     ":core_resources",
