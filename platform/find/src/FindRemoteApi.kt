@@ -43,6 +43,8 @@ interface FindRemoteApi : RemoteApi<Unit> {
    */
   suspend fun performFindAllOrReplaceAll(findModel: FindModel, projectId: ProjectId)
 
+  suspend fun checkDirectoryExists(findModel: FindModel): Boolean
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): FindRemoteApi {

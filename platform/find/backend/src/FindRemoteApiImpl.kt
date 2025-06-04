@@ -111,4 +111,8 @@ internal class FindRemoteApiImpl : FindRemoteApi {
       FindInProjectManager.getInstance(project).findInPath(findModel)
     }
   }
+
+  override suspend fun checkDirectoryExists(findModel: FindModel): Boolean {
+    return FindInProjectUtil.getDirectory(findModel) != null
+  }
 }

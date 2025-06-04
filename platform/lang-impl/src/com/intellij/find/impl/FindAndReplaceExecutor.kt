@@ -46,4 +46,6 @@ interface FindAndReplaceExecutor {
    */
   fun performFindAllOrReplaceAll(findModel: FindModel, project: Project)
 
+  fun validateModel(findModel: FindModel, onFinish: (Boolean) -> Any?)
+
 }

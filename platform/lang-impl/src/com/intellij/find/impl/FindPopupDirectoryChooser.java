@@ -159,8 +159,16 @@ public final class FindPopupDirectoryChooser extends JPanel {
   }
 
   public @Nullable ValidationInfo validate(@NotNull FindModel model) {
+    if (FindKey.isEnabled() && !myFindPopupPanel.isBackendValidationFinished()) {
+      return new ValidationInfo(FindBundle.message("find.directory.validation.in.progress"), myDirectoryComboBox).asWarning();
+    }
+    if (FindKey.isEnabled()) return null;
     VirtualFile directory = FindInProjectUtil.getDirectory(model);
-    if (directory == null) {
+    return getDirectoryValidationInfo(directory != null);
+  }
+
+  public ValidationInfo getDirectoryValidationInfo(boolean isDirectoryExists) {
+    if (!isDirectoryExists) {
       return new ValidationInfo(FindBundle.message("find.directory.not.found.error"), myDirectoryComboBox);
     }
     return null;

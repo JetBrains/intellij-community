@@ -71,4 +71,10 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
       }
     }
   }
+
+  override fun validateModel(findModel: FindModel, onFinish: (Boolean) -> Any?) {
+    coroutineScope.launch {
+      FindRemoteApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) }
+    }
+  }
 }

@@ -118,6 +118,7 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 @ApiStatus.Internal
 public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, UiDataProvider {
+  private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
   private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke RESET_FILTERS = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
@@ -170,6 +171,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   private String myFilesCount;
   private UsageViewPresentation myUsageViewPresentation;
   private final ComponentValidator myComponentValidator;
+  private final BackendValidator backendValidator = new BackendValidator();
   private AnAction myCaseSensitiveAction;
   private AnAction myWholeWordsAction;
   private AnAction myRegexAction;
@@ -1107,7 +1109,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       findModel.setMultiline(true);
     }
 
-    ValidationInfo result = getValidationInfo(myHelper.getModel());
+    ValidationInfo backendValidation = backendValidator.runBackendValidation();
+    ValidationInfo result = backendValidation != null ? backendValidation : getValidationInfo(myHelper.getModel());
     myOKButton.setEnabled(result == null);
     myComponentValidator.updateInfo(result);
 
@@ -1272,6 +1275,10 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }, myResultsPreviewSearchProgress);
   }
 
+  public boolean isBackendValidationFinished() {
+    return backendValidator.isFinished();
+  }
+
   private @NotNull Set<UsageInfoAdapter> getPreviousUsages() {
     Set<UsageInfoAdapter> previousUsages = new LinkedHashSet<>();
 
@@ -1286,6 +1293,18 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       }
     }
     return previousUsages;
+  }
+
+  private void applyValidationResult(ValidationInfo result, int hash) {
+    myOKButton.setEnabled(result == null);
+    myComponentValidator.updateInfo(result);
+    myReplaceAllButton.setEnabled(result == null);
+    myReplaceSelectedButton.setEnabled(result == null);
+
+    if (result != null && result.component != myReplaceComponent) {
+      onStop(hash, result.message);
+      reset();
+    }
   }
 
   private void reset() {
@@ -1476,11 +1495,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   private @Nullable("null means OK") ValidationInfo getValidationInfo(@NotNull FindModel model) {
-    ValidationInfo scopeValidationInfo = myScopeUI.validate(model, mySelectedScope);
-    if (scopeValidationInfo != null) {
-      return scopeValidationInfo;
-    }
-
     if (!myHelper.canSearchThisString()) {
       return new ValidationInfo(FindBundle.message("find.empty.search.text.error"), mySearchComponent);
     }
@@ -1537,6 +1551,10 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       catch (PatternSyntaxException ex) {
         return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), header.fileMaskField);
       }
+    }
+    ValidationInfo scopeValidationInfo = myScopeUI.validate(model, mySelectedScope);
+    if (scopeValidationInfo != null) {
+      return scopeValidationInfo;
     }
     return null;
   }
@@ -1722,6 +1740,73 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
   }
 
   public enum ToggleOptionName {CaseSensitive, PreserveCase, WholeWords, Regex, FileFilter}
+
+  private final class BackendValidator {
+    private @NotNull FindModel model = new FindModel();
+    private boolean isFinished = true;
+    private boolean isDirectoryExists = true;
+
+    public void setNewModel(@NotNull FindModel model) {
+      this.model = model.clone();
+      isFinished = false;
+      isDirectoryExists = true;
+    }
+
+    private void setDirectoryExists(Boolean isDirectoryExists) {
+      isFinished = true;
+      this.isDirectoryExists = isDirectoryExists;
+    }
+
+    public boolean isFinished() {
+      return isFinished;
+    }
+
+    private ValidationInfo getValidationInfo() {
+      if (!isFinished) return null;
+      return evaluateValidationInfo(isDirectoryExists);
+    }
+
+    // currently validate only directory
+    private boolean isNecessaryToRevalidate(FindModel otherModel) {
+      if (!Objects.equals(model.getDirectoryName(), otherModel.getDirectoryName())) return true;
+      return false;
+    }
+
+    //if FindKey is not enabled, validation will be performed in com.intellij.find.impl.FindPopupScopeUI.validate
+    private boolean couldSkipValidation() {
+      return !FindKey.isEnabled() || !myScopeUI.isDirectoryScope(mySelectedScope);
+    }
+
+    @ApiStatus.Internal
+    public ValidationInfo runBackendValidation() {
+      FindModel model = myHelper.getModel();
+      if (couldSkipValidation()) return null;
+      if (isFinished() && !isNecessaryToRevalidate(model)) {
+        return getValidationInfo();
+      }
+      setNewModel(model);
+      FindAndReplaceExecutor.getInstance().validateModel(model, (isDirectoryExists) -> {
+        FindModel currentModel = myHelper.getModel();
+        if (couldSkipValidation() || isNecessaryToRevalidate(currentModel)) return null;
+        setDirectoryExists(isDirectoryExists);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!isDirectoryExists) {
+            applyValidationResult(evaluateValidationInfo(isDirectoryExists), myLoadingHash);
+            finishPreviousPreviewSearch();
+          }
+          else {
+            scheduleResultsUpdate();
+          }
+        });
+        return null;
+      });
+      return null;
+    }
+
+    private @Nullable("null means ok") ValidationInfo evaluateValidationInfo(Boolean isDirectoryExists) {
+      return myScopeUI.evaluateValidationInfo(isDirectoryExists);
+    }
+  }
 
   private final class MySwitchStateToggleAction extends DumbAwareToggleAction implements TooltipLinkProvider, TooltipDescriptionProvider {
     private final ToggleOptionName myOptionName;
