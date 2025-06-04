@@ -19,12 +19,14 @@ import com.intellij.usages.UsageInfoAdapter
 import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
   private var validationJob: Job? = null
+  private var findUsagesJob: Job? = null
 
   override fun findUsages(
     project: Project,
@@ -36,7 +38,10 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     onFinish: () -> Unit?,
   ) {
     if (FindKey.isEnabled) {
-      coroutineScope.launch {
+      if (findUsagesJob?.isActive == true) {
+        findUsagesJob?.cancel("new find request is started")
+      }
+      findUsagesJob = coroutineScope.launch {
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
 
         FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() }).collect { findResult ->
@@ -77,7 +82,7 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
 
   override fun validateModel(findModel: FindModel, onFinish: (isDirectoryExists: Boolean) -> Any?) {
     if (validationJob?.isActive == true) {
-      validationJob?.cancel()
+      validationJob?.cancel("new validation request is started")
     }
     validationJob = coroutineScope.launch {
       try {
@@ -89,6 +94,8 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   }
 
   override fun cancelActivities() {
-    validationJob?.cancel()
+    val message = "cancel all activities for find and replace executor"
+    validationJob?.cancel(message)
+    findUsagesJob?.cancel(message)
   }
 }
