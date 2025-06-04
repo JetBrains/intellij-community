@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabsShortcutsUtils
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
 import com.intellij.platform.searchEverywhere.frontend.SeFilterComponentPresentation
@@ -31,11 +34,16 @@ import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
 
 @Internal
-class SePopupHeaderPane(tabNames: @Nls List<String>,
-                        selectedTabState: MutableStateFlow<Int>,
-                        coroutineScope: CoroutineScope,
-                        toolbar: JComponent? = null): NonOpaquePanel() {
+class SePopupHeaderPane(
+  private val project: Project?,
+  tabs: @Nls List<Tab>,
+  selectedTabState: MutableStateFlow<Int>,
+  coroutineScope: CoroutineScope,
+  toolbar: JComponent? = null,
+): NonOpaquePanel() {
   private lateinit var tabbedPane: JBTabbedPane
+  private val tabInfos = mutableListOf<Tab>().apply { addAll(tabs) }
+  private val tabShortcuts = SearchEverywhereTabsShortcutsUtils.createShortcutsMap()
   private val panel: DialogPanel
   private var toolbar: ActionToolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", DefaultActionGroup(), true)
   private val tabFilterContainer: JPanel = object : JPanel() {
@@ -82,9 +90,8 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
       JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
       EmptyBorder(0, headerInsets.left, 0, headerInsets.right))
 
-    for (tab in tabNames) {
-      //@NlsSafe val shortcut = shortcutSupplier.apply(tab.id)
-      tabbedPane.addTab(tab, null, JPanel(), tab)
+    for (tab in tabInfos) {
+      tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
     }
 
     add(panel)
@@ -100,8 +107,9 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
     }
   }
 
-  fun addTab(tabName: @Nls String) {
-    tabbedPane.addTab(tabName, null, JPanel(), tabName)
+  fun addTab(tab: Tab) {
+    tabInfos.add(tab)
+    tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
   }
 
   private fun setFilterComponent(filterComponent: JComponent?) {
@@ -134,6 +142,8 @@ class SePopupHeaderPane(tabNames: @Nls List<String>,
   fun updateToolbarActions() {
     toolbar.updateActionsAsync()
   }
+
+  class Tab(val name: @Nls String, val id: String)
 
   companion object {
     private const val MAX_FILTER_WIDTH = 100

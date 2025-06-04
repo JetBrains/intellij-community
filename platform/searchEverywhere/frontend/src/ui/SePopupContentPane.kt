@@ -64,7 +64,9 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
-  private val headerPane: SePopupHeaderPane = SePopupHeaderPane(vm.tabVms.map { it.name }, vm.currentTabIndex, vm.coroutineScope)
+  private val headerPane: SePopupHeaderPane = SePopupHeaderPane(
+    project, vm.tabVms.map { SePopupHeaderPane.Tab(it.name, it.tabId) }, vm.currentTabIndex, vm.coroutineScope
+  )
   private val textField: SeTextField = SeTextField()
 
   private val resultListModel = SeResultListModel { resultList.selectionModel }
@@ -193,7 +195,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     vm.coroutineScope.launch {
       vm.deferredTabVms.collect { tabVm ->
         withContext(Dispatchers.EDT) {
-          headerPane.addTab(tabVm.name)
+          headerPane.addTab(SePopupHeaderPane.Tab(tabVm.name, tabVm.tabId))
         }
       }
     }

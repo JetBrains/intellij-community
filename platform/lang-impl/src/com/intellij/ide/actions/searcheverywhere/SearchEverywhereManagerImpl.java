@@ -67,7 +67,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
   public SearchEverywhereManagerImpl(Project project) {
     myProject = project;
-    myTabsShortcutsMap = createShortcutsMap();
+    myTabsShortcutsMap = SearchEverywhereTabsShortcutsUtils.INSTANCE.createShortcutsMap();
   }
 
   @Override
@@ -386,25 +386,5 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     if (myHistoryIterator == null || !myHistoryIterator.getContributorID().equals(selectedContributorID)) {
       myHistoryIterator = myHistoryList.getIterator(selectedContributorID);
     }
-  }
-
-  private static Map<String, String> createShortcutsMap() {
-    Map<String, @Nls String> res = new HashMap<>();
-
-    res.put(ALL_CONTRIBUTORS_GROUP_ID, LangBundle.message("double.shift"));
-    addShortcut(res, "ClassSearchEverywhereContributor", "GotoClass");
-    addShortcut(res, "FileSearchEverywhereContributor", "GotoFile");
-    addShortcut(res, "SymbolSearchEverywhereContributor", "GotoSymbol");
-    addShortcut(res, "ActionSearchEverywhereContributor", "GotoAction");
-    addShortcut(res, "DbSETablesContributor", "GotoDatabaseObject");
-    addShortcut(res, "TextSearchContributor", "TextSearchAction");
-    addShortcut(res, "UrlSearchEverywhereContributor", "GotoUrlAction");
-
-    return res;
-  }
-
-  private static void addShortcut(Map<String, @Nls String> map, String tabId, String actionID) {
-    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionID);
-    if (shortcut != null) map.put(tabId, KeymapUtil.getShortcutText(shortcut));
   }
 }
