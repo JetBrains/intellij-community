@@ -1215,9 +1215,9 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 }
 
 private class ScalableCounterIconComponent : JComponent(), UISettingsListener {
-  private val icon: CounterIcon = CounterIcon.createRoundIcon(1,
-                                                              JBColor.WHITE,
-                                                              JBUI.CurrentTheme.StatusBar.Progresses.COUNTER)
+  private val icon: CounterIcon = CounterIcon(1,
+                                              JBColor.WHITE,
+                                              JBUI.CurrentTheme.StatusBar.Progresses.COUNTER)
 
 
   fun setNumber(value: Int) {
@@ -1226,9 +1226,12 @@ private class ScalableCounterIconComponent : JComponent(), UISettingsListener {
 
   override fun getPreferredSize(): Dimension {
     val iconSize = JBUI.scale(16) //icon size
-    val sensibleDefaultInset = JBUI.scale(4)
-    icon.setInsets(sensibleDefaultInset)
-    return Dimension(max(iconSize, icon.iconWidth), iconSize)
+    if (icon.number < 10) {
+      return Dimension(iconSize, iconSize)
+    }
+    val sensibleDefaultInset = JBUI.scale(3)
+    icon.setInsets(0, sensibleDefaultInset)
+    return Dimension(max(iconSize, icon.iconWidth), max(iconSize, icon.iconHeight))
   }
 
   override fun paintComponent(g: Graphics?) {
@@ -1248,6 +1251,54 @@ private class ScalableCounterIconComponent : JComponent(), UISettingsListener {
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
+    icon.uiSettingsChanged()
+  }
+}
+
+private class CounterIcon(private val icon: TextIcon, initialNumber: Int) : Icon by icon {
+  private var lastDigitNumber: Int = 0
+  private var _number: Int = initialNumber
+  var number: Int
+    set(value) {
+      val text = value.toString()
+      if (text.length != lastDigitNumber) {
+        lastDigitNumber = text.length
+        val predefined = when (lastDigitNumber) {
+          1 -> 0..9
+          2 -> 10..99
+          3 -> 100..999
+          else -> null
+        }
+        if (predefined != null) {
+          icon.setTextsForMinimumBounds(predefined.map { it.toString() })
+        }
+      }
+      icon.text = text
+      _number = value
+    }
+    get() = _number
+
+  init {
+    icon.font = JBFont.regular()
+  }
+
+  constructor(number: Int, foreground: Color, background: Color) : this(TextIcon("", foreground, background, 0), number)
+
+  var round: Int? by icon::round
+
+  fun setInsets(top: Int, left: Int, bottom: Int, right: Int) {
+    icon.setInsets(top, left, bottom, right)
+  }
+
+  fun setInsets(topBottom: Int, leftRight: Int) {
+    icon.setInsets(topBottom, leftRight, topBottom, leftRight)
+  }
+
+  fun setInsets(all: Int) {
+    setInsets(all, all, all, all)
+  }
+
+  fun uiSettingsChanged() {
     icon.uiSettingsChanged()
   }
 }
