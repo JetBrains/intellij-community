@@ -1,4 +1,7 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider"
                     serviceImplementation="com.intellij.internal.statistic.local.FileTypeUsageLocalSummary"

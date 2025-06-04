@@ -14,6 +14,10 @@
 
   <resource-bundle>messages.marketplaceMlBundle</resource-bundle>
 
+  <dependencies>
+    <module name="intellij.platform.ml.impl"/>
+  </dependencies>
+  
   <extensions defaultExtensionNs="com.intellij">
     <registryKey
       defaultValue="-1"

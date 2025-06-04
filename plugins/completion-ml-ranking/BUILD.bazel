@@ -14,7 +14,6 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:ngram-slp",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
@@ -65,7 +64,6 @@ jvm_library(
     "//platform/ml-impl",
     "//platform/ml-impl:ml-impl_test_lib",
     "//platform/core-ui",
-    "@lib//:ngram-slp",
     "//platform/platform-impl/internal",
     "//platform/ml-api:ml",
   ]

@@ -40,11 +40,15 @@ jvm_library(
     "@lib//:jetbrains-mlapi-ml-tools-suspendable",
   ],
   exports = [
+    "@lib//:ngram-slp",
     "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
     "@lib//:jetbrains-mlapi-ml-tools",
     "@lib//:jetbrains-mlapi-ml-tools-suspendable",
   ],
-  runtime_deps = [":ml-impl_resources"]
+  runtime_deps = [
+    ":ml-impl_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(

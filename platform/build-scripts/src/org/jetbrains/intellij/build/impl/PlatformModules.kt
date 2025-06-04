@@ -77,7 +77,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.feedback",
   "intellij.platform.usageView.impl",
   "intellij.platform.buildScripts.downloader",
-  "intellij.platform.ml.impl",
 
   "intellij.platform.runtime.product",
   "intellij.platform.bootstrap",

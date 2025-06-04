@@ -2,6 +2,7 @@
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <dependencies>
+    <module name="intellij.platform.ml.impl"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
   </dependencies>
 
