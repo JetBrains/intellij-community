@@ -50,14 +50,20 @@ private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndSt
   if (sourceToInstalledRuntimeAndStubPkgs.isEmpty()) return emptyMap()
 
   val stubPkgsAvailableToInstall = availablePackages.asSequence()
-    .filter { it.name.endsWith(STUBS_SUFFIX) || it.name.startsWith(TYPES_PREFIX) }
+    .filter { it.name.isStubPackage() }
     .associateBy { it.name }
 
   return sourceToInstalledRuntimeAndStubPkgs.mapValues { (_, runtimeAndStubPkgs) ->
     runtimeAndStubPkgs
       .asSequence()
       .filter { it.second == null }
-      .mapNotNull { stubPkgsAvailableToInstall["${it.first.name}$STUBS_SUFFIX"] ?: stubPkgsAvailableToInstall["$TYPES_PREFIX${it.first.name}"] }
+      .flatMap {
+        setOfNotNull(
+          stubPkgsAvailableToInstall["${it.first.name}$STUBS_SUFFIX"],
+          stubPkgsAvailableToInstall["$TYPES_PREFIX${it.first.name}"],
+          stubPkgsAvailableToInstall["${it.first.name}$TYPES_SUFFIX"],
+        )
+      }
       .toSet()
   }
 }
@@ -82,13 +88,13 @@ private fun installedRuntimeAndStubPackages(pkgName: String, installedPackages: 
   var stub: PyPackage? = null
   val stubPkgName = "$pkgName$STUBS_SUFFIX"
   val typesPkgName = "$TYPES_PREFIX$pkgName"
+  val typesSuffixPkgName = "$pkgName$TYPES_SUFFIX"
 
   for (pkg in installedPackages) {
     val name = pkg.name
 
     if (name == pkgName) runtime = pkg
-    if (name == stubPkgName) stub = pkg
-    if (name == typesPkgName) stub = pkg
+    if (name == stubPkgName || name == typesPkgName || name == typesSuffixPkgName) stub = pkg
   }
 
   return if (runtime == null) null else runtime to stub
