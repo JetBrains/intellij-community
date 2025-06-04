@@ -13,78 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi.impl
 
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyUserInitiatedResolvableReference;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyReferenceOwner;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.resolve.FileContextUtil
+import com.jetbrains.python.PyUserInitiatedResolvableReference
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyReferenceOwner
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.pyi.PyiUtil
 
 /**
- * {@link com.intellij.codeInsight.navigation.actions.GotoDeclarationAction} uses {@link PsiElement#findReferenceAt(int)}.
- * This method knows nothing about execution context and {@link PyBaseElementImpl} injects loose {@link TypeEvalContext}.
- * While regular methods are indexed, {@link com.jetbrains.python.codeInsight.PyCustomMember} are not.
+ * [com.intellij.codeInsight.navigation.actions.GotoDeclarationAction] uses [PsiElement.findReferenceAt].
+ * This method knows nothing about execution context and [PyBaseElementImpl] injects loose [TypeEvalContext].
+ * While regular methods are indexed, [com.jetbrains.python.codeInsight.PyCustomMember] are not.
  * As result, "go to declaration" failed to resolve reference pointing to another files which leads to bugs like PY-18089.
- * <p>
+ *
+ *
  * "Go to declaration" is always user-initiated action, so we resolve it manually using best context
  *
  * @author Ilya.Kazakevich
  */
-public final class PyGotoDeclarationHandler extends GotoDeclarationHandlerBase {
-  @Override
-  public @Nullable PsiElement getGotoDeclarationTarget(final @Nullable PsiElement sourceElement, final Editor editor) {
-    if (sourceElement == null) {
-      return null;
-    }
-    final PyResolveContext context =
-      PyResolveContext.defaultContext(TypeEvalContext.userInitiated(sourceElement.getProject(), sourceElement.getContainingFile()));
+class PyGotoDeclarationHandler : GotoDeclarationHandlerBase() {
+  override fun getGotoDeclarationTarget(sourceElement: PsiElement?, editor: Editor?): PsiElement? {
+    sourceElement ?: return null
+    val context =
+      PyResolveContext.defaultContext(TypeEvalContext.userInitiated(sourceElement.project, sourceElement.containingFile))
 
-    PyReferenceOwner referenceOwner = null;
-    final PsiElement parent = sourceElement.getParent();
-    if (sourceElement instanceof PyReferenceOwner) {
-      referenceOwner = (PyReferenceOwner)sourceElement;
-    }
-    else if (parent instanceof PyReferenceOwner) {
-      referenceOwner = (PyReferenceOwner)parent; //Reference expression may be parent of IDENTIFIER
-    }
-    if (referenceOwner != null) {
-      PsiElement resolved = PyResolveUtil.resolveDeclaration(referenceOwner.getReference(context), context);
-      if (resolved != null && PyiUtil.isInsideStub(resolved) && !PyiUtil.isInsideStub(FileContextUtil.getContextFile(sourceElement))) {
-        return ObjectUtils.chooseNotNull(PyiUtil.getOriginalElement((PyElement)resolved), resolved);
+    val parent = sourceElement.parent
+    return (sourceElement as? PyReferenceOwner ?: parent as? PyReferenceOwner)?.let { referenceOwner ->
+      val resolved = PyResolveUtil.resolveDeclaration(referenceOwner.getReference(context), context)
+      if (resolved != null && PyiUtil.isInsideStub(resolved) && !PyiUtil.isInsideStub(FileContextUtil.getContextFile(sourceElement)!!)) {
+        PyiUtil.getOriginalElement(resolved as PyElement) ?: resolved
       }
-      return resolved != referenceOwner ? resolved : null;
+      else resolved.takeIf { it !== referenceOwner }
     }
-    // If element is not ref owner, it still may have provided references, lets find some
-    final PsiElement element = findProvidedReferenceAndResolve(sourceElement);
-    if (element != null) {
-      return element;
-    }
-    if (parent != null) {
-      return findProvidedReferenceAndResolve(parent);
-    }
-    return null;
+           // If element is not ref owner, it still may have provided references, lets find some
+           ?: findProvidedReferenceAndResolve(sourceElement)
+           ?: parent?.let { findProvidedReferenceAndResolve(it) }
   }
 
-  private static @Nullable PsiElement findProvidedReferenceAndResolve(final @NotNull PsiElement sourceElement) {
-    for (final PsiReference reference : sourceElement.getReferences()) {
-      if (reference instanceof PyUserInitiatedResolvableReference) {
-        final PsiElement element = ((PyUserInitiatedResolvableReference)reference).userInitiatedResolve();
-        if (element != null && element != sourceElement) {
-          return element;
-        }
+  companion object {
+    private fun findProvidedReferenceAndResolve(sourceElement: PsiElement): PsiElement? {
+      return sourceElement.references.firstNotNullOfOrNull { ref ->
+        (ref as? PyUserInitiatedResolvableReference)?.userInitiatedResolve()?.takeIf { it !== sourceElement }
       }
     }
-    return null;
   }
 }
