@@ -12,7 +12,7 @@ import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupRenderer
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStep
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStepBase
@@ -46,7 +46,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
 
     runBlocking {
       // Ensure that the state holder is initialized
-      GitRepositoriesFrontendHolder.getInstance(project).init()
+      GitRepositoriesHolder.getInstance(project).init()
     }
   }
 
@@ -249,7 +249,7 @@ class GitWidgetTreeStructureTest : GitPlatformTest() {
     repositoryManager.updateAllRepositories()
 
     return invokeAndWaitIfNeeded {
-      val holder = GitRepositoriesFrontendHolder.getInstance(project)
+      val holder = GitRepositoriesHolder.getInstance(project)
       val repositories = holder.getAll().sorted()
       //TODO replace with the actual tree from GitBranchesTreePopupBase
       val tree = Tree()

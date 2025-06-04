@@ -3,7 +3,7 @@ package git4idea.ui.branch.popup
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import git4idea.repo.GitRepository
 import org.apache.http.annotation.Obsolete
@@ -20,7 +20,7 @@ internal object GitBranchesTreePopupOnBackend {
   @JvmStatic
   fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
     val preferredSelection = selectedRepository?.let {
-      GitRepositoriesFrontendHolder.getInstance(project).get(selectedRepository.rpcId)
+      GitRepositoriesHolder.getInstance(project).get(selectedRepository.rpcId)
     }
     return GitBranchesWidgetPopup.createPopup(project, preferredSelection)
   }

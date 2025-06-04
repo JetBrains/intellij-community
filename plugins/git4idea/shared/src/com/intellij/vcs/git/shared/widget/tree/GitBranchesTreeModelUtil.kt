@@ -12,7 +12,7 @@ import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
 import com.intellij.vcs.git.shared.ref.GitRefUtil
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.telemetry.GitBranchesPopupSpan
 import git4idea.*
 import git4idea.branch.GitBranchType
@@ -32,7 +32,7 @@ internal val emptyBranchComparator = Comparator<GitReference> { _, _ -> 0 }
 internal fun buildBranchTreeNodes(branchType: GitRefType,
                                   branchesMap: Map<String, Any>,
                                   path: List<String>,
-                                  repository: GitRepositoryFrontendModel? = null): List<Any> {
+                                  repository: GitRepositoryModel? = null): List<Any> {
   if (path.isEmpty()) {
     return branchesMap.mapToNodes(branchType, path, repository)
   }
@@ -46,7 +46,7 @@ internal fun buildBranchTreeNodes(branchType: GitRefType,
   }
 }
 
-private fun Map<String, Any>.mapToNodes(branchType: GitRefType, path: List<String>, repository: GitRepositoryFrontendModel?): List<Any> {
+private fun Map<String, Any>.mapToNodes(branchType: GitRefType, path: List<String>, repository: GitRepositoryModel?): List<Any> {
   return entries.map { (name, value) ->
     if (value is GitReference && repository != null) GitBranchesTreeModel.RefUnderRepository(repository, value)
     else if (value is Map<*, *>) GitBranchesTreeModel.BranchesPrefixGroup(branchType, path + name, repository) else value
@@ -103,7 +103,7 @@ fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePath? {
 
 @Suppress("UNCHECKED_CAST")
 internal fun getPreferredBranch(project: Project,
-                                repositories: List<GitRepositoryFrontendModel>,
+                                repositories: List<GitRepositoryModel>,
                                 branchNameMatcher: MinusculeMatcher?,
                                 localBranchesTree: LazyRefsSubtreeHolder<GitStandardLocalBranch>,
                                 remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>,
@@ -123,7 +123,7 @@ internal fun getPreferredBranch(project: Project,
 
 internal fun getPreferredBranch(
   project: Project,
-  repositories: List<GitRepositoryFrontendModel>,
+  repositories: List<GitRepositoryModel>,
   localBranches: List<GitBranch>
 ): GitBranch? {
   val repository = repositories.singleOrNull()
@@ -191,7 +191,7 @@ internal fun addSeparatorIfNeeded(nodes: Collection<Any>, separator: SeparatorWi
 
 internal open class LazyRepositoryHolder(
   project: Project,
-  repositories: List<GitRepositoryFrontendModel>,
+  repositories: List<GitRepositoryModel>,
   matcher: MinusculeMatcher?,
   canHaveChildren: Boolean,
 ) : LazyHolder<GitBranchesTreeModel.RepositoryNode>(

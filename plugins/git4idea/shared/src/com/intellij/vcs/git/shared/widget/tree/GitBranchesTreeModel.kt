@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.tree.AbstractTreeModel
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardLocalBranch
@@ -24,7 +24,7 @@ import kotlin.properties.Delegates.observable
 abstract class GitBranchesTreeModel(
   protected val project: Project,
   private val actions: List<Any>,
-  protected val repositories: List<GitRepositoryFrontendModel>,
+  protected val repositories: List<GitRepositoryModel>,
 ) : AbstractTreeModel() {
   protected var actionsTree: LazyActionsHolder = LazyActionsHolder(project, emptyList(), null)
   protected var localBranchesTree: LazyRefsSubtreeHolder<GitStandardLocalBranch> = LazyRefsSubtreeHolder.emptyHolder()
@@ -122,7 +122,7 @@ abstract class GitBranchesTreeModel(
       else LazyRefsSubtreeHolder.emptyHolder()
   }
 
-  protected fun getRefComparator(affectedRepositories: List<GitRepositoryFrontendModel> = repositories): Comparator<GitReference> {
+  protected fun getRefComparator(affectedRepositories: List<GitRepositoryModel> = repositories): Comparator<GitReference> {
     return compareBy<GitReference> {
       !it.isCurrentRefInAny(affectedRepositories)
     } then compareBy {
@@ -143,11 +143,11 @@ abstract class GitBranchesTreeModel(
   /**
    * @return true if there is at least one repository where the reference is not the current branch.
    */
-  private fun GitReference.isCurrentRefInAny(repositories: List<GitRepositoryFrontendModel>): Boolean {
+  private fun GitReference.isCurrentRefInAny(repositories: List<GitRepositoryModel>): Boolean {
     return repositories.any { it.state.isCurrentRef(this) }
   }
 
-  private fun GitReference.isFavoriteInAll(repositories: List<GitRepositoryFrontendModel>): Boolean {
+  private fun GitReference.isFavoriteInAll(repositories: List<GitRepositoryModel>): Boolean {
     return repositories.all { repo -> repo.favoriteRefs.contains(this) }
   }
 
@@ -157,13 +157,13 @@ abstract class GitBranchesTreeModel(
   }
   data class BranchesPrefixGroup(val type: GitRefType,
                                  val prefix: List<String>,
-                                 val repository: GitRepositoryFrontendModel? = null) : PathElementIdProvider {
+                                 val repository: GitRepositoryModel? = null) : PathElementIdProvider {
     override fun getPathElementId(): String = type.name + "/" + prefix.toString()
   }
-  data class RefTypeUnderRepository(val repository: GitRepositoryFrontendModel, val type: GitRefType)
+  data class RefTypeUnderRepository(val repository: GitRepositoryModel, val type: GitRefType)
 
   data class RepositoryNode(
-    val repository: GitRepositoryFrontendModel,
+    val repository: GitRepositoryModel,
     /**
      * Set to true if this repository node doesn't contain children (e.g., used to navigate to the next level pop-up).
      */
@@ -172,7 +172,7 @@ abstract class GitBranchesTreeModel(
     override fun getPresentableText(): String = repository.shortName
   }
 
-  data class RefUnderRepository(val repository: GitRepositoryFrontendModel, val ref: GitReference): PresentableNode {
+  data class RefUnderRepository(val repository: GitRepositoryModel, val ref: GitReference): PresentableNode {
     override fun getPresentableText(): String = ref.name
   }
 

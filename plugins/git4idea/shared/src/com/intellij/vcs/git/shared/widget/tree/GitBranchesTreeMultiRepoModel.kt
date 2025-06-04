@@ -3,7 +3,7 @@ package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.git.shared.ref.GitRefUtil
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import git4idea.GitReference
 import git4idea.branch.GitBranchType
@@ -13,7 +13,7 @@ import javax.swing.tree.TreePath
 
 internal class GitBranchesTreeMultiRepoModel(
   project: Project,
-  repositories: List<GitRepositoryFrontendModel>,
+  repositories: List<GitRepositoryModel>,
   topLevelActions: List<Any>
 ) : GitBranchesTreeModel(project, topLevelActions, repositories) {
   private val repositoriesNodes = this.repositories.map { RepositoryNode(it, isLeaf = true) }

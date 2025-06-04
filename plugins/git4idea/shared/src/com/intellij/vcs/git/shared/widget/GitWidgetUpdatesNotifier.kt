@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.flow.debounceBatch
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -15,10 +15,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.milliseconds
 
-@ApiStatus.Internal
-// TODO move to the frontend module
 @Service(Service.Level.PROJECT)
-class GitWidgetUpdatesNotifier(project: Project, cs: CoroutineScope) {
+internal class GitWidgetUpdatesNotifier(project: Project, cs: CoroutineScope) {
   private val _updates =
     MutableSharedFlow<GitWidgetUpdate>(replay = 0, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -46,14 +44,14 @@ class GitWidgetUpdatesNotifier(project: Project, cs: CoroutineScope) {
     }
 
   init {
-    project.messageBus.connect(cs).subscribe(GitRepositoriesFrontendHolder.UPDATES, GitRepositoriesFrontendHolder.UpdatesListener { event ->
+    project.messageBus.connect(cs).subscribe(GitRepositoriesHolder.UPDATES, GitRepositoriesHolder.UpdatesListener { event ->
       val update = when (event) {
-        GitRepositoriesFrontendHolder.UpdateType.FAVORITE_REFS_UPDATED -> GitWidgetUpdate.REPAINT
-        GitRepositoriesFrontendHolder.UpdateType.REPOSITORY_CREATED -> GitWidgetUpdate.REFRESH
-        GitRepositoriesFrontendHolder.UpdateType.REPOSITORY_DELETED -> GitWidgetUpdate.REFRESH
-        GitRepositoriesFrontendHolder.UpdateType.REPOSITORY_STATE_UPDATED -> GitWidgetUpdate.REFRESH
-        GitRepositoriesFrontendHolder.UpdateType.TAGS_LOADED -> GitWidgetUpdate.REFRESH_TAGS
-        GitRepositoriesFrontendHolder.UpdateType.TAGS_HIDDEN -> GitWidgetUpdate.REFRESH
+        GitRepositoriesHolder.UpdateType.FAVORITE_REFS_UPDATED -> GitWidgetUpdate.REPAINT
+        GitRepositoriesHolder.UpdateType.REPOSITORY_CREATED -> GitWidgetUpdate.REFRESH
+        GitRepositoriesHolder.UpdateType.REPOSITORY_DELETED -> GitWidgetUpdate.REFRESH
+        GitRepositoriesHolder.UpdateType.REPOSITORY_STATE_UPDATED -> GitWidgetUpdate.REFRESH
+        GitRepositoriesHolder.UpdateType.TAGS_LOADED -> GitWidgetUpdate.REFRESH_TAGS
+        GitRepositoriesHolder.UpdateType.TAGS_HIDDEN -> GitWidgetUpdate.REFRESH
       }
 
       if (LOG.isDebugEnabled) {

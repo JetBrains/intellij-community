@@ -18,7 +18,7 @@ import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.branch.GitBranchesClippedNamesCache
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupStepBase
@@ -61,7 +61,7 @@ abstract class GitBranchesTreeRenderer(
   }
 
   private fun getBranchIcon(reference: GitReference,
-                            repositories: List<GitRepositoryFrontendModel>,
+                            repositories: List<GitRepositoryModel>,
                             selected: Boolean): Icon {
     val isCurrent = repositories.all { it.state.isCurrentRef(reference) }
     val isFavorite = repositories.all { it.favoriteRefs.contains(reference) }

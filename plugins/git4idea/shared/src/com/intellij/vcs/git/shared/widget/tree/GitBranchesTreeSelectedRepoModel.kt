@@ -3,7 +3,7 @@ package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
@@ -16,13 +16,13 @@ import javax.swing.tree.TreePath
  */
 internal class GitBranchesTreeSelectedRepoModel(
   project: Project,
-  selectedRepository: GitRepositoryFrontendModel,
+  selectedRepository: GitRepositoryModel,
   /**
    * Note that it isn't the same as [repositories].
    * [allProjectRepositories] contains a list of repositories to be displayed as repo-level nodes in this tree,
    * while [repositories] is used to specify repositories which refs should be displayed
    */
-  private val allProjectRepositories: List<GitRepositoryFrontendModel>,
+  private val allProjectRepositories: List<GitRepositoryModel>,
   topLevelActions: List<Any>
 ) : GitBranchesTreeSingleRepoModel(project, selectedRepository, topLevelActions) {
   private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()

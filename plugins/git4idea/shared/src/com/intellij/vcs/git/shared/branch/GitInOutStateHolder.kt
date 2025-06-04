@@ -11,12 +11,9 @@ import com.intellij.vcs.git.shared.rpc.GitIncomingOutgoingStateApi
 import git4idea.GitStandardLocalBranch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-@ApiStatus.Internal
-// This class is temporarily moved to the shared module until the branch widget can be fully moved to the frontend.
-class GitInOutStateHolder(private val project: Project, cs: CoroutineScope) {
+internal class GitInOutStateHolder(private val project: Project, cs: CoroutineScope) {
   private var state: GitInOutProjectState = GitInOutProjectState(emptyMap(), emptyMap())
 
   init {

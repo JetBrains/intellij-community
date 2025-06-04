@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.widget.GitWidgetUpdatesNotifier
 import git4idea.config.GitVcsSettings
 
@@ -48,7 +48,7 @@ internal abstract class GitWidgetSettingsToggleAction(
     }
 
     fun isMultiRoot(project: Project): Boolean {
-      val repositoriesHolder = GitRepositoriesFrontendHolder.getInstance(project)
+      val repositoriesHolder = GitRepositoriesHolder.getInstance(project)
       return if (!repositoriesHolder.initialized) false else repositoriesHolder.getAll().size > 1
     }
   }

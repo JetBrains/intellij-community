@@ -19,7 +19,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.vcs.git.shared.GitDisplayName
 import com.intellij.vcs.git.shared.actions.GitSingleRefActions
 import com.intellij.vcs.git.shared.ref.GitRefUtil
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys
 import com.intellij.vcs.git.shared.widget.tree.*
@@ -32,8 +32,8 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 class GitBranchesTreePopupStep private constructor(
   project: Project,
-  selectedRepository: GitRepositoryFrontendModel?,
-  repositories: List<GitRepositoryFrontendModel>,
+  selectedRepository: GitRepositoryModel?,
+  repositories: List<GitRepositoryModel>,
   private val isFirstStep: Boolean,
 ) : GitBranchesTreePopupStepBase(project, selectedRepository, repositories) {
   private var finalRunnable: Runnable? = null
@@ -135,8 +135,8 @@ class GitBranchesTreePopupStep private constructor(
     @VisibleForTesting
     fun create(
       project: Project,
-      preferredSelection: GitRepositoryFrontendModel?,
-      repositories: List<GitRepositoryFrontendModel>,
+      preferredSelection: GitRepositoryModel?,
+      repositories: List<GitRepositoryModel>,
     ): GitBranchesTreePopupStep {
       val selectedRepoIfNeeded = when {
         repositories.size <= 1 -> null
@@ -150,13 +150,13 @@ class GitBranchesTreePopupStep private constructor(
     /**
      * 2nd-level popup shown on repository click
      */
-    private fun createPopupStepForSelectedRepo(project: Project, repository: GitRepositoryFrontendModel): GitBranchesTreePopupStep =
+    private fun createPopupStepForSelectedRepo(project: Project, repository: GitRepositoryModel): GitBranchesTreePopupStep =
       GitBranchesTreePopupStep(project, repository, listOf(repository), false)
 
     private fun createActionStep(actionGroup: ActionGroup,
                                  project: Project,
-                                 selectedRepository: GitRepositoryFrontendModel?,
-                                 repositories: List<GitRepositoryFrontendModel>,
+                                 selectedRepository: GitRepositoryModel?,
+                                 repositories: List<GitRepositoryModel>,
                                  reference: GitReference? = null): ListPopupStep<*> {
       val dataContext = createDataContext(project, selectedRepository, repositories, reference)
       return JBPopupFactory.getInstance()
@@ -176,8 +176,8 @@ class GitBranchesTreePopupStep private constructor(
 
     internal fun createDataContext(
       project: Project,
-      selectedRepository: GitRepositoryFrontendModel?,
-      repositories: List<GitRepositoryFrontendModel>,
+      selectedRepository: GitRepositoryModel?,
+      repositories: List<GitRepositoryModel>,
       reference: GitReference? = null,
       component: JComponent? = null,
     ): DataContext =

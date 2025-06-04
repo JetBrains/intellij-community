@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.ui.RowIcon
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
 import git4idea.i18n.GitBundle
@@ -47,7 +47,7 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
         getPopupForRepoSetup(state.trustedProject, event)
       }
       is GitWidgetState.OnRepository -> {
-        val repo = GitRepositoriesFrontendHolder.getInstance(project).get(state.repository)
+        val repo = GitRepositoriesHolder.getInstance(project).get(state.repository)
         GitBranchesWidgetPopup.createPopup(project, repo)
       }
       GitWidgetState.UnknownGitRepository -> getPopupForUnknownGitRepo(project, event)
@@ -55,7 +55,7 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
   }
 
   protected open fun doUpdate(e: AnActionEvent, project: Project) {
-    val state = if (GitRepositoriesFrontendHolder.getInstance(project).initialized) {
+    val state = if (GitRepositoriesHolder.getInstance(project).initialized) {
       GitWidgetStateHolder.Companion.getInstance(project).currentState
     } else {
       GitWidgetState.DoNotShow

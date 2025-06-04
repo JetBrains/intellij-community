@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.vcs.git.shared.ref.GitRefUtil
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitRefType
@@ -14,7 +14,7 @@ import javax.swing.tree.TreePath
 
 internal class GitBranchesTreeMultiRepoFilteringModel(
   project: Project,
-  repositories: List<GitRepositoryFrontendModel>,
+  repositories: List<GitRepositoryModel>,
   topLevelActions: List<Any> = emptyList(),
 ) : GitBranchesTreeModel(project, topLevelActions, repositories) {
   private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
@@ -92,7 +92,7 @@ internal class GitBranchesTreeMultiRepoFilteringModel(
     return topNodes + localAndRemoteNodes + notEmptyRepositories
   }
 
-  private fun getTreeNodes(branchType: GitRefType, path: List<String>, repository: GitRepositoryFrontendModel? = null): List<Any> {
+  private fun getTreeNodes(branchType: GitRefType, path: List<String>, repository: GitRepositoryModel? = null): List<Any> {
     val branchesMap: Map<String, Any> = when {
       GitBranchType.LOCAL == branchType && repository == null -> localBranchesTree.tree
       GitBranchType.LOCAL == branchType && repository != null -> repositoriesWithBranchesTree[repository.repositoryId].localBranches.tree
@@ -149,7 +149,7 @@ internal class GitBranchesTreeMultiRepoFilteringModel(
     }
   }
 
-  private inner class LazyRepositoryBranchesSubtreeHolder(private val repository: GitRepositoryFrontendModel) {
+  private inner class LazyRepositoryBranchesSubtreeHolder(private val repository: GitRepositoryModel) {
     val localBranches by lazy {
       LazyRefsSubtreeHolder(
         repository.state.localBranchesOrCurrent,

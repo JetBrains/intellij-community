@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.util.ui.JBDimension
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupMinimalRenderer
@@ -26,7 +26,7 @@ import javax.swing.tree.TreePath
 
 internal class GitCompareWithBranchPopupStep(
   project: Project,
-  private val repository: GitRepositoryFrontendModel,
+  private val repository: GitRepositoryModel,
   private val onRefSelected: Consumer<GitReference>,
 ) : GitBranchesTreePopupStepBase(project = project, selectedRepository = null, repositories = listOf(repository)) {
   private var finalRunnable: Runnable? = null
@@ -58,7 +58,7 @@ internal class GitCompareWithBranchPopupStep(
   override fun getTitle(): String = DvcsBundle.message("popup.title.select.branch.to.compare")
 }
 
-private class GitCompareWithBranchesTreeModel(project: Project, repository: GitRepositoryFrontendModel) : GitBranchesTreeSingleRepoModel(project, repository, emptyList()) {
+private class GitCompareWithBranchesTreeModel(project: Project, repository: GitRepositoryModel) : GitBranchesTreeSingleRepoModel(project, repository, emptyList()) {
   override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.localBranches.skipCurrentBranch()
   override fun getRecentBranches(): Collection<GitStandardLocalBranch> = super.getRecentBranches().skipCurrentBranch()
 

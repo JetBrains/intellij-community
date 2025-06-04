@@ -7,15 +7,14 @@ import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import com.intellij.vcs.git.shared.ref.GitFavoriteRefs
 import org.jetbrains.annotations.ApiStatus
 
-// This class is temporarily moved to the shared module until the branch widget can be fully moved to the frontend.
 @ApiStatus.Internal
-interface GitRepositoryFrontendModel: Comparable<GitRepositoryFrontendModel> {
+interface GitRepositoryModel: Comparable<GitRepositoryModel> {
   val repositoryId: RepositoryId
   val shortName: String
   val state: GitRepositoryState
   val favoriteRefs: GitFavoriteRefs
   val root: VirtualFile?
 
-  override fun compareTo(other: GitRepositoryFrontendModel): Int =
+  override fun compareTo(other: GitRepositoryModel): Int =
     NaturalComparator.INSTANCE.compare(shortName, other.shortName)
 }

@@ -12,8 +12,8 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.ref.GitReferenceName
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetActions
 import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeFilters
@@ -123,8 +123,8 @@ internal class GitBranchesTreePopup private constructor(
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
 
-    fun create(project: Project, preferredSelection: GitRepositoryFrontendModel?): GitBranchesTreePopup {
-      val repositories = GitRepositoriesFrontendHolder.getInstance(project).getAll().sorted()
+    fun create(project: Project, preferredSelection: GitRepositoryModel?): GitBranchesTreePopup {
+      val repositories = GitRepositoriesHolder.getInstance(project).getAll().sorted()
       return GitBranchesTreePopup(project, GitBranchesTreePopupStep.create(project, preferredSelection, repositories)).also {
         it.setIsMovable(true)
       }

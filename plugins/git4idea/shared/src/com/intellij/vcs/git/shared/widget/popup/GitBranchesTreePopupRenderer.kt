@@ -15,7 +15,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
 import com.intellij.vcs.git.shared.branch.GitInOutStateHolder
 import com.intellij.vcs.git.shared.branch.calcTooltip
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
 import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeModel
 import com.intellij.vcs.git.shared.widget.tree.GitBranchesTreeRenderer
@@ -108,7 +108,7 @@ class GitBranchesTreePopupRenderer(treePopupStep: GitBranchesTreePopupStepBase) 
     }
   }
 
-  private fun GitStandardLocalBranch.getCommonTrackedBranch(repositories: List<GitRepositoryFrontendModel>): GitRemoteBranch? {
+  private fun GitStandardLocalBranch.getCommonTrackedBranch(repositories: List<GitRepositoryModel>): GitRemoteBranch? {
     var commonTrackedBranch: GitRemoteBranch? = null
 
     for (repository in repositories) {

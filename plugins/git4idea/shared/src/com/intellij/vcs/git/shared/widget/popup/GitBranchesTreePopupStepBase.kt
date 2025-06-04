@@ -10,7 +10,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.ui.getCommonText
 import com.intellij.vcs.git.shared.ui.getInRepoText
 import com.intellij.vcs.git.shared.ui.getText
@@ -26,8 +26,8 @@ import javax.swing.tree.TreePath
 @ApiStatus.Internal
 abstract class GitBranchesTreePopupStepBase(
   val project: Project,
-  internal val selectedRepository: GitRepositoryFrontendModel?,
-  internal val repositories: List<GitRepositoryFrontendModel>,
+  internal val selectedRepository: GitRepositoryModel?,
+  internal val repositories: List<GitRepositoryModel>,
 ) : PopupStep<Any> {
   internal val affectedRepositories = selectedRepository?.let(::listOf) ?: repositories
   internal val affectedRepositoriesIds = affectedRepositories.map { it.repositoryId }

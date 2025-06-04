@@ -31,14 +31,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.ConcurrentHashMap
 
-// This class is temporarily moved to the shared module until the branch widget can be fully moved to the frontend.
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class GitRepositoriesFrontendHolder(
+class GitRepositoriesHolder(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {
-  private val repositories: MutableMap<RepositoryId, GitRepositoryFrontendModelImpl> = ConcurrentHashMap()
+  private val repositories: MutableMap<RepositoryId, GitRepositoryModelImpl> = ConcurrentHashMap()
 
   @Volatile
   var initialized: Boolean = false
@@ -46,12 +45,12 @@ class GitRepositoriesFrontendHolder(
 
   private val initLock = Mutex()
 
-  fun getAll(): List<GitRepositoryFrontendModel> {
+  fun getAll(): List<GitRepositoryModel> {
     logErrorIfNotInitialized()
     return repositories.values.toList()
   }
 
-  fun get(repositoryId: RepositoryId): GitRepositoryFrontendModel {
+  fun get(repositoryId: RepositoryId): GitRepositoryModel {
     logErrorIfNotInitialized()
     val repo = repositories[repositoryId]
     if (repo != null) return repo
@@ -62,11 +61,11 @@ class GitRepositoriesFrontendHolder(
       }
     }
 
-    return GitRepositoryFrontendModelStub(repositoryId)
+    return GitRepositoryModelStub(repositoryId)
   }
 
   /**
-   * Caller should ensure that [initialized] is set to true before accessing the data in [GitRepositoriesFrontendHolder]
+   * Caller should ensure that [initialized] is set to true before accessing the data in [GitRepositoriesHolder]
    */
   private fun logErrorIfNotInitialized() {
     if (!initialized) {
@@ -85,7 +84,7 @@ class GitRepositoriesFrontendHolder(
     }
   }
 
-  private suspend fun fetchAllRepositories(): Map<RepositoryId, GitRepositoryFrontendModelImpl> = GitRepositoryApi.getInstance().getRepositories(project.projectId()).associate { repositoryDto ->
+  private suspend fun fetchAllRepositories(): Map<RepositoryId, GitRepositoryModelImpl> = GitRepositoryApi.getInstance().getRepositories(project.projectId()).associate { repositoryDto ->
     repositoryDto.repositoryId to convertToRepositoryInfo(repositoryDto)
   }
 
@@ -171,15 +170,15 @@ class GitRepositoriesFrontendHolder(
   }
 
   companion object {
-    fun getInstance(project: Project): GitRepositoriesFrontendHolder = project.getService(GitRepositoriesFrontendHolder::class.java)
+    fun getInstance(project: Project): GitRepositoriesHolder = project.getService(GitRepositoriesHolder::class.java)
 
     @ApiStatus.Internal
     val UPDATES: Topic<UpdatesListener> = Topic(UpdatesListener::class.java, Topic.BroadcastDirection.NONE)
 
-    private val LOG = Logger.getInstance(GitRepositoriesFrontendHolder::class.java)
+    private val LOG = Logger.getInstance(GitRepositoriesHolder::class.java)
 
     private fun convertToRepositoryInfo(repositoryDto: GitRepositoryDto) =
-      GitRepositoryFrontendModelImpl(
+      GitRepositoryModelImpl(
         repositoryId = repositoryDto.repositoryId,
         shortName = repositoryDto.shortName,
         state = convertToRepositoryState(repositoryDto.state),
@@ -221,13 +220,13 @@ class GitRepositoriesFrontendHolder(
   }
 }
 
-private open class GitRepositoryFrontendModelImpl(
+private open class GitRepositoryModelImpl(
   override val repositoryId: RepositoryId,
   override val shortName: String,
   override var state: GitRepositoryStateImpl,
   override var favoriteRefs: GitFavoriteRefs,
   private val rootFileId: VirtualFileId,
-) : GitRepositoryFrontendModel {
+) : GitRepositoryModel {
   override val root: VirtualFile?
     get() = rootFileId.virtualFile()
 }
@@ -261,7 +260,7 @@ private class GitRepositoryStateImpl(
     else revision?.hash ?: GitBundle.message("git.status.bar.widget.text.unknown")
 }
 
-private class GitRepositoryFrontendModelStub(override val repositoryId: RepositoryId) : GitRepositoryFrontendModel {
+private class GitRepositoryModelStub(override val repositoryId: RepositoryId) : GitRepositoryModel {
   override val shortName = ""
   override val state = GitRepositoryStateImpl(null, null, emptySet(), emptySet(), emptySet(),  emptyList(), GitOperationState.DETACHED_HEAD, emptyMap())
   override val favoriteRefs = GitFavoriteRefs(emptySet(), emptySet(), emptySet())

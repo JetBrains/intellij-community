@@ -1,15 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.shared.branch
 
-import com.intellij.dvcs.DvcsImplIconsExt
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
 import git4idea.i18n.GitBundle.message
-import icons.DvcsImplIcons
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.Icon
 
 @ApiStatus.Internal
 @Serializable
@@ -47,19 +44,6 @@ data class GitInOutCountersInRepo(
   fun hasIncoming(): Boolean = incoming != null
   fun hasOutgoing(): Boolean = outgoing != null
   fun hasUnfetched(): Boolean = incoming == 0
-}
-
-@ApiStatus.Internal
-fun GitInOutCountersInProject.getIcon(): Icon? {
-  val hasIncomingIcon = hasIncoming() || hasUnfetched()
-  val hasOutgoingIcon = hasOutgoing()
-
-  return when {
-    hasIncomingIcon && hasOutgoingIcon -> DvcsImplIconsExt.incomingOutgoingIcon
-    hasIncomingIcon -> DvcsImplIcons.Incoming
-    hasOutgoingIcon -> DvcsImplIcons.Outgoing
-    else -> null
-  }
 }
 
 @ApiStatus.Internal

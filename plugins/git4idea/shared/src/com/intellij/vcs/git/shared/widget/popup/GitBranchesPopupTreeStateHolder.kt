@@ -9,7 +9,7 @@ import javax.swing.JTree
 
 @State(name = "GitBranchesPopupTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
 @Service(Service.Level.PROJECT)
-class GitBranchesPopupTreeStateHolder : PersistentStateComponent<TreeState> {
+internal class GitBranchesPopupTreeStateHolder : PersistentStateComponent<TreeState> {
 
   private var treeState: TreeState? = null
 

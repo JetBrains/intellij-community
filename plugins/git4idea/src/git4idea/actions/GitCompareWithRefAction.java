@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.git.shared.repo.GitRepositoriesFrontendHolder;
+import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.GitTag;
@@ -37,7 +37,7 @@ public class GitCompareWithRefAction extends DvcsCompareWithAction<GitRepository
     Consumer<GitReference> selectionHandler = selected -> showDiff(repository, file, selected);
     return new GitCompareWithBranchPopup(project,
                                          new GitCompareWithBranchPopupStep(project,
-                                                                           GitRepositoriesFrontendHolder.Companion.getInstance(project)
+                                                                           GitRepositoriesHolder.Companion.getInstance(project)
                                                                              .get(repository.getRpcId()), selectionHandler));
   }
 

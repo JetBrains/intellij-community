@@ -3,7 +3,7 @@ package com.intellij.vcs.git.shared.widget.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesTreePopupBase
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
@@ -17,7 +17,7 @@ import javax.swing.tree.TreePath
 @ApiStatus.Internal
 open class GitBranchesTreeSingleRepoModel(
   project: Project,
-  val repository: GitRepositoryFrontendModel,
+  val repository: GitRepositoryModel,
   topLevelActions: List<Any>,
 ) : GitBranchesTreeModel(project, topLevelActions, listOf(repository)) {
   private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()

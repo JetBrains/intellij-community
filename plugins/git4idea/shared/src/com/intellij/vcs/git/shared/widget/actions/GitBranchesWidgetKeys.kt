@@ -2,7 +2,7 @@
 package com.intellij.vcs.git.shared.widget.actions
 
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys.AFFECTED_REPOSITORIES
 import com.intellij.vcs.git.shared.widget.actions.GitBranchesWidgetKeys.SELECTED_REPOSITORY
 import com.intellij.vcs.git.shared.widget.popup.GitBranchesWidgetPopup
@@ -21,6 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 object GitBranchesWidgetKeys {
   val POPUP: DataKey<GitBranchesWidgetPopup> = DataKey.create("GIT_BRANCHES_TREE_POPUP")
 
-  val SELECTED_REPOSITORY: DataKey<GitRepositoryFrontendModel> = DataKey.create("Git.Widget.Selected.Repository")
-  val AFFECTED_REPOSITORIES: DataKey<List<GitRepositoryFrontendModel>> = DataKey.create("Git.Frontend.Repositories")
+  val SELECTED_REPOSITORY: DataKey<GitRepositoryModel> = DataKey.create("Git.Widget.Selected.Repository")
+  val AFFECTED_REPOSITORIES: DataKey<List<GitRepositoryModel>> = DataKey.create("Git.Frontend.Repositories")
 }

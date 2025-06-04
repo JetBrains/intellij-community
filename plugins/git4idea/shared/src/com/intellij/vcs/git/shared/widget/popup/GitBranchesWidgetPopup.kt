@@ -3,7 +3,7 @@ package com.intellij.vcs.git.shared.widget.popup
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.vcs.git.shared.repo.GitRepositoryFrontendModel
+import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
@@ -24,7 +24,7 @@ interface GitBranchesWidgetPopup: JBPopup {
   fun getExpandedPathsSize(): Int
 
   companion object {
-    fun createPopup(project: Project, preferredSelection: GitRepositoryFrontendModel?): GitBranchesWidgetPopup =
+    fun createPopup(project: Project, preferredSelection: GitRepositoryModel?): GitBranchesWidgetPopup =
       GitBranchesTreePopup.create(project, preferredSelection)
   }
 }
