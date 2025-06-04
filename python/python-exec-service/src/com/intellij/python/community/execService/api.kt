@@ -3,14 +3,17 @@ package com.intellij.python.community.execService
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.impl.ExecServiceImpl
+import com.intellij.python.community.execService.impl.PyExecBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
@@ -69,22 +72,6 @@ interface ExecService {
     processOutputTransformer: ProcessOutputTransformer<T>,
   ): PyExecResult<T>
 
-  /**
-   * See [execute]
-   */
-  @CheckReturnValue
-  suspend fun execGetStdout(
-    whatToExec: WhatToExec,
-    args: List<String> = emptyList(),
-    options: ExecOptions = ExecOptions(),
-    procListener: PyProcessListener? = null,
-  ): PyExecResult<String> = execute(
-    whatToExec = whatToExec,
-    args = args,
-    options = options,
-    processOutputTransformer = ZeroCodeStdoutTransformer,
-    procListener = procListener
-  )
 }
 
 /**
@@ -125,3 +112,64 @@ sealed interface WhatToExec {
  * Default server implementation
  */
 fun ExecService(): ExecService = ExecServiceImpl
+
+/**
+ * See [ExecService.execute]
+ */
+@CheckReturnValue
+suspend fun ExecService.execGetStdout(
+  whatToExec: WhatToExec,
+  args: List<String> = emptyList(),
+  options: ExecOptions = ExecOptions(),
+  procListener: PyProcessListener? = null,
+): PyExecResult<String> = execute(
+  whatToExec = whatToExec,
+  args = args,
+  options = options,
+  processOutputTransformer = ZeroCodeStdoutTransformer,
+  procListener = procListener
+)
+
+/**
+ * Execute [binaryName] on [eelApi].
+ * This [binaryName] will be searched in `PATH`
+ */
+@CheckReturnValue
+suspend fun ExecService.execGetStdout(
+  eelApi: EelApi,
+  binaryName: String,
+  args: List<String> = emptyList(),
+  options: ExecOptions = ExecOptions(),
+  procListener: PyProcessListener? = null,
+): PyResult<String> {
+  val whatToExec = WhatToExec.Binary.fromRelativeName(eelApi, binaryName)
+                   ?: return PyResult.localizedError(PyExecBundle.message("py.exec.fileNotFound", binaryName, eelApi.descriptor.userReadableDescription))
+  return execGetStdout(whatToExec, args, options, procListener)
+}
+
+/**
+ * Execute [binary] right directly on the eel it resides on.
+ */
+@CheckReturnValue
+suspend fun ExecService.execGetStdout(
+  binary: Path,
+  args: List<String> = emptyList(),
+  options: ExecOptions = ExecOptions(),
+  procListener: PyProcessListener? = null,
+): PyExecResult<String> = execGetStdout(WhatToExec.Binary(binary), args, options, procListener)
+
+/**
+ * Execute [commandForShell] on [eelApi].
+ * Shell is `cmd` for Windows and Bourne Shell for POSIX.
+ */
+@CheckReturnValue
+suspend fun ExecService.execGetStdoutInShell(
+  eelApi: EelApi,
+  commandForShell: String,
+  args: List<String> = emptyList(),
+  options: ExecOptions = ExecOptions(),
+  procListener: PyProcessListener? = null,
+): PyExecResult<String> {
+  val (shell, arg) = eelApi.exec.getShell()
+  return execGetStdout(WhatToExec.Binary(shell.asNioPath()), listOf(arg, commandForShell) + args, options, procListener)
+}

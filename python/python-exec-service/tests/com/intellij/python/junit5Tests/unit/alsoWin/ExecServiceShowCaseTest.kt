@@ -2,7 +2,6 @@
 package com.intellij.python.junit5Tests.unit.alsoWin
 
 import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.readWholeText
@@ -33,6 +32,39 @@ import kotlin.time.Duration.Companion.minutes
  */
 @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
 class ExecServiceShowCaseTest {
+
+  @CartesianTest
+  fun testExecSimpleApi(
+    @EelSource eelHolder: EelHolder,
+    @CartesianTest.Values(booleans = [true, false]) rainyDay: Boolean,
+    @CartesianTest.Values(booleans = [true, false]) useShell: Boolean,
+  ): Unit = timeoutRunBlocking(5.minutes) {
+    val eel = eelHolder.eel
+    val sut = ExecService()
+    val hello = "hello"
+
+    val r = if (useShell) {
+      sut.execGetStdoutInShell(eel, if (rainyDay) "abc123" else "echo $hello")
+    }
+    else {
+      val (binary, args) = when (eel.platform) {
+        is EelPlatform.Windows -> Pair("cmd.exe", arrayOf("/C", "echo $hello\r\nexit\r\n"))
+        is EelPlatform.Posix -> Pair("sh", arrayOf("-c", "echo $hello && exit"))
+      }
+      sut.execGetStdout(eel, if (rainyDay) "abc123" else binary, args.toList())
+    }
+
+    when (r) {
+      is Result.Failure -> {
+        assertTrue(rainyDay, "unexpected error ${r.error}")
+      }
+      is Result.Success -> {
+        assertFalse(rainyDay)
+        assertThat("No expected stdout", r.result, CoreMatchers.containsString(hello))
+      }
+    }
+  }
+
 
   @ParameterizedTest
   @EelSource

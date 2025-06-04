@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.WhatToExec
+import com.intellij.python.community.execService.execGetStdout
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
