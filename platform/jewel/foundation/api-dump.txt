@@ -53,3 +53,7 @@ org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope
 - bs:stickyHeader$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
 org.jetbrains.jewel.foundation.theme.JewelTheme
 - sf:Companion:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
+f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
+- f:getInstanceUuid(androidx.compose.runtime.Composer,I):java.util.UUID
+f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
+- sf:getLocalThemeInstanceUuid():androidx.compose.runtime.ProvidableCompositionLocal

@@ -17,4 +17,11 @@ import kotlin.RequiresOptIn.Level
     AnnotationTarget.TYPEALIAS,
     AnnotationTarget.VALUE_PARAMETER,
 )
+/**
+ * APIs annotated as experimental Jewel API are subject to change at any time, with no binary nor source compatibility
+ * guarantees. Behavior might change at any time.
+ *
+ * Using any API annotated as experimental in client code should be done with caution, and you will have to take care of
+ * breakages in your code when usages are impacted by a change in a Jewel update.
+ */
 public annotation class ExperimentalJewelApi
