@@ -519,7 +519,9 @@ final class UndoClientState implements Disposable {
   private void addUndoableAction(@NotNull UndoableAction action) {
     addActionToSharedStack(action);
     currentCommandMerger.addAction(action);
-    undoSpy.addUndoableAction(action, UndoableActionType.forAction(action));
+    if (!(currentProject instanceof DummyProject)) {
+      undoSpy.addUndoableAction(currentProject, action, UndoableActionType.forAction(action));
+    }
   }
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {

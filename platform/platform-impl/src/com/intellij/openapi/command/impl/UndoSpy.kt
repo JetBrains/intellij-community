@@ -20,6 +20,7 @@ interface UndoSpy {
   )
 
   fun addUndoableAction(
+    project: Project?,
     action: UndoableAction,
     type: UndoableActionType,
   )
@@ -37,7 +38,7 @@ interface UndoSpy {
     @JvmField
     val BLIND: UndoSpy = object : UndoSpy {
       override fun commandStarted(project: Project?, undoConfirmationPolicy: UndoConfirmationPolicy) {}
-      override fun addUndoableAction(action: UndoableAction, type: UndoableActionType) {}
+      override fun addUndoableAction(project: Project?, action: UndoableAction, type: UndoableActionType) {}
       override fun commandFinished(project: Project?, commandName: @Command String?, commandGroupId: Any?, isTransparent: Boolean) {}
       override fun flushCommand(project: Project?) {}
     }
