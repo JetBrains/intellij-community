@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl
 
+import com.intellij.codeInsight.folding.impl.CodeFoldingRegion.SaveType.PlainText
+import com.intellij.codeInsight.folding.impl.CodeFoldingRegion.SaveType.SecretPlaceholder
 import com.intellij.codeInsight.folding.impl.CodeFoldingZombie.Companion.putRegion
 import com.intellij.openapi.editor.impl.zombie.Necromancy
 import com.intellij.util.io.DataInputOutputUtil.*
@@ -41,13 +43,17 @@ internal object CodeFoldingNecromancy : Necromancy<CodeFoldingZombie> {
   }
 
   private fun writeRegion(output: DataOutput, region: CodeFoldingRegion) {
+    output.writeByte(region.saveType.value.toInt())
     writeINT(output, region.startOffset)
     writeINT(output, region.endOffset)
-    writeUTF(output, region.placeholderText)
     writeGroupId(output, region.groupId)
     output.writeBoolean(region.neverExpands)
     output.writeBoolean(region.isExpanded)
     output.writeBoolean(region.isAutoCreated)
+    when (region) {
+      is CodeFoldingRegion.PlainTextCodeFoldingRegion -> writeUTF(output, region.placeholderText)
+      is CodeFoldingRegion.SecretPlaceholderCodeFoldingRegion -> writeINT(output, region.placeholderLength)
+    }
   }
 
   private fun writeGroupId(output: DataOutput, groupId: Long?) {
@@ -71,14 +77,25 @@ internal object CodeFoldingNecromancy : Necromancy<CodeFoldingZombie> {
   }
 
   private fun read(input: DataInput): CodeFoldingRegion {
+    val typeByte = input.readByte()
+    val type = CodeFoldingRegion.SaveType.entries.find { it.value == typeByte} ?: error("Invalid CodeFoldingRegion type is found")
+
     val start = readINT(input)
     val end = readINT(input)
-    val placeholder = readUTF(input)
     val groupId = readGroupId(input)
     val neverExpands = input.readBoolean()
     val isExpanded = input.readBoolean()
     val isAutoCreated = input.readBoolean()
-    return CodeFoldingRegion(start, end, placeholder, groupId, neverExpands, isExpanded, isAutoCreated)
+    return when (type) {
+      PlainText -> {
+        val placeholder = readUTF(input)
+        CodeFoldingRegion.PlainTextCodeFoldingRegion(start, end, groupId, neverExpands, isExpanded, isAutoCreated, placeholder)
+      }
+      SecretPlaceholder -> {
+        val placeholder = readINT(input)
+        CodeFoldingRegion.SecretPlaceholderCodeFoldingRegion(start, end, groupId, neverExpands, isExpanded, isAutoCreated, placeholder)
+      }
+    }
   }
 
   private fun readGroupId(input: DataInput): Long? {
