@@ -124,7 +124,10 @@ abstract class ToolbarUpdater
 
       // don't update the toolbar if there is currently active modal dialog
       val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow
-      if (window is Dialog && window.isModal && !SwingUtilities.isDescendingFrom(updater.component, window)) {
+      // The isVisible checks should not be needed (how can an invisible window be focused?),
+      // but for some reason in tests it sometimes happens: the modality state is correct (not modal),
+      // but the dialog is reported as still focused, which prevents toolbar updates: IJPL-190242, KTNB-1022.
+      if (window is Dialog && window.isModal && window.isVisible && !SwingUtilities.isDescendingFrom(updater.component, window)) {
         return
       }
 
