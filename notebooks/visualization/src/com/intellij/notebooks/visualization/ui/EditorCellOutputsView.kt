@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.ui.bind
@@ -22,6 +23,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.asSafely
@@ -260,10 +262,17 @@ class EditorCellOutputsView(
     showAbove = false,
     priority = editor.notebookAppearance.cellOutputToolbarInlayPriority,
     offset = computeInlayOffset(editor.document, cell.interval.lines),
+    rendererFactory = makeGutterIcon(),
   ).also { inlay ->
     Disposer.register(this, inlay)
     Disposer.register(inlay) {
       onInlayDisposed(this)
+    }
+  }
+
+  private fun makeGutterIcon(): EditorEmbeddedComponentManager.Properties.RendererFactory? {
+    return outputs.firstNotNullOfOrNull { it.gutterRenderer }?.let { renderer ->
+      EditorEmbeddedComponentManager.Properties.RendererFactory { renderer }
     }
   }
 
@@ -282,7 +291,7 @@ class EditorCellOutputsView(
       }
     }
 
-    val outputComponent = EditorCellOutputView(editor, output, collapsingComponent, newComponent.disposable)
+    val outputComponent = EditorCellOutputView(editor, output, collapsingComponent, newComponent.disposable, newComponent.gutterRenderer)
 
     innerComponent.add(
       collapsingComponent,
