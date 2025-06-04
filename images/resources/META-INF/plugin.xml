@@ -163,11 +163,11 @@
       </action>
       <action class="org.intellij.images.scientific.action.RotateImageAction"
               id="Images.RotateImageAction"
-              icon="AllIcons.Actions.Refresh">
+              icon="org.intellij.images.ImagesIcons.Rotate">
       </action>
       <action class="org.intellij.images.scientific.action.NormalizeImageAction"
               id="Images.NormalizeImageAction"
-              icon="AllIcons.Actions.Colors">
+              icon="org.intellij.images.ImagesIcons.NormalizeImage">
       </action>
       <group id="Images.ImageOperationsGroup"
              class="org.intellij.images.scientific.action.ImageOperationsActionGroup"/>
