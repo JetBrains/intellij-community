@@ -16,12 +16,15 @@ import com.intellij.platform.project.projectId
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoAdapter
+import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
+  private var validationJob: Job? = null
 
   override fun findUsages(
     project: Project,
@@ -72,9 +75,20 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     }
   }
 
-  override fun validateModel(findModel: FindModel, onFinish: (Boolean) -> Any?) {
-    coroutineScope.launch {
-      FindRemoteApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) }
+  override fun validateModel(findModel: FindModel, onFinish: (isDirectoryExists: Boolean) -> Any?) {
+    if (validationJob?.isActive == true) {
+      validationJob?.cancel()
     }
+    validationJob = coroutineScope.launch {
+      try {
+        FindRemoteApi.getInstance().checkDirectoryExists(findModel).let { onFinish(it) }
+      } catch (_: RpcTimeoutException) {
+        onFinish(false)
+      }
+    }
+  }
+
+  override fun cancelActivities() {
+    validationJob?.cancel()
   }
 }

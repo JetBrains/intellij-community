@@ -48,4 +48,6 @@ interface FindAndReplaceExecutor {
 
   fun validateModel(findModel: FindModel, onFinish: (Boolean) -> Any?)
 
+  fun cancelActivities()
+
 }

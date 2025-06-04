@@ -230,6 +230,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
         @Override
         protected void dispose() {
+          FindAndReplaceExecutor.getInstance().cancelActivities();
           saveSettings();
           super.dispose();
         }
