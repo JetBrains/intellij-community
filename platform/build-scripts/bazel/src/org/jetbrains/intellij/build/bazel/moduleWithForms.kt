@@ -118,7 +118,7 @@ internal val moduleWithForm: Set<String> = setOf(
   "intellij.java.duplicates",
   "intellij.javaee.ejb.impl",
   "intellij.coffeescript",
-  "intellij.cidr.debugger",
+  "intellij.cidr.debugger.core",
   "intellij.c.core",
   "intellij.cidr.clangd",
   "intellij.appcode",
