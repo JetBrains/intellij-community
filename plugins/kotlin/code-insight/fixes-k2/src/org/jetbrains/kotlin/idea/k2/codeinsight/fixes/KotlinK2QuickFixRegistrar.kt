@@ -399,6 +399,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ReplaceProtectedToPublishedApiCallFixFactory.protectedCallFromPublicInlineError)
 
         registerFactory(AnnotationUsedAsAnnotationArgumentFixFactories.removeAtFromAnnotationArgumentFixFactory)
+
+        registerFactory(NoReturnValueFactory.noReturnValue)
     }
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {

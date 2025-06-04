@@ -25,6 +25,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/checkArguments", pattern = pattern)
             model("$idea/quickfix/conflictingImports", pattern = pattern)
             model("$idea/quickfix/expressions", pattern = pattern)
+            model("$idea/quickfix/explicitlyIgnoreReturnValue", pattern = pattern)
             model("$idea/quickfix/lateinit", pattern = pattern)
             model("$idea/quickfix/localVariableWithTypeParameters", pattern = pattern)
             model("$idea/quickfix/modifiers", pattern = pattern)

@@ -9685,6 +9685,30 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/explicitlyIgnoreReturnValue")
+    public static class ExplicitlyIgnoreReturnValue extends AbstractK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ignoredWithAnnotation.kt")
+        public void testIgnoredWithAnnotation() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/ignoredWithAnnotation.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/expressions")
     public static class Expressions extends AbstractK1QuickFixTest {
         @java.lang.Override
