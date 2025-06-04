@@ -3,7 +3,6 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -22,9 +21,7 @@ internal object PythonPackageManagerRunner {
     @NlsContexts.ProgressTitle backgroundProgressTitle: String,
     withBackgroundProgress: Boolean,
   ): ProcessOutput {
-    val handler = blockingContext {
-      PyPackageProcessHandler(process, command)
-    }
+    val handler = PyPackageProcessHandler(process, command)
 
     val processOutput = if (withBackgroundProgress)
       withBackgroundProgress(project, backgroundProgressTitle, true) {

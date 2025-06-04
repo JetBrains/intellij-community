@@ -112,17 +112,15 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
   @Test
   fun `non-cancellable`(): Unit = timeoutRunBlocking {
     val job = launch(Dispatchers.EDT) {
-      blockingContext {
-        Cancellation.computeInNonCancelableSection<_, Nothing> {
-          assertDoesNotThrow {
-            runWithModalProgressBlocking {
-              assertDoesNotThrow {
-                ensureActive()
-              }
-              this@launch.cancel()
-              assertDoesNotThrow {
-                ensureActive()
-              }
+      Cancellation.computeInNonCancelableSection<_, Nothing> {
+        assertDoesNotThrow {
+          runWithModalProgressBlocking {
+            assertDoesNotThrow {
+              ensureActive()
+            }
+            this@launch.cancel()
+            assertDoesNotThrow {
+              ensureActive()
             }
           }
         }
@@ -238,21 +236,15 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   private suspend fun blockingContextTest() {
     val contextModality = requireNotNull(currentCoroutineContext().contextModality())
-    blockingContext {
-      assertSame(contextModality, ModalityState.defaultModalityState())
-      runBlockingCancellable {
-        progressManagerTest {
-          val nestedModality = currentCoroutineContext().contextModality()
-          blockingContext {
-            assertSame(nestedModality, ModalityState.defaultModalityState())
-          }
-        }
-        runWithModalProgressBlockingTest {
-          val nestedModality = currentCoroutineContext().contextModality()
-          blockingContext {
-            assertSame(nestedModality, ModalityState.defaultModalityState())
-          }
-        }
+    assertSame(contextModality, ModalityState.defaultModalityState())
+    runBlockingCancellable {
+      progressManagerTest {
+        val nestedModality = currentCoroutineContext().contextModality()
+        assertSame(nestedModality, ModalityState.defaultModalityState())
+      }
+      runWithModalProgressBlockingTest {
+        val nestedModality = currentCoroutineContext().contextModality()
+        assertSame(nestedModality, ModalityState.defaultModalityState())
       }
     }
   }
@@ -511,17 +503,13 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
 private fun CoroutineScope.runWithModalProgressBlockingCoroutine(action: suspend CoroutineScope.() -> Unit): Job {
   return launch(Dispatchers.EDT) {
-    blockingContext {
-      runWithModalProgressBlocking(action)
-    }
+    runWithModalProgressBlocking(action)
   }
 }
 
 private suspend fun <T> runWithModalProgressBlockingContext(action: suspend CoroutineScope.() -> T): T {
   return withContext(Dispatchers.EDT) {
-    blockingContext {
-      runWithModalProgressBlocking(action)
-    }
+    runWithModalProgressBlocking(action)
   }
 }
 

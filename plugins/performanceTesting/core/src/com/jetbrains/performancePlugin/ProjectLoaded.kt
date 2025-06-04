@@ -22,7 +22,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
@@ -165,9 +164,7 @@ private fun runOnProjectInit(project: Project) {
 
 private class PerformancePluginInitProjectActivity : InitProjectActivity {
   override suspend fun run(project: Project) {
-    blockingContext {
-      runOnProjectInit(project)
-    }
+    runOnProjectInit(project)
   }
 }
 

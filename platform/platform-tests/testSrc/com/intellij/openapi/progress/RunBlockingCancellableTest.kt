@@ -57,19 +57,17 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   fun `with current job non-cancellable`(): Unit = timeoutRunBlocking {
     val job = launch {
-      blockingContext {
-        Cancellation.computeInNonCancelableSection<_, Nothing> {
-          assertDoesNotThrow {
-            runBlockingCancellable {
-              @OptIn(ExperimentalCoroutinesApi::class)
-              assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
-              assertDoesNotThrow {
-                ensureActive()
-              }
-              this@launch.cancel()
-              assertDoesNotThrow {
-                ensureActive()
-              }
+      Cancellation.computeInNonCancelableSection<_, Nothing> {
+        assertDoesNotThrow {
+          runBlockingCancellable {
+            @OptIn(ExperimentalCoroutinesApi::class)
+            assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+            assertDoesNotThrow {
+              ensureActive()
+            }
+            this@launch.cancel()
+            assertDoesNotThrow {
+              ensureActive()
             }
           }
         }
@@ -150,21 +148,19 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   fun `with indicator under job non-cancellable`(): Unit = timeoutRunBlocking {
     launch {
-      blockingContext {
-        indicatorTest {
-          Cancellation.computeInNonCancelableSection<_, Nothing> {
-            assertDoesNotThrow {
-              runBlockingCancellable {
-                @OptIn(ExperimentalCoroutinesApi::class)
-                assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
-                assertDoesNotThrow {
-                  ensureActive()
-                }
-                this@launch.cancel()
-                delay(100.milliseconds) // let indicator polling job kick in
-                assertDoesNotThrow {
-                  ensureActive()
-                }
+      indicatorTest {
+        Cancellation.computeInNonCancelableSection<_, Nothing> {
+          assertDoesNotThrow {
+            runBlockingCancellable {
+              @OptIn(ExperimentalCoroutinesApi::class)
+              assertNull(coroutineContext.job.parent) // rbc does not attach to blockingContext job
+              assertDoesNotThrow {
+                ensureActive()
+              }
+              this@launch.cancel()
+              delay(100.milliseconds) // let indicator polling job kick in
+              assertDoesNotThrow {
+                ensureActive()
               }
             }
           }
@@ -251,23 +247,19 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   fun `two neighbor calls the same thread restore context properly`(): Unit = timeoutRunBlocking {
     launch {
-      blockingContext {
-        runBlockingCancellable {} // 2
-      }
+      runBlockingCancellable {} // 2
     }
-    blockingContext {
-      runBlockingCancellable { // 1
-        yield()
-        // Will pump the queue and run previously launched coroutine.
-        // That coroutine runs inner runBlockingCancellable which installs its own thread context.
-        // Then inner runBlockingCancellable pumps the same queue, and gets to this continuation.
-        // This continuation tries to restore its context.
-        // We get the following incorrect chain:
-        // set context 1
-        // -> set context 2
-        // -> reset context to whatever was before 1
-        // -> reset context to whatever was before 2 (i.e. 1)
-      }
+    runBlockingCancellable { // 1
+      yield()
+      // Will pump the queue and run previously launched coroutine.
+      // That coroutine runs inner runBlockingCancellable which installs its own thread context.
+      // Then inner runBlockingCancellable pumps the same queue, and gets to this continuation.
+      // This continuation tries to restore its context.
+      // We get the following incorrect chain:
+      // set context 1
+      // -> set context 2
+      // -> reset context to whatever was before 1
+      // -> reset context to whatever was before 2 (i.e. 1)
     }
   }
 

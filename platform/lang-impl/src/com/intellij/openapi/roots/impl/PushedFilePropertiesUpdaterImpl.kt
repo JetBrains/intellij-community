@@ -231,9 +231,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       try {
         coroutineScope {
           task.getTasks().forEachConcurrent(SCANNING_PARALLELISM) { subtask ->
-            blockingContext {
-              subtask.run()
-            }
+            subtask.run()
           }
         }
         hadTasks = true
