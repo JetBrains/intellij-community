@@ -1480,7 +1480,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       //noinspection HardCodedStringLiteral
       showEmptyText(message);
-      header.loadingIcon.setIcon(EmptyIcon.ICON_16);
+      if(backendValidator.isFinished) {
+        header.loadingIcon.setIcon(EmptyIcon.ICON_16);
+      }
       myHelper.onSearchStop();
     });
   }
@@ -1747,7 +1749,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     private boolean isDirectoryExists = true;
 
     public void setNewModel(@NotNull FindModel model) {
-      this.model = model.clone();
+      this.model = model;
       isFinished = false;
       isDirectoryExists = true;
     }
@@ -1767,7 +1769,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
 
     // currently validate only directory
-    private boolean isNecessaryToRevalidate(FindModel otherModel) {
+    private static boolean isNecessaryToRevalidate(FindModel model, FindModel otherModel) {
       if (!Objects.equals(model.getDirectoryName(), otherModel.getDirectoryName())) return true;
       return false;
     }
@@ -1779,15 +1781,15 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
     @ApiStatus.Internal
     public ValidationInfo runBackendValidation() {
-      FindModel model = myHelper.getModel();
+      FindModel validatedModel = myHelper.getModel().clone();
       if (couldSkipValidation()) return null;
-      if (isFinished() && !isNecessaryToRevalidate(model)) {
+      if (isFinished() && !isNecessaryToRevalidate(this.model, validatedModel)) {
         return getValidationInfo();
       }
-      setNewModel(model);
-      FindAndReplaceExecutor.getInstance().validateModel(model, (isDirectoryExists) -> {
+      setNewModel(validatedModel);
+      FindAndReplaceExecutor.getInstance().validateModel(validatedModel, (isDirectoryExists) -> {
         FindModel currentModel = myHelper.getModel();
-        if (couldSkipValidation() || isNecessaryToRevalidate(currentModel)) return null;
+        if (couldSkipValidation() || isNecessaryToRevalidate(validatedModel, currentModel)) return null;
         setDirectoryExists(isDirectoryExists);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!isDirectoryExists) {
