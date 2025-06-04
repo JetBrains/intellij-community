@@ -224,7 +224,7 @@ private fun findBrandingResource(relativePath: String, context: BuildContext): P
   )
 }
 
-internal suspend fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
+suspend fun updateExecutablePermissions(destinationDir: Path, executableFilesMatchers: Collection<PathMatcher>) {
   spanBuilder("update executable permissions").setAttribute("dir", "$destinationDir").use(Dispatchers.IO) {
     val executable = EnumSet.of(
       PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
