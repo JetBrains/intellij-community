@@ -3,6 +3,7 @@ package org.jetbrains.jewel.markdown.extensions.github.strikethrough
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension
 import org.commonmark.parser.Parser.ParserExtension
 import org.commonmark.renderer.text.TextContentRenderer
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 
@@ -16,6 +17,7 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
  * @see GitHubStrikethroughNode
  * @see GitHubStrikethroughRendererExtension
  */
+@ExperimentalJewelApi
 public class GitHubStrikethroughProcessorExtension(requireTwoTildes: Boolean = false) : MarkdownProcessorExtension {
     private val commonMarkExtension = StrikethroughExtension.builder().requireTwoTildes(requireTwoTildes).build()
 

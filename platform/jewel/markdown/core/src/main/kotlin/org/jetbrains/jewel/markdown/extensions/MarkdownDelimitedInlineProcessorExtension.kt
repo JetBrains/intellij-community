@@ -1,9 +1,11 @@
 package org.jetbrains.jewel.markdown.extensions
 
 import org.commonmark.node.Delimited
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
+@ExperimentalJewelApi
 /** An extension for parsing [org.commonmark.node.Delimited] inline nodes. */
 public interface MarkdownDelimitedInlineProcessorExtension {
     /** Checks whether the [delimited] can be processed by this instance. */

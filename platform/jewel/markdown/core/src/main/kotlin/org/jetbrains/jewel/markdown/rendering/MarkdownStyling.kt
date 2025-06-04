@@ -25,6 +25,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPo
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition.TopEnd
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition.TopStart
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class MarkdownStyling(
     public val blockVerticalSpacing: Dp,
@@ -39,6 +40,7 @@ public class MarkdownStyling(
 ) {
     @ExperimentalJewelApi public val baseInlinesStyling: InlinesStyling = paragraph.inlinesStyling
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Paragraph(override val inlinesStyling: InlinesStyling) : WithInlinesStyling {
         override fun equals(other: Any?): Boolean {
@@ -57,6 +59,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Heading(
         public val h1: H1,
@@ -70,6 +73,7 @@ public class MarkdownStyling(
             public val padding: PaddingValues
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H1(
             override val inlinesStyling: InlinesStyling,
@@ -115,6 +119,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H2(
             override val inlinesStyling: InlinesStyling,
@@ -160,6 +165,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H3(
             override val inlinesStyling: InlinesStyling,
@@ -205,6 +211,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H4(
             override val inlinesStyling: InlinesStyling,
@@ -250,6 +257,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H5(
             override val inlinesStyling: InlinesStyling,
@@ -295,6 +303,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class H6(
             override val inlinesStyling: InlinesStyling,
@@ -371,6 +380,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class BlockQuote(
         public val padding: PaddingValues,
@@ -420,8 +430,10 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class List(public val ordered: Ordered, public val unordered: Unordered) {
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class Ordered(
             public val numberStyle: TextStyle,
@@ -475,6 +487,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class Unordered(
             public val bullet: Char?,
@@ -547,8 +560,10 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Code(public val indented: Indented, public val fenced: Fenced) {
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class Indented(
             public val editorTextStyle: TextStyle,
@@ -606,6 +621,7 @@ public class MarkdownStyling(
             public companion object
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class Fenced(
             public val editorTextStyle: TextStyle,
@@ -708,6 +724,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Image(
         public val alignment: Alignment,
@@ -761,6 +778,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class ThematicBreak(
         public val padding: PaddingValues,
@@ -792,6 +810,7 @@ public class MarkdownStyling(
         public companion object
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class HtmlBlock(
         public val textStyle: TextStyle,
@@ -904,6 +923,7 @@ public interface WithUnderline {
     public val underlineGap: Dp
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class InlinesStyling(
     public val textStyle: TextStyle,

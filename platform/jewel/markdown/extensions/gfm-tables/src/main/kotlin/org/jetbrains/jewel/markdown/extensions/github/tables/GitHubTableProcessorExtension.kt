@@ -33,7 +33,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
  *
  * @see TablesExtension
  */
-@OptIn(ExperimentalJewelApi::class)
+@ExperimentalJewelApi
 public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
     override val parserExtension: ParserExtension = GitHubTablesCommonMarkExtension
     override val textRendererExtension: TextContentRendererExtension = GitHubTablesCommonMarkExtension
@@ -129,7 +129,7 @@ private object GitHubTablesCommonMarkExtension : ParserExtension, TextContentRen
     }
 }
 
-@OptIn(ExperimentalJewelApi::class)
+@ExperimentalJewelApi
 public class GitHubTableRendererExtension(tableStyling: GfmTableStyling, rootStyling: MarkdownStyling) :
     MarkdownRendererExtension {
     override val blockRenderer: MarkdownBlockRendererExtension = GitHubTableBlockRenderer(rootStyling, tableStyling)

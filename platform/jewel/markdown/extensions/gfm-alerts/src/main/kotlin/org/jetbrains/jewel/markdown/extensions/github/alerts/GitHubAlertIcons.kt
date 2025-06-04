@@ -1,8 +1,10 @@
 package org.jetbrains.jewel.markdown.extensions.github.alerts
 
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icon.PathIconKey
 
+@ExperimentalJewelApi
 public object GitHubAlertIcons {
     public val Note: IconKey =
         PathIconKey(
