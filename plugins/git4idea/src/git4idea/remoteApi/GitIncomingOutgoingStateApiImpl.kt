@@ -20,9 +20,8 @@ internal class GitIncomingOutgoingStateApiImpl: GitIncomingOutgoingStateApi {
   @OptIn(FlowPreview::class)
   override suspend fun syncState(projectId: ProjectId): Flow<GitInOutProjectState> {
     val project = projectId.findProject()
-    val scope = GitDisposable.getInstance(project).childScope("Git repository in/out synchronizer in ${project}")
 
-    return flowWithMessageBus(project, scope) { connection ->
+    return flowWithMessageBus(project, GitDisposable.getInstance(project).coroutineScope) { connection ->
       val inOutManager = GitBranchIncomingOutgoingManager.getInstance(project)
       send(inOutManager.state)
 

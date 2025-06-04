@@ -41,7 +41,7 @@ internal class GitPushTagAction : GitSingleTagAction(GitBundle.messagePointer("a
     val remote = e.getData(GitPushTagsActionGroup.REMOTE_IN_REPOSITORY_KEY) ?: return
     val repository = e.getData(GitBranchActionsDataKeys.SELECTED_REPOSITORY) ?: return
 
-    GitDisposable.getInstance(project).childScope("Git push tags").launch {
+    GitDisposable.getInstance(project).coroutineScope.launch {
       withBackgroundProgress(project, DvcsBundle.message("push.process.pushing"), cancellable = true) {
         val pushSupport = getPushSupport(getInstance(project)) as GitPushSupport
         val pushSpec = preparePushSpec(reference, remote)

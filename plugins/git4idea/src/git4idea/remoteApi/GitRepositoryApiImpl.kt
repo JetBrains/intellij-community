@@ -49,9 +49,7 @@ class GitRepositoryApiImpl : GitRepositoryApi {
 
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    val scope = GitDisposable.getInstance(project).childScope("Git repository synchronizer in ${project}")
-
-    return flowWithMessageBus(project, scope) { connection ->
+    return flowWithMessageBus(project, GitDisposable.getInstance(project).coroutineScope) { connection ->
       val synchronizer = Synchronizer(project, this@flowWithMessageBus)
       getAllRepositories(project).forEach(synchronizer::sendDeletedEventOnDispose)
 

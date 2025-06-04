@@ -49,7 +49,7 @@ abstract class GitStageShowVersionAction(private val showStaged: Boolean) : Dumb
     val caret = e.getData(CommonDataKeys.CARET)
 
     if (showStaged) {
-      GitDisposable.getInstance(project).childScope("Show staged file").async {
+      GitDisposable.getInstance(project).coroutineScope.async {
         val filePath = sourceFile.filePath()
         withBackgroundProgress(project, GitBundle.message("stage.vfs.read.process", filePath.name), true) {
           val targetFile = GitIndexFileSystemRefresher.getInstance(project).createFile(root, filePath) ?: return@withBackgroundProgress

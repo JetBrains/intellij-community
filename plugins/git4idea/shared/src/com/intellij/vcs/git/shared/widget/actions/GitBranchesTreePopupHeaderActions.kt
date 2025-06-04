@@ -92,7 +92,7 @@ internal class GitBranchesTreePopupGroupByPrefixAction :
     val project = e.project ?: return
     val widgetPopup = e.getData(GitBranchesWidgetKeys.POPUP) ?: return
 
-    GitDisposable.getInstance(project).childScope("Git group by prefix").launch {
+    GitDisposable.getInstance(project).coroutineScope.launch {
       GitUiSettingsApi.getInstance().setGroupingByPrefix(project.projectId(), state)
     }
     widgetPopup.groupByPrefix = state

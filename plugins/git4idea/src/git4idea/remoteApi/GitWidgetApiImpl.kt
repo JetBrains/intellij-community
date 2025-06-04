@@ -36,9 +36,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
   override suspend fun getWidgetState(projectId: ProjectId, selectedFile: VirtualFileId?): Flow<GitWidgetState> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     val file = selectedFile?.virtualFile()
-    val scope = GitDisposable.getInstance(project).childScope("Git widget update scope")
-
-    return flowWithMessageBus(project, scope) { connection ->
+    return flowWithMessageBus(project, GitDisposable.getInstance(project).coroutineScope) { connection ->
       fun trySendNewState() {
         val widgetState = getWidgetState(project, file)
         if (widgetState is GitWidgetState.OnRepository) {

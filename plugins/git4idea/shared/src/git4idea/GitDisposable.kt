@@ -17,6 +17,7 @@ class GitDisposable(
   override fun dispose() {
   }
 
+  @ApiStatus.Internal
   fun childScope(name: String): CoroutineScope = coroutineScope.childScope(name)
 
   companion object {

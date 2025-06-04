@@ -43,7 +43,7 @@ interface GitRepositoryApi : RemoteApi<Unit> {
     suspend fun getInstance(): GitRepositoryApi = RemoteApiProviderService.resolve(remoteApiDescriptor<GitRepositoryApi>())
 
     fun launchRequest(project: Project, request: suspend GitRepositoryApi.() -> Unit) {
-      GitDisposable.getInstance(project).childScope("GitRepositoryApi call").launch {
+      GitDisposable.getInstance(project).coroutineScope.launch {
         getInstance().request()
       }
     }

@@ -33,7 +33,7 @@ abstract class StagingAreaOperationAction(private val operation: StagingAreaOper
 fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, operation: StagingAreaOperation) {
   FileDocumentManager.getInstance().saveAllDocuments()
 
-  GitDisposable.getInstance(project).childScope("Git stage operation").launch {
+  GitDisposable.getInstance(project).coroutineScope.launch {
     withBackgroundProgress(project, operation.progressTitle) {
       val repositoryManager = GitRepositoryManager.getInstance(project)
 
