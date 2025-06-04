@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.roots.ui
 
 import com.intellij.openapi.module.ModuleConfigurationEditor
@@ -11,7 +10,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
-class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
+private class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
     override fun isCompleteEditorSet() = true
 
     override fun createEditors(state: ModuleConfigurationState): Array<ModuleConfigurationEditor> {

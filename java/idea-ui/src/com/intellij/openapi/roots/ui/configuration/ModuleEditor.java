@@ -158,9 +158,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return false;
   }
 
-  private void createEditors(@Nullable Module module) {
-    if (module == null) return;
-
+  private void createEditors(@NotNull Module module) {
     ModuleConfigurationState state = createModuleConfigurationState();
     for (ModuleConfigurationEditorProvider provider : EP_NAME.getExtensionList(module)) {
       ModuleConfigurationEditor[] editors = provider.createEditors(state);
@@ -218,12 +216,16 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private @NotNull JPanel createPanel() {
-    getModifiableRootModel(); //initialize model if needed
+    // initialize model if needed
+    getModifiableRootModel();
     getModifiableRootModelProxy();
 
     myGenericSettingsPanel = new ModuleEditorPanel();
 
-    createEditors(getModule());
+    Module module = getModule();
+    if (module  != null) {
+      createEditors(module);
+    }
 
     final JComponent component = createCenterPanel();
     myGenericSettingsPanel.add(component, BorderLayout.CENTER);

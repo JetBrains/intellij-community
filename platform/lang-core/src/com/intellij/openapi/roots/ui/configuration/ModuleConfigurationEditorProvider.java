@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.module.ModuleConfigurationEditor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Implement this interface to provide tabs for a module editor in 'Project Structure' dialog. The implementation should be registered in your {@code plugin.xml}:
@@ -12,5 +13,5 @@ import com.intellij.openapi.module.ModuleConfigurationEditor;
  * </pre>
  */
 public interface ModuleConfigurationEditorProvider {
-  ModuleConfigurationEditor[] createEditors(ModuleConfigurationState state);
+  @NotNull ModuleConfigurationEditor @NotNull [] createEditors(@NotNull ModuleConfigurationState state);
 }

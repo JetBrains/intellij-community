@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UsePropertyAccessSyntax")
 
 package com.intellij.ide.plugins
@@ -843,7 +843,7 @@ class DynamicPluginsTest {
     val listenerDisposable = Disposer.newDisposable()
 
     val checked = AtomicInteger()
-    Configurable.PROJECT_CONFIGURABLE.addChangeListener(project, Runnable {
+    Configurable.PROJECT_CONFIGURABLE.addChangeListener(project, {
       checked.incrementAndGet()
     }, listenerDisposable)
 
@@ -1134,7 +1134,7 @@ private class MyRunnable : Runnable {
 }
 
 private class MyModuleConfigurationEditorProvider : ModuleConfigurationEditorProvider {
-  override fun createEditors(state: ModuleConfigurationState?): Array<ModuleConfigurationEditor> = arrayOf()
+  override fun createEditors(state: ModuleConfigurationState): Array<ModuleConfigurationEditor> = emptyArray()
 }
 
 private inline fun runAndCheckThatNoNewPlugins(block: () -> Unit) {
