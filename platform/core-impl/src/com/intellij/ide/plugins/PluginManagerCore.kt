@@ -108,7 +108,8 @@ object PluginManagerCore {
   fun isRunningFromSources(): Boolean {
     var result = isRunningFromSources
     if (result == null) {
-      result = Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
+      // MPS is always loading platform classes from jars even though there is a project directory present
+      result = !PlatformUtils.isMPS() && Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
       isRunningFromSources = result
     }
     return result
