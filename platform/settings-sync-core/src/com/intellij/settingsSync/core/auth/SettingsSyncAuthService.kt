@@ -2,6 +2,7 @@ package com.intellij.settingsSync.core.auth
 
 import com.intellij.settingsSync.core.SettingsSyncStatusTracker
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
 
@@ -27,13 +28,13 @@ interface SettingsSyncAuthService {
    * The method must call `SettingsSyncEvents.getInstance().fireLoginStateChanged()` in order to propagate the changed state.
    * If function is null, logout link in the UI is not visible
    */
-  val logoutFunction: ( suspend (Component?) -> Unit)?
+  val logoutFunction: (suspend (Component?) -> Unit)?
     get() = null
 
   /**
    * Starts the login procedure (if necessary) and returns the Deferred of the logged-in user
    */
-  suspend fun login(parentComponent: Component?) : SettingsSyncUserData?
+  suspend fun login(parentComponent: Component?): SettingsSyncUserData?
 
   /**
    * Data of the current user. If there's no user, return null
@@ -48,5 +49,16 @@ interface SettingsSyncAuthService {
    */
   fun crossSyncSupported(): Boolean = true
 
-  fun getPendingUserAction(userId:String): SettingsSyncStatusTracker.SyncStatus.ActionRequired? = null
+  fun getPendingUserAction(userId: String): PendingUserAction? = null
+
+  /**
+   * @param message - text message that will be shown in the configurable label
+   * @param actionTitle - text to use in the button
+   * @param action - action to perform when clicked the button. The action will be performed under EDT
+   */
+  data class PendingUserAction(
+    val message: @Nls String,
+    val actionTitle: @Nls String,
+    val action: suspend (Component?) -> Unit
+  )
 }
