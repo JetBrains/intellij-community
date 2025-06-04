@@ -7,6 +7,8 @@ import com.intellij.ide.ui.LafFlowService
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.util.messages.impl.subscribeAsFlow
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
@@ -21,7 +23,7 @@ import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.component.copyWithSize
 
 @Suppress("UnstableApiUsage")
-internal class SwingBridgeService {
+internal class SwingBridgeReader {
     private val scrollbarHelper = ScrollbarHelper.getInstance()
     private val settingsFlow: Flow<UISettings> =
         ApplicationManager.getApplication()
@@ -29,14 +31,21 @@ internal class SwingBridgeService {
             .subscribeAsFlow(UISettingsListener.TOPIC) { UISettingsListener { uiSettings -> trySend(uiSettings) } }
             .onStart { emit(UISettings.getInstance()) }
 
-    internal val currentBridgeThemeData: StateFlow<BridgeThemeData> =
+    private val editorSchemeChangeFlow: Flow<Unit> =
+        ApplicationManager.getApplication()
+            .messageBus
+            .subscribeAsFlow(EditorColorsManager.TOPIC) { EditorColorsListener { trySend(Unit) } }
+            .onStart { emit(Unit) }
+
+    val currentBridgeThemeData: StateFlow<BridgeThemeData> =
         LafFlowService.getInstance().customLafFlowState(BridgeThemeData.DEFAULT) { lafChangeFlow ->
             combine(
                 lafChangeFlow,
                 scrollbarHelper.scrollbarVisibilityStyleFlow,
                 scrollbarHelper.trackClickBehaviorFlow,
                 settingsFlow,
-            ) { _, _, _, _ ->
+                editorSchemeChangeFlow,
+            ) { _, _, _, _, _ ->
                 tryGettingThemeData()
             }
         }
@@ -63,7 +72,7 @@ internal class SwingBridgeService {
     }
 
     internal data class BridgeThemeData(val themeDefinition: ThemeDefinition, val componentStyling: ComponentStyling) {
-        companion object {
+        companion object Companion {
             val DEFAULT = run {
                 val textStyle = TextStyle.Default.copyWithSize(fontSize = 13.sp)
                 val monospaceTextStyle = textStyle.copy(fontFamily = FontFamily.Monospace)
