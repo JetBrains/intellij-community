@@ -2816,10 +2816,10 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                from typing import TypeVarTuple, Unpack
                
-               t1: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or tuple">tuple[*tuple[str, ...], *tuple[int, ...]]</warning>
-               t2: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or tuple">tuple[*tuple[str, *tuple[str, ...]], *tuple[int, ...]]</warning>
-               t3: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or tuple">tuple[Unpack[tuple[str, ...]], Unpack[tuple[int, ...]]]</warning>
-               t4: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or tuple">tuple[Unpack[tuple[str, Unpack[tuple[str, ...]]]], Unpack[tuple[int, ...]]]</warning>
+               t1: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or unbounded tuple">tuple[*tuple[str, ...], *tuple[int, ...]]</warning>
+               t2: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or unbounded tuple">tuple[*tuple[str, *tuple[str, ...]], *tuple[int, ...]]</warning>
+               t3: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or unbounded tuple">tuple[Unpack[tuple[str, ...]], Unpack[tuple[int, ...]]]</warning>
+               t4: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or unbounded tuple">tuple[Unpack[tuple[str, Unpack[tuple[str, ...]]]], Unpack[tuple[int, ...]]]</warning>
                
                # > An unpacked TypeVarTuple counts as an unbounded tuple in the context of this rule
                
@@ -2828,7 +2828,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                
                def func(t: tuple[*Ts]):
                    t5: tuple[*tuple[str], *Ts]
-                   t6: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or tuple">tuple[*tuple[str, ...], *Ts]</warning>
+                   t6: <warning descr="Type argument list can have at most one unpacked TypeVarTuple or unbounded tuple">tuple[*tuple[str, ...], *Ts]</warning>
                """);
   }
 
