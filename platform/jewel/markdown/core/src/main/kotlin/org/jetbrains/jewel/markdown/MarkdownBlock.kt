@@ -1,9 +1,12 @@
 package org.jetbrains.jewel.markdown
 
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.code.MimeType
 
+@ExperimentalJewelApi
 public sealed interface MarkdownBlock {
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class BlockQuote(override val children: List<MarkdownBlock>) : MarkdownBlock, WithChildBlocks {
         public constructor(vararg children: MarkdownBlock) : this(children.toList())
@@ -22,9 +25,11 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "BlockQuote(children=$children)"
     }
 
+    @ExperimentalJewelApi
     public sealed interface CodeBlock : MarkdownBlock {
         public val content: String
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class IndentedCodeBlock(override val content: String) : CodeBlock {
             override fun equals(other: Any?): Boolean {
@@ -41,6 +46,7 @@ public sealed interface MarkdownBlock {
             override fun toString(): String = "IndentedCodeBlock(content='$content')"
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class FencedCodeBlock(override val content: String, public val mimeType: MimeType?) : CodeBlock {
             override fun equals(other: Any?): Boolean {
@@ -65,8 +71,9 @@ public sealed interface MarkdownBlock {
         }
     }
 
-    public interface CustomBlock : MarkdownBlock
+    @ExperimentalJewelApi public interface CustomBlock : MarkdownBlock
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Heading(override val inlineContent: List<InlineMarkdown>, public val level: Int) :
         MarkdownBlock, WithInlineMarkdown {
@@ -93,6 +100,7 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "Heading(inlineContent=$inlineContent, level=$level)"
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class HtmlBlock(public val content: String) : MarkdownBlock {
         override fun equals(other: Any?): Boolean {
@@ -109,10 +117,12 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "HtmlBlock(content='$content')"
     }
 
+    @ExperimentalJewelApi
     public sealed interface ListBlock : MarkdownBlock, WithChildBlocks {
         override val children: List<ListItem>
         public val isTight: Boolean
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class OrderedList(
             override val children: List<ListItem>,
@@ -159,6 +169,7 @@ public sealed interface MarkdownBlock {
             }
         }
 
+        @ExperimentalJewelApi
         @GenerateDataFunctions
         public class UnorderedList(
             override val children: List<ListItem>,
@@ -195,6 +206,7 @@ public sealed interface MarkdownBlock {
         }
     }
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class ListItem(override val children: List<MarkdownBlock>) : MarkdownBlock, WithChildBlocks {
         public constructor(vararg children: MarkdownBlock) : this(children.toList())
@@ -213,8 +225,9 @@ public sealed interface MarkdownBlock {
         override fun toString(): String = "ListItem(children=$children)"
     }
 
-    public data object ThematicBreak : MarkdownBlock
+    @ExperimentalJewelApi public data object ThematicBreak : MarkdownBlock
 
+    @ExperimentalJewelApi
     @GenerateDataFunctions
     public class Paragraph(override val inlineContent: List<InlineMarkdown>) : MarkdownBlock, WithInlineMarkdown {
         public constructor(vararg inlineContent: InlineMarkdown) : this(inlineContent.toList())

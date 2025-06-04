@@ -8,18 +8,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.intui.markdown.bridge.styling.isLightTheme
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableColors
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableMetrics
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.RowBackgroundStyle
 
+@ExperimentalJewelApi
 public fun GfmTableStyling.Companion.create(
     colors: GfmTableColors = GfmTableColors.create(),
     metrics: GfmTableMetrics = GfmTableMetrics.create(),
     headerBaseFontWeight: FontWeight = FontWeight.SemiBold,
 ): GfmTableStyling = GfmTableStyling(colors, metrics, headerBaseFontWeight)
 
+@ExperimentalJewelApi
 public fun GfmTableColors.Companion.create(
     borderColor: Color = if (isLightTheme) Color(0xffd1d9e0) else Color(0xff3d444d),
     rowBackgroundColor: Color = Color.Unspecified,
@@ -27,6 +30,7 @@ public fun GfmTableColors.Companion.create(
     rowBackgroundStyle: RowBackgroundStyle = RowBackgroundStyle.Striped,
 ): GfmTableColors = GfmTableColors(borderColor, rowBackgroundColor, alternateRowBackgroundColor, rowBackgroundStyle)
 
+@ExperimentalJewelApi
 public fun GfmTableMetrics.Companion.create(
     borderWidth: Dp = 1.dp,
     cellPadding: PaddingValues = PaddingValues(horizontal = 13.dp, vertical = 6.dp),

@@ -10,13 +10,13 @@ import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableStyling(
     public val colors: GfmTableColors,
     public val metrics: GfmTableMetrics,
     public val headerBaseFontWeight: FontWeight,
 ) {
-    @ExperimentalJewelApi
     public constructor(
         borderColor: Color,
         rowBackgroundColor: Color,
@@ -64,6 +64,7 @@ public class GfmTableStyling(
     public companion object
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableColors(
     public val borderColor: Color,
@@ -104,6 +105,7 @@ public class GfmTableColors(
     public companion object
 }
 
+@ExperimentalJewelApi
 public enum class RowBackgroundStyle {
     /**
      * All rows have the same background color, [GfmTableColors.rowBackgroundColor]. In this style,
@@ -118,6 +120,7 @@ public enum class RowBackgroundStyle {
     Striped,
 }
 
+@ExperimentalJewelApi
 @GenerateDataFunctions
 public class GfmTableMetrics(
     public val borderWidth: Dp,

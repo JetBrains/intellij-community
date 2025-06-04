@@ -15,6 +15,7 @@ import org.commonmark.renderer.text.TextContentNodeRendererContext
 import org.commonmark.renderer.text.TextContentRenderer
 import org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension
 import org.commonmark.text.Characters
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
@@ -28,6 +29,7 @@ import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertBlock.Warning
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+@ExperimentalJewelApi
 public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
     override val parserExtension: ParserExtension = GitHubAlertCommonMarkExtension
     override val textRendererExtension: TextContentRendererExtension = GitHubAlertCommonMarkExtension
@@ -57,6 +59,7 @@ public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
     }
 }
 
+@ExperimentalJewelApi
 public class GitHubAlertRendererExtension(alertStyling: AlertStyling, rootStyling: MarkdownStyling) :
     MarkdownRendererExtension {
     override val blockRenderer: MarkdownBlockRendererExtension = GitHubAlertBlockRenderer(alertStyling, rootStyling)
