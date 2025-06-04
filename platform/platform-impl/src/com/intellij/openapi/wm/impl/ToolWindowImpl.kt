@@ -185,12 +185,17 @@ internal class ToolWindowImpl(
   }
 
   private fun createContentManager(): ContentManagerImpl {
-    val contentManager = ContentManagerImpl(canCloseContent, toolWindowManager.project, parentDisposable,
-                                            ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
-                                              val result = ToolWindowContentUi(this, contentManager, componentGetter.get())
-                                              contentUi = result
-                                              result
-                                            })
+    val contentManager = ContentManagerImpl(
+      /* canCloseContents = */ canCloseContent,
+      /* project = */ toolWindowManager.project,
+      /* parentDisposable = */ parentDisposable,
+      /* contentUiProducer = */
+      ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
+        val result = ToolWindowContentUi(this, contentManager, componentGetter.get())
+        contentUi = result
+        result
+      },
+    )
 
     addContentNotInHierarchyComponents(contentUi!!)
 
@@ -710,7 +715,6 @@ internal class ToolWindowImpl(
     ToolWindowContentUi.toggleContentPopup(contentUi!!, contentManager.value)
   }
 
-  @JvmOverloads
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
     return object : ActionGroupWrapper(GearActionGroup()) {
       override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
