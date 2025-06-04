@@ -103,8 +103,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     String externalDoc = null;
     myElement = element;
 
+    String authority = "localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort();
     String projectPath = "/" + myProject.getName() + "/";
-    String builtInServer = "http://localhost:" + BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort() + projectPath;
+    String builtInServer = Urls.newHttpUrl(authority, projectPath).toExternalForm();
     if (docURL.startsWith(builtInServer)) {
       Url url = Urls.parseFromIdea(docURL);
       if (url != null) {
