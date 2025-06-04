@@ -8,7 +8,6 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.ToolWindowManager
@@ -22,8 +21,8 @@ internal class ServiceViewStartupActivity private constructor() : ProjectActivit
     }
   }
 
-  override suspend fun execute(project: Project) : Unit = blockingContext {
-    if (!shouldEnableServicesViewInCurrentEnvironment()) return@blockingContext
+  override suspend fun execute(project: Project) {
+    if (!shouldEnableServicesViewInCurrentEnvironment()) return
 
     if (!ServiceViewContributor.CONTRIBUTOR_EP_NAME.hasAnyExtensions()) {
       ServiceViewContributor.CONTRIBUTOR_EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ServiceViewContributor<*>> {

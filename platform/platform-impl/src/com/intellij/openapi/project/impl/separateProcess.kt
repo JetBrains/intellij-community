@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
@@ -52,10 +51,8 @@ internal suspend fun checkChildProcess(projectStoreBaseDir: Path, options: OpenP
     perProcessInstanceSupport.openInChildProcess(projectStoreBaseDir)
 
 
-    blockingContext {
-      application.invokeLater {
-        ApplicationManagerEx.getApplicationEx().exit(true, true)
-      }
+    application.invokeLater {
+      ApplicationManagerEx.getApplicationEx().exit(true, true)
     }
 
     return true

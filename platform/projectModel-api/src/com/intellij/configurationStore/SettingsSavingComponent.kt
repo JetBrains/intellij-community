@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -16,9 +15,7 @@ interface SettingsSavingComponent {
 @Deprecated("Use SettingsSavingComponent")
 interface SettingsSavingComponentJavaAdapter : SettingsSavingComponent {
   override suspend fun save() {
-    blockingContext {
-      doSave()
-    }
+    doSave()
   }
 
   fun doSave()

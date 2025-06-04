@@ -25,7 +25,6 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -90,9 +89,7 @@ suspend fun detectJavaProjectStructure(project: Project, projectDir: VirtualFile
         setCompilerOutputPath(project, "${projectDir.path}/out")
       }
 
-      blockingContext {
-        showNotificationToImport(project, projectDir, importers)
-      }
+      showNotificationToImport(project, projectDir, importers)
     }
     else if (setupFromSources){
       setupFromSources(project = project, projectDir = projectDir)

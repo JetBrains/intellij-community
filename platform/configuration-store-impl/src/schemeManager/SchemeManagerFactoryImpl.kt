@@ -13,7 +13,6 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
@@ -125,9 +124,7 @@ sealed class SchemeManagerFactoryBase(
     }
 
     if (events.isNotEmpty()) {
-      blockingContext {
-        RefreshQueue.getInstance().processEvents(false, events)
-      }
+      RefreshQueue.getInstance().processEvents(false, events)
     }
 
     error?.let {
