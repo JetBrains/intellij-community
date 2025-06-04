@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.ide.ui.icons.icon
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -85,34 +84,35 @@ internal fun computeBreakpointProxy(
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     try {
       val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-      if (editor != null && readAction { breakpointManager.canToggleLightBreakpoint(editor, info) }) {
-        val breakpoint = breakpointManager.toggleLightBreakpoint(editor, info).await()
-        result.complete(breakpoint)
-        return@launch
-      }
-      val singleBreakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, info).singleOrNull()
-      val response = XBreakpointTypeApi.getInstance().toggleLineBreakpoint(project.projectId(), info.toRequest(singleBreakpoint != null))
-                     ?: throw kotlin.coroutines.cancellation.CancellationException()
-      when (response) {
-        is XRemoveBreakpointResponse -> {
-          XDebuggerUtilImpl.removeBreakpointIfPossible(project, info, singleBreakpoint)
-          result.complete(null)
-        }
-        is XLineBreakpointInstalledResponse -> {
-          result.complete(createBreakpoint(project, response.breakpoint))
-        }
-        is XLineBreakpointMultipleVariantResponse -> {
-          result.handle { _, _ ->
-            response.selectionCallback.close()
+      breakpointManager.withLightBreakpointIfPossible(editor, info) {
+        val singleBreakpointExists = XDebuggerUtilImpl.findBreakpointsAtLine(project, info).singleOrNull() != null
+        val response = XBreakpointTypeApi.getInstance()
+                         .toggleLineBreakpoint(project.projectId(), info.toRequest(singleBreakpointExists))
+                       ?: throw kotlin.coroutines.cancellation.CancellationException()
+        when (response) {
+          is XRemoveBreakpointResponse -> {
+            val breakpoint = XDebuggerUtilImpl.findBreakpointsAtLine(project, info).firstOrNull()
+            if (breakpoint != null) {
+              XDebuggerUtilImpl.removeBreakpointIfPossible(project, info, breakpoint)
+            }
+            result.complete(null)
           }
-          val variants = response.variants.map(::FrontendXLineBreakpointVariantImpl)
-          val choiceData = VariantChoiceData(variants, result) { i ->
-            responseWithVariantChoice(project, result, response.selectionCallback, i)
+          is XLineBreakpointInstalledResponse -> {
+            result.complete(createBreakpoint(project, response.breakpoint))
           }
-          onVariantsChoice(choiceData)
-        }
-        XNoBreakpointPossibleResponse -> {
-          result.complete(null)
+          is XLineBreakpointMultipleVariantResponse -> {
+            result.handle { _, _ ->
+              response.selectionCallback.close()
+            }
+            val variants = response.variants.map(::FrontendXLineBreakpointVariantImpl)
+            val choiceData = VariantChoiceData(variants, result) { i ->
+              responseWithVariantChoice(project, result, response.selectionCallback, i)
+            }
+            onVariantsChoice(choiceData)
+          }
+          XNoBreakpointPossibleResponse -> {
+            result.complete(null)
+          }
         }
       }
     }

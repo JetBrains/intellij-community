@@ -32,6 +32,10 @@ internal class FrontendXLightLineBreakpoint(
     }
   }
 
+  suspend fun awaitDispose() {
+    cs.coroutineContext.job.join()
+  }
+
   fun dispose() {
     cs.cancel()
     visualRepresentation.removeHighlighter()

@@ -6,16 +6,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl.toggleAndReturnLineBreakpointProxy
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import com.intellij.xdebugger.impl.rpc.XBreakpointDto
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<XBreakpointManagerProxy>()
@@ -52,10 +48,7 @@ interface XBreakpointManagerProxy {
 
   fun findBreakpointsAtLine(type: XLineBreakpointTypeProxy, file: VirtualFile, line: Int): List<XLineBreakpointProxy>
 
-  @RequiresReadLock
-  fun canToggleLightBreakpoint(editor: Editor, info: XLineBreakpointInstallationInfo): Boolean
-
-  fun toggleLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?>
+  suspend fun <T> withLightBreakpointIfPossible(editor: Editor?, info: XLineBreakpointInstallationInfo, block: suspend () -> T): T
 
   class Monolith(val breakpointManager: XBreakpointManagerImpl) : XBreakpointManagerProxy {
     override val breakpointsDialogSettings: XBreakpointsDialogState?
@@ -155,12 +148,8 @@ interface XBreakpointManagerProxy {
         .map { it.asProxy() }
     }
 
-    override fun canToggleLightBreakpoint(editor: Editor, info: XLineBreakpointInstallationInfo): Boolean {
-      return false
-    }
-
-    override fun toggleLightBreakpoint(editor: Editor, installationInfo: XLineBreakpointInstallationInfo): Deferred<XLineBreakpointProxy?> {
-      return toggleAndReturnLineBreakpointProxy(breakpointManager.project, editor, installationInfo, false).asDeferred()
+    override suspend fun <T> withLightBreakpointIfPossible(editor: Editor?, info: XLineBreakpointInstallationInfo, block: suspend () -> T): T {
+      return block()
     }
   }
 }
