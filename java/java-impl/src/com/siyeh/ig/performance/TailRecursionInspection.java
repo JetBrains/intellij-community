@@ -62,8 +62,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     if (containingMethod.isVarArgs()) {
       return false;
     }
-    final PsiParameter[] parameters = containingMethod.getParameterList().getParameters();
-    for (final PsiParameter parameter : parameters) {
+    for (PsiParameter parameter : containingMethod.getParameterList().getParameters()) {
       if (parameter.hasModifierProperty(PsiModifier.FINAL)) {
         return false;
       }
@@ -260,9 +259,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         PsiExpression current = tailCall;
         List<String> conditions = new ArrayList<>();
         while (true) {
-          PsiPolyadicExpression parent =
-            ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(current.getParent()), PsiPolyadicExpression.class);
-          if (parent == null) {
+          if (!(PsiUtil.skipParenthesizedExprUp(current.getParent()) instanceof PsiPolyadicExpression parent)) {
             break;
           }
           PsiExpression[] operands = parent.getOperands();
@@ -282,10 +279,10 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         // When replacing recursion with iteration, new values are assigned to the parameters,
         // instead of calling the method with the new values. Care needs to be taken to not clobber
         // the value of a parameter which is used later (in some expression assigned to a different
-        // parameter). To achieve this a simple graph of the dependencies between the parameters is
-        // built and analysed/ordered. If the graph is a directed acyclic graph, the assignments
+        // parameter). To achieve this, a simple graph of the dependencies between the parameters is
+        // built and sorted. If the graph is a directed acyclic graph, the assignments
         // are ordered in such a way that making a defensive copy is unnecessary (topological
-        // ordering). If the graph has a cycle, a copy of the value of at least one parameter needs
+        // ordering). If the graph has a cycle, a copy of at least one parameter needs
         // to be made before assigning a new value.
         final DFSTBuilder<Integer> builder = new DFSTBuilder<>(graph);
         final List<Integer> sortedNodes = builder.getSortedNodes();
@@ -298,7 +295,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           assert argument != null;
           if (argument instanceof PsiReferenceExpression referenceExpression) {
             if (parameter.equals(referenceExpression.resolve())) {
-              // parameter keeps same value
+              // parameter keeps the same value
               continue;
             }
           }
@@ -306,7 +303,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           boolean copy = false;
           while (dependants.hasNext()) {
             if (!seen.contains(dependants.next())) {
-              // current parameter which depends on value of parameter 'index' has not yet received its value (cycle)
+              // the current parameter which depends on the value of parameter 'index' has not yet received its value (cycle)
               // if 'dependants' was some collection instead of an iterator this would have been a nice containsAll expression
               copy = true;
               break;
@@ -366,7 +363,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           out.append(element.getText());
         }
         else {
-          for (final PsiElement child : children) {
+          for (PsiElement child : children) {
             replaceTailCalls(child, method, thisVariableName, tailCallIsContainedInLoop, isReturnAtTheEndOfWhileLoop, out);
           }
         }
@@ -486,13 +483,12 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           }
         }
       }
-      tailCall = ObjectUtils.tryCast(returnValue, PsiMethodCallExpression.class);
+      tailCall = returnValue instanceof PsiMethodCallExpression call ? call : null;
     }
-    else if (element instanceof PsiExpressionStatement &&
-             (ControlFlowUtils.blockCompletesWithStatement(Objects.requireNonNull(method.getBody()), (PsiStatement)element) ||
+    else if (element instanceof PsiExpressionStatement statement &&
+             (ControlFlowUtils.blockCompletesWithStatement(Objects.requireNonNull(method.getBody()), statement) ||
               isBeforeVoidReturn(element, method))) {
-      final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-      tailCall = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
+      tailCall = statement.getExpression() instanceof PsiMethodCallExpression e ? e : null;
     }
     if (tailCall == null) return null;
     final JavaResolveResult resolveResult = tailCall.resolveMethodGenerics();
@@ -500,12 +496,11 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
   }
 
   private static boolean isBeforeVoidReturn(PsiElement element, PsiMethod method) {
-    PsiReturnStatement returnStatement =
-      ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(element), PsiReturnStatement.class);
-    return isVoidReturn(returnStatement) && PsiTypes.voidType().equals(method.getReturnType());
+    return PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiReturnStatement statement
+      && isVoidReturn(statement) && PsiTypes.voidType().equals(method.getReturnType());
   }
 
   private static boolean isVoidReturn(PsiElement element) {
-    return element instanceof PsiReturnStatement && ((PsiReturnStatement)element).getReturnValue() == null;
+    return element instanceof PsiReturnStatement statement && statement.getReturnValue() == null;
   }
 }
