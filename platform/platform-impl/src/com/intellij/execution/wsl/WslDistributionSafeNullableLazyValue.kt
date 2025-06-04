@@ -4,18 +4,14 @@ package com.intellij.execution.wsl
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.progress.runBlockingCancellable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
-import kotlin.coroutines.coroutineContext
 
 /**
  * Designed to be used only in [WSLDistribution] and is visible only for testing purposes.
@@ -68,7 +64,7 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
             canWait -> {
               val result = runCatching {
                 runBlockingCancellable {
-                  blockingContext {
+                  run {
                     computable.get()
                   }
                 }
@@ -82,7 +78,7 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
               }
               @Suppress("RAW_SCOPE_CREATION")
               CoroutineScope(currentThreadContext()).launch(Dispatchers.IO) {
-                blockingContext {
+                run {
                   val result = runCatching {
                     computable.get()
                   }

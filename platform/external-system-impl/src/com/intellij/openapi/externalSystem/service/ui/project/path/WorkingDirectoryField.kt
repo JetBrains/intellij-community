@@ -11,10 +11,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.*
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.RecursionGuard
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
@@ -72,9 +72,7 @@ class WorkingDirectoryField(
           .map { TextCompletionInfo(it) }
       }
       Mode.PATH -> {
-        val textToComplete = blockingContext {
-          getTextToComplete()
-        }
+        val textToComplete = getTextToComplete()
         val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
         externalProjects
           .filter { it.path.startsWith(pathToComplete) }

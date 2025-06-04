@@ -15,7 +15,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.help.HelpManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -205,12 +204,10 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
       val show = prepareToShow() ?: return
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         val windowManager = serviceAsync<WindowManager>() as? WindowManagerImpl ?: return@launch
-        blockingContext {
-          windowManager.disposeRootFrame()
-          if (windowManager.projectFrameHelpers.isEmpty()) {
-            show()
-            lifecyclePublisher?.welcomeScreenDisplayed()
-          }
+        windowManager.disposeRootFrame()
+        if (windowManager.projectFrameHelpers.isEmpty()) {
+          show()
+          lifecyclePublisher?.welcomeScreenDisplayed()
         }
       }
     }

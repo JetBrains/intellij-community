@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.spellchecker.dictionary.Loader
@@ -47,9 +46,7 @@ internal class WordListLoader(private val project: Project, private val coroutin
       coroutineScope.launch {
         LOG.debug("${loader} loaded!")
 
-        val list = blockingContext { // makes checkCanceled() work inside constructor
-          SimpleWordList(readAll(loader))
-        }
+        val list = SimpleWordList(readAll(loader))
         consumer(loader.name, list)
 
         while (listsToLoad.isNotEmpty()) {
@@ -57,9 +54,7 @@ internal class WordListLoader(private val project: Project, private val coroutin
           // ProgressManager.checkCanceled()
           val (curLoader, currentConsumer) = listsToLoad.removeAt(0)
           LOG.debug("${curLoader.name} loaded!")
-          val simpleWordList = blockingContext { // makes checkCanceled() work inside constructor
-            SimpleWordList(readAll(curLoader))
-          }
+          val simpleWordList = SimpleWordList(readAll(curLoader))
           currentConsumer(curLoader.name, simpleWordList)
         }
 
@@ -67,9 +62,7 @@ internal class WordListLoader(private val project: Project, private val coroutin
         isLoadingList.set(false)
 
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            AsyncUtils.restartInspection(ApplicationManager.getApplication())
-          }
+          AsyncUtils.restartInspection(ApplicationManager.getApplication())
         }
       }
     }
