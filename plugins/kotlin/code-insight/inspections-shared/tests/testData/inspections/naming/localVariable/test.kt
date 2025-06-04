@@ -36,4 +36,7 @@ fun lambda() {
 fun anonymousFun() {
     "".let(fun(_: String) {
     })
+    val _ = someValueProvider()
 }
+
+fun someValueProvider() = 42
