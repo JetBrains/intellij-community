@@ -5,8 +5,8 @@ package com.intellij.serviceContainer
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.contentModules
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
@@ -35,7 +35,7 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
   // step 1 - collect module level extension points
   val extensionPointDescriptors = ArrayList<Pair<IdeaPluginDescriptor, List<ExtensionPointDescriptor>>>()
   val allServices = ArrayList<Pair<IdeaPluginDescriptor, List<ServiceDescriptor>>>()
-  executeRegisterTaskForPluginAndV2Content(plugins) { module ->
+  executeRegisterTask(plugins) { module ->
     val list = module.moduleContainerDescriptor.extensionPoints
     if (list.isNotEmpty()) {
       extensionPointDescriptors.add(module to list)
@@ -55,29 +55,24 @@ fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {
   }
 
   // step 2 - collect module level extensions
-  executeRegisterTask(plugins) { plugin ->
-    val map = plugin.extensions
+  executeRegisterTask(plugins) { module ->
+    val map = module.extensions
     for ((name, list) in map.entries) {
-      nameToExtensions.get(name)?.add(plugin to list)
+      nameToExtensions.get(name)?.add(module to list)
     }
   }
 
   return PrecomputedExtensionModel(extensionPoints = extensionPointDescriptors, nameToExtensions = nameToExtensions, services = allServices)
 }
 
-private fun executeRegisterTask(modules: List<IdeaPluginDescriptorImpl>, task: (IdeaPluginDescriptorImpl) -> Unit) {
-  for (module in modules) {
-    task(module)
-    executeRegisterTaskForOldContent(mainPluginDescriptor = module, task = task)
-  }
-}
-
-private fun executeRegisterTaskForPluginAndV2Content(plugins: List<IdeaPluginDescriptorImpl>, task: (IdeaPluginDescriptorImpl) -> Unit) {
+private fun executeRegisterTask(plugins: List<PluginMainDescriptor>, task: (IdeaPluginDescriptorImpl) -> Unit) {
   for (plugin in plugins) {
     task(plugin)
     for (content in plugin.contentModules) {
       task(content)
     }
+
+    executeRegisterTaskForOldContent(plugin, task)
   }
 }
 
