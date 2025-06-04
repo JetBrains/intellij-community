@@ -430,15 +430,22 @@ internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: 
   }
 }
 
+@Deprecated(message = "This function does not provide an instance of `ProgressIndicator` to `action`", level = DeprecationLevel.HIDDEN)
+suspend fun <T> coroutineToIndicator(action: () -> T): T {
+  val ctx = coroutineContext
+  return contextToIndicator(ctx, action)
+}
+
 /**
  * Runs blocking (e.g., Java) code under indicator, which is canceled if the current Job is canceled.
  *
  * This function switches from suspending context to indicator context.
  *
  * Example:
- * ```
+ * ```kotlin
  * launch {
  *   coroutineToIndicator {
+ *     val indicator = ProgressManager.getGlobalProgressIndicator() // retrieving the new indicator
  *     someJavaFunctionWhichDoesntKnowAboutCoroutines()
  *   }
  * }
@@ -453,10 +460,11 @@ internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: 
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
  */
-@ApiStatus.Experimental
-suspend fun <T> coroutineToIndicator(action: () -> T): T {
+suspend fun <T> coroutineToIndicator(action: (ProgressIndicator) -> T): T {
   val ctx = coroutineContext
-  return contextToIndicator(ctx, action)
+  return contextToIndicator(ctx) {
+    action(ProgressManager.getGlobalProgressIndicator())
+  }
 }
 
 /**

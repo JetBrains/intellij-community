@@ -288,8 +288,7 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - com.intellij.openapi.module.ModuleDescription
 - a:getContentRoots():java.util.List
 - a:getGroupPath():java.util.List
-*f:com.intellij.openapi.progress.CoroutinesKt
-- *sf:coroutineToIndicator(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.progress.CoroutinesKt
 - *sf:withCurrentThreadCoroutineScope(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:withCurrentThreadCoroutineScopeBlocking(kotlin.jvm.functions.Function0):kotlin.Pair
 *f:com.intellij.openapi.progress.SuspenderKt
