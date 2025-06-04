@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassU
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isCheapEnoughToSearchUsages
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
@@ -75,8 +76,7 @@ object K2UnusedSymbolUtil {
 
         if (declaration is KtParameter) {
             // nameless parameters like `(Type) -> Unit` or `_` make no sense to highlight
-            val name = declaration.name
-            if (name == null || name == "_") return false
+            if (declaration.isExplicitlyIgnoredByName()) return false
             // functional type params like `fun foo(u: (usedParam: Type) -> Unit)` shouldn't be highlighted because they could be implicitly used by lambda arguments
             if (declaration.isFunctionTypeParameter) return false
             val ownerFunction = declaration.ownerDeclaration

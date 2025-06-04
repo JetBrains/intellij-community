@@ -210,3 +210,6 @@ tailrec fun KtExpression.replaceVariableCallsWithExplicitInvokeCalls(variableCal
 fun ModCommandAction.asQuickFix(): LocalQuickFix {
     return ModCommandService.getInstance().wrapToQuickFix(this)
 }
+
+fun KtNamedDeclaration.isExplicitlyIgnoredByName(): Boolean =
+    name?.let { it == "_" } != false

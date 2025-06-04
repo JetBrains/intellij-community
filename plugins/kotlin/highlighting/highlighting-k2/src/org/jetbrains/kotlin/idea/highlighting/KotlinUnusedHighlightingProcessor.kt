@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.analysis.KotlinUastOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isCalleeExpression
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isConstructorCallReference
 import org.jetbrains.kotlin.idea.inspections.describe
@@ -168,6 +169,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         val namedElements: MutableList<KtNamedDeclaration> = mutableListOf()
         val namedElementVisitor = object : KtVisitorVoid() {
             override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                if (declaration.isExplicitlyIgnoredByName()) return
                 namedElements.add(declaration)
             }
         }
