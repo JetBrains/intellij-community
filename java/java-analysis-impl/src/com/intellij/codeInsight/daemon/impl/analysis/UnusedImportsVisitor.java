@@ -176,6 +176,12 @@ class UnusedImportsVisitor extends JavaElementVisitor {
         return false;
       }
     }
+    if (importStatement instanceof PsiImportModuleStatement moduleStatement) {
+      List<PsiImportModuleStatement> moduleStatements = ImportUtils.optimizeModuleImports(javaFile);
+      if (!moduleStatements.contains(moduleStatement)) {
+        return true;
+      }
+    }
     return isRedundant;
   }
 

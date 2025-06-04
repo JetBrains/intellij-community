@@ -395,7 +395,6 @@ public class ResolveModuleImportTest extends LightJava9ModulesCodeInsightFixture
   }
 
   public void testOptimizeImportWithSimilarNames() {
-    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
     addCode("module-info.java", """
     module my.source.moduleB {
       exports my.source.moduleB;

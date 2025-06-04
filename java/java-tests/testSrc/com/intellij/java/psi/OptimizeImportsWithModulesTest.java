@@ -99,6 +99,38 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
   }
 
 
+  public void testHierarchy() {
+    IdeaTestUtil.withLevel(
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+        addCode("my/source/moduleD/Sql.java", """
+          package my.source.moduleD;
+          public class Sql {}
+          """, M5);
+        addCode("my/source/moduleC/Transaction.java", """
+          package my.source.moduleC;
+          public class Transaction {}
+          """, M4);
+        doTest();
+      });
+  }
+
+  public void testHierarchy2() {
+    IdeaTestUtil.withLevel(
+      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+        addCode("my/source/moduleD/Sql.java", """
+          package my.source.moduleD;
+          public class Sql {}
+          """, M5);
+        addCode("my/source/moduleC/Transaction.java", """
+          package my.source.moduleC;
+          public class Transaction {}
+          """, M4);
+        doTest();
+      });
+  }
+
   public void testParentNotUsedChildUsed() {
     IdeaTestUtil.withLevel(
       getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {

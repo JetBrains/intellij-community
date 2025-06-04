@@ -880,10 +880,11 @@ public final class ImportUtils {
       Map<PsiImportModuleStatement, PsiJavaModule> modules = new HashMap<>();
       Map<PsiJavaModule, Set<PsiJavaModule>> dependencies = new HashMap<>();
       Set<PsiImportModuleStatement> toDelete = new HashSet<>();
+      List<PsiImportModuleStatement> allImports = ContainerUtil.concat(implicit, statements);
       for (PsiImportModuleStatement current : statements) {
         PsiJavaModule currentModule = modules.computeIfAbsent(current, m -> m.resolveTargetModule());
         if (currentModule == null) continue;
-        for (PsiImportModuleStatement higher : ContainerUtil.concat(implicit, statements)) {
+        for (PsiImportModuleStatement higher : allImports) {
           if(toDelete.contains(higher)) continue;
           if (higher == current) continue;
           PsiJavaModule higherModule = modules.computeIfAbsent(higher, m -> m.resolveTargetModule());
