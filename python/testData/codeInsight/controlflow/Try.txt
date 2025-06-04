@@ -16,7 +16,7 @@
 15(16,19,27,30) READ ACCESS: s
 16(17,19,27,30) element: PyCallExpression: s.strip
 17(18,19,27,30) element: PyCallExpression: int
-18(19,27,30,36) WRITE ACCESS: i
+18(19,27,30,37) WRITE ACCESS: i
 19(20) element: PyExceptPart
 20(21) READ ACCESS: IOError
 21(22) WRITE ACCESS: errno
@@ -24,14 +24,15 @@
 23(24) element: PyPrintStatement
 24(25) READ ACCESS: errno
 25(26) READ ACCESS: strerror
-26(36) element: PyCallExpression: "I/O error({0}): {1}".format
+26(37) element: PyCallExpression: "I/O error({0}): {1}".format
 27(28) element: PyExceptPart
 28(29) READ ACCESS: ValueError
-29(36) element: PyPrintStatement
+29(37) element: PyPrintStatement
 30(31) element: PyExceptPart
 31(32) element: PyPrintStatement
 32(33) element: PySubscriptionExpression
 33(34) READ ACCESS: sys
 34(35) element: PyCallExpression: sys.exc_info
-35(36) raise: PyRaiseStatement
-36() element: null
+35(36) element: PyRaiseStatement
+36(37) raise: PyRaiseStatement
+37() element: null

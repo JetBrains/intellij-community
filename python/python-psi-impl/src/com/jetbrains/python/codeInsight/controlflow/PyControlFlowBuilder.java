@@ -699,11 +699,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyRaiseStatement(final @NotNull PyRaiseStatement node) {
-    myBuilder.addNodeAndCheckPending(new PyRaiseInstruction(myBuilder, node));
+    myBuilder.startNode(node);
     final PyExpression[] expressions = node.getExpressions();
     for (PyExpression expression : expressions) {
       expression.accept(this);
     }
+    myBuilder.addNode(new PyRaiseInstruction(myBuilder, node));
     myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
     myBuilder.flowAbrupted();
   }

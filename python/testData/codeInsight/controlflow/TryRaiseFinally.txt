@@ -1,9 +1,10 @@
 0(1) element: null
 1(2) element: PyTryExceptStatement
-2(3,5) element: PyTryPart
-3(4,5) raise: PyRaiseStatement
-4(5) READ ACCESS: KeyboardInterrupt
-5(6) element: PyFinallyPart
-6(7) element: PyPrintStatement
-7(8) finally fail exit
-8() element: null
+2(3,6) element: PyTryPart
+3(4,6) element: PyRaiseStatement
+4(5,6) READ ACCESS: KeyboardInterrupt
+5(6) raise: PyRaiseStatement
+6(7) element: PyFinallyPart
+7(8) element: PyPrintStatement
+8(9) finally fail exit
+9() element: null

@@ -193,7 +193,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         return;
       }
       if (!expr.isQualified()) {
-        if (PyDataFlowKt.isUnreachable(expr, myTypeEvalContext)) {
+        if (PyDataFlowKt.isUnreachableForInspection(expr, myTypeEvalContext)) {
           return;
         }
         ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(refText));

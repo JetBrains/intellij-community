@@ -4,7 +4,10 @@ import com.intellij.codeInsight.controlflow.ControlFlow
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInsight.controlflow.Instruction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
@@ -50,13 +53,77 @@ class PyDataFlow(controlFlow: ControlFlow, private val context: TypeEvalContext)
   }
 }
 
-fun PsiElement.isUnreachable(context: TypeEvalContext): Boolean {
+/**
+ * Checks if inspections should flag a Python element as unreachable.
+ *
+ * This method considers special cases where code might be technically unreachable
+ * but should not be reported as an issue.
+ * In particular, the first terminating statement in a sequence is considered valid
+ * and should not be reported as unreachable.
+ *
+ * Terminating statements include:
+ * - `raise` statements
+ * - `assert False`
+ * - calls to functions annotated with `NoReturn`
+ */
+fun PsiElement.isUnreachableForInspection(context: TypeEvalContext): Boolean {
+  return isUnreachableByControlFlow(context) && !isFirstTerminatingStatement(context)
+}
+
+/**
+ * Determines if the element is unreachable by control flow analysis.
+ * If the element does not have corresponding instruction in CFG, searches for the nearest parent that has.
+ */
+fun PsiElement.isUnreachableByControlFlow(context: TypeEvalContext): Boolean {
+  return PyUtil.getParameterizedCachedValue(this, context) { this.isUnreachableByControlFlowNoCache(it) }
+}
+
+private fun PsiElement.isUnreachableByControlFlowNoCache(context: TypeEvalContext): Boolean {
   val scope = ScopeUtil.getScopeOwner(this)
   if (scope != null) {
-    val flow = ControlFlowCache.getControlFlow(scope).getInstructions()
-    val idx = ControlFlowUtil.findInstructionNumberByElement(flow, this)
-    if (idx < 0) return false
-    return ControlFlowCache.getDataFlow(scope, context).isUnreachable(flow[idx])
+    val flow = ControlFlowCache.getDataFlow(scope, context)
+    val instructions = flow.instructions
+    val idx = ControlFlowUtil.findInstructionNumberByElement(instructions, this)
+    if (idx < 0 || instructions[idx].isAuxiliary()) {
+      val parent = this.parent
+      return parent != null && parent.isUnreachableByControlFlow(context)
+    }
+    return flow.isUnreachable(instructions[idx])
   }
   return false
+}
+
+private fun PsiElement.isFirstTerminatingStatement(context: TypeEvalContext): Boolean {
+  if (this.isTerminatingStatement(context)) {
+    val prevSibling = prevSiblingOfType<PyElement>() ?: return true
+    return !prevSibling.isTerminatingStatement(context) && !prevSibling.isUnreachableByControlFlow(context)
+  }
+  return false
+}
+
+private fun PsiElement.isTerminatingStatement(context: TypeEvalContext): Boolean {
+  return when (this) {
+    is PyRaiseStatement -> true
+    is PyAssertStatement -> getArguments().firstOrNull()?.asBooleanNoResolve() == false
+    is PyExpressionStatement -> expression is PyCallExpression && context.getType(expression) is PyNeverType
+    else -> false
+  }
+}
+
+private fun Instruction.isAuxiliary(): Boolean {
+  return when (this) {
+    is PyRaiseInstruction -> true
+    is PyWithContextExitInstruction -> true
+    is PyFinallyFailExitInstruction -> true
+    is ReadWriteInstruction -> access.isAssertTypeAccess
+    else -> false
+  }
+}
+
+private fun PyExpression.asBooleanNoResolve(): Boolean? {
+  return PyEvaluator.evaluateAsBooleanNoResolve(this)
+}
+
+private inline fun <reified T: PsiElement> PsiElement.prevSiblingOfType(): T? {
+  return PsiTreeUtil.getPrevSiblingOfType(this, T::class.java)
 }

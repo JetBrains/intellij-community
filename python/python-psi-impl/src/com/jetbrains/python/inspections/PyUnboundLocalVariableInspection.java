@@ -67,7 +67,7 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
       if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase.class) != null) {
         return;
       }
-      if (PyDataFlowKt.isUnreachable(node, myTypeEvalContext)) {
+      if (PyDataFlowKt.isUnreachableForInspection(node, myTypeEvalContext)) {
         return;
       }
       final String name = node.getReferencedName();
