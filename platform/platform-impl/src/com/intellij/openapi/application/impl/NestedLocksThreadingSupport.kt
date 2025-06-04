@@ -6,7 +6,6 @@ import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.withThreadLocal
 import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.impl.ComputationState.Companion.thisLevelPermit
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.text.StringUtil
@@ -26,233 +25,6 @@ import kotlin.coroutines.startCoroutine
 import kotlin.getOrThrow
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
-
-/**
- * The locking state that is shared by all computations belonging to the same level.
- */
-private class ComputationState(
-  /**
-   * A set of write-intent permits of **previous** locks (from `0` to `n - 1` included)
-   * We need them for obtaining write permit on [thisLevelLock] while cancelling lower-level actions.
-   */
-  private val lowerLevelPermits: Array<WriteIntentPermit>,
-
-  /**
-   * The lock of level `n`. This lock is intended to be shared between all computations belonging to the same level.
-   */
-  private val thisLevelLock: RWMutexIdea,
-
-  /**
-   * An artifact of parallelizing the read lock. The code parallelized from the read lock
-   * has no way of upgrading further, so it is safe to share read access with whole remaining computation tree.
-   */
-  private val isParallelizedRead: Boolean,
-) {
-
-  companion object {
-    /**
-     * Current permit that is given to a thread.
-     * We need to have this in a thread local, because thread context often gets reset, but we still need to proceed with locking actions.
-     * Example:
-     * ```
-     * WriteIntentReadAction.run {
-     *   dispatchAllInvocationEvents { // <- this method starts processing event queue, hence we reset the context there
-     *     WriteIntentReadAction.run { // since the context is reset, we need to obtain the higher-level permit;
-     *                                 // otherwise there would be a deadlock on a new attempt to acquire a write-intent permit
-     *     }
-     *   }
-     * }
-     * ```
-     */
-    private val thisLevelPermit: ThreadLocal<Permit> = ThreadLocal.withInitial { null }
-
-    /**
-     * This field is set after starting a write action.
-     *
-     * It is needed to support [NestedLocksThreadingSupport.executeSuspendingWriteAction].
-     * During the execution of suspending WA, we release and re-acquire write permits.
-     *
-     * Invariants: these fields must be accessed only from EDT, so all usages are intended to be serialized.
-     * We don't add excessive memory barriers here for the sake of performance.
-     */
-    private var publishedPermits: ExposedWritePermitData? = null
-  }
-
-  fun level(): Int {
-    return lowerLevelPermits.size
-  }
-
-  fun isParallelizedReadPermit(): Boolean {
-    return isParallelizedRead
-  }
-
-  fun getThisThreadPermit(): ParallelizablePermit? {
-    if (isParallelizedRead) {
-      return ParallelizablePermit.Read(null)
-    }
-    else {
-      return thisLevelPermit.get()?.asParallelizablePermit()
-    }
-  }
-
-  /**
-   * Fast check for read access; skips unnecessary boxing that is caused by inline classes
-   */
-  fun isReadAcquired(): Boolean {
-    return isParallelizedRead || thisLevelPermit.get() != null
-  }
-
-  /**
-   * Obtains a write permit if current thread holds a write-intent permit
-   */
-  fun upgradeWritePermit(support: NestedLocksThreadingSupport, permit: WriteIntentPermit) {
-    return upgradeWritePermit(support, permit, permit)
-  }
-
-  private fun upgradeWritePermit(support: NestedLocksThreadingSupport, permit: WriteIntentPermit, original: WriteIntentPermit?) {
-    val finalPermit = support.runSuspendMaybeConsuming(false) {
-      permit.acquireWritePermit()
-    }
-
-    // we need to acquire writes on the whole stack of lower-level write-intent permits,
-    // since we want to cancel all lower-level running read actions
-    val writePermits = Array(level()) {
-      support.runSuspendMaybeConsuming(false) {
-        lowerLevelPermits[it].acquireWritePermit()
-      }
-    }
-    check(publishedPermits == null) { "'upgradeWritePermit' must not be preceded by another 'upgradeWritePermit'" }
-    // exposing write permit data for possible suspending WA
-    publishedPermits = ExposedWritePermitData(lowerLevelPermits, writePermits, finalPermit, permit, original)
-    thisLevelPermit.set(finalPermit)
-  }
-
-  fun releaseWritePermit() {
-    val currentPublishedPermits = checkNotNull(publishedPermits) { "'releaseWrite' must be called only after 'acquireWritePermit' or 'upgradeWritePermit'" }
-    thisLevelPermit.set(currentPublishedPermits.oldPermit)
-    publishedPermits = null
-    val writePermits = currentPublishedPermits.writePermitStack
-    // forEachReversed is the most performant loop in kotlin, it uses indexes instead of iterators
-    writePermits.forEachReversed {
-      it.release()
-    }
-    currentPublishedPermits.finalWritePermit.release()
-    if (currentPublishedPermits.oldPermit == null) {
-      // it means that we were asked to acquire write permit without existing write-intent
-      currentPublishedPermits.originalWriteIntentPermit.release()
-    }
-  }
-
-  /**
-   * Normally, management of [thisLevelPermit] should happen in acquire-release functions.
-   * If something uses [hack_setThisLevelPermit], then it is a hack
-   */
-  @Suppress("FunctionName") // this function is for hackers
-  fun hack_setThisLevelPermit(permit: Permit?) {
-    thisLevelPermit.set(permit)
-  }
-
-  @Suppress("FunctionName") // this function is for hackers
-  fun hack_getPublishedWriteData(): ExposedWritePermitData? {
-    return publishedPermits
-  }
-
-  @Suppress("FunctionName") // this function is for hackers
-  fun hack_setPublishedPermitData(newData: ExposedWritePermitData?) {
-    publishedPermits = newData
-  }
-
-  /**
-   * Obtains a write-intent permit if the current thread does not hold anything
-   */
-  fun acquireWriteIntentPermit(support: NestedLocksThreadingSupport): WriteIntentPermit {
-    val permit = support.runSuspendMaybeConsuming(false) {
-      thisLevelLock.acquireWriteIntentPermit()
-    }
-    thisLevelPermit.set(permit)
-    return permit
-  }
-
-  /**
-   * Releases a write-intent permit acquired in [acquireWriteIntentPermit].
-   * Must be preceded by [acquireWriteIntentPermit] on this thread.
-   */
-  fun releaseWriteIntentPermit(writeIntentPermit: WriteIntentPermit) {
-    thisLevelPermit.set(null)
-    return writeIntentPermit.release()
-  }
-
-  /**
-   * Obtains a write-intent permit if the current thread does not hold anything
-   */
-  fun acquireReadPermit(support: NestedLocksThreadingSupport): ReadPermit {
-    val permit = support.runSuspendMaybeConsuming(true) {
-      thisLevelLock.acquireReadPermit(false)
-    }
-    thisLevelPermit.set(permit)
-    return permit
-  }
-
-  /**
-   * same as [acquireReadPermit], but returns `null` if acquisition failed
-   */
-  fun tryAcquireReadPermit(support: NestedLocksThreadingSupport): ReadPermit? {
-    val permit = support.runSuspendMaybeConsuming(false) {
-      thisLevelLock.tryAcquireReadPermit()
-    }
-    if (permit != null) {
-      thisLevelPermit.set(permit)
-    }
-    return permit
-  }
-
-  /**
-   * Releases a read permit acquired in [acquireReadPermit] or [tryAcquireReadPermit].
-   */
-  fun releaseReadPermit(readPermit: ReadPermit) {
-    check(thisLevelPermit.get() === readPermit) { "Attempt to release of a read permit that was not acquired in the current thread" }
-    thisLevelPermit.set(null)
-    return readPermit.release()
-  }
-
-  /**
-   * Starts parallelization of the write-intent permit.
-   * We introduce a new level of locking here
-   */
-  fun parallelizeWriteIntent(thisLevelPermit: WriteIntentPermit): Pair<ComputationState, AccessToken> {
-    val existingPermit = Companion.thisLevelPermit.get()
-    check(existingPermit == thisLevelPermit) { "Internal error: attempt to parallelize a foreign write-intent permit" }
-    Companion.thisLevelPermit.set(null)
-    return ComputationState(lowerLevelPermits + thisLevelPermit, RWMutexIdea(), false) to object : AccessToken() {
-      override fun finish() {
-        Companion.thisLevelPermit.set(existingPermit)
-      }
-    }
-  }
-
-  /**
-   * Starts parallelization of the write-intent permit.
-   * We simply grant the read access to all computations.
-   */
-  fun parallelizeRead(): Pair<ComputationState, AccessToken> {
-    return ComputationState(lowerLevelPermits, thisLevelLock, true) to AccessToken.EMPTY_ACCESS_TOKEN
-  }
-
-  override fun toString(): String {
-    return "ComputationState(level=${level()},thisLevelLock=$thisLevelLock,isParallelizedRead=${isParallelizedRead})"
-  }
-}
-
-private class ComputationStateContextElement(val computationState: ComputationState) : CoroutineContext.Element {
-  override val key: CoroutineContext.Key<*>
-    get() = ComputationStateContextElement
-
-  companion object : CoroutineContext.Key<ComputationStateContextElement>
-
-  override fun toString(): String {
-    return "$computationState"
-  }
-}
 
 /**
  * This enum is almost in one-to-one correspondence to [Permit], except that it handles downgrades of write and write-intent permits to Read permit.
@@ -379,9 +151,36 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
   companion object {
     private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
     private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
-    
+
     val defaultInstance: NestedLocksThreadingSupport = NestedLocksThreadingSupport()
   }
+
+  /**
+   * Current permit that is given to a thread.
+   * We need to have this in a thread local, because thread context often gets reset, but we still need to proceed with locking actions.
+   * Example:
+   * ```
+   * WriteIntentReadAction.run {
+   *   dispatchAllInvocationEvents { // <- this method starts processing event queue, hence we reset the context there
+   *     WriteIntentReadAction.run { // since the context is reset, we need to obtain the higher-level permit;
+   *                                 // otherwise there would be a deadlock on a new attempt to acquire a write-intent permit
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  val thisLevelPermit: ThreadLocal<Permit> = ThreadLocal.withInitial { null }
+
+  /**
+   * This field is set after starting a write action.
+   *
+   * It is needed to support [NestedLocksThreadingSupport.executeSuspendingWriteAction].
+   * During the execution of suspending WA, we release and re-acquire write permits.
+   *
+   * Invariants: these fields must be accessed only from EDT, so all usages are intended to be serialized.
+   * We don't add excessive memory barriers here for the sake of performance.
+   */
+  private var publishedPermits: ExposedWritePermitData? = null
 
 
   /**
@@ -451,6 +250,189 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
    * Used to wakeup non-blocking read actions
    */
   private val pendingWriteActionFollowup: MutableList<Runnable> = ArrayList()
+
+
+  /**
+   * The locking state that is shared by all computations belonging to the same level.
+   */
+  // we need backreference to ThreadingSupport because there can exist multiple instances of ThreadingSupport, like in Analyzer
+  private inner class ComputationState(
+    /**
+     * A set of write-intent permits of **previous** locks (from `0` to `n - 1` included)
+     * We need them for obtaining write permit on [thisLevelLock] while cancelling lower-level actions.
+     */
+    private val lowerLevelPermits: Array<WriteIntentPermit>,
+
+    /**
+     * The lock of level `n`. This lock is intended to be shared between all computations belonging to the same level.
+     */
+    private val thisLevelLock: RWMutexIdea,
+
+    /**
+     * An artifact of parallelizing the read lock. The code parallelized from the read lock
+     * has no way of upgrading further, so it is safe to share read access with whole remaining computation tree.
+     */
+    private val isParallelizedRead: Boolean,
+  ) {
+
+    fun level(): Int {
+      return lowerLevelPermits.size
+    }
+
+    fun isParallelizedReadPermit(): Boolean {
+      return isParallelizedRead
+    }
+
+    fun getThisThreadPermit(): ParallelizablePermit? {
+      if (isParallelizedRead) {
+        return ParallelizablePermit.Read(null)
+      }
+      else {
+        return thisLevelPermit.get()?.asParallelizablePermit()
+      }
+    }
+
+    /**
+     * Fast check for read access; skips unnecessary boxing that is caused by inline classes
+     */
+    fun isReadAcquired(): Boolean {
+      return isParallelizedRead || thisLevelPermit.get() != null
+    }
+
+    /**
+     * Obtains a write permit if current thread holds a write-intent permit
+     */
+    fun upgradeWritePermit(permit: WriteIntentPermit) {
+      return upgradeWritePermit(permit, permit)
+    }
+
+    private fun upgradeWritePermit(permit: WriteIntentPermit, original: WriteIntentPermit?) {
+      val finalPermit = runSuspendMaybeConsuming(false) {
+        permit.acquireWritePermit()
+      }
+
+      // we need to acquire writes on the whole stack of lower-level write-intent permits,
+      // since we want to cancel all lower-level running read actions
+      val writePermits = Array(level()) {
+        runSuspendMaybeConsuming(false) {
+          lowerLevelPermits[it].acquireWritePermit()
+        }
+      }
+      check(hack_getPublishedWriteData() == null) {
+        "'upgradeWritePermit' must not be preceded by another 'upgradeWritePermit'"
+      }
+      // exposing write permit data for possible suspending WA
+      hack_setPublishedPermitData(ExposedWritePermitData(lowerLevelPermits, writePermits, finalPermit, permit, original))
+      thisLevelPermit.set(finalPermit)
+    }
+
+    fun releaseWritePermit() {
+      val currentPublishedPermits = checkNotNull(hack_getPublishedWriteData()) { "'releaseWrite' must be called only after 'acquireWritePermit' or 'upgradeWritePermit'" }
+      thisLevelPermit.set(currentPublishedPermits.oldPermit)
+      hack_setPublishedPermitData(null)
+      val writePermits = currentPublishedPermits.writePermitStack
+      // forEachReversed is the most performant loop in kotlin, it uses indexes instead of iterators
+      writePermits.forEachReversed {
+        it.release()
+      }
+      currentPublishedPermits.finalWritePermit.release()
+      if (currentPublishedPermits.oldPermit == null) {
+        // it means that we were asked to acquire write permit without existing write-intent
+        currentPublishedPermits.originalWriteIntentPermit.release()
+      }
+    }
+
+    /**
+     * Obtains a write-intent permit if the current thread does not hold anything
+     */
+    fun acquireWriteIntentPermit(): WriteIntentPermit {
+      val permit = runSuspendMaybeConsuming(false) {
+        thisLevelLock.acquireWriteIntentPermit()
+      }
+      thisLevelPermit.set(permit)
+      return permit
+    }
+
+    /**
+     * Releases a write-intent permit acquired in [acquireWriteIntentPermit].
+     * Must be preceded by [acquireWriteIntentPermit] on this thread.
+     */
+    fun releaseWriteIntentPermit(writeIntentPermit: WriteIntentPermit) {
+      thisLevelPermit.set(null)
+      return writeIntentPermit.release()
+    }
+
+    /**
+     * Obtains a write-intent permit if the current thread does not hold anything
+     */
+    fun acquireReadPermit(): ReadPermit {
+      val permit = runSuspendMaybeConsuming(true) {
+        thisLevelLock.acquireReadPermit(false)
+      }
+      thisLevelPermit.set(permit)
+      return permit
+    }
+
+    /**
+     * same as [acquireReadPermit], but returns `null` if acquisition failed
+     */
+    fun tryAcquireReadPermit(): ReadPermit? {
+      val permit = runSuspendMaybeConsuming(false) {
+        thisLevelLock.tryAcquireReadPermit()
+      }
+      if (permit != null) {
+        thisLevelPermit.set(permit)
+      }
+      return permit
+    }
+
+    /**
+     * Releases a read permit acquired in [acquireReadPermit] or [tryAcquireReadPermit].
+     */
+    fun releaseReadPermit(readPermit: ReadPermit) {
+      check(thisLevelPermit.get() === readPermit) { "Attempt to release of a read permit that was not acquired in the current thread" }
+      thisLevelPermit.set(null)
+      return readPermit.release()
+    }
+
+    /**
+     * Starts parallelization of the write-intent permit.
+     * We introduce a new level of locking here
+     */
+    fun parallelizeWriteIntent(thisLevelPermit: WriteIntentPermit): Pair<ComputationState, AccessToken> {
+      val existingPermit = this@NestedLocksThreadingSupport.thisLevelPermit.get()
+      check(existingPermit == thisLevelPermit) { "Internal error: attempt to parallelize a foreign write-intent permit" }
+      this@NestedLocksThreadingSupport.thisLevelPermit.set(null)
+      return ComputationState(lowerLevelPermits + thisLevelPermit, RWMutexIdea(), false) to object : AccessToken() {
+        override fun finish() {
+          this@NestedLocksThreadingSupport.thisLevelPermit.set(existingPermit)
+        }
+      }
+    }
+
+    /**
+     * Starts parallelization of the write-intent permit.
+     * We simply grant the read access to all computations.
+     */
+    fun parallelizeRead(): Pair<ComputationState, AccessToken> {
+      return ComputationState(lowerLevelPermits, thisLevelLock, true) to AccessToken.EMPTY_ACCESS_TOKEN
+    }
+
+    override fun toString(): String {
+      return "ComputationState(level=${level()},thisLevelLock=$thisLevelLock,isParallelizedRead=${isParallelizedRead})"
+    }
+  }
+
+  private class ComputationStateContextElement(val computationState: ComputationState) : CoroutineContext.Element {
+    override val key: CoroutineContext.Key<*>
+      get() = ComputationStateContextElement
+
+    companion object : CoroutineContext.Key<ComputationStateContextElement>
+
+    override fun toString(): String {
+      return "$computationState"
+    }
+  }
 
   override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken> {
     if (!isLockStoredInContext) {
@@ -539,13 +521,13 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
         // It is difficult to get right, and we are not sure about the valid semantics yet.
         // Unfortunately, our old tests rely on this concept.
         // We forbid write lock parallelization in production (see `runBlockingCancellable`), and instead allow it only in tests
-        val currentPermits = checkNotNull(currentComputationState.hack_getPublishedWriteData()) { "Parallelization of write permit must happen when write lock is acquired" }
+        val currentPermits = checkNotNull(hack_getPublishedWriteData()) { "Parallelization of write permit must happen when write lock is acquired" }
         val currentWriteIntentPermit = currentPermits.originalWriteIntentPermit
         // the idea of write lock parallelization is that we release the **top-level** write permit,
         // capture read permit, and parallelize it.
         // so this is the parallelization of the second kind.
         currentPermit.writePermit.release()
-        val newPermit = currentComputationState.acquireReadPermit(this)
+        val newPermit = currentComputationState.acquireReadPermit()
         val (newState, cleanup) = currentComputationState.parallelizeRead()
         return ComputationStateContextElement(newState) to object : AccessToken() {
           override fun finish() {
@@ -555,8 +537,8 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
             val newWritePermit = runSuspendMaybeConsuming(false) {
               currentWriteIntentPermit.acquireWritePermit()
             }
-            currentComputationState.hack_setThisLevelPermit(newWritePermit)
-            currentComputationState.hack_setPublishedPermitData(currentPermits.copy(finalWritePermit = newWritePermit))
+            hack_setThisLevelPermit(newWritePermit)
+            hack_setPublishedPermitData(currentPermits.copy(finalWritePermit = newWritePermit))
           }
         }
       }
@@ -619,7 +601,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       var permitToRelease: WriteIntentPermit? = null
       when (currentPermit) {
         null -> {
-          permitToRelease = computationState.acquireWriteIntentPermit(this)
+          permitToRelease = computationState.acquireWriteIntentPermit()
         }
         is ParallelizablePermit.Read -> {
           error("WriteIntentReadAction can not be called from ReadAction")
@@ -678,7 +660,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   private fun smartAcquireReadPermit(state: ComputationState): ReadPermit {
-    var permit = state.tryAcquireReadPermit(this)
+    var permit = state.tryAcquireReadPermit()
     if (permit != null) {
       return permit
     }
@@ -689,7 +671,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     val indicator = myLegacyProgressIndicatorProvider?.obtainProgressIndicator()
     // Nothing to check or cannot be canceled
     if (indicator == null || Cancellation.isInNonCancelableSection()) {
-      return state.acquireReadPermit(this)
+      return state.acquireReadPermit()
     }
 
     // Spin & sleep with checking for cancellation
@@ -698,10 +680,10 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       indicator.checkCanceled()
       if (iter++ < SPIN_TO_WAIT_FOR_LOCK) {
         Thread.yield()
-        permit = state.tryAcquireReadPermit(this)
+        permit = state.tryAcquireReadPermit()
       }
       else {
-        permit = state.acquireReadPermit(this) // getReadPermitTimed (1) // millis
+        permit = state.acquireReadPermit() // getReadPermitTimed (1) // millis
       }
     }
     while (permit == null)
@@ -775,7 +757,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     try {
       when (currentPermit) {
         null -> {
-          readPermitToRelease = computationState.tryAcquireReadPermit(this)
+          readPermitToRelease = computationState.tryAcquireReadPermit()
           if (readPermitToRelease == null) {
             return false
           }
@@ -901,6 +883,8 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       finally {
         writeLockInitResult.release()
       }
+    } catch (e : Throwable) {
+      throw e
     }
     finally {
       writeIntentInitResult.release()
@@ -949,7 +933,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     try {
       when (permit) {
         null -> {
-          val writeIntent = computationState.acquireWriteIntentPermit(this)
+          val writeIntent = computationState.acquireWriteIntentPermit()
           return PreparatoryWriteIntent(writeIntent, true, computationState, listener)
         }
         is ParallelizablePermit.Read -> {
@@ -975,7 +959,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       when (preparatoryWriteIntent.permit) {
         is WriteIntentPermit -> {
           processWriteLockAcquisition {
-            state.upgradeWritePermit(this, preparatoryWriteIntent.permit)
+            state.upgradeWritePermit(preparatoryWriteIntent.permit)
           }
           true
         }
@@ -1049,16 +1033,16 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     val prevBase = myWriteStackBase
     myWriteStackBase = myWriteActionsStack.size
     myWriteAcquired = null
-    val exposedPermitData = checkNotNull(state.hack_getPublishedWriteData()) {
+    val exposedPermitData = checkNotNull(hack_getPublishedWriteData()) {
       "Suspending write action was requested, but the thread did not start write action properly"
     }
-    state.hack_setPublishedPermitData(null)
+    hack_setPublishedPermitData(null)
     exposedPermitData.writePermitStack.forEachReversed {
       it.release()
     }
     val rootWriteIntentPermit = exposedPermitData.originalWriteIntentPermit
     permit.writePermit.release()
-    state.hack_setThisLevelPermit(rootWriteIntentPermit)
+    hack_setThisLevelPermit(rootWriteIntentPermit)
     drainWriteActionFollowups()
     try {
       action()
@@ -1068,13 +1052,13 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       val newWritePermit = runSuspendMaybeConsuming(false) {
         rootWriteIntentPermit.acquireWritePermit()
       }
-      state.hack_setThisLevelPermit(newWritePermit)
+      hack_setThisLevelPermit(newWritePermit)
       val newWritePermits = Array(exposedPermitData.writeIntentStack.size) {
         runSuspendMaybeConsuming(false) {
           exposedPermitData.writeIntentStack[it].acquireWritePermit()
         }
       }
-      state.hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit))
+      hack_setPublishedPermitData(exposedPermitData.copy(writePermitStack = newWritePermits, finalWritePermit = newWritePermit))
       myWriteAcquired = Thread.currentThread()
       myWriteStackBase = prevBase
     }
@@ -1132,7 +1116,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       private val capturedListener = myReadActionListener
       private val myPermit = run {
         fireBeforeReadActionStart(capturedListener, javaClass)
-        val p = computationState.acquireReadPermit(this@NestedLocksThreadingSupport)
+        val p = computationState.acquireReadPermit()
         fireReadActionStarted(capturedListener, javaClass)
         p
       }
@@ -1387,7 +1371,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       // non-cancellable section here because we need to prohibit prompt cancellation of lock acquisition in this `finally`
       // otherwise the outer release in `runWriteIntentReadAction` would fail with NPE
       installThreadContext(currentThreadContext().minusKey(Job), true).use {
-        state.acquireWriteIntentPermit(this)
+        state.acquireWriteIntentPermit()
       }
     }
   }
@@ -1438,6 +1422,25 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     else {
       runSuspendWithWaitingConsumer(block, myLockInterceptor.get())
     }
+  }
+
+  /**
+   * Normally, management of [thisLevelPermit] should happen in acquire-release functions.
+   * If something uses [hack_setThisLevelPermit], then it is a hack
+   */
+  @Suppress("FunctionName") // this function is for hackers
+  fun hack_setThisLevelPermit(permit: Permit?) {
+    thisLevelPermit.set(permit)
+  }
+
+  @Suppress("FunctionName") // this function is for hackers
+  private fun hack_getPublishedWriteData(): ExposedWritePermitData? {
+    return publishedPermits
+  }
+
+  @Suppress("FunctionName") // this function is for hackers
+  private fun hack_setPublishedPermitData(newData: ExposedWritePermitData?) {
+    publishedPermits = newData
   }
 }
 
