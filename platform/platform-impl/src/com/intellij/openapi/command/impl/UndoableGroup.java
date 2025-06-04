@@ -362,10 +362,12 @@ final class UndoableGroup implements Dumpable {
           DocumentEx newDocument = getDocumentToSetBulkMode(action);
           if (newDocument == null) {
             for (DocumentEx document : bulkDocuments) {
+              //noinspection deprecation
               document.setInBulkUpdate(false);
             }
             bulkDocuments.clear();
           } else if (bulkDocuments.add(newDocument)) {
+            //noinspection deprecation
             newDocument.setInBulkUpdate(true);
           }
         }
@@ -377,6 +379,7 @@ final class UndoableGroup implements Dumpable {
       }
     } finally {
       for (DocumentEx bulkDocument : bulkDocuments) {
+        //noinspection deprecation
         bulkDocument.setInBulkUpdate(false);
       }
     }
