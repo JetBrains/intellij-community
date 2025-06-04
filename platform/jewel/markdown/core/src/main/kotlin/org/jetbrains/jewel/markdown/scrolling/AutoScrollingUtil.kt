@@ -13,6 +13,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import kotlin.math.abs
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.MarkdownBlock
 
 /**
@@ -21,6 +22,7 @@ import org.jetbrains.jewel.markdown.MarkdownBlock
  *
  * @see [ScrollSyncMarkdownBlockRenderer]
  */
+@ExperimentalJewelApi
 @Composable
 public fun AutoScrollableBlock(
     block: MarkdownBlock,

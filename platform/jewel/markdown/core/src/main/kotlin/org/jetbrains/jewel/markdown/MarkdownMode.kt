@@ -17,7 +17,7 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 @ExperimentalJewelApi
 public sealed interface MarkdownMode {
     /** Default mode when only rendered contents of a file is shown to a user. */
-    public object Standalone : MarkdownMode
+    @ExperimentalJewelApi public object Standalone : MarkdownMode
 
     /**
      * Mode that is intended for cases when the raw file can be edited, and changes are expected to affect rendered
@@ -26,6 +26,7 @@ public sealed interface MarkdownMode {
      * @param scrollingSynchronizer [ScrollingSynchronizer] that enables auto-scrolling in the preview to match the
      *   scrolling position in the editor and therefore show the same blocks that are currently visible in the editor.
      */
+    @ExperimentalJewelApi
     public class EditorPreview(public val scrollingSynchronizer: ScrollingSynchronizer?) : MarkdownMode
 }
 

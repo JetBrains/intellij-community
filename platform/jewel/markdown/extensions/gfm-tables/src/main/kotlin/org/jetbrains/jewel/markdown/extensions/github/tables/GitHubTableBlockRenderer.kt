@@ -21,7 +21,7 @@ import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
-@OptIn(ExperimentalJewelApi::class)
+@ExperimentalJewelApi
 public class GitHubTableBlockRenderer(
     private val rootStyling: MarkdownStyling,
     private val tableStyling: GfmTableStyling,
