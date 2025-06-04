@@ -70,6 +70,11 @@ public class K2IdeK2CodeKotlinVariablePrintingTestGenerated extends AbstractK2Id
         runTest("../testData/variables/reentrantInlineFunctions.kt");
     }
 
+    @TestMetadata("scopeVariablesInInlineSuspendBlock.kt")
+    public void testScopeVariablesInInlineSuspendBlock() throws Exception {
+        runTest("../testData/variables/scopeVariablesInInlineSuspendBlock.kt");
+    }
+
     @TestMetadata("spilledCapturedVariables.kt")
     public void testSpilledCapturedVariables() throws Exception {
         runTest("../testData/variables/spilledCapturedVariables.kt");

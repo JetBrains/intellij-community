@@ -81,8 +81,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:52)
     JavaValue[local] b: java.lang.String = b (optimisedVariablesWithLambdas.kt:12)
     JavaValue[local] a: java.lang.String = a (optimisedVariablesWithLambdas.kt:9)
     JavaValue[local] i: java.lang.String = i (optimisedVariablesWithLambdas.kt:50)
-    JavaValue[continuation] $i$f$inlineBlock = 0
-    JavaValue[continuation] $i$a$-inlineBlock-OptimisedVariablesWithLambdasKt$foo$4 = 0
 optimisedVariablesWithLambdas.kt:58
 CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:58)
     JavaValue[continuation] a = a
@@ -92,9 +90,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:58)
     JavaValue[continuation] param1 = 1
     JavaValue[continuation] param2 = 2
     JavaValue[continuation] param3 = 3
-    JavaValue[continuation] $i$f$inlineBlock = 0
-    JavaValue[continuation] $i$a$-inlineBlock-OptimisedVariablesWithLambdasKt$foo$4 = 0
-    JavaValue[continuation] $i$a$-inlineBlock-OptimisedVariablesWithLambdasKt$foo$4$2 = 0
     DummyMessageValueNode = 'j' was optimised out
 optimisedVariablesWithLambdas.kt:66
 KotlinStackFrame (optimisedVariablesWithLambdas.kt:66)

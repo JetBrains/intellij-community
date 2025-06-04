@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
-import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl.logError
 import com.intellij.openapi.diagnostic.fileLogger
@@ -13,10 +12,8 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
 import com.sun.jdi.Value
 import kotlinx.serialization.json.Json
-import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.callMethodFromHelper
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStacksInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
@@ -32,28 +29,6 @@ internal fun fetchCoroutineStacksInfoData(context: DefaultExecutionContext, cont
         logError("Error while looking for stack frame", e)
         null
     }
-}
-
-internal fun MirrorOfBaseContinuationImpl.spilledValues(context: DefaultExecutionContext): List<JavaValue> {
-    return fieldVariables.map {
-        it.toJavaValue(that, context)
-    }
-}
-
-private fun FieldVariable.toJavaValue(continuation: ObjectReference, context: DefaultExecutionContext): JavaValue {
-    val valueDescriptor = ContinuationVariableValueDescriptorImpl(
-        context,
-        continuation,
-        fieldName,
-        dropInlineSuffix(variableName)
-    )
-    return JavaValue.create(
-        null,
-        valueDescriptor,
-        context.evaluationContext,
-        context.debugProcess.xdebugProcess!!.nodeManager,
-        false
-    )
 }
 
 private fun fetchContinuationStack(
@@ -95,9 +70,8 @@ private fun parseResultFromHelper(array: Value, context: DefaultExecutionContext
         val data = coroutineStackTraceData.continuationFrames[i]
         CoroutineStackFrameItem.create(
             stackTraceElement = data.stackTraceElement?.stackTraceElement(),
-            fieldVariables = data.spilledVariables
-                .map { FieldVariable(it.fieldName, it.variableName) }
-                .map { it.toJavaValue(continuation, context) },
+            fieldVariables = data.spilledVariables.map { FieldVariable(it.fieldName, it.variableName) },
+            continuation = continuation,
             context = context
         )
     }
