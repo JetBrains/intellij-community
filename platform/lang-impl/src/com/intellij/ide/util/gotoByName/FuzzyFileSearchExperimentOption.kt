@@ -2,6 +2,7 @@
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
@@ -10,12 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal fun isFuzzyFileSearchEnabled(): Boolean {
-  return ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
+  return !`is`("search.everywhere.fuzzy.file.search.ab.experiment.disable", false) &&
+         ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(FuzzyFileSearchExperimentOption::class.java)
 }
 
 @ApiStatus.Internal
 internal class FuzzyFileSearchExperimentOption : ABExperimentOption {
-  override val id: ABExperimentOptionId = ABExperimentOptionId("fuzzyFileSearch")
+  override val id: ABExperimentOptionId = ABExperimentOptionId(FUZZY_FILE_SEARCH_EXPERIMENT_OPTION_ID)
 
   override fun getGroupSizeForIde(isPopularIde: Boolean): ABExperimentOptionGroupSize {
     return ABExperimentOptionGroupSize(128)
@@ -26,5 +28,9 @@ internal class FuzzyFileSearchExperimentOption : ABExperimentOption {
   override fun checkIdeVersionIsSuitable(): Boolean {
     val appInfo = ApplicationInfo.getInstance()
     return appInfo.isEAP && appInfo.majorVersion == "2025" && appInfo.minorVersionMainPart == "2"
+  }
+
+  companion object {
+    const val FUZZY_FILE_SEARCH_EXPERIMENT_OPTION_ID = "fuzzyFileSearch"
   }
 }
