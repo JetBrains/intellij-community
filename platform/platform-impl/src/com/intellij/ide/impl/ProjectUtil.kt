@@ -517,7 +517,7 @@ object ProjectUtil {
 
   @JvmStatic
   fun getUserHomeProjectDir(): String {
-    val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
+    val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() || PlatformUtils.isMPS()) {
       ApplicationNamesInfo.getInstance().productName
     }
     else {
