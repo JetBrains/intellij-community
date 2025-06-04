@@ -552,10 +552,18 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
         val provider = RemoteCommunicatorHolder.getProvider(providerCode) ?: return
         login(provider, syncConfigPanel)
       }
-    } else if (enableCheckbox.isSelected || SettingsSyncSettings.getInstance().syncEnabled) {
-      disableCurrentSyncDialog()
-    } else {
+    }
+    else {
+      val wasEnabled = enableCheckbox.isSelected
+      if (wasEnabled) {
+        if (!disableCurrentSyncDialog()){
+          return
+        }
+      }
       userDropDownLink.selectedItem = selectedValue
+      if (wasEnabled && !enableCheckbox.isSelected) {
+        enableCheckbox.doClick()
+      }
     }
 
   }
