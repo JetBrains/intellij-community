@@ -284,6 +284,9 @@ public class JBColor extends Color implements PresentableColor, ComparableColor 
 
   @Override
   public @NotNull Color brighter() {
+    if (Registry.is("ide.color.mixture.mark.colors")) {
+      return new SwingTuneBrighter(this).createColor(true);
+    }
     if (func != null) {
       return lazy(() -> func.get().brighter());
     }
@@ -296,6 +299,9 @@ public class JBColor extends Color implements PresentableColor, ComparableColor 
 
   @Override
   public @NotNull Color darker() {
+    if (Registry.is("ide.color.mixture.mark.colors")) {
+      return new SwingTuneDarker(this).createColor(true);
+    }
     if (func != null) {
       return lazy(() -> func.get().darker());
     }

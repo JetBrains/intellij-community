@@ -14,7 +14,9 @@ import java.awt.Color
  * This may introduce issues when the Color is used as a key in some cache.
  *
  * Note: the Supplier func in [com.intellij.ui.JBColor] may implement the interface as well
+ *
  * @see com.intellij.util.ui.UIUtil.equalColors
+ * @see com.intellij.internal.inspector.themePicker.UiThemeColorPicker and Registry keys it may override
  */
 @ApiStatus.Internal
 interface ComparableColor {

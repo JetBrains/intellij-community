@@ -2,8 +2,6 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributeKeyColor;
-import com.intellij.openapi.editor.markup.TextAttributeKeyColorType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;

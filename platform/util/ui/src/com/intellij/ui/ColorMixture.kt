@@ -74,15 +74,14 @@ abstract class ColorMixture internal constructor(
   }
 }
 
-@Suppress("UseJBColor")
 @ApiStatus.Internal
-class NamedColor internal constructor(val fullName: @NlsSafe String, color: Color) : Color(color.rgb, true), PresentableColor, ComparableColor {
+class NamedColor internal constructor(val fullName: @NlsSafe String, color: Color) : ColorWrapper(color) {
   override fun getPresentableName(): @NlsSafe String = fullName
 
   override fun colorEquals(other: ComparableColor): Boolean {
     return other is NamedColor &&
            fullName == other.fullName &&
-           super<Color>.equals(other)
+           this == other
   }
 
   override fun colorHashCode(): Int {
@@ -95,4 +94,32 @@ class NamedColor internal constructor(val fullName: @NlsSafe String, color: Colo
       return NamedColor(name, color)
     }
   }
+}
+
+@ApiStatus.Internal
+class SwingTuneDarker(
+  private val color: Color,
+) : ColorMixture("swingDarker") {
+  override val args: List<Any> get() = listOf(color)
+
+  override fun get(): Color {
+    return getRawColor(color).darker()
+  }
+}
+
+@ApiStatus.Internal
+class SwingTuneBrighter(
+  private val color: Color,
+) : ColorMixture("swingBrighter") {
+  override val args: List<Any> get() = listOf(color)
+
+  override fun get(): Color {
+    return getRawColor(color).brighter()
+  }
+}
+
+@Suppress("UseJBColor")
+private fun getRawColor(color: Color): Color {
+  // avoid recursion
+  return Color(color.rgb, true)
 }

@@ -2,14 +2,14 @@
 package com.intellij.openapi.editor.colors.impl
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ColorWrapper
 import com.intellij.util.ui.ComparableColor
-import com.intellij.util.ui.PresentableColor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
 @ApiStatus.Internal
-class ColorKeyColor(color: Color, val keyName: String) : Color(color.rgb, true), PresentableColor, ComparableColor {
-  override fun getPresentableName(): @NlsSafe String? {
+class ColorKeyColor(color: Color, val keyName: String) : ColorWrapper(color) {
+  override fun getPresentableName(): @NlsSafe String {
     return "ColorKey: $keyName"
   }
 
