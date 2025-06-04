@@ -151,13 +151,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   override fun configureEditorsSplitters(component: EditorsSplitters) {
     if (isManyIslandEnabled) {
-      IslandsRoundedBorder.createEditorBorder(component)
+      IslandsRoundedBorder.createEditorBorder(component, tabPainterAdapter)
     }
   }
 
   override fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics) {
     if (isManyIslandEnabled) {
-      IslandsRoundedBorder.paintBeforeEditorEmptyText(component, graphics)
+      IslandsRoundedBorder.paintBeforeEditorEmptyText(component, graphics, tabPainterAdapter)
     }
   }
 

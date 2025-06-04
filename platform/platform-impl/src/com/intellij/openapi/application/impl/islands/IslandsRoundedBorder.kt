@@ -5,10 +5,9 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.toolWindow.xNext.island.XNextRoundedBorder
-import com.intellij.ui.tabs.impl.JBEditorTabs
+import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.Graphics
 import java.awt.Paint
 import javax.swing.JComponent
@@ -29,15 +28,13 @@ internal class IslandsRoundedBorder(fillColor: (JComponent) -> Paint?) :
       component.border = IslandsRoundedBorder { JBUI.CurrentTheme.ToolWindow.background() }
     }
 
-    fun createEditorBorder(editorsSplitters: EditorsSplitters) {
-      editorsSplitters.border = IslandsRoundedBorder {
-        UIUtil.findComponentOfType(it, JBEditorTabs::class.java)?.background ?: it.background
-      }
+    fun createEditorBorder(editorsSplitters: EditorsSplitters, editorTabPainter: TabPainterAdapter) {
+      editorsSplitters.border = IslandsRoundedBorder { editorTabPainter.tabPainter.getBackgroundColor() }
     }
 
-    fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics) {
+    fun paintBeforeEditorEmptyText(component: JComponent, graphics: Graphics, editorTabPainter: TabPainterAdapter) {
       val g = IdeBackgroundUtil.getOriginalGraphics(graphics)
-      g.color = UIUtil.findComponentOfType(component.rootPane, JBEditorTabs::class.java)?.background ?: return
+      g.color = editorTabPainter.tabPainter.getBackgroundColor()
       g.fillRect(0, 0, component.width, component.height)
     }
   }
