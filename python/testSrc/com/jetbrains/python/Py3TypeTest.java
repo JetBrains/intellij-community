@@ -2,7 +2,9 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -3760,6 +3762,41 @@ public class Py3TypeTest extends PyTestCase {
     doTest("EllipsisType", "expr = Ellipsis");
   }
 
+  // PY-80166, PY-80167
+  public void testVarianceObtainedFromTypeVarDeclaration() {
+    doTestTypeVarVariance(PyTypeVarType.Variance.INVARIANT, """
+      from typing import TypeVar
+      T = TypeVar("T")
+      expr: T
+      """);
+    doTestTypeVarVariance(PyTypeVarType.Variance.COVARIANT, """
+      from typing import TypeVar
+      T_co = TypeVar("T_co", covariant=True)
+      expr: T_co
+      """);
+    doTestTypeVarVariance(PyTypeVarType.Variance.CONTRAVARIANT, """
+      from typing import TypeVar
+      T_contra = TypeVar("T_contra", contravariant=True)
+      expr: T_contra
+      """);
+    doTestTypeVarVariance(PyTypeVarType.Variance.INFER_VARIANCE, """
+      from typing import TypeVar
+      T_inf = TypeVar("T_inf", infer_variance=True)
+      expr: T_inf
+      """);
+    doTestTypeVarVariance(PyTypeVarType.Variance.INVARIANT, """
+      from typing import TypeVar
+      T_wrong = TypeVar("T_wrong", covariant=True, contravariant=True)
+      expr: T_wrong
+      """);
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestTypeVarVariance(PyTypeVarType.Variance.INFER_VARIANCE, """
+      def foo[T]():
+        expr: T
+      """);
+    });
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
@@ -3772,6 +3809,15 @@ public class Py3TypeTest extends PyTestCase {
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
     assertProjectFilesNotParsed(containingFile);
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
+  }
+
+  private void doTestTypeVarVariance(PyTypeVarType.Variance variance, String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    assertNotNull(expr);
+    PyType type = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()).getType(expr);
+    assertInstanceOf(type, PyTypeVarType.class);
+    assertEquals(variance, ((PyTypeVarType)type).getVariance());
   }
 
   private void doMultiFileTest(@NotNull String expectedType, @NotNull String text) {
