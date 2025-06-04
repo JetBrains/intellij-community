@@ -116,6 +116,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                  defaultValue="true"
                  restartRequired="false"
                  description="Use bare python instead of conda run for conda"/>
+    <registryKey defaultValue="true"
+                 description="Enable pyi stubs for Django (django-stubs package)"
+                 key="django.enable.pyi.stubs"/>
     <registryKey key="python.packaging.conda.chain.installation"
                  defaultValue="true"
                  restartRequired="true"
