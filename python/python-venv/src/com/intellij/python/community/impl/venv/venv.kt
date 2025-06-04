@@ -10,6 +10,7 @@ import com.intellij.python.community.execService.WhatToExec
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.validatePythonAndGetVersion
@@ -44,7 +45,7 @@ suspend fun createVenv(
     add(venvDir.pathString)
   }
   val version = python.validatePythonAndGetVersion().getOr { return it }
-  val helper = if (version.isPy3K) VIRTUALENV_ZIPAPP_NAME else PY_2_VIRTUALENV_ZIPAPP_NAME
+  val helper = if (version.isAtLeast(LanguageLevel.PYTHON38)) VIRTUALENV_ZIPAPP_NAME else LEGACY_VIRTUALENV_ZIPAPP_NAME
   execService.execGetStdout(WhatToExec.Helper(python, helper = helper), args, ExecOptions(timeout = 3.minutes)).getOr { return it }
 
 
@@ -65,5 +66,6 @@ suspend fun createVenv(
 @Internal
 const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-py3.pyz"
 
-// Ancient version, the last one compatible with Py2
-private const val PY_2_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"
+// Ancient version, the last one compatible with Py 2.7, 3.6, 3.7
+@Internal
+const val LEGACY_VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-20.13.0.pyz"
