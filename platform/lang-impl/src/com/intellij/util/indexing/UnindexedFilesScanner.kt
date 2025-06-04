@@ -273,7 +273,7 @@ class UnindexedFilesScanner (
   internal suspend fun applyDelayedPushOperations(scanningHistory: ProjectScanningHistoryImpl) {
     this.scanningHistory = scanningHistory
     markStageSus(ProjectScanningHistoryImpl.Stage.DelayedPushProperties) {
-      val pusher = blockingContext { PushedFilePropertiesUpdater.getInstance(myProject) }
+      val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
       if (pusher is PushedFilePropertiesUpdaterImpl) {
         pusher.performDelayedPushTasks()
       }
@@ -463,7 +463,7 @@ class UnindexedFilesScanner (
       scanningStatistics.setProviderRoots(provider, project)
       val origin = provider.origin
 
-      val fileScannerVisitors = blockingContext { sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) } }
+      val fileScannerVisitors = sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) }
       val thisProviderDeduplicateFilter =
         IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter)
 
@@ -565,9 +565,7 @@ class UnindexedFilesScanner (
 
       scanningStatistics.startVfsIterationAndScanningApplication()
       try {
-        blockingContext {
-          provider.iterateFiles(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
-        }
+        provider.iterateFiles(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
       }
       finally {
         scanningStatistics.tryFinishVfsIterationAndScanningApplication()

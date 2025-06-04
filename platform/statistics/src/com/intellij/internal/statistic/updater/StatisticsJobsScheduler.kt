@@ -6,6 +6,7 @@ import com.intellij.ide.StatisticsNotificationManager
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProviders
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProvidersHolder
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -16,7 +17,6 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -94,9 +94,7 @@ private class StatisticsJobsScheduler : ApplicationActivity {
       delay((5 * 60).seconds)
 
       while (isActive) {
-        blockingContext {
-          StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId).send()
-        }
+        StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId).send()
         delay(provider.sendFrequencyMs.milliseconds)
       }
     }

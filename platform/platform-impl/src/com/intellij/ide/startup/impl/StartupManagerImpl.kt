@@ -23,7 +23,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareRunnable
 import com.intellij.openapi.project.DumbService
@@ -254,22 +253,20 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
         if (activity is ProjectActivity) {
           if (ApplicationManager.getApplication().isUnitTestMode) {
-            blockingContext {
-              // We propagate modality only in unit tests
-              // because in unit tests, activities are often started in a modal context (see TestProjectManager).
-              // Thus, any "invokeAndWait" will hang without modality propagation.
-              // In the future, we aim to avoid .joinAll in runPostStartupActivities altogether.
-              @Suppress("DEPRECATION")
-              val modalityContext = currentThreadContextModality()?.asContextElement() ?: EmptyCoroutineContext
-              val job = launchActivity(
-                activity = activity,
-                project = project,
-                pluginId = pluginDescriptor.pluginId,
-                additionalContext = modalityContext,
-              )
-              runningProjectActivities.put(activity.javaClass, job)
-              job.invokeOnCompletion { runningProjectActivities.remove(activity.javaClass) }
-            }
+            // We propagate modality only in unit tests
+            // because in unit tests, activities are often started in a modal context (see TestProjectManager).
+            // Thus, any "invokeAndWait" will hang without modality propagation.
+            // In the future, we aim to avoid .joinAll in runPostStartupActivities altogether.
+            @Suppress("DEPRECATION")
+            val modalityContext = currentThreadContextModality()?.asContextElement() ?: EmptyCoroutineContext
+            val job = launchActivity(
+              activity = activity,
+              project = project,
+              pluginId = pluginDescriptor.pluginId,
+              additionalContext = modalityContext,
+            )
+            runningProjectActivities.put(activity.javaClass, job)
+            job.invokeOnCompletion { runningProjectActivities.remove(activity.javaClass) }
           }
           else {
             launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
@@ -284,19 +281,15 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
             LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
           }
           dumbService.runWithWaitForSmartModeDisabled().use {
-            blockingContext {
-              runOldActivity(activity as StartupActivity)
-            }
+            runOldActivity(activity as StartupActivity)
           }
         }
         else if (!isProjectLightEditCompatible) {
           LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           counter.incrementAndGet()
-          blockingContext {
-            dumbService.runWhenSmart {
-              runOldActivity(activity as StartupActivity)
-            }
+          dumbService.runWhenSmart {
+            runOldActivity(activity as StartupActivity)
           }
         }
       }
@@ -361,9 +354,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         val pluginId = PluginUtil.getPluginId(runnableClass.classLoader)
         launch(tracer.span("run activity", arrayOf("class", runnableClass.name, "plugin", pluginId.idString))) {
           runCatching {
-            blockingContext {
-              runnable.run()
-            }
+            runnable.run()
           }.getOrLogException(LOG)
         }
       }
@@ -462,10 +453,8 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
 
   createActivityScope(project, activity.javaClass).launch {
     try {
-      blockingContext {
-        @Suppress("UsagesOfObsoleteApi")
-        (activity as StartupActivity).runActivity(project)
-      }
+      @Suppress("UsagesOfObsoleteApi")
+      (activity as StartupActivity).runActivity(project)
     }
     catch (e: CancellationException) {
       throw e

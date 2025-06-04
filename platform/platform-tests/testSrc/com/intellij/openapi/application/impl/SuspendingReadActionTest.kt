@@ -235,17 +235,13 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
           throw assertThrows<CannotReadException> {
             runBlockingCancellable {
               throw assertThrows<CannotReadException> {
-                blockingContext {
-                  throw assertThrows<CannotReadException> {
-                    runBlockingCancellable {
+                throw assertThrows<CannotReadException> {
+                  runBlockingCancellable {
+                    throw assertThrows<CannotReadException> {
                       throw assertThrows<CannotReadException> {
-                        blockingContext {
-                          throw assertThrows<CannotReadException> {
-                            runBlockingCancellable {
-                              waitForPendingWrite().up()
-                              awaitCancellation()
-                            }
-                          }
+                        runBlockingCancellable {
+                          waitForPendingWrite().up()
+                          awaitCancellation()
                         }
                       }
                     }

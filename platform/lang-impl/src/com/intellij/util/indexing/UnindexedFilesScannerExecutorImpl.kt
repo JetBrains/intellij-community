@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.DumbService
@@ -279,9 +278,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
         task.applyDelayedPushOperations(scanningHistory)
       }
-      blockingContext {
-        task.perform(taskIndicator, progressReporter, scanningHistory, scanningParameters)
-      }
+      task.perform(taskIndicator, progressReporter, scanningHistory, scanningParameters)
 
       progressScope.cancel()
       return@coroutineScope scanningHistory

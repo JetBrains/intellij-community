@@ -6,7 +6,6 @@ import com.intellij.ide.util.treeView.*
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.TreeDomainModel
@@ -46,9 +45,7 @@ class TreeStructureDomainModelAdapter(
       }
     }
     else {
-      blockingContext {
-        accessor()
-      }
+      accessor()
     }
   }
 

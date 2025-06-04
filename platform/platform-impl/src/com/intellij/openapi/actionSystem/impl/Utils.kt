@@ -1309,7 +1309,7 @@ internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline b
     return readActionUndispatched(block)
   }
   else {
-    return blockingContext { ApplicationManager.getApplication().runReadAction<R, Throwable> { block() } }
+    return ApplicationManager.getApplication().runReadAction<R, Throwable> { block() }
   }
 }
 

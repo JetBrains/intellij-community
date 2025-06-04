@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -38,10 +37,8 @@ fun <T> runBlockingWithFlushing(id: String, timeout: Duration, action: suspend C
       withTimeoutAndDump("runBlockingWithFlushing $id", timeout, action)
     }
 
-    blockingContext {
-      resetThreadContext().use {
-        pumpMessages { task.isCompleted }
-      }
+    resetThreadContext().use {
+      pumpMessages { task.isCompleted }
     }
     task.await()
   }

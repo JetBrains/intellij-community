@@ -117,7 +117,7 @@ fun loggedError(canThrow: Semaphore): Throwable {
 
 fun blockingContextTest(test: () -> Unit) {
   timeoutRunBlocking {
-    blockingContext(test)
+    test()
   }
 }
 

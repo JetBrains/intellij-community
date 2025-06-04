@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -26,9 +25,7 @@ private class UnknownSdkStartupChecker : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    blockingContext {
-      checkUnknownSdks(project)
-    }
+    checkUnknownSdks(project)
 
     ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
       checkUnknownSdks(project)

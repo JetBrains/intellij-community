@@ -14,7 +14,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -186,14 +185,12 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     externalProjectPath: String,
     extension: ExternalSystemUnlinkedProjectAware
   ) {
-    blockingContext {
-      val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
-      UnlinkedProjectNotificationAware.getInstance(project)
-        .notificationNotify(extension.createProjectId(externalProjectPath)) {
-          project.esCoroutineScope.launch(extensionDisposable) {
-            project.trackActivity(ExternalSystemActivityKey) {
-              extension.linkAndLoadProjectAsync(project, externalProjectPath)
-            }
+    val extensionDisposable = EP_NAME.createExtensionDisposable(extension, project)
+    UnlinkedProjectNotificationAware.getInstance(project)
+      .notificationNotify(extension.createProjectId(externalProjectPath)) {
+        project.esCoroutineScope.launch(extensionDisposable) {
+          project.trackActivity(ExternalSystemActivityKey) {
+            extension.linkAndLoadProjectAsync(project, externalProjectPath)
           }
         }
     }
@@ -204,10 +201,8 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     externalProjectPath: String,
     extension: ExternalSystemUnlinkedProjectAware
   ) {
-    blockingContext {
-      UnlinkedProjectNotificationAware.getInstance(project)
-        .notificationExpire(extension.createProjectId(externalProjectPath))
-    }
+    UnlinkedProjectNotificationAware.getInstance(project)
+      .notificationExpire(extension.createProjectId(externalProjectPath))
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
