@@ -486,8 +486,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  fun getCurrentBranchIfShouldShow(path: String, nameIsDistinct: Boolean): String? {
-    return RecentProjectsBranchesProvider.getCurrentBranchIfShouldShow(path, nameIsDistinct)
+  fun getCurrentBranch(path: String, nameIsDistinct: Boolean): String? {
+    return RecentProjectsBranchesProvider.getCurrentBranch(path, nameIsDistinct)
   }
 
   fun getProjectName(path: String): String {

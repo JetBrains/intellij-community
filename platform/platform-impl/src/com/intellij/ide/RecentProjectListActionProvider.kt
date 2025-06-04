@@ -175,7 +175,7 @@ open class RecentProjectListActionProvider {
 
     if (displayName.isNullOrBlank()) {
       val nameIsDistinct = !duplicates.contains(ProjectNameOrPathIfNotYetComputed(projectName))
-      branch = recentProjectManager.getCurrentBranchIfShouldShow(path, nameIsDistinct)
+      branch = recentProjectManager.getCurrentBranch(path, nameIsDistinct)
 
       displayName = if (!nameIsDistinct) {
         FileUtil.toSystemDependentName(path)

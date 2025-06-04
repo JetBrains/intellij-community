@@ -151,8 +151,7 @@ com.intellij.ide.ProtocolHandler
 - a:getScheme():java.lang.String
 - a:process(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.ide.RecentProjectsManagerBase
-- f:getCurrentBranchIfShouldShow(java.lang.String,Z):java.lang.String
-c:com.intellij.ide.RecentProjectsManagerBase
+- f:getCurrentBranch(java.lang.String,Z):java.lang.String
 - willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.ide.actions.CloseAction$CloseTarget
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
@@ -291,9 +290,9 @@ com.intellij.ide.util.TipUIUtil$Browser
 - a:load(java.lang.String):V
 - a:setText(java.lang.String):V
 com.intellij.ide.vcs.RecentProjectsBranchesProvider
-- a:getCurrentBranchIfShouldShow(java.lang.String,Z):java.lang.String
+- a:getCurrentBranch(java.lang.String,Z):java.lang.String
 f:com.intellij.ide.vcs.RecentProjectsBranchesProvider$Companion
-- f:getCurrentBranchIfShouldShow(java.lang.String,Z):java.lang.String
+- f:getCurrentBranch(java.lang.String,Z):java.lang.String
 com.intellij.ide.wizard.BuildSystemNewProjectWizardData
 - com.intellij.ide.wizard.LanguageNewProjectWizardData
 - a:getBuildSystem():java.lang.String
