@@ -6,9 +6,12 @@ import com.intellij.codeInsight.hints.filtering.Matcher
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousFunctionSymbol
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
@@ -16,6 +19,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -104,29 +108,75 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
         sink.whenOptionEnabled(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name) {
             analyze(functionLiteral) {
                 val anonymousFunctionSymbol = functionLiteral.symbol
-                anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
-                    val skipped = functionLiteral.getParentOfType<KtCallExpression>(false, KtBlockExpression::class.java)?.let { callExpression ->
-                        val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@let true
-                        val functionSymbol = functionCall.symbol
-                        functionSymbol.isExcludeListed(excludeListMatchers)
-                    }
+                printContextParameters(lambdaExpression, anonymousFunctionSymbol, sink)
+                printReceiverParameter(lambdaExpression, anonymousFunctionSymbol, sink)
+                printImplicitIt(lambdaExpression, anonymousFunctionSymbol, sink)
+            }
+        }
+    }
 
-                    if (skipped != true) {
-                        sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
-                            text("this: ")
-                            printKtType(receiverSymbol.returnType)
-                        }
-                    }
+    @OptIn(KaExperimentalApi::class)
+    private fun KaSession.printContextParameters(
+        lambdaExpression: KtLambdaExpression,
+        anonymousFunctionSymbol: KaAnonymousFunctionSymbol,
+        sink: InlayTreeSink,
+    ) {
+        anonymousFunctionSymbol.contextParameters.ifNotEmpty {
+            val contextParameters = this
+            sink.addPresentation(
+                position = InlineInlayPosition(lambdaExpression.leftCurlyBrace.textRange.endOffset, true),
+                hintFormat = HintFormat.default,
+            ) {
+                text("context(")
+                for (contextParameter in contextParameters.dropLast(1)) {
+                    printKtType(contextParameter.returnType)
+                    text(", ")
+                }
+                printKtType(contextParameters.last().returnType)
+                text(")")
+            }
+        }
+    }
+
+    private fun KaSession.printReceiverParameter(
+        lambdaExpression: KtLambdaExpression,
+        anonymousFunctionSymbol: KaAnonymousFunctionSymbol,
+        sink: InlayTreeSink,
+    ) {
+        anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
+            val skipped = lambdaExpression.functionLiteral.getParentOfType<KtCallExpression>(false, KtBlockExpression::class.java)
+                ?.let { callExpression ->
+                    val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return@let true
+                    val functionSymbol = functionCall.symbol
+                    functionSymbol.isExcludeListed(excludeListMatchers)
                 }
 
-                anonymousFunctionSymbol.valueParameters.singleOrNull()?.let { singleParameterSymbol ->
-                    val type = singleParameterSymbol.takeIf { it.isImplicitLambdaParameter }
-                        ?.returnType?.takeUnless { it.isUnitType } ?: return@let
-                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
-                        text("it: ")
-                        printKtType(type)
-                    }
+            if (skipped != true) {
+                sink.addPresentation(
+                    position = InlineInlayPosition(lambdaExpression.leftCurlyBrace.textRange.endOffset, true),
+                    hintFormat = HintFormat.default,
+                ) {
+                    text("this: ")
+                    printKtType(receiverSymbol.returnType)
                 }
+            }
+        }
+    }
+
+    private fun KaSession.printImplicitIt(
+        lambdaExpression: KtLambdaExpression,
+        anonymousFunctionSymbol: KaAnonymousFunctionSymbol,
+        sink: InlayTreeSink,
+    ) {
+        anonymousFunctionSymbol.valueParameters.singleOrNull()?.let { singleParameterSymbol ->
+            val type = singleParameterSymbol.takeIf { it.isImplicitLambdaParameter }
+                ?.returnType?.takeUnless { it.isUnitType } ?: return@let
+            sink.addPresentation(
+                position = InlineInlayPosition(lambdaExpression.leftCurlyBrace.textRange.endOffset, true),
+                hintFormat = HintFormat.default
+            ) {
+                text("it: ")
+                printKtType(type)
             }
         }
     }

@@ -1100,7 +1100,9 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractKotlinLambdasHintsProvider> {
-            model("codeInsight/hints/lambda")
+            model("codeInsight/hints/lambda", excludedDirectories = listOf(
+                "context", // K2
+            ))
         }
         testClass<AbstractKotlinValuesHintsProviderTest> {
             model("codeInsight/hints/values")
