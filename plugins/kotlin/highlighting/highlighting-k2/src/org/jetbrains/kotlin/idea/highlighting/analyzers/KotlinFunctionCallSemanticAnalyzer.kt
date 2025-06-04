@@ -83,8 +83,13 @@ internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHold
             CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("suspend"))
 
         internal fun KaSession.getHighlightInfoTypeForCallFromExtension(expression: KtExpression, call: KaCall): HighlightInfoType? {
+            val session = this
             val highlightInfoType =
-                KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull { it.highlightCall(expression, call) }
+                KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull {
+                    with(it) {
+                        session.highlightCall(expression, call)
+                    }
+                }
             return highlightInfoType
         }
     }

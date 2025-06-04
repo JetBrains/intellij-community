@@ -25,8 +25,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
  * @see com.intellij.compose.ide.plugin.k1.highlighting.ComposableHighlightingVisitorExtension
  */
 internal class ComposableFunctionCallHighlighterExtension : KotlinCallHighlighterExtension {
-  context(KaSession)
-  override fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
+  override fun KaSession.highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
     val memberCall = call as? KaCallableMemberCall<*, *> ?: return null
     if (!isComposableInvocation(memberCall)) return null
 

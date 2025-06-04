@@ -34,7 +34,9 @@ internal class K2ComposableFunctionParameterCallHighlightingTestCase : Composabl
         "Call was not found!"
       }
 
-      ext.highlightCall(element, call)
+      with(ext) {
+        highlightCall(element, call)
+      }
     }
   }
 }
