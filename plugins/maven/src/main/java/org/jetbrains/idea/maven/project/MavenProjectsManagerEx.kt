@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
@@ -117,7 +116,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                                    modelsProvider: IdeModifiableModelsProvider?,
                                                    previewModule: Module?,
                                                    syncProject: Boolean): List<Module> {
-    blockingContext { doAddManagedFilesWithProfiles(files, profiles, previewModule) }
+    doAddManagedFilesWithProfiles(files, profiles, previewModule)
     if (!syncProject) return emptyList()
     return updateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManagerEx.addManagedFilesWithProfilesAndUpdate"), modelsProvider)
   }
@@ -150,16 +149,14 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       MavenProjectBundle.message("maven.project.importing"),
       false
     ) {
-      blockingContext {
-        ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).importStarted(myProject)
-        val importResult = runImportProjectActivity(projectsToImport, modelsProvider, parentActivity)
-        tracer.spanBuilder("importFinished").use {
-          ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC)
-            .importFinished(myProject, projectsToImport, importResult.createdModules)
-        }
-
-        importResult
+      ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).importStarted(myProject)
+      val importResult = runImportProjectActivity(projectsToImport, modelsProvider, parentActivity)
+      tracer.spanBuilder("importFinished").use {
+        ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC)
+          .importFinished(myProject, projectsToImport, importResult.createdModules)
       }
+
+      importResult
     }
 
     getVirtualFileManager().asyncRefresh()
@@ -167,11 +164,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     withBackgroundProgressTraced(project, "configureMavenProject", MavenProjectBundle.message("maven.post.processing"), true) {
       val indicator = EmptyProgressIndicator()
       for (task in importResult.postTasks) {
-        blockingContext {
-          tracer.spanBuilder("configureMavenProjectTask: ${task.javaClass.canonicalName}").use { span ->
-            runMavenConfigurationTask(project, parentActivity, task.javaClass) {
-              task.perform(myProject, embeddersManager, indicator)
-            }
+        tracer.spanBuilder("configureMavenProjectTask: ${task.javaClass.canonicalName}").use { span ->
+          runMavenConfigurationTask(project, parentActivity, task.javaClass) {
+            task.perform(myProject, embeddersManager, indicator)
           }
         }
       }

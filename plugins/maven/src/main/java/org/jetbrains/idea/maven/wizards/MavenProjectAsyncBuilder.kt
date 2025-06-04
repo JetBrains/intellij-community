@@ -15,7 +15,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -94,7 +93,7 @@ class MavenProjectAsyncBuilder {
     val generalSettings = directProjectsSettings.generalSettings.clone()
 
     if (isVeryNewProject) {
-      blockingContext { ExternalProjectsManagerImpl.setupCreatedProject(project) }
+      ExternalProjectsManagerImpl.setupCreatedProject(project)
     }
 
     if (createDummyModule) {

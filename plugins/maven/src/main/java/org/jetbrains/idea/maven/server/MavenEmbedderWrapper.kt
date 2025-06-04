@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -334,21 +333,19 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
           while (isActive) {
             span.addEvent("poll", System.currentTimeMillis(), TimeUnit.MILLISECONDS)
             delay(500)
-            blockingContext {
-              try {
-                val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-                val fraction = status.fraction()
-                if (fraction > 1.0) {
-                  MavenLog.LOG.warn("fraction is more than one: $status")
-                }
-                progressReporter?.fraction(fraction.coerceAtMost(1.0))
-                eventHandler.handleConsoleEvents(status.consoleEvents())
-                eventHandler.handleDownloadEvents(status.downloadEvents())
+            try {
+              val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+              val fraction = status.fraction()
+              if (fraction > 1.0) {
+                MavenLog.LOG.warn("fraction is more than one: $status")
               }
-              catch (e: Throwable) {
-                if (isActive) {
-                  throw e
-                }
+              progressReporter?.fraction(fraction.coerceAtMost(1.0))
+              eventHandler.handleConsoleEvents(status.consoleEvents())
+              eventHandler.handleDownloadEvents(status.downloadEvents())
+            }
+            catch (e: Throwable) {
+              if (isActive) {
+                throw e
               }
             }
           }
@@ -369,14 +366,12 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       try {
         withContext(Dispatchers.IO) {
           tracer.spanBuilder("runMavenExecution").useWithScope { span ->
-            blockingContext {
-              val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, TelemetryContext.current())
-              val response = task.run(embedder, longRunningTaskInput)
-              val status = response.status
-              eventHandler.handleConsoleEvents(status.consoleEvents())
-              eventHandler.handleDownloadEvents(status.downloadEvents())
-              response.result
-            }
+            val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, TelemetryContext.current())
+            val response = task.run(embedder, longRunningTaskInput)
+            val status = response.status
+            eventHandler.handleConsoleEvents(status.consoleEvents())
+            eventHandler.handleDownloadEvents(status.downloadEvents())
+            response.result
           }
         }
       }

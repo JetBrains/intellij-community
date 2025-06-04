@@ -16,7 +16,6 @@ import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.module.impl.createGrouper
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -394,9 +393,7 @@ abstract class ModuleManagerBridgeImpl(
 
     // we need to save module configurations before unloading, otherwise their settings will be lost
     if (moduleEntitiesToUnload.isNotEmpty()) {
-      blockingContext {
-        project.save()
-      }
+      project.save()
     }
 
     val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal

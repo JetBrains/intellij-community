@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -164,14 +163,10 @@ internal class MavenServerManagerImpl : MavenServerManager {
   }
 
   override suspend fun getConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {
-    var connector = blockingContext {
-      doGetConnector(project, workingDirectory, jdk)
-    }
+    var connector = doGetConnector(project, workingDirectory, jdk)
     if (!connector.ping()) {
       shutdownConnector(connector, true)
-      connector = blockingContext {
-        doGetConnector(project, workingDirectory, jdk)
-      }
+      connector = doGetConnector(project, workingDirectory, jdk)
     }
     return connector
   }

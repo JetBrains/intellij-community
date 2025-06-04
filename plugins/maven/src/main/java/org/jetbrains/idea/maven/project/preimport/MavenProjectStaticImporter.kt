@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PREIMPORT_ACTIVITY
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -109,17 +108,15 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       // MavenProjectsManager.getInstance(project).projectsTree = projectTree
       return PreimportResult(withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         tracer.spanBuilder("importProject").useWithScope {
-          blockingContext {
-            val importer = MavenProjectImporter.createStaticImporter(project,
-                                                                     projectTree,
-                                                                     projectChanges,
-                                                                     modelsProvider,
-                                                                     importingSettings,
-                                                                     parentActivity)
+          val importer = MavenProjectImporter.createStaticImporter(project,
+                                                                   projectTree,
+                                                                   projectChanges,
+                                                                   modelsProvider,
+                                                                   importingSettings,
+                                                                   parentActivity)
 
-            importer.importProject()
-            return@blockingContext importer.createdModules()
-          }
+          importer.importProject()
+          return@useWithScope importer.createdModules()
         }
       }, projectTree)
     }

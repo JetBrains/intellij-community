@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTab
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.observable.util.createTextModificationTracker
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.getActionShortcutText
 import com.intellij.openapi.util.ModificationTracker
@@ -59,19 +58,17 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
     }
 
     private suspend fun collectGoals(): List<TextCompletionInfo> {
-      val projectDirectory = blockingContext { workingDirectoryField.getWorkingDirectoryVirtualFile() }
+      val projectDirectory = workingDirectoryField.getWorkingDirectoryVirtualFile()
                              ?: return emptyList()
       val projectsManager = MavenProjectsManager.getInstance(project)
       val mavenProject = readAction { projectsManager.findContainingProject(projectDirectory) }
                          ?: return emptyList()
-      val localRepository = blockingContext { projectsManager.repositoryPath }
-      return blockingContext {
-        mavenProject.declaredPluginInfos
-          .mapNotNull { MavenArtifactUtil.readPluginInfo(it.artifact) }
-          .flatMap { it.mojos }
-          .map { TextCompletionInfo(it.displayName) }
-          .sortedBy { it.text }
-      }
+      val localRepository = projectsManager.repositoryPath
+      return mavenProject.declaredPluginInfos
+        .mapNotNull { MavenArtifactUtil.readPluginInfo(it.artifact) }
+        .flatMap { it.mojos }
+        .map { TextCompletionInfo(it.displayName) }
+        .sortedBy { it.text }
     }
 
     override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {
@@ -94,11 +91,9 @@ class MavenCommandLineInfo(project: Project, projectPathField: WorkingDirectoryF
       "maven.run.configuration.command.line.description.column")
 
     private suspend fun collectOptionCompletion(isLongOptions: Boolean): List<TextCompletionInfo> {
-      return blockingContext {
-        MavenCommandLineOptions.getAllOptions()
-          .map { TextCompletionInfo(it.getName(isLongOptions), it.description) }
-          .sortedBy { it.text }
-      }
+      return MavenCommandLineOptions.getAllOptions()
+        .map { TextCompletionInfo(it.getName(isLongOptions), it.description) }
+        .sortedBy { it.text }
     }
 
     override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {

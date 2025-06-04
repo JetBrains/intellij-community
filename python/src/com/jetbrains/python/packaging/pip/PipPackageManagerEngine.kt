@@ -7,7 +7,6 @@ import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
@@ -29,6 +28,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonPackageManagerRunner
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
@@ -121,7 +121,7 @@ internal class PipPackageManagerEngine(
     // todo[akniazev]: check for package management tools
     val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
     val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
-    val pythonExecution = blockingContext { prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareTargetRequest) }
+    val pythonExecution = prepareHelperScriptExecution(PythonHelper.PACKAGING_TOOL, helpersAwareTargetRequest)
 
     if (targetEnvironmentRequest is LocalTargetEnvironmentRequest) {
       if (Registry.`is`("python.packaging.tool.use.project.location.as.working.dir")) {
@@ -166,7 +166,7 @@ internal class PipPackageManagerEngine(
     // TODO [targets] Apply flavor from PythonSdkFlavor.getFlavor(mySdk)
     // TODO [targets] check askForSudo
 
-    val process = blockingContext { targetEnvironment.createProcess(targetedCommandLine, indicator) }
+    val process = targetEnvironment.createProcess(targetedCommandLine, indicator)
 
     val commandLine = targetedCommandLine.collectCommandsSynchronously()
     val commandLineString = commandLine.joinToString(" ")

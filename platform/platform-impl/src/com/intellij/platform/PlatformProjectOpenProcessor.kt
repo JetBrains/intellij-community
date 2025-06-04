@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -286,9 +285,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       val moduleRef = Ref<Module>()
 
-      val virtualFile = blockingContext {
-        LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir)!!
-      }
+      val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir)!!
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
           virtualFile.refresh(false, false)
