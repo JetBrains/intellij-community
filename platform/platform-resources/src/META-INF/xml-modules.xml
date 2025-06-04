@@ -2,6 +2,8 @@
   <content>
     <module name="intellij.xml.dom" loading="embedded"/>
     <module name="intellij.xml.dom.impl" loading="embedded"/>
+    <module name="intellij.xml.structureView" loading="embedded"/>
+    <module name="intellij.xml.structureView.impl" loading="embedded"/>
     <module name="intellij.relaxng"/>
   </content>
 </idea-plugin>
