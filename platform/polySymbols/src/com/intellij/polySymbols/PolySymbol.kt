@@ -74,38 +74,11 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
   val name: @NlsSafe String
 
   /**
-   * An optional text, which describes the symbol purpose and usage.
-   * It is rendered in the documentation popup or view.
-   */
-  val description: @Nls String?
-    get() = null
-
-  /**
-   * Additional sections, to be rendered in the symbols’ documentation.
-   * Each section should have a name, but the contents can be empty.
-   */
-  val descriptionSections: Map<@Nls String, @Nls String>
-    get() = emptyMap()
-
-  /**
-   * An optional URL to a website with detailed symbol's documentation
-   */
-  val docUrl: @NlsSafe String?
-    get() = null
-
-  /**
    * An optional icon associated with the symbol, which is going to be used across the IDE.
    * If none is specified, a default icon of the origin will be used and if that’s not available,
    * a default icon for symbol namespace and kind.
    */
   val icon: Icon?
-    get() = null
-
-  /**
-   * If the symbol represents some property, variable or anything that can hold a value,
-   * this property documents what is the default value.
-   */
-  val defaultValue: @NlsSafe String?
     get() = null
 
   /**
@@ -279,33 +252,18 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
 
   /**
    * Used by Poly Symbols framework to get a [DocumentationTarget], which handles documentation
-   * rendering for the symbol. Default implementation will use [createDocumentation]
-   * to render the documentation.
+   * rendering for the symbol. You may implement [com.intellij.polySymbols.documentation.PolySymbolWithDocumentation]
+   * interface, which will provide a default implementation to render the documentation.
    */
   fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
-    if (properties[PROP_NO_DOC] != true)
-      PolySymbolDocumentationTargetImpl(this, location)
-    else
-      null
-
-  /**
-   * Returns [PolySymbolDocumentation] - an interface holding information required to render documentation for the symbol.
-   * By default, it's contents are build from the available Poly Symbol information.
-   *
-   * To customize symbols documentation, one can override the method, or implement [PolySymbolDocumentationCustomizer].
-   *
-   * [PolySymbolDocumentation] interface provides builder methods for customizing the documentation.
-   * `with*` methods return a copy of the documentation with customized fields.
-   */
-  fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
-    PolySymbolDocumentation.create(this, location)
+    null
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     emptyList()
 
   /**
    * Symbols can be used in [CachedValue]s as dependencies.
-   * If a symbol instance can mutate over the time, it should properly implement this method.
+   * If a symbol instance can mutate over time, it should properly implement this method.
    */
   override fun getModificationCount(): Long = 0
 

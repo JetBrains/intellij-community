@@ -3,7 +3,7 @@ package com.intellij.polySymbols.query
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.*
-import com.intellij.polySymbols.query.impl.PolySymbolMatchImpl
+import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
@@ -26,7 +26,7 @@ interface PolySymbolMatch : CompositePolySymbol {
       explicitPriority: PolySymbol.Priority? = null,
       explicitProximity: Int? = null,
     ): PolySymbolMatch =
-      PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { builder ->
           builder.addNameSegments(nameSegments)
           explicitProximity?.let { builder.explicitProximity(it) }
@@ -41,7 +41,7 @@ interface PolySymbolMatch : CompositePolySymbol {
       origin: PolySymbolOrigin,
       builder: (PolySymbolMatchBuilder.() -> Unit),
     ): PolySymbolMatch =
-      PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { builder.invoke(it) }
         .build()
 
@@ -52,7 +52,7 @@ interface PolySymbolMatch : CompositePolySymbol {
       origin: PolySymbolOrigin,
       vararg nameSegments: PolySymbolNameSegment,
     ): PolySymbolMatch =
-      PolySymbolMatchImpl.BuilderImpl(matchedName, qualifiedKind, origin)
+      PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { it.addNameSegments(*nameSegments) }
         .build()
 

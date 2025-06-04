@@ -19,9 +19,9 @@ import com.intellij.psi.createSmartPointer
  * for code completion.
  */
 class CodeCompletionPolySymbolWithDocumentation(
-  delegate: PolySymbol,
+  override val delegate: PolySymbol,
   private val location: PsiElement,
-) : PolySymbolDelegate<PolySymbol>(delegate), DocumentationSymbol {
+) : PolySymbolDelegate<PolySymbol>, DocumentationSymbol {
 
   override fun createPointer(): Pointer<CodeCompletionPolySymbolWithDocumentation> {
     val delegatePtr = delegate.createPointer()
@@ -40,9 +40,9 @@ class CodeCompletionPolySymbolWithDocumentation(
 }
 
 class PsiSourcedCodeCompletionPolySymbolWithDocumentation(
-  delegate: PsiSourcedPolySymbol,
+  override val delegate: PsiSourcedPolySymbol,
   private val location: PsiElement,
-) : PsiSourcedPolySymbolDelegate<PsiSourcedPolySymbol>(delegate), DocumentationSymbol {
+) : PsiSourcedPolySymbolDelegate<PsiSourcedPolySymbol>, DocumentationSymbol {
 
   override fun createPointer(): Pointer<PsiSourcedCodeCompletionPolySymbolWithDocumentation> {
     val delegatePtr = delegate.createPointer()

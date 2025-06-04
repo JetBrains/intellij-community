@@ -12,6 +12,7 @@ import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer
 import com.intellij.polySymbols.context.PolyContext
+import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
@@ -182,7 +183,9 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     }
   }
 
-  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol
+  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol {
+    abstract override fun createPointer(): Pointer<out StandardHtmlSymbol>
+  }
 
   class HtmlElementDescriptorBasedSymbol(
     val descriptor: XmlElementDescriptor,

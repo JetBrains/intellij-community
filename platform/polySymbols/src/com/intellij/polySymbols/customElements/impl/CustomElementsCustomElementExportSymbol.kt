@@ -29,7 +29,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
     this
 
-  override fun createPointer(): Pointer<out PolySymbol> =
+  override fun createPointer(): Pointer<out CustomElementsSymbol> =
     Pointer.hardPointer(this)
 
   override fun matchContext(context: PolyContext): Boolean =

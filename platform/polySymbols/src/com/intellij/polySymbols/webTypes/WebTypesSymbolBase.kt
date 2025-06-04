@@ -6,6 +6,7 @@ import com.intellij.model.Symbol
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
+import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
@@ -17,6 +18,7 @@ import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.wrap
 import com.intellij.polySymbols.webTypes.json.*
 import com.intellij.psi.PsiElement
+import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
 import javax.swing.Icon
 
@@ -111,17 +113,21 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override val description: String?
     get() = base.contribution.description
               ?.let { base.jsonOrigin.renderDescription(base.contribution.description) }
-            ?: superContributions.asSequence().mapNotNull { it.description }.firstOrNull()
+            ?: superContributions.asSequence()
+              .mapNotNull { it.asSafely<PolySymbolWithDocumentation>()?.description }
+              .firstOrNull()
 
   final override val descriptionSections: Map<String, String>
     get() = (base.contribution.descriptionSections?.additionalProperties?.asSequence() ?: emptySequence())
-      .plus(superContributions.asSequence().flatMap { it.descriptionSections.asSequence() })
+      .plus(superContributions.asSequence().flatMap {
+        it.asSafely<PolySymbolWithDocumentation>()?.descriptionSections?.asSequence() ?: emptySequence()
+      })
       .distinctBy { it.key }
       .associateBy({ it.key }, { base.jsonOrigin.renderDescription(it.value) })
 
   final override val docUrl: String?
     get() = base.contribution.docUrl
-            ?: superContributions.asSequence().mapNotNull { it.docUrl }.firstOrNull()
+            ?: superContributions.asSequence().mapNotNull { it.asSafely<PolySymbolWithDocumentation>()?.docUrl }.firstOrNull()
 
   final override val icon: Icon?
     get() = base.icon ?: superContributions.asSequence().mapNotNull { it.icon }.firstOrNull()
@@ -180,11 +186,10 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override val defaultValue: String?
     get() = (base.contribution as? GenericContribution)?.default
             ?: (base.contribution as? HtmlAttribute)?.default
-            ?: superContributions.firstOrNull()?.defaultValue
+            ?: superContributions.firstNotNullOfOrNull { it.asSafely<PolySymbolWithDocumentation>()?.defaultValue }
 
   final override val pattern: PolySymbolsPattern?
     get() = base.jsonPattern?.wrap(base.contribution.name, origin as WebTypesJsonOrigin)
-
 
   final override val queryScope: List<PolySymbolsScope>
     get() = superContributions.asSequence()

@@ -21,7 +21,7 @@ import com.intellij.polySymbols.impl.withOffset
 import com.intellij.polySymbols.impl.withRange
 import com.intellij.polySymbols.patterns.impl.applyIcons
 import com.intellij.polySymbols.query.*
-import com.intellij.polySymbols.query.impl.PolySymbolMatchImpl
+import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -84,7 +84,10 @@ fun PolySymbol.withMatchedKind(qualifiedKind: PolySymbolQualifiedKind): PolySymb
   else this
 
 fun PolySymbol.withNavigationTarget(target: PsiElement): PolySymbol =
-  object : PolySymbolDelegate<PolySymbol>(this@withNavigationTarget) {
+  object : PolySymbolDelegate<PolySymbol> {
+    override val delegate: PolySymbol
+      get() = this@withNavigationTarget
+
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
       listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(target))
 
@@ -139,7 +142,7 @@ fun PolySymbolNameSegment.withSymbols(symbols: List<PolySymbol>): PolySymbolName
   (this as PolySymbolNameSegmentImpl).withSymbols(symbols)
 
 fun PolySymbolMatch.withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
-  (this as PolySymbolMatchImpl).withSegments(segments)
+  (this as PolySymbolMatchBase).withSegments(segments)
 
 fun PolySymbol.match(
   nameToMatch: String,

@@ -6,7 +6,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
 
-abstract class PsiSourcedPolySymbolDelegate<T : PsiSourcedPolySymbol>(delegate: T) : PolySymbolDelegate<T>(delegate), PsiSourcedPolySymbol {
+interface PsiSourcedPolySymbolDelegate<T : PsiSourcedPolySymbol> : PolySymbolDelegate<T>, PsiSourcedPolySymbol {
 
   override val source: PsiElement?
     get() = delegate.source

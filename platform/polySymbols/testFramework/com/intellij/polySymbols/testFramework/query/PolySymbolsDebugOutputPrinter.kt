@@ -6,6 +6,7 @@ import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.polySymbols.utils.completeMatch
@@ -70,9 +71,11 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "type", source.type)
       printProperty(level, "attrValue", source.attributeValue)
       printProperty(level, "complete", source.completeMatch)
-      printProperty(level, "description", source.description?.ellipsis(45))
-      printProperty(level, "docUrl", source.docUrl)
-      printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
+      if (source is PolySymbolWithDocumentation) {
+        printProperty(level, "description", source.description?.ellipsis(45))
+        printProperty(level, "docUrl", source.docUrl)
+        printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
+      }
       printProperty(level, "abstract", source.abstract.takeIf { it })
       printProperty(level, "virtual", source.virtual.takeIf { it })
       printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is PolySymbolApiStatus.Stable || it.since != null })

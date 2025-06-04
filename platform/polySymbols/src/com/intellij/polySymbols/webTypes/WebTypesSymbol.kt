@@ -1,13 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.webTypes
 
+import com.intellij.model.Pointer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbol.Companion.PROP_NO_DOC
+import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
+import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.psi.PsiElement
 
-interface WebTypesSymbol : PsiSourcedPolySymbol {
+interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolWithDocumentation {
 
   val location: Location?
+
+  override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
+    if (properties[PROP_NO_DOC] != true)
+      PolySymbolDocumentationTargetImpl(this, location)
+    else
+      null
+
+  override fun createPointer(): Pointer<out WebTypesSymbol>
 
   sealed interface Location
 

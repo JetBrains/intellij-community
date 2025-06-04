@@ -5,8 +5,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
+import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 
-abstract class MdnDocumentedSymbol : PolySymbol {
+abstract class MdnDocumentedSymbol : PolySymbolWithDocumentation {
 
   private val mdnDoc by lazy(LazyThreadSafetyMode.PUBLICATION) {
     getMdnDocumentation()

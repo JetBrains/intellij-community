@@ -28,7 +28,9 @@ import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.util.containers.Stack
 import javax.swing.Icon
 
-abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol {
+interface PolySymbolDelegate<T : PolySymbol> : PolySymbol {
+
+  val delegate: T
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext
@@ -44,12 +46,6 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
     get() = delegate.queryScope
   override val name: String
     get() = delegate.name
-  override val description: String?
-    get() = delegate.description
-  override val descriptionSections: Map<String, String>
-    get() = delegate.descriptionSections
-  override val docUrl: String?
-    get() = delegate.docUrl
   override val icon: Icon?
     get() = delegate.icon
   override val apiStatus: PolySymbolApiStatus
@@ -62,8 +58,6 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
     get() = delegate.extension
   override val required: Boolean?
     get() = delegate.required
-  override val defaultValue: String?
-    get() = delegate.defaultValue
   override val priority: PolySymbol.Priority?
     get() = delegate.priority
   override val proximity: Int?
@@ -76,9 +70,6 @@ abstract class PolySymbolDelegate<T : PolySymbol>(val delegate: T) : PolySymbol 
     get() = delegate.pattern
   override val properties: Map<String, Any>
     get() = delegate.properties
-
-  override fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
-    delegate.createDocumentation(location)
 
   override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     delegate.getDocumentationTarget(location)
