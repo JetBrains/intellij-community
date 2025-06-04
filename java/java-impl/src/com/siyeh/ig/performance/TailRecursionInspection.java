@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,22 +78,22 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement tailCallToken, @NotNull ModPsiUpdater updater) {
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(tailCallToken, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiFile originalFile = updater.getOriginalFile(element.getContainingFile());
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (method == null) {
         return;
       }
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
+      PsiMethod originalMethod = PsiTreeUtil.findSameElementInCopy(method, originalFile);
+      final PsiCodeBlock originalBody = originalMethod.getBody();
+      if (originalBody == null) {
         return;
       }
-      final @NonNls StringBuilder builder = new StringBuilder();
-      builder.append('{');
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
         return;
       }
+      final @NonNls StringBuilder builder = new StringBuilder("{");
       final String thisVariableName;
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       if (methodReturnsContainingClassType(method, containingClass)) {
@@ -101,7 +101,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         thisVariableName = styleManager.suggestUniqueVariableName("result", method, false);
         builder.append(' ').append(thisVariableName).append(" = this;");
       }
-      else if (methodContainsCallOnOtherInstance(method)) {
+      else if (methodContainsCallOnOtherInstance(originalMethod)) {
         builder.append(containingClass.getName());
         thisVariableName = styleManager.suggestUniqueVariableName("other", method, false);
         builder.append(' ').append(thisVariableName).append(" = this;");
@@ -110,7 +110,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         thisVariableName = null;
       }
       final boolean tailCallIsContainedInLoop;
-      if (ControlFlowUtils.isInLoop(tailCallToken)) {
+      if (ControlFlowUtils.isInLoop(element)) {
         tailCallIsContainedInLoop = true;
         builder.append(method.getName()).append(':');
       }
@@ -119,13 +119,15 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       }
       builder.append("while(true)");
       final boolean methodMayCompleteNormally = ControlFlowUtils.methodMayCompleteNormally(method);
-      replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, methodMayCompleteNormally, builder);
+      replaceTailCalls(originalBody, originalMethod, thisVariableName, tailCallIsContainedInLoop, methodMayCompleteNormally, builder);
       if (methodMayCompleteNormally) {
         builder.insert(builder.length() - 1, "return;");
       }
       builder.append('}');
       final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(builder.toString(), method);
       removeEmptyElse(block);
+      PsiCodeBlock body = method.getBody();
+      assert body != null;
       CodeStyleManager.getInstance(project).reformat(body.replace(block));
     }
 

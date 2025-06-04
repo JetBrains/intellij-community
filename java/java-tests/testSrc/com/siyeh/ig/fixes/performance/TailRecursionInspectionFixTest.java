@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.performance;
 
 import com.intellij.application.options.CodeStyle;
@@ -34,6 +34,18 @@ public class TailRecursionInspectionFixTest extends IGQuickFixesTestCase {
   public void testVoidMethod1() { doTest(); }
   public void testVoidMethod2() { doTest(); }
   public void testAndOrChain() { doTest(); }
+
+  public void testClassInOtherFile() {
+    myFixture.addClass("""
+                         class Container extends ClassInOtherFile {
+                           Container(Container parent) {
+                             super(parent);
+                           }
+                         }
+                         """);
+    doTest();
+  }
+
   public void testAndOrChain2() {
     CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     int oldValue = settings.IF_BRACE_FORCE;
