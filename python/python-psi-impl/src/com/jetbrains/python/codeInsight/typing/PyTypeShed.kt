@@ -110,6 +110,41 @@ object PyTypeShed {
     "zoneinfo" to (LanguageLevel.PYTHON39 to null)
   ) // Modified by script 2024-07-31 07:30:25
 
+  // mapping of definitions that are in the incorrect place in typeshed
+  val typingRedirections: Map<String, String> = mapOf(
+    "typing.Hashable" to "_collections_abc.Hashable",
+    "typing.Awaitable" to "_collections_abc.Awaitable",
+    "typing.Coroutine" to "_collections_abc.Coroutine",
+    "typing.AsyncIterable" to "_collections_abc.AsyncIterable",
+    "typing.AsyncIterator" to "_collections_abc.AsyncIterator",
+    "typing.Iterable" to "_collections_abc.Iterable",
+    "typing.Iterator" to "_collections_abc.Iterator",
+    "typing.Reversible" to "_collections_abc.Reversible",
+    "typing.Sized" to "_collections_abc.Sized",
+    "typing.Container" to "_collections_abc.Container",
+    "typing.Collection" to "_collections_abc.Collection",
+    "typing.Callable" to "_collections_abc.Callable",
+    "typing.AbstractSet" to "_collections_abc.Set",
+    "typing.MutableSet" to "_collections_abc.MutableSet",
+    "typing.Mapping" to "_collections_abc.Mapping",
+    "typing.MutableMapping" to "_collections_abc.MutableMapping",
+    "typing.Sequence" to "_collections_abc.Sequence",
+    "typing.MutableSequence" to "_collections_abc.MutableSequence",
+    "typing.ByteString" to "_collections_abc.ByteString",
+    "typing.Deque" to "_collections.deque",
+    "typing.MappingView" to "_collections_abc.MappingView",
+    "typing.KeysView" to "_collections_abc.KeysView",
+    "typing.ItemsView" to "_collections_abc.ItemsView",
+    "typing.ValuesView" to "_collections_abc.ValuesView",
+    "typing.DefaultDict" to "_collections.defaultdict",
+    "typing.Generator" to "_collections_abc.Generator",
+    "typing.AsyncGenerator" to "_collections_abc.AsyncGenerator"
+  )
+
+  val typeshedModuleRedirections: Map<String, String> = mapOf(
+    "collections.abc" to "_collections_abc",
+  )
+
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */

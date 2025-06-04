@@ -4,9 +4,16 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.ide.warmup.WarmupStatus;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class MavenSimpleProjectComponent {
+  @ApiStatus.Internal
+  public static boolean isNormalProjectInHeadless() {
+    return WarmupStatus.InProgress.INSTANCE.equals(WarmupStatus.Companion.currentStatus()) || 
+           Boolean.parseBoolean(System.getProperty("maven.default.headless.import", "false"));
+  }
+
   protected final Project myProject;
 
   protected MavenSimpleProjectComponent(@NotNull Project project) {
@@ -14,12 +21,10 @@ public abstract class MavenSimpleProjectComponent {
   }
 
   protected boolean isNormalProject() {
-    return !MavenUtil.isMavenUnitTestModeEnabled() && !isHeadless() && !isDefault();
-  }
-
-  protected boolean isHeadless() {
-    return ApplicationManager.getApplication().isHeadlessEnvironment() &&
-           !WarmupStatus.InProgress.INSTANCE.equals(WarmupStatus.Companion.currentStatus());
+    var isHeadless = ApplicationManager.getApplication().isHeadlessEnvironment();
+    return !MavenUtil.isMavenUnitTestModeEnabled() &&
+           (!isHeadless || isNormalProjectInHeadless()) &&
+           !isDefault();
   }
 
   protected boolean isDefault() {

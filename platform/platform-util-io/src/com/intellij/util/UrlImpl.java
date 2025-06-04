@@ -166,7 +166,7 @@ final class UrlImpl implements Url {
 
   @Override
   public boolean equalsIgnoreParameters(@Nullable Url url) {
-    return url != null && equals(url.trimParameters());
+    return url != null && trimParameters().equals(url.trimParameters());
   }
 
   private int computeHashCode(boolean caseSensitive) {

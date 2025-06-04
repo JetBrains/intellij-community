@@ -91,7 +91,7 @@ class PyDataView(private val project: Project) : DumbAware {
     window.contentManager.getReady(this).doWhenDone {
       val selectedInfo = addTab(value.frameAccessor)
       val dataViewerPanel = selectedInfo.component as PyDataViewerPanel
-      dataViewerPanel.component.apply(value, false)
+      dataViewerPanel.apply(value, false)
       window.show {
         window.component.requestFocusInWindow()
         dataViewerPanel.requestFocusInWindow()
@@ -103,7 +103,7 @@ class PyDataView(private val project: Project) : DumbAware {
     val tabsToRemove: MutableList<Content> = ArrayList()
 
     contentManager.contents.forEach {
-      if (ifClose.test(getPanel(it.component).component.dataViewerModel.frameAccessor)) {
+      if (ifClose.test(getPanel(it.component).frameAccessor)) {
         tabsToRemove.add(it)
       }
     }
@@ -111,6 +111,7 @@ class PyDataView(private val project: Project) : DumbAware {
     ApplicationManager.getApplication().invokeLater {
       tabsToRemove.forEach {
         contentManager.removeContent(it, true)
+        getPanel(it.component).closeEditorTabs()
       }
     }
   }
@@ -118,8 +119,8 @@ class PyDataView(private val project: Project) : DumbAware {
   fun updateTabs(handler: ProcessHandler) {
     saveSelectedInfo()
     contentManager.contents.forEach { content ->
-      val panel: PyDataViewerCommunityPanel = getPanel(content.component).component as PyDataViewerCommunityPanel
-      val accessor = panel.dataViewerModel.frameAccessor
+      val panel: PyDataViewerPanel = getPanel(content.component)
+      val accessor = panel.frameAccessor
       if (accessor !is PyDebugProcess) {
         return@forEach
       }
@@ -144,7 +145,7 @@ class PyDataView(private val project: Project) : DumbAware {
   private fun saveSelectedInfo() {
     val selectedInfo = contentManager.selectedContent
     if (!hasOnlyEmptyTab() && selectedInfo != null) {
-      val accessor: PyFrameAccessor = getPanel(selectedInfo.component).component.dataViewerModel.frameAccessor
+      val accessor: PyFrameAccessor = getPanel(selectedInfo.component).frameAccessor
       if (accessor is PyDebugProcess) {
         selectedInfos[accessor.processHandler] = selectedInfo
       }
@@ -172,7 +173,14 @@ class PyDataView(private val project: Project) : DumbAware {
       contentManager.removeAllContents(true)
     }
 
-    val panel = PyDataViewerPanel(project, frameAccessor)
+    var panel: PyDataViewerPanel? = null
+    for (factory in PyDataViewPanelFactory.EP_NAME.extensionList) {
+      panel = factory.createDataViewPanel(project, frameAccessor)
+      if (panel != null) break
+    }
+    if (panel == null) {
+      panel = PyDataViewerPanel(project, frameAccessor)
+    }
 
     val content = ContentFactory.getInstance().createContent(panel, null, false)
     content.isCloseable = true
@@ -190,7 +198,7 @@ class PyDataView(private val project: Project) : DumbAware {
     if (window is ToolWindowEx) {
       window.setTabActions(NewViewerAction(frameAccessor))
     }
-    panel.addListener( PyDataViewerAbstractPanel.OnNameChangedListener {
+    panel.addListener(PyDataViewerPanel.Listener {
       content.displayName = it
     })
     Disposer.register(content, panel)
@@ -221,7 +229,7 @@ class PyDataView(private val project: Project) : DumbAware {
 
   fun changeAutoResize(autoResize: Boolean) {
     contentManager.contents.forEach {
-      (getPanel(it.component).component as PyDataViewerCommunityPanel).resize(autoResize)
+      getPanel(it.component).resize(autoResize)
     }
   }
 
@@ -232,8 +240,8 @@ class PyDataView(private val project: Project) : DumbAware {
   companion object {
     private const val DATA_VIEWER_ID = "SciView"
 
-    const val COLORED_BY_DEFAULT: String = "python.debugger.dataView.coloredByDefault"
-    const val AUTO_RESIZE: String = "python.debugger.dataView.autoresize"
+    const val COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault"
+    const val AUTO_RESIZE = "python.debugger.dataview.autoresize"
     private const val HELP_ID = "reference.toolWindows.PyDataView"
 
     @JvmStatic

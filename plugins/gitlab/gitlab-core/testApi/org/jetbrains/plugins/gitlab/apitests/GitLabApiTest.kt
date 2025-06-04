@@ -66,7 +66,7 @@ class GitLabApiTest : GitLabApiTestCase() {
     checkVersion(after(v(15, 7)))
 
     requiresAuthentication { api ->
-      val diffs = api.rest.loadMergeRequestDiffs(api.getMergeRequestDiffsURI(glTest1Coordinates, "2")).body()
+      val diffs = api.rest.loadMergeRequestDiffs(api.getMergeRequestDiffsURI(glTest1Coordinates, "2", 1)).body()
 
       assertEquals(glTest1Mr2ChangedFiles, diffs.map { it.newPath })
     }

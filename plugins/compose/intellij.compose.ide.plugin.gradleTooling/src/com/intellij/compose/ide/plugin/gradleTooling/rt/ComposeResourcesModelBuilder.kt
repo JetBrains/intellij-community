@@ -19,14 +19,18 @@ class ComposeResourcesExtension private constructor(extension: Any) {
   }
 
   @Suppress("UNCHECKED_CAST")
-  val customComposeResourcesDirectories: Map<String, String> by lazy {
+  val customComposeResourcesDirectories: Map<String, Pair<String, Boolean>> by lazy {
     val invoke = extension("getCustomResourceDirectories\$compose") as? MutableMap<*, *> ?: emptyMap()
     invoke.entries.associate {
       val sourceSetName = it.key as String
       val directoryName = (it.value as? Provider<Directory>)?.orNull?.asFile?.path as String
-      sourceSetName to directoryName
+      sourceSetName to (directoryName to /*isCustom*/ true)
     }.toMap()
   }
+
+  val isPublicResClass: Boolean by lazy { extension("getPublicResClass") as? Boolean ?: false }
+
+  val nameOfResClass: String by lazy { extension("getNameOfResClass") as? String ?: "Res" }
 
   companion object {
     val Project.composeResourcesExtension: ComposeResourcesExtension?
@@ -49,7 +53,10 @@ class ComposeResourcesModelBuilder : ModelBuilderService {
 
   override fun buildAll(modelName: String, project: Project): ComposeResourcesModel? {
     val resourcesExtension = project.composeResourcesExtension ?: return null
-    val customComposeResourcesDirectories = resourcesExtension.customComposeResourcesDirectories
-    return ComposeResourcesModelImpl(customComposeResourcesDirs = customComposeResourcesDirectories)
+    return ComposeResourcesModelImpl(
+      customComposeResourcesDirs = resourcesExtension.customComposeResourcesDirectories,
+      isPublicResClass = resourcesExtension.isPublicResClass,
+      nameOfResClass = resourcesExtension.nameOfResClass,
+    )
   }
 }

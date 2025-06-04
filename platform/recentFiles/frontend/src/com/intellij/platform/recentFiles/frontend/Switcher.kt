@@ -283,6 +283,7 @@ object Switcher : BaseSwitcherAction(null) {
                 preservingSelectionModel.setSelectionInterval(0, 0)
               }
             }
+            updatePathLabel()
           }
 
           override fun intervalRemoved(e: ListDataEvent?) {
@@ -310,16 +311,7 @@ object Switcher : BaseSwitcherAction(null) {
           }
         }
       }
-      if (files.model.size > 0) {
-        val fileFromSelectedEditor = FileEditorManager.getInstance(project).selectedEditor?.file
-        val firstFileInList = files.model.getElementAt(0).virtualFileId.virtualFile()
-        if (firstFileInList != null && firstFileInList == fileFromSelectedEditor) {
-          files.setSelectedIndex(1)
-        }
-        else {
-          files.setSelectedIndex(0)
-        }
-      }
+
 
       val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
@@ -335,6 +327,20 @@ object Switcher : BaseSwitcherAction(null) {
           popupUpdater?.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this@SwitcherPanel)))
         }
       }
+      toolWindows.selectionModel.addListSelectionListener(filesSelectionListener)
+      files.selectionModel.addListSelectionListener(filesSelectionListener)
+
+      if (files.model.size > 0) {
+        val fileFromSelectedEditor = FileEditorManager.getInstance(project).selectedEditor?.file
+        val firstFileInList = files.model.getElementAt(0).virtualFileId.virtualFile()
+        if (firstFileInList != null && firstFileInList == fileFromSelectedEditor) {
+          files.setSelectedIndex(1)
+        }
+        else {
+          files.setSelectedIndex(0)
+        }
+      }
+
 
       files.selectionMode = if (pinned) ListSelectionModel.MULTIPLE_INTERVAL_SELECTION else ListSelectionModel.SINGLE_SELECTION
       files.accessibleContext.accessibleName = IdeBundle.message("recent.files.accessible.file.list")

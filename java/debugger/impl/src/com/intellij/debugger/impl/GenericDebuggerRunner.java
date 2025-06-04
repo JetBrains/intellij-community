@@ -106,6 +106,13 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
 
   protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
                                                                    @NotNull ExecutionEnvironment environment) throws ExecutionException {
+    if (state instanceof RemoteConnectionCreator) {
+      RemoteConnection connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
+      boolean isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
+      if (connection != null) {
+        return attachVirtualMachine(state, environment, connection, isPollConnection);
+      }
+    }
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       boolean isPollConnection = true;
@@ -126,8 +133,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       return attachVirtualMachine(state, environment, connection, isPollConnection);
     }
     if (state instanceof PatchedRunnableState) {
-      RemoteConnection connection =
-        doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
+      RemoteConnection connection = createPatchedConnection(environment);
       return attachVirtualMachine(state, environment, connection, true);
     }
     if (state instanceof RemoteState) {
@@ -212,6 +218,10 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             runProfile instanceof RunConfiguration ? ((RunConfiguration)runProfile).getProject() : null);
     JavaProgramPatcher
       .runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
+  }
+
+  public static RemoteConnection createPatchedConnection(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+    return doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
   }
 
   private static RemoteConnection doPatch(@NotNull JavaParameters javaParameters,

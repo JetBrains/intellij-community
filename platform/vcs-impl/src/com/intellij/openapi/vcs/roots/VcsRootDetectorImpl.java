@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.diagnostic.Activity;
@@ -75,13 +75,9 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     Set<VcsRoot> detectedRoots = new HashSet<>();
     Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
 
-    VirtualFile resolvedDir = dirToScan.getCanonicalFile();
-    if (resolvedDir == null) {
-      return Collections.emptySet();
-    }
-    detectedRoots.addAll(scanForRootsInsideDir(myProject, resolvedDir, null, scannedDirs));
-    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(resolvedDir), scannedDirs, detectedRoots));
-    return detectedRoots;
+    detectedRoots.addAll(scanForRootsInsideDir(myProject, dirToScan, null, scannedDirs));
+    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(dirToScan), scannedDirs, detectedRoots));
+    return deduplicate(detectedRoots);
   }
 
   private @NotNull Collection<VcsRoot> scanForRootsInContentRoots() {
@@ -110,7 +106,43 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     detectedAndKnownRoots.addAll(Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots()));
     detectedRoots.addAll(scanDependentRoots(scannedDirs, detectedAndKnownRoots));
 
-    return detectedRoots;
+    return deduplicate(detectedRoots);
+  }
+
+  /**
+   * @return a deduplicated set of {@code detectedRoots} with removed links pointing to the same canonical file.
+   */
+  private static @NotNull Set<VcsRoot> deduplicate(@NotNull Set<VcsRoot> detectedRoots) {
+    if (detectedRoots.size() <= 1) return detectedRoots;
+
+    Set<VcsRoot> result = new HashSet<>();
+
+    Set<VirtualFile> processedCanonicalRoots = new HashSet<>();
+    Set<VcsRoot> rootsUnderSymlink = new HashSet<>();
+    for (VcsRoot root : detectedRoots) {
+      VirtualFile path = root.getPath();
+      VirtualFile canonicalPath = path.getCanonicalFile();
+      if (canonicalPath != null && !path.equals(canonicalPath)) {
+        rootsUnderSymlink.add(root);
+      } else {
+        processedCanonicalRoots.add(path);
+        result.add(root);
+      }
+    }
+
+    if (rootsUnderSymlink.isEmpty()) return detectedRoots;
+
+    for (VcsRoot root : ContainerUtil.sorted(rootsUnderSymlink, Comparator.comparing(root -> root.getPath().toNioPath()))) {
+      VirtualFile canonicalFile = root.getPath().getCanonicalFile();
+      if (processedCanonicalRoots.contains(canonicalFile)) {
+        LOG.debug("Skipping duplicate VCS root %s: root for canonical file '%s' is already detected".formatted(root, canonicalFile));
+      } else {
+        processedCanonicalRoots.add(canonicalFile);
+        result.add(root);
+      }
+    }
+
+    return result;
   }
 
   private @NotNull Set<VcsRoot> scanForRootsInsideDir(@NotNull Project project,
@@ -124,17 +156,6 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
       }
 
       if (scannedDirs.containsKey(dir)) return CONTINUE;
-
-      VirtualFile canonicalFile = dir.getCanonicalFile(); // NO_FOLLOW_SYMLINKS still allows iterating over symlinks non-recursively
-      if (canonicalFile != null) {
-        Boolean scanResult = scannedDirs.get(canonicalFile);
-        if (scanResult != null) {
-          scannedDirs.put(canonicalFile, scanResult);
-          return CONTINUE;
-        }
-
-        dir = canonicalFile; // scan links for vcs repos, once
-      }
 
       VcsRoot vcsRoot = getVcsRootFor(dir, null);
       scannedDirs.put(dir, vcsRoot != null);

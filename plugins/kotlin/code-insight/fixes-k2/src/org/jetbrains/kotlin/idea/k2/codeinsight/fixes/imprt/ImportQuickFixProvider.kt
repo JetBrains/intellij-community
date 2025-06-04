@@ -49,6 +49,7 @@ object ImportQuickFixProvider : KotlinQuickFixFactory.IntentionBased<KaDiagnosti
             ArrayAccessorImportQuickFixFactory,
             ComponentFunctionImportQuickFixFactory,
             IteratorImportQuickFixFactory,
+            InvokeImportQuickFixFactory,
         )
 
         return factories.flatMap { it.run { createQuickFixes(diagnostics) } }

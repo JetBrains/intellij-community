@@ -2777,15 +2777,11 @@ public final class TableResultView extends JBTableWithResizableCells
     return myStatisticsHeader;
   }
 
-  public void setStatisticsPanelMode(StatisticsPanelMode newPanelMode) {
-    StatisticsPanelMode previousPanelMode = getStatisticsPanelMode();
+  public void setStatisticsPanelMode(StatisticsPanelMode panelMode) {
     if (myStatisticsHeader != null) {
-      myStatisticsHeader.setStatisticsPanelMode(newPanelMode);
-
-      if (previousPanelMode != null) {
-        myColumnLayout.resetLayout();
-      }
+      myStatisticsHeader.setStatisticsPanelMode(panelMode);
     }
+    myColumnLayout.resetLayout();
   }
 
   public StatisticsPanelMode getStatisticsPanelMode() {

@@ -45,7 +45,7 @@ object PyPackageInstallUtils {
     return !checkIsInstalled(project, sdk, packageName) && checkExistsInRepository(packageName)
   }
 
-  private fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
+  fun checkIsInstalled(project: Project, sdk: Sdk, packageName: String): Boolean {
     val isStdLib = (PyStdlibUtil.getPackages() as Set<*>).contains(packageName)
     if (isStdLib) {
       return true

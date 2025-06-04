@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.PlatformUtils
@@ -22,13 +21,15 @@ import com.jetbrains.python.debugger.containerview.PyDataView.Companion.isColori
 import com.jetbrains.python.debugger.containerview.PyDataView.Companion.setAutoResizeEnabled
 import com.jetbrains.python.debugger.containerview.PyDataView.Companion.setColoringEnabled
 import java.awt.BorderLayout
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
 import javax.swing.Action
 import javax.swing.BoxLayout
 import javax.swing.JPanel
 
 class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : DialogWrapper(myProject, false) {
   private val mainPanel: JPanel
-  private val dataViewerPanel: PyDataViewerCommunityPanel
+  private val dataViewerPanel: PyDataViewerPanel
   private var jupyterSuggestionPanel: JPanel? = null
 
   init {
@@ -36,7 +37,7 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
     setCancelButtonText(PyBundle.message("debugger.data.view.close"))
     setCrossClosesWindow(true)
 
-    dataViewerPanel = PyDataViewerCommunityPanel(PyDataViewerModel(myProject, value.frameAccessor))
+    dataViewerPanel = PyDataViewerPanel(myProject, value.frameAccessor)
     dataViewerPanel.apply(value, modifier = false, commandSource = null)
     dataViewerPanel.preferredSize = JBUI.size(TABLE_DEFAULT_WIDTH, TABLE_DEFAULT_HEIGHT)
 
@@ -51,8 +52,8 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
 
     mainPanel.add(dataViewerPanel, BorderLayout.CENTER)
 
-    dataViewerPanel.addListener(object : PyDataViewerAbstractPanel.OnNameChangedListener {
-      override fun onNameChanged(@NlsSafe name: @NlsContexts.TabTitle String) {
+    dataViewerPanel.addListener(object : PyDataViewerPanel.Listener {
+      override fun onNameChanged(name: @NlsContexts.TabTitle String) {
         title = name
       }
     })
@@ -63,23 +64,27 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
     init()
   }
 
-  override fun getDimensionServiceKey(): String = "#com.jetbrains.python.debugger.containerview.PyDataViewDialog"
+  override fun getDimensionServiceKey() = "#com.jetbrains.python.debugger.containerview.PyDataViewDialog"
 
   private fun createBottomElements(): JPanel {
     val colored = JBCheckBox(PyBundle.message("debugger.data.view.colored.cells"))
     colored.setSelected(isColoringEnabled(myProject))
-    colored.addActionListener {
-      setColoringEnabled(myProject, colored.isSelected)
-      dataViewerPanel.dataViewerModel.isColored = colored.isSelected
-    }
+    colored.addActionListener(object : ActionListener {
+      override fun actionPerformed(e: ActionEvent?) {
+        setColoringEnabled(myProject, colored.isSelected)
+        dataViewerPanel.isColored = colored.isSelected
+      }
+    })
 
     val resize = JBCheckBox(PyBundle.message("debugger.data.view.resize.automatically"))
     resize.setSelected(isAutoResizeEnabled(myProject))
-    resize.addActionListener {
-      setAutoResizeEnabled(myProject, resize.isSelected)
-      dataViewerPanel.resize(resize.isSelected)
-      dataViewerPanel.updateUI()
-    }
+    resize.addActionListener(object : ActionListener {
+      override fun actionPerformed(e: ActionEvent?) {
+        setAutoResizeEnabled(myProject, resize.isSelected)
+        dataViewerPanel.resize(resize.isSelected)
+        dataViewerPanel.updateUI()
+      }
+    })
 
     return JPanel().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
@@ -88,13 +93,13 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
     }
   }
 
-  override fun createActions(): Array<Action> = arrayOf(cancelAction)
+  override fun createActions() = arrayOf<Action>(cancelAction)
 
-  override fun createCenterPanel(): JPanel = mainPanel
+  override fun createCenterPanel() = mainPanel
 
   private fun createJupyterSuggestionPanel(): JPanel? {
-    if (!isRichTableAndJupyterCanBeEnabled()) return null
-
+    if (PlatformUtils.isCommunityEdition()) return null
+    if (!isJupyterSuggestionEnabled(myProject)) return null
     val requiredPluginIds = listOf(PluginId.getId("Pythonid"), PluginId.getId("intellij.jupyter"))
 
     var needToInstallPlugin = false
@@ -149,24 +154,6 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
     return panel
   }
 
-  /**
-   * Determines if enhanced table features can be enabled.
-   *
-   * Checks three conditions:
-   * 1. Running Ultimate Edition
-   * 2. Jupyter suggestion is enabled
-   * 3. Ultimate plugin is active
-   */
-  private fun isRichTableAndJupyterCanBeEnabled(): Boolean {
-    val isUltimateEdition = !PlatformUtils.isCommunityEdition()
-    val isJupyterEnabled = isJupyterSuggestionEnabled(myProject)
-    val isUltimatePluginEnabled = !PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)
-
-    return isUltimateEdition
-           && isJupyterEnabled
-           && isUltimatePluginEnabled
-  }
-
   private fun hideJupyterSuggestionPanel() {
     jupyterSuggestionPanel?.let {
       mainPanel.remove(it)
@@ -179,7 +166,7 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
     private const val TABLE_DEFAULT_WIDTH = 700
     private const val TABLE_DEFAULT_HEIGHT = 500
 
-    private const val JUPYTER_SUGGESTION_ENABLED_PROPERTY_KEY = "python.debugger.dataView.jupyter.suggestion.enabled"
+    private const val JUPYTER_SUGGESTION_ENABLED_PROPERTY_KEY = "python.debugger.dataview.jupyter.suggestion.enabled"
 
     private fun isJupyterSuggestionEnabled(project: Project) = PropertiesComponent.getInstance(project).getBoolean(JUPYTER_SUGGESTION_ENABLED_PROPERTY_KEY, true)
 

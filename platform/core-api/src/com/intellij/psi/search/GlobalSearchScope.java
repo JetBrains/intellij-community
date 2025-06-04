@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
   private final Project myProject;
+  private static final Key<Boolean> USE_WEAK_FILE_SCOPE = Key.create("virtual.file.use.weak.scope");
 
   protected GlobalSearchScope(@Nullable Project project) {
     myProject = project;
@@ -83,6 +85,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @Contract(pure = true)
   public @NotNull GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
+    return defaultIntersectWith(scope);
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  protected final @NotNull GlobalSearchScope defaultIntersectWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return this;
     if (scope instanceof IntersectionScope && ((IntersectionScope)scope).containsScope(this)) {
       return scope;
@@ -244,9 +252,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @Contract(pure = true)
-  public static @NotNull GlobalSearchScope fileScope(@NotNull Project project, @Nullable VirtualFile virtualFile, final @Nullable @Nls String displayName) {
+  public static @NotNull GlobalSearchScope fileScope(@NotNull Project project,
+                                                     @Nullable VirtualFile virtualFile,
+                                                     final @Nullable @Nls String displayName) {
+    if (virtualFile != null && virtualFile.getUserData(USE_WEAK_FILE_SCOPE) == Boolean.TRUE) {
+      return new FileWeakScope(project, virtualFile, displayName);
+    }
     return new FileScope(project, virtualFile, displayName);
   }
+
 
   /**
    * Please consider using {@link #filesWithLibrariesScope} or {@link #filesWithoutLibrariesScope} for optimization
@@ -310,6 +324,18 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
     if (fileTypes.length == 0) throw new IllegalArgumentException("empty fileTypes");
     return new FileTypeRestrictionScope(scope, fileTypes);
+  }
+
+  /**
+   * Marks a specified file to use a weak file scope. This is useful for modifying
+   * the scoping mechanism of a file to ensure it is treated under weaker constraints
+   * than the default resolve scope. It can be used to improve memory consumption.
+   *
+   * @param file the virtual file to be marked for weak scope; must not be null
+   */
+  @ApiStatus.Internal
+  public static void markFileForWeakScope(@NotNull VirtualFile file) {
+    file.putUserData(USE_WEAK_FILE_SCOPE, Boolean.TRUE);
   }
 
   private static class EmptyScope extends GlobalSearchScope {

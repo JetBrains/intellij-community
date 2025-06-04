@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
@@ -148,7 +149,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
     val startOffsets = mutableListOf<Int>()
     model.addListener(testRootDisposable, object: TerminalOutputModelListener {
-      override fun afterContentChanged(startOffset: Int) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
         startOffsets.add(startOffset)
       }
     })
@@ -176,12 +177,47 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `cursor is on a partially trimmed line`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalTestUtil.createOutputModel(maxLength = 10)
+
+    model.update(0, """
+      abcdef
+      ghijkl
+    """.trimIndent(), emptyList())
+    model.updateCursor(0, 4)
+
+    assertEquals("""
+      def
+      ghijkl
+    """.trimIndent(), model.document.text)
+    // three characters were trimmed, so the new cursor offset is 1
+    assertEquals(1, model.cursorOffsetState.value)
+
+    // now check that this specific state can be copied correctly
+
+    val state = model.dumpState()
+    val newModel = TerminalTestUtil.createOutputModel(maxLength = 10)
+    newModel.restore(state)
+
+    assertEquals("""
+      def
+      ghijkl
+    """.trimIndent(), newModel.document.text)
+    assertEquals(1, newModel.cursorOffsetState.value)
+
+    // ...and modified correctly
+
+    newModel.updateCursor(0, 5)
+    assertEquals(2, newModel.cursorOffsetState.value)
+  }
+
+  @Test
   fun `update editor content from the start when some lines were trimmed already (clear)`() = runBlocking(Dispatchers.EDT) {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
 
     // Prepare
     val fillerText = "12345"
-    for (lineInd in 0 until 10) {
+    for (lineInd in 0L until 10L) {
       model.update(lineInd, fillerText, emptyList())
     }
 
@@ -241,7 +277,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     // Prepare
     val line = "a".repeat(9) + "\n"
     val text = line.repeat(10)
-    val styles = (0 until 20).map { styleRange(it * 5, (it + 1) * 5) }
+    val styles = (0L until 20L).map { styleRange(it * 5L, (it + 1L) * 5L) }
     model.update(0, text, styles)
     model.updateCursor(9, 3)
 
@@ -249,8 +285,8 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     val state = model.dumpState()
 
     assertEquals(line, state.text)
-    assertEquals(9, state.trimmedLinesCount)
-    assertEquals(90, state.trimmedCharsCount)
+    assertEquals(9L, state.trimmedLinesCount)
+    assertEquals(90L, state.trimmedCharsCount)
     assertEquals(3, state.cursorOffset)
     assertEquals(listOf(styleRange(90, 95), styleRange(95, 100)), state.highlightings)
   }
@@ -264,6 +300,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       text = line,
       trimmedLinesCount = 9,
       trimmedCharsCount = 90,
+      firstLineTrimmedCharsCount = 10,
       cursorOffset = 3,
       highlightings = listOf(styleRange(90, 95), styleRange(95, 100))
     )
@@ -272,8 +309,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
     assertEquals(line, model.document.text)
     assertEquals(3, model.cursorOffsetState.value)
-    assertEquals(9, model.trimmedLinesCount)
-    assertEquals(90, model.trimmedCharsCount)
+    assertEquals(9L, model.trimmedLinesCount)
+    assertEquals(90L, model.trimmedCharsCount)
+    assertEquals(10, model.firstLineTrimmedCharsCount)
 
     val expectedHighlightings = listOf(highlighting(0, 5), highlighting(5, 10))
     val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
@@ -287,7 +325,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     // Prepare
     val line = "a".repeat(9) + "\n"
     val text = line.repeat(10)
-    val styles = (0 until 20).map { styleRange(it * 5, (it + 1) * 5) }
+    val styles = (0L until 20L).map { styleRange(it * 5L, (it + 1L) * 5L) }
     sourceModel.update(0, text, styles)
     sourceModel.updateCursor(9, 3)
 
@@ -298,15 +336,15 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
     assertEquals(line, newModel.document.text)
     assertEquals(3, newModel.cursorOffsetState.value)
-    assertEquals(9, newModel.trimmedLinesCount)
-    assertEquals(90, newModel.trimmedCharsCount)
+    assertEquals(9L, newModel.trimmedLinesCount)
+    assertEquals(90L, newModel.trimmedCharsCount)
 
     val expectedHighlightings = listOf(highlighting(0, 5), highlighting(5, 10))
     val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(newModel.document, expectedHighlightings)
     assertEquals(expectedHighlightingsSnapshot, newModel.getHighlightings())
   }
 
-  private fun styleRange(start: Int, end: Int): StyleRange {
+  private fun styleRange(start: Long, end: Long): StyleRange {
     return StyleRange(start, end, TextStyle())
   }
 

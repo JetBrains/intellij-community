@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.core.lib.impl.*
@@ -44,6 +44,7 @@ class StandardLibrarySupport
                                     OptionalResultOperation("findAny"),
                                     OptionalResultOperation("findFirst"),
                                     ToCollectionOperation("toArray"),
+                                    ToCollectionOperation("toList"),
                                     ToCollectionOperation("collect"))
   }
 }

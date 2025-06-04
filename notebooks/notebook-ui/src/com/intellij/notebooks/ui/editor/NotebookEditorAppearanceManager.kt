@@ -15,7 +15,7 @@ internal class NotebookEditorAppearanceManager {
 
   private val connection: MessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect(NotebookPluginDisposable.getInstance() as Disposable)
 
-  private val eventDispatcher = EventDispatcher.create<EditorColorsListener>(EditorColorsListener::class.java)
+  private val eventDispatcher = EventDispatcher.create(EditorColorsListener::class.java)
 
   init {
     connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme ->

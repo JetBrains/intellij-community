@@ -11,13 +11,14 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.imports.KtFileWithReplacedImports
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.factories.MismatchedArgumentsImportQuickFixFactory.FILE_WITH_REPLACED_IMPORTS_CACHE
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 
 internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFixFactory() {
-    override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
+    override fun KaSession.detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): ImportContext? {
         return when (diagnostic) {
             is KaFirDiagnostic.TooManyArguments,
             is KaFirDiagnostic.NoValueForParameter,
@@ -39,7 +40,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
                     else -> originalDiagnosticPsi.parentOfType<KtCallExpression>()?.calleeExpression
                 } ?: return null
 
-                ImportContext(adjustedDiagnosticPsi, ImportPositionTypeAndReceiver.detect(adjustedDiagnosticPsi))
+                DefaultImportContext(adjustedDiagnosticPsi, ImportPositionTypeAndReceiver.detect(adjustedDiagnosticPsi))
             }
 
             else -> null
@@ -66,16 +67,16 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
     context(KaSession)
     private fun getCandidateProvidersForUnresolvedNameReference(
         importContext: ImportContext,
-    ): Sequence<AbstractImportCandidatesProvider> = when (importContext.positionTypeAndReceiver) {
-        is ImportPositionTypeAndReceiver.DefaultCall -> sequenceOf(
+    ): Sequence<AbstractImportCandidatesProvider> = when (importContext.positionType) {
+        is ImportPositionType.DefaultCall -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
             ClassifierImportCandidatesProvider(importContext),
         )
 
-        is ImportPositionTypeAndReceiver.DotCall,
-        is ImportPositionTypeAndReceiver.SafeCall,
-        is ImportPositionTypeAndReceiver.InfixCall,
-        is ImportPositionTypeAndReceiver.OperatorCall -> sequenceOf(
+        is ImportPositionType.DotCall,
+        is ImportPositionType.SafeCall,
+        is ImportPositionType.InfixCall,
+        is ImportPositionType.OperatorCall -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
         )
 
@@ -94,9 +95,9 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
             // do not do any filtering, let all candidates pass
             return true
         }
-        
+
         val containingFile = originalCallExpression.containingKtFile
-        
+
         if (containingFile is KtCodeFragment) {
             // KtFileWithReplacedImports does not properly work with KtCodeFragments now,
             // so we do not do actual applicability filtering.
@@ -104,7 +105,7 @@ internal object MismatchedArgumentsImportQuickFixFactory : AbstractImportQuickFi
             // Should be implemented in KTIJ-33606
             return true
         }
-        
+
         val candidateFqName = candidate.fqName ?: return false
 
         val fileWithReplacedImports = getFileWithReplacedImportsFor(containingFile)

@@ -3,17 +3,16 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightableCellPanel
+import com.intellij.notebooks.visualization.ui.cellsDnD.DropHighlightable
 import com.intellij.notebooks.visualization.ui.jupyterToolbars.JupyterAddNewCellToolbar
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBEmptyBorder
-import java.awt.Graphics2D
-import org.intellij.lang.annotations.Language
 import java.awt.FlowLayout
-import javax.swing.JPanel
 import java.awt.Graphics
+import java.awt.Graphics2D
+import javax.swing.JPanel
 
 /**
  * Basically, this panel consists only of
@@ -21,8 +20,8 @@ import java.awt.Graphics
  * * a highlightable border to show drop destination
  */
 class NotebookBelowLastCellPanel(
-  val editor: EditorImpl
-) : JPanel(FlowLayout(FlowLayout.CENTER)), DropHighlightableCellPanel {
+  val editor: EditorImpl,
+) : JPanel(FlowLayout(FlowLayout.CENTER)), DropHighlightable {
 
   private var isHighlighted = false
 
@@ -30,7 +29,7 @@ class NotebookBelowLastCellPanel(
     if (editor.isOrdinaryNotebookEditor()) {
       isOpaque = false
       border = HighlightableTopBorder(editor.notebookAppearance.cellBorderHeight)
-      val actionGroup = ActionManager.getInstance().getAction(ACTION_GROUP_ID) as ActionGroup
+      val actionGroup = ActionManager.getInstance().getAction("Jupyter.CreateNewCellsPanel") as ActionGroup
       add(JupyterAddNewCellToolbar(actionGroup, toolbarTargetComponent = this))
     }
   }
@@ -55,9 +54,5 @@ class NotebookBelowLastCellPanel(
         g2d.fillRect(x, lineY - 1, width, 2)
       }
     }
-  }
-
-  companion object {
-    @Language("devkit-action-id") private const val ACTION_GROUP_ID = "Jupyter.BelowCellNewPanel"
   }
 }

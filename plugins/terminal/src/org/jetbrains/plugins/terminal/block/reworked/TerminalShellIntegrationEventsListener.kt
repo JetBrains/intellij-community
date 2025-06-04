@@ -10,7 +10,7 @@ interface TerminalShellIntegrationEventsListener : EventListener {
 
   fun commandStarted(command: String) {}
 
-  fun commandFinished(command: String, exitCode: Int) {}
+  fun commandFinished(command: String, exitCode: Int, currentDirectory: String) {}
 
   fun promptStarted() {}
 

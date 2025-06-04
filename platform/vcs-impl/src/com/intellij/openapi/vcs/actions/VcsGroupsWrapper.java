@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +55,8 @@ final class VcsGroupsWrapper extends ActionGroup implements DumbAware {
   private static @NotNull Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
-    return VcsContextUtil.selectedFilePathsIterable(dataContext)
-      .filterMap(vcsManager::getVcsFor)
+    return VcsContextUtil.selectedFilesIterable(dataContext)
+      .filterMap(file -> vcsManager.getVcsFor(VcsUtil.resolveSymlinkIfNeeded(project, file)))
       .map(AbstractVcs::getName)
       .unique()
       .take(vcsManager.getAllActiveVcss().length) // stop processing files if all available vcses are already affected

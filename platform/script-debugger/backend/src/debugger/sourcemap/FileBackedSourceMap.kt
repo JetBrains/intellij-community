@@ -42,6 +42,8 @@ private class FileBackedSourceMapData(private val filePath: Path, initialData: S
   override val hasNameMappings: Boolean = initialData.sourceMapData.hasNameMappings
   override val mappings: List<MappingEntry>
     get() = getData().sourceMapData.mappings
+  override val ignoreList: List<Int>
+    get() = getData().sourceMapData.ignoreList
 
   val sourceIndexToMappings: Array<MappingList?>
     get() = getData().sourceIndexToMappings

@@ -16,7 +16,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.terminal.settings.TerminalLocalOptions"
                         serviceImplementation="org.jetbrains.plugins.terminal.settings.impl.TerminalLocalOptionsImpl"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalFontOptions"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider"
                     serviceImplementation="org.jetbrains.plugins.terminal.block.reworked.TerminalNoPortForwardingUiProvider"/>
@@ -24,11 +24,12 @@
     <rdct.remoteSettingProvider implementation="org.jetbrains.plugins.terminal.TerminalRemoteSettingsInfoProvider"/>
     <applicationSettings service="org.jetbrains.plugins.terminal.block.BlockTerminalOptions"/>
     <applicationSettings service="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
-    <applicationSettings service="org.jetbrains.plugins.terminal.TerminalFontOptions"/>
+    <applicationSettings service="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.terminal.fus.TerminalFocusRule"/>
     <statistics.applicationUsagesCollector implementation="org.jetbrains.plugins.terminal.fus.TerminalSettingsStateCollector"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
@@ -144,6 +145,11 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalWidgetProvider" dynamic="true"
                     interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
   </extensionPoints>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.terminal.TerminalNewUserTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 
   <projectListeners>
     <listener class="org.jetbrains.plugins.terminal.block.prompt.TerminalLookupManagerListener"

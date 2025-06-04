@@ -3721,7 +3721,6 @@
     <module>cgi</module>
     <module>cgitb</module>
     <module>chunk</module>
-    <module>collections.abc</module>
     <module>commands</module>
     <module>compiler</module>
     <module>compiler.ast</module>

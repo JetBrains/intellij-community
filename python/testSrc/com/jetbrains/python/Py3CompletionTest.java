@@ -506,6 +506,37 @@ public class Py3CompletionTest extends PyTestCase {
     doNegativeTest();
   }
 
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsArgument() {
+    doTest();
+  }
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsKeywordArgument() {
+    doTest();
+  }
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsPositionalVarargArgument() {
+    doTest();
+  }
+
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsKeywordVarargArgument() {
+    doTest();
+  }
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsAssignedValue() {
+    doTest();
+  }
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsAssignedValueWithUnpacking() {
+    doTest();
+  }
+    
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
     doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);

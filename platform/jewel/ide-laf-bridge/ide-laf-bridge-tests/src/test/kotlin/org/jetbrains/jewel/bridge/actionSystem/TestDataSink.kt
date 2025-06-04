@@ -44,4 +44,7 @@ internal class TestDataSink : DataSink {
     override fun <T : Any> lazyNull(key: DataKey<T>) {
         set(key, null)
     }
+
+    override fun <T : Any> lazyValue(key: DataKey<T>, data: (DataMap) -> T?) {
+    }
 }

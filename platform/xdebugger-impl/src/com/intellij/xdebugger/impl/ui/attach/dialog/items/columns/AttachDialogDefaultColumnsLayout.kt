@@ -20,12 +20,12 @@ class AttachDialogDefaultColumnsLayout : AttachDialogColumnsLayout() {
   }
 
   private val columnInfos = listOf(
-    AttachDialogColumnInfo(EXECUTABLE_CELL_KEY, ExecutableCell::class.java, XDebuggerBundle.message("xdebugger.attach.executable.column.name"), JBUI.scale(290)),
+    AttachDialogColumnInfo(EXECUTABLE_CELL_KEY, ExecutableCell::class.java, XDebuggerBundle.message("xdebugger.attach.executable.column.name"), JBUI.scale(300)),
     AttachDialogColumnInfo(PID_CELL_KEY, PidCell::class.java, XDebuggerBundle.message("xdebugger.attach.pid.column.name"), JBUI.scale(80)),
     AttachDialogColumnInfo(USER_CELL_KEY, UserCell::class.java, XDebuggerBundle.message("xdebugger.attach.user.column.name"),
                              JBUI.scale(70)),
       AttachDialogColumnInfo(DEBUGGERS_CELL_KEY, DebuggersCell::class.java, XDebuggerBundle.message("xdebugger.attach.debuggers.column.name"), JBUI.scale(140)),
-      AttachDialogColumnInfo(COMMAND_LINE_CELL_KEY, CommandLineCell::class.java, XDebuggerBundle.message("xdebugger.attach.command.line.column.name"), JBUI.scale(290)),
+      AttachDialogColumnInfo(COMMAND_LINE_CELL_KEY, CommandLineCell::class.java, XDebuggerBundle.message("xdebugger.attach.command.line.column.name"), JBUI.scale(380)),
     )
 
 

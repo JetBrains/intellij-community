@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.ui.TerminalWidget
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 /**
  * It is a hack to get the TerminalWidget implementation from the Frontend.
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface TerminalWidgetProvider {
-  fun createTerminalWidget(project: Project, parentDisposable: Disposable): TerminalWidget
+  fun createTerminalWidget(project: Project, startupFusInfo: TerminalStartupFusInfo?, parentDisposable: Disposable): TerminalWidget
 
   companion object {
     private val EP_NAME = ExtensionPointName<TerminalWidgetProvider>("org.jetbrains.plugins.terminal.terminalWidgetProvider")

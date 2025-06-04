@@ -18,8 +18,8 @@ public final class RefValueHashMapUtil {
   }
 
   public static void expungeStaleEntries(@NotNull Map<?, ?> map) {
-    if (map instanceof com.intellij.util.containers.WeakHashMap) {
-      ((com.intellij.util.containers.WeakHashMap<?, ?>)map).processQueue();
+    if (map instanceof ReferenceQueueable) {
+      ((ReferenceQueueable)map).processQueue();
     }
     else if (map instanceof java.util.WeakHashMap) {
       // Calling the size() method forces cleansing of the WeakHashMap

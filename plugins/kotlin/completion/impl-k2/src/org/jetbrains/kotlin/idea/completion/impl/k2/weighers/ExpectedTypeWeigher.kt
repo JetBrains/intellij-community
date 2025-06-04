@@ -55,7 +55,7 @@ internal object ExpectedTypeWeigher {
         expectedType: KaType?
     ) = when {
         expectedType == null -> MatchesExpectedType.NON_TYPABLE
-        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol.isSubClassOf(it) } == true ->
+        symbol is KaClassSymbol && expectedType.expandedSymbol?.let { symbol == it || symbol.isSubClassOf(it) } == true ->
             MatchesExpectedType.MATCHES
 
         symbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE

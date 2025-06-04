@@ -2323,6 +2323,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/receiverParameterReversed.kt");
             }
 
+            @TestMetadata("redundantTypeArgument.kt")
+            public void testRedundantTypeArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/redundantTypeArgument.kt");
+            }
+
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/simple.kt");

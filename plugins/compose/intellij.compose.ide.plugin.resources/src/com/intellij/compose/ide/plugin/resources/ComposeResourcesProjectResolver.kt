@@ -32,11 +32,17 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
       .keys
       .associateWith { sourceSetName ->
         val defaultComposeResourcesDir = gradleModule.defaultComposeResourcesDirFor(sourceSetName)
-        val directoryPath = customComposeResourcesDirs[sourceSetName] ?: defaultComposeResourcesDir
-        directoryPath
+        customComposeResourcesDirs[sourceSetName]
+          ?.let { /*directoryPath*/ it.first to /*isCustom*/ true } ?: (defaultComposeResourcesDir to /*isCustom*/ false)
       }
 
-    val composeResources = ComposeResourcesModelImpl(customComposeResourcesDirs = composeResourcesDirs)
+    val isPublicResClass = composeResourcesModel?.isPublicResClass ?: false
+    val nameOfResClass = composeResourcesModel?.nameOfResClass ?: "Res"
+    val composeResources = ComposeResourcesModelImpl(
+      customComposeResourcesDirs = composeResourcesDirs,
+      isPublicResClass = isPublicResClass,
+      nameOfResClass = nameOfResClass,
+    )
     ideModule.createChild(COMPOSE_RESOURCES_KEY, composeResources)
   }
 
@@ -44,10 +50,10 @@ internal class ComposeResourcesProjectResolver : AbstractProjectResolverExtensio
    * Provide common composeResources default dirs even for single target Compose projects
    * for which mppModel doesn't list common source sets
    */
-  private fun IdeaModule.commonComposeResourcesDirs(): Map<String, String> =
+  private fun IdeaModule.commonComposeResourcesDirs(): Map<String, Pair<String, Boolean>> =
     mapOf(
-      "commonMain" to defaultComposeResourcesDirFor("commonMain"),
-      "commonTest" to defaultComposeResourcesDirFor("commonTest"),
+      "commonMain" to (defaultComposeResourcesDirFor("commonMain") to /*isCustom*/ false),
+      "commonTest" to (defaultComposeResourcesDirFor("commonTest") to /*isCustom*/ false),
     )
 
   private fun IdeaModule.defaultComposeResourcesDirFor(sourceSetName: String): String = gradleProject.projectDirectory

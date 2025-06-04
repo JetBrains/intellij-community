@@ -78,7 +78,13 @@ data class TestProjectModule(
     val contentRoots: List<TestContentRoot>?,
 )
 
-data class Dependency(val name: String, val kind: DependencyKind, val scope: DependencyScope, val isExported: Boolean)
+data class Dependency(
+    val name: String,
+    val kind: DependencyKind,
+    val scope: DependencyScope,
+    val isExported: Boolean,
+    val productionOnTest: Boolean,
+)
 
 enum class DependencyKind {
     REGULAR,
@@ -169,13 +175,20 @@ object TestProjectModuleParser {
     private fun parseDependencies(json: JsonObject, jsonField: String, dependencyKind: DependencyKind): List<Dependency> =
         json.getAsJsonArray(jsonField)?.toList().orEmpty().map { dependency ->
             when (dependency) {
-                is JsonPrimitive -> Dependency(dependency.asString, dependencyKind, scope = DependencyScope.COMPILE, isExported = false)
+                is JsonPrimitive -> Dependency(
+                    dependency.asString,
+                    dependencyKind,
+                    scope = DependencyScope.COMPILE,
+                    isExported = false,
+                    productionOnTest = false,
+                )
                 is JsonObject ->
                     Dependency(
                         dependency.getString("name"),
                         dependencyKind,
                         scope = dependency.getNullableString("scope")?.let(DependencyScope::valueOf) ?: DependencyScope.COMPILE,
                         isExported = dependency.get("exported")?.asBoolean == true,
+                        productionOnTest = dependency.get("productionOnTest")?.asBoolean == true,
                     )
                 else -> error("Unexpected json element type: ${dependency::class.java}")
             }

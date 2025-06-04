@@ -10,16 +10,20 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+
+@ApiStatus.Internal
+const val DYNAMIC_PLUGINS_SYNCHRONIZER_FILE_NAME: String = "p3-dynamic-plugins.xml"
 
 /**
  * Synchronizes state of dynamically loaded and unloaded plugins between multiple IDE processes running in parallel.
  * Lists of plugins which were dynamically loaded or unloaded during this session are stored in [P3State], so when one process
  * loads or unloads a plugin, other processes are notified about that using the common settings synchronization mechanics.
  */
-@State(name = "P3DynamicPlugins", storages = [Storage("p3-dynamic-plugins.xml", roamingType = RoamingType.DISABLED,
-                                                                   usePathMacroManager = false)])
+@State(name = "P3DynamicPlugins", storages = [Storage(DYNAMIC_PLUGINS_SYNCHRONIZER_FILE_NAME, roamingType = RoamingType.DISABLED,
+                                                      usePathMacroManager = false)])
 internal class P3DynamicPluginSynchronizer: PersistentStateComponent<P3State>, DynamicPluginListener {
   companion object {
     fun getInstance(): P3DynamicPluginSynchronizer = service()

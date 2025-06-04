@@ -14,6 +14,8 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
+import kotlinx.coroutines.CompletableDeferred;
+import kotlinx.coroutines.future.FutureKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
@@ -27,8 +29,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -107,8 +109,9 @@ public final class TerminalWorkingDirectoryManager {
     if (connector == null) return null;
     try {
       long startNano = System.nanoTime();
-      Future<String> cwd = ProcessInfoUtil.getCurrentWorkingDirectory(connector.getProcess());
-      String result = cwd.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+      CompletableDeferred<String> cwdDeferred = ProcessInfoUtil.getInstance().getCurrentWorkingDirectoryDeferred(connector.getProcess());
+      CompletableFuture<String> cwdFuture = FutureKt.asCompletableFuture(cwdDeferred);
+      String result = cwdFuture.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
       boolean exists = checkDirectory(result);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Cwd (" + result + ", exists=" + exists + ") fetched in " + TimeoutUtil.getDurationMillis(startNano) + " ms");

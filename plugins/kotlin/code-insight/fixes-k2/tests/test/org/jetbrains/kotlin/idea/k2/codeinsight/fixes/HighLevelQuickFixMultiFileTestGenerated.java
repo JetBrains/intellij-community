@@ -224,6 +224,95 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/invoke")
+        public static class Invoke extends AbstractHighLevelQuickFixMultiFileTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+            }
+
+            @TestMetadata("invokeExtension.test")
+            public void testInvokeExtension() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension.test");
+            }
+
+            @TestMetadata("invokeExtensionNoOperator_afterConstructorCall.test")
+            public void testInvokeExtensionNoOperator_afterConstructorCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtensionNoOperator_afterConstructorCall.test");
+            }
+
+            @TestMetadata("invokeExtensionWithLambdaParameter.test")
+            public void testInvokeExtensionWithLambdaParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtensionWithLambdaParameter.test");
+            }
+
+            @TestMetadata("invokeExtensionWithLambdaParameter_qualifiedCall.test")
+            public void testInvokeExtensionWithLambdaParameter_qualifiedCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtensionWithLambdaParameter_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall.test")
+            public void testInvokeExtension_afterConstructorCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall_unrelatedInvokes_single.test")
+            public void testInvokeExtension_afterConstructorCall_unrelatedInvokes_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_afterConstructorCall_unrelatedInvokes_two.test")
+            public void testInvokeExtension_afterConstructorCall_unrelatedInvokes_two() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_afterConstructorCall_unrelatedInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_extraArguments_unrelatedInvokes_single.test")
+            public void testInvokeExtension_extraArguments_unrelatedInvokes_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_extraArguments_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall.test")
+            public void testInvokeExtension_qualifiedCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall_unrelatedInvokes_single.test")
+            public void testInvokeExtension_qualifiedCall_unrelatedInvokes_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_qualifiedCall_unrelatedInvokes_two.test")
+            public void testInvokeExtension_qualifiedCall_unrelatedInvokes_two() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_qualifiedCall_unrelatedInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_topLevelVal.test")
+            public void testInvokeExtension_topLevelVal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_topLevelVal.test");
+            }
+
+            @TestMetadata("invokeExtension_unrelatedInvokes_single.test")
+            public void testInvokeExtension_unrelatedInvokes_single() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_unrelatedInvokes_single.test");
+            }
+
+            @TestMetadata("invokeExtension_unrelatedInvokes_two.test")
+            public void testInvokeExtension_unrelatedInvokes_two() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_unrelatedInvokes_two.test");
+            }
+
+            @TestMetadata("invokeExtension_unresolvedReceiver.test")
+            public void testInvokeExtension_unresolvedReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/invoke/invokeExtension_unresolvedReceiver.test");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/kt21515")
         public static class Kt21515 extends AbstractHighLevelQuickFixMultiFileTest {
             @java.lang.Override
@@ -752,11 +841,6 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/importNullableInterfaceWithGenerics.before.Main.kt");
             }
 
-            @TestMetadata("ImportOperatorInvokeWithConvention.before.Main.kt")
-            public void testImportOperatorInvokeWithConvention() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/ImportOperatorInvokeWithConvention.before.Main.kt");
-            }
-
             @TestMetadata("indexCallExtensionGet.test")
             public void testIndexCallExtensionGet() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/indexCallExtensionGet.test");
@@ -805,21 +889,6 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("infixCallK1.before.Main.kt")
             public void testInfixCallK1() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/infixCallK1.before.Main.kt");
-            }
-
-            @TestMetadata("invokeExtension.test")
-            public void testInvokeExtension() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension.test");
-            }
-
-            @TestMetadata("invokeExtension2.test")
-            public void testInvokeExtension2() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtension2.test");
-            }
-
-            @TestMetadata("invokeExtensionNoOperator.test")
-            public void testInvokeExtensionNoOperator() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/invokeExtensionNoOperator.test");
             }
 
             @TestMetadata("iteratorOperator.test")
@@ -935,6 +1004,31 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("multiDeclarationExtensionComponentNoOperator.test")
             public void testMultiDeclarationExtensionComponentNoOperator() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationExtensionComponentNoOperator.test");
+            }
+
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionAllComponents.test")
+            public void testMultiDeclarationInLambdaParameterExtensionAllComponents() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionAllComponents.test");
+            }
+
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionComponent1.test")
+            public void testMultiDeclarationInLambdaParameterExtensionComponent1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionComponent1.test");
+            }
+
+            @TestMetadata("multiDeclarationInLambdaParameterExtensionComponent2.test")
+            public void testMultiDeclarationInLambdaParameterExtensionComponent2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationInLambdaParameterExtensionComponent2.test");
+            }
+
+            @TestMetadata("multiDeclarationInLoopExtensionComponent1.test")
+            public void testMultiDeclarationInLoopExtensionComponent1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationInLoopExtensionComponent1.test");
+            }
+
+            @TestMetadata("multiDeclarationInLoopExtensionComponent1_ambiguousFunction.test")
+            public void testMultiDeclarationInLoopExtensionComponent1_ambiguousFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/multiDeclarationInLoopExtensionComponent1_ambiguousFunction.test");
             }
 
             @TestMetadata("multiFunctionCandidate.test")

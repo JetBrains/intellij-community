@@ -52,11 +52,7 @@ class SimpleTerminalController(
     val eventsHandler = SimpleTerminalEventsHandler(session, settings, outputModel)
     setupKeyEventDispatcher(editor, eventsHandler, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
-    TerminalOutputEditorInputMethodSupport(
-      editor,
-      sendInputString = { text -> session.terminalOutputStream.sendString(text, true) },
-      getCaretPosition = { caretModel.getCaretPosition() }
-    ).install(this)
+    setupInputMethodSupport(editor, session, caretModel, this)
     terminalModel.withContentLock {
       updateEditorContent()
     }

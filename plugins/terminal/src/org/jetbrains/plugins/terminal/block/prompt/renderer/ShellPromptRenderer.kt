@@ -88,10 +88,10 @@ internal class ShellPromptRenderer(
     var curOffset = 0
     for (range in this) {
       if (curOffset < range.startOffset) {
-        highlightings.add(HighlightingInfo(curOffset, range.startOffset, EmptyTextAttributesProvider))
+        highlightings.add(HighlightingInfo(curOffset, range.startOffset.toInt(), EmptyTextAttributesProvider))
       }
-      highlightings.add(HighlightingInfo(range.startOffset, range.endOffset, TextStyleAdapter(range.style, colorPalette)))
-      curOffset = range.endOffset
+      highlightings.add(HighlightingInfo(range.startOffset.toInt(), range.endOffset.toInt(), TextStyleAdapter(range.style, colorPalette)))
+      curOffset = range.endOffset.toInt()
     }
     if (curOffset < totalTextLength) {
       highlightings.add(HighlightingInfo(curOffset, totalTextLength, EmptyTextAttributesProvider))

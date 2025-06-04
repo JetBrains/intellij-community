@@ -25,6 +25,8 @@ internal suspend fun getAccessorsSpecs(
   packageName: String,
   sourceSetName: String,
   moduleDir: String,
+  isPublicResClass: Boolean,
+  nameOfResClass: String,
 ) {
 
 
@@ -35,11 +37,13 @@ internal suspend fun getAccessorsSpecs(
 
     chunks.forEachIndexed { index, ids ->
       getChunkFileSpec(
-        type,
-        type.accessorName.uppercaseFirstChar() + index + "." + sourceSetName + ".kt",
-        packageName,
-        moduleDir,
-        idToResources.subMap(ids.first(), true, ids.last(), true)
+        type = type,
+        fileName = type.accessorName.uppercaseFirstChar() + index + "." + sourceSetName + ".kt",
+        packageName = packageName,
+        moduleDir = moduleDir,
+        idToResources = idToResources.subMap(ids.first(), true, ids.last(), true),
+        isPublicResClass = isPublicResClass,
+        nameOfResClass = nameOfResClass,
       )
     }
   }
@@ -52,6 +56,8 @@ private suspend fun getChunkFileSpec(
   packageName: String,
   moduleDir: String,
   idToResources: Map<String, List<ResourceAccessorItem>>,
+  isPublicResClass: Boolean,
+  nameOfResClass: String,
 ) {
   val content = buildString {
     append("""
@@ -70,10 +76,11 @@ private suspend fun getChunkFileSpec(
         
       """.trimIndent())
     appendLine()
+    val visibilityModifier = if (isPublicResClass) "public" else "internal"
     idToResources.forEach { (resName, items) ->
       appendLine(
         buildString {
-          append("internal val Res.${type.accessorName}.${resName}: ${type.resourceName} by lazy { ")
+          append("$visibilityModifier val $nameOfResClass.${type.accessorName}.${resName}: ${type.resourceName} by lazy { ")
           append("${type.resourceName}(\"${type.typeName}:${resName}\", ${if (type.isStringType) "\"$resName\", " else ""}")
           append(items.joinToString(prefix = "setOf(", postfix = ")) }") { item ->
             buildString {

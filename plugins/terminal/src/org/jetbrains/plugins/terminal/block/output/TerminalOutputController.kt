@@ -341,7 +341,11 @@ class TerminalOutputController(
 
   private fun updateHighlightings(block: CommandBlock, replaceOffset: Int, styles: List<StyleRange>) {
     val replaceHighlightings = styles.map {
-      HighlightingInfo(replaceOffset + it.startOffset, replaceOffset + it.endOffset, it.style.toTextAttributesProvider())
+      HighlightingInfo(
+        startOffset = (replaceOffset + it.startOffset).toInt(),
+        endOffset = (replaceOffset + it.endOffset).toInt(),
+        textAttributesProvider = it.style.toTextAttributesProvider()
+      )
     }
     val newHighlightings = outputModel.getHighlightings(block).asSequence()
       .filter { it.endOffset <= replaceOffset }
@@ -389,11 +393,7 @@ class TerminalOutputController(
       val eventsHandler = BlockTerminalEventsHandler(session, settings, this@TerminalOutputController)
       setupKeyEventDispatcher(editor, eventsHandler, disposable)
       setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
-      TerminalOutputEditorInputMethodSupport(
-        editor,
-        sendInputString = { text -> session.terminalOutputStream.sendString(text, true) },
-        getCaretPosition = { caretModel.getCaretPosition() }
-      ).install(disposable)
+      setupInputMethodSupport(editor, session, caretModel, disposable)
 
       contentUpdatesScheduler = setupContentUpdating()
     }

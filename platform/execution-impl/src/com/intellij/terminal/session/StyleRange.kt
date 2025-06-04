@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 data class StyleRange(
-  val startOffset: Int,
-  val endOffset: Int,
+  val startOffset: Long,
+  val endOffset: Long,
   val style: TextStyle,
 )

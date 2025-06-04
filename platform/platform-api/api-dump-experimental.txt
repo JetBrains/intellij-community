@@ -362,13 +362,13 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,com.intellij.ui.Side,javax.swing.JComponent,I,java.lang.Object):V
 - bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent,I,java.lang.Object):V
 *c:com.intellij.ui.components.JBHtmlPane
-- javax.swing.JEditorPane
 - com.intellij.openapi.Disposable
+- javax.swing.JEditorPane
 - <init>():V
 - <init>(com.intellij.ui.components.JBHtmlPaneStyleConfiguration,com.intellij.ui.components.JBHtmlPaneConfiguration):V
 - dispose():V
 - f:getBackgroundFlow():kotlinx.coroutines.flow.StateFlow
-- p:getContentsScaleFactor():F
+- getContentsScaleFactor():F
 - getSelectedText():java.lang.String
 - getText():java.lang.String
 - p:initializePaneConfiguration(com.intellij.ui.components.JBHtmlPaneConfiguration$Builder):V
@@ -378,6 +378,7 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - f:reloadCssStylesheets():V
 - setDocument(javax.swing.text.Document):V
 - setEditorKit(javax.swing.text.EditorKit):V
+- setFont(java.awt.Font):V
 - setText(java.lang.String):V
 *f:com.intellij.ui.components.JBHtmlPaneConfiguration
 - *sf:Companion:com.intellij.ui.components.JBHtmlPaneConfiguration$Companion

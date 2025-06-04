@@ -134,7 +134,9 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
         threadList.repaint();
       }
     });
-    ListSpeedSearch.installOn(threadList).setComparator(new SpeedSearchComparator(false, true));
+    ListSpeedSearch
+      .installOn(threadList, DumpItem::getName)
+      .setComparator(new SpeedSearchComparator(false, true));
     return threadList;
   }
 

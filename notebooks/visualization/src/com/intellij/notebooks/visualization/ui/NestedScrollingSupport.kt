@@ -48,7 +48,15 @@ class NestedScrollingSupportImpl {
       }
     }
     resetOwnerIfTimeoutExceeded()
+
     val owner = resetOwnerIfEventIsOutside(e)
+
+    // We have inlays with error or text outputs. Sometimes they have scroll, sometimes not,
+    // and in case they have not, or the scroll in the desired direction is impossible, we will scroll the main Editor.
+    if (owner is JScrollPane && !canScroll(e, owner)) {
+      resetOwner()
+    }
+
     if (owner != null) {
       if (component != owner) {
         redispatchEvent(SwingUtilities.convertMouseEvent(component, e, owner))
@@ -73,17 +81,17 @@ class NestedScrollingSupportImpl {
     }
   }
 
-  private fun dispatchEvent(event: MouseEvent) {
+  private fun dispatchEvent(event: MouseWheelEvent) {
     val owner = event.component
     if (isAsync(owner)) return
 
     if (owner is JLayer<*>) {
-      val aa = owner.parent
-      if (aa is JLayer<*>) {
-        dispatchEventSync(event, aa.parent)
+      val ownerParent = owner.parent
+      if (ownerParent is JLayer<*>) {
+        dispatchEventSync(event, ownerParent.parent)
       }
       else {
-        dispatchEventSync(event, aa)
+        dispatchEventSync(event, ownerParent)
       }
     }
     else {
@@ -91,7 +99,16 @@ class NestedScrollingSupportImpl {
     }
   }
 
-  private fun dispatchEventSync(event: MouseEvent, owner: Component) {
+  private fun canScroll(event: MouseWheelEvent, owner: JScrollPane): Boolean {
+    return if (event.wheelRotation > 0) { // Down
+      owner.verticalScrollBar.maximum > owner.verticalScrollBar.value + owner.viewport.height
+    }
+    else { // Up
+      owner.verticalScrollBar.minimum < owner.verticalScrollBar.value
+    }
+  }
+
+  private fun dispatchEventSync(event: MouseWheelEvent, owner: Component) {
     val oldDispatchingEvent = dispatchingEvent
     dispatchingEvent = event
     try {

@@ -12,13 +12,9 @@ object InlayDimensions {
    * Offset for inlay painted round-rect background.
    * We need it to draw visual offsets from surrounding text.
    */
-  const val topOffsetUnscaled = 10
-  const val bottomOffsetUnscaled = 24
-
-  const val topBorderUnscaled = topOffsetUnscaled + 3
-  const val bottomBorderUnscaled = bottomOffsetUnscaled + 5
+  private const val bottomOffsetUnscaled = 24
+  private const val bottomBorderUnscaled = bottomOffsetUnscaled + 5
 
   /** Real borders for inner inlay component */
-  val topBorder = JBUI.scale(topBorderUnscaled)
   val bottomBorder = JBUI.scale(bottomBorderUnscaled)
 }

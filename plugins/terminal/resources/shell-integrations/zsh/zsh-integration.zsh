@@ -2,9 +2,14 @@
 
 function __jetbrains_intellij_update_environment() {
   if [[ -n "${JEDITERM_SOURCE:-}" ]]; then
-    builtin source -- "$JEDITERM_SOURCE" ${=JEDITERM_SOURCE_ARGS:-}
+    if [[ -n "${JEDITERM_SOURCE_SINGLE_ARG}" ]]; then
+      # JEDITERM_SOURCE_ARGS might be either list of args or one arg depending on JEDITERM_SOURCE_SINGLE_ARG
+      builtin source -- "$JEDITERM_SOURCE" "${JEDITERM_SOURCE_ARGS}"
+    else
+      builtin source -- "$JEDITERM_SOURCE" ${=JEDITERM_SOURCE_ARGS:-}
+    fi
   fi
-  builtin unset JEDITERM_SOURCE JEDITERM_SOURCE_ARGS
+
 
   # Enable native zsh options to make coding easier.
   builtin emulate -L zsh

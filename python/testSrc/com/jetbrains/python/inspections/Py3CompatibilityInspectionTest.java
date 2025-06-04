@@ -79,6 +79,11 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-81022
+  public void testCollectionsAbc() {
+    doTestByText("import <warning descr=\"Python version 2.7 does not have module collections.abc\">collections.abc</warning>");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

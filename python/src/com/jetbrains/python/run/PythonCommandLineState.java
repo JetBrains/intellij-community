@@ -52,6 +52,7 @@ import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
@@ -70,6 +71,7 @@ import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvide
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1060,6 +1062,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                                                        @NotNull Path scriptPath) {
     return PySdkTargetPaths.getTargetPathForPythonScriptExecution(myConfig.getProject(), myConfig.getSdk(), createRemotePathMapper(),
                                                                   scriptPath);
+  }
+
+  /**
+   * Decides whether the configuration should run.
+   * This check happens at the moment that the run configuration is set to run (e.g., when the
+   * user presses the green arrow button to run the configuration).
+   * @return Returns `true` if the configuration should be allowed to run, `false` otherwise.
+   */
+  @RequiresEdt
+  @ApiStatus.Internal
+  public boolean canRun() {
+    return true;
   }
 
   /**

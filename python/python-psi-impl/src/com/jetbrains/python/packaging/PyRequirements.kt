@@ -19,6 +19,19 @@ fun pyRequirement(name: String): PyRequirement = PyRequirementImpl(name, emptyLi
 
 /**
  * This helper is not an API, consider using methods listed below.
+ *
+ * @see PyPackageManager.parseRequirement
+ * @see PyPackageManager.parseRequirements
+ *
+ * @see PyRequirementParser.fromLine
+ * @see PyRequirementParser.fromText
+ * @see PyRequirementParser.fromFile
+ */
+fun pyRequirement(name: String, relation: PyRequirementRelation, version: String): PyRequirement =
+  pyRequirement(name, relation, version, "")
+
+/**
+ * This helper is not an API, consider using methods listed below.
  * If given version could not be normalized, then specified relation will be replaced with [PyRequirementRelation.STR_EQ].
  *
  * @see PyPackageManager.parseRequirement
@@ -30,9 +43,9 @@ fun pyRequirement(name: String): PyRequirement = PyRequirementImpl(name, emptyLi
  *
  * @see pyRequirementVersionSpec
  */
-fun pyRequirement(name: String, relation: PyRequirementRelation, version: String): PyRequirement {
+fun pyRequirement(name: String, relation: PyRequirementRelation, version: String, extras: String = ""): PyRequirement {
   val versionSpec = pyRequirementVersionSpec(relation, version)
-  return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), "")
+  return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), extras)
 }
 
 /**

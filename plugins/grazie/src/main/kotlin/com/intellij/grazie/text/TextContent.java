@@ -158,6 +158,9 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
   /** Offsets in this text where exclusions of type {@link ExclusionKind#markup} were applied */
   int[] markupOffsets();
 
+  /** Offsets in this text where exclusions of type {@link ExclusionKind#unknown} were applied */
+  int[] unknownOffsets();
+
   /** Return a copy of this text with the specified character inserted into {@link #markupOffsets()} */
   WithMarkup replaceMarkupWith(char c);
 

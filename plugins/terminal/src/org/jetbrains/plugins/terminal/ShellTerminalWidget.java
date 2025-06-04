@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class ShellTerminalWidget extends JBTerminalWidget {
+public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPanelMarker {
 
   private static final Logger LOG = Logger.getInstance(ShellTerminalWidget.class);
 

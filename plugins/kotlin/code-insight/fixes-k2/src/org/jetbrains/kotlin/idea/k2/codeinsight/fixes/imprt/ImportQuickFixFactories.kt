@@ -54,7 +54,7 @@ object ImportQuickFixFactories {
 
     val componentFunctionMissingFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ComponentFunctionMissing> =
         ImportQuickFixProvider.upcast()
-    
+
     // TODO: Reconsider this factory after KT-76253 is fixed
     val componentFunctionAmbiguityFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ComponentFunctionAmbiguity> =
         ImportQuickFixProvider.upcast()
@@ -63,6 +63,9 @@ object ImportQuickFixFactories {
         ImportQuickFixProvider.upcast()
 
     val iteratorAmbiguityFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.IteratorAmbiguity> =
+        ImportQuickFixProvider.upcast()
+
+    val functionExpectedFactory: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.FunctionExpected> =
         ImportQuickFixProvider.upcast()
 }
 

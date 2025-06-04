@@ -42,5 +42,8 @@ interface SettingsSyncAuthService {
 
   fun getAvailableUserAccounts(): List<SettingsSyncUserData>
 
+  /**
+   * Indicates whether the current provider supports cross-IDE sync
+   */
   fun crossSyncSupported(): Boolean = true
 }

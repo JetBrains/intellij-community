@@ -17,6 +17,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.junit.Assert
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -66,6 +67,37 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertServerSnapshot {
       fileState("options/laf.xml", "LaF Initial")
     }
+  }
+
+
+  @Test
+  fun `dispose communicator when disabling sync`() = timeoutRunBlockingAndStopBridge {
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    Assertions.assertFalse(remoteCommunicator.wasDisposed)
+    SettingsSyncSettings.getInstance().syncEnabled = false
+    Assertions.assertTrue(remoteCommunicator.wasDisposed)
+
+  }
+
+  @Test
+  fun `reset user data if cannot find`() = timeoutRunBlockingAndStopBridge {
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().providerCode, MOCK_CODE)
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, DUMMY_USER_ID)
+    authService.userData = null
+    initSettingsSync()
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().providerCode, null)
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, null)
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
+
   }
 
   @Test
@@ -464,8 +496,6 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertEquals(MockRemoteCommunicator.DISCONNECTED_ERROR,
                             (SettingsSyncStatusTracker.getInstance().currentStatus as? SettingsSyncStatusTracker.SyncStatus.Error)?.errorMessage
     )
-
-
   }
 
   private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {

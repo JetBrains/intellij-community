@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.service
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState
-import com.intellij.openapi.externalSystem.util.ListenerAssertion
+import com.intellij.platform.testFramework.assertion.listenerAssertion.ListenerAssertion
 import com.intellij.openapi.progress.ProcessCanceledException
 
 class AbstractExternalSystemTaskTest : AbstractExternalSystemTaskTestCase() {

@@ -20,7 +20,7 @@ import java.util.function.BiConsumer;
  * Null values are NOT allowed
  */
 @ApiStatus.Internal
-public abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
+public abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V>, ReferenceQueueable {
 
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = new ConcurrentHashMap<>();
   private final BiConsumer<? super @NotNull ConcurrentMap<K, V>, ? super K> myEvictionListener;
@@ -38,6 +38,7 @@ public abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K
   }
 
   // returns true if some refs were tossed
+  @Override
   @ApiStatus.Internal
   @VisibleForTesting
   public boolean processQueue() {

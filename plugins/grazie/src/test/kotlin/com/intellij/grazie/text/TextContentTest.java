@@ -109,10 +109,9 @@ public class TextContentTest extends BasePlatformTestCase {
 
   public static String unknownOffsets(TextContent text) {
     StringBuilder sb = new StringBuilder(text);
-    for (int i = text.length(); i >= 0; i--) {
-      if (text.hasUnknownFragmentsIn(TextRange.from(i, 0))) {
-        sb.insert(i, "|");
-      }
+    int[] offsets = text.unknownOffsets();
+    for (int i = offsets.length - 1; i >= 0; i--) {
+      sb.insert(offsets[i], "|");
     }
     return sb.toString();
   }

@@ -5,13 +5,19 @@ import com.intellij.compiler.options.MakeProjectStepBeforeRun
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.DebuggingRunnerData
+import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.configurations.ParametersList
+import com.intellij.execution.configurations.RunConfigurationBase
+import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.scratch.JavaScratchConfiguration
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.eel.provider.asEelPath
@@ -110,30 +116,10 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.add("-Djdk.nio.maxCachedBufferSize=2097152") // IJPL-164109
     }
 
-    enableIjentDefaultFsProvider(project, configuration, vmParameters)
+    enableIjentDefaultFsProvider(project, configuration.workingDirectory, vmParameters)
 
     if (isDevBuild) {
       updateParametersForDevBuild(javaParameters, configuration, project)
-    }
-  }
-
-  private fun enableIjentDefaultFsProvider(
-    project: Project,
-    configuration: JavaRunConfigurationBase,
-    vmParameters: ParametersList,
-  ) {
-    // Enable the IJent file system only when the new default FS provider class is available.
-    // It is required to let actual DevKit plugins work with branches without the FS provider class, like 241.
-    if (JUnitDevKitPatcher.loaderValid(project, null, IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS)) {
-      val isIjentWslFsEnabled = isIjentWslFsEnabledByDefaultForProduct_Reflective(
-        configuration.workingDirectory,
-        vmParameters.getPropertyValue("idea.platform.prefix"),
-      )
-      vmParameters.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=$isIjentWslFsEnabled")
-      if (isIjentWslFsEnabled) {
-        vmParameters.addAll(getMultiRoutingFileSystemVmOptions_Reflective(configuration.workingDirectory))
-        vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
-      }
     }
   }
 
@@ -225,7 +211,7 @@ private fun getIdeSystemProperties(runDir: Path): Map<String, String> {
 }
 
 /**
- * A direct call of [com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct] invokes
+ * A direct call of [com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct] invokes
  * the function which is bundled with the DevKit plugin.
  * In contrast, the result of this function corresponds to what is written in the source code at current revision.
  */
@@ -234,7 +220,12 @@ private fun isIjentWslFsEnabledByDefaultForProduct_Reflective(workingDirectory: 
   if (workingDirectory == null) return false
   try {
     val constantsClass = getIjentBuildScriptsConstantsClass_Reflective(workingDirectory) ?: return false
-    val method = constantsClass.getDeclaredMethod("isIjentWslFsEnabledByDefaultForProduct", String::class.java)
+    val method =
+      try {
+        constantsClass.getDeclaredMethod("isMultiRoutingFileSystemEnabledForProduct", String::class.java)
+      } catch (_: NoSuchMethodException) {
+        constantsClass.getDeclaredMethod("isIjentWslFsEnabledByDefaultForProduct", String::class.java)
+      }
     return method.invoke(null, platformPrefix) as Boolean
   }
   catch (err: Throwable) {
@@ -307,4 +298,38 @@ private fun getIjentBuildScriptsConstantsClass_Reflective(workingDirectory: Stri
 
   val tmpClassLoader = URLClassLoader(arrayOf(buildConstantsClassPath, kotlinStdlibClassPath), null)
   return tmpClassLoader.loadClass("com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt")
+}
+
+internal fun enableIjentDefaultFsProvider(
+  project: Project,
+  workingDirectory: String?,
+  vmParameters: ParametersList,
+) {
+  // Enable the IJent file system only when the new default FS provider class is available.
+  // It is required to let actual DevKit plugins work with branches without the FS provider class, like 241.
+  if (JUnitDevKitPatcher.loaderValid(project, null, IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS)) {
+    val isIjentWslFsEnabled = isIjentWslFsEnabledByDefaultForProduct_Reflective(
+      workingDirectory,
+      vmParameters.getPropertyValue("idea.platform.prefix"),
+    )
+    vmParameters.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=$isIjentWslFsEnabled")
+    vmParameters.addAll(getMultiRoutingFileSystemVmOptions_Reflective(workingDirectory))
+    vmParameters.add("-Xbootclasspath/a:${workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
+  }
+}
+
+internal fun Module.hasIjentDefaultFsProviderInClassPath(): Boolean {
+  val queue = ArrayDeque(listOf(*ModuleRootManager.getInstance(this).getModuleDependencies()))
+  val seen = hashSetOf(this)
+  while (true) {
+    val module =
+      queue.removeFirstOrNull()
+      ?: return false
+    if (module.name == IJENT_BOOT_CLASSPATH_MODULE) {
+      return true
+    }
+    if (seen.add(module)) {
+      queue.addAll(ModuleRootManager.getInstance(module).getModuleDependencies())
+    }
+  }
 }

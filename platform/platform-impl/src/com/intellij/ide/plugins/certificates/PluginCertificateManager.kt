@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.Configurable.SingleEditorConfiguration
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
@@ -19,8 +20,10 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.net.ssl.*
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.CardLayout
+import java.awt.Dimension
 import java.security.cert.X509Certificate
 import javax.swing.JPanel
 import javax.swing.tree.TreeSelectionModel
@@ -29,7 +32,7 @@ class PluginCertificateManager :
   BoundConfigurable(
     IdeBundle.message("plugin.manager.custom.certificates"),
     "plugin.certificates"
-  ), Configurable.NoScroll, CertificateListener {
+  ), Configurable.NoScroll, CertificateListener, SingleEditorConfiguration {
 
   private val myTree: Tree = Tree()
 
@@ -214,4 +217,5 @@ class PluginCertificateManager :
     myDetailsPanel.add(scrollPane, uniqueName)
   }
 
+  override fun getDialogInitialSize(): Dimension = JBUI.DialogSizes.medium()
 }

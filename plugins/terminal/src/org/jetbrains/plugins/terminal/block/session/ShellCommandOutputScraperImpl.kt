@@ -116,7 +116,7 @@ fun TerminalTextBuffer.collectLines(
   startLine: Int = -historyLinesCount,
 ) {
   val adjustedStartLine = if (isUsingAlternateBuffer) max(0, startLine) else startLine
-  for (ind in adjustedStartLine until screenLinesCount) {
+  for (ind in adjustedStartLine until screenLinesCount.coerceAtMost(height)) {
     terminalLinesCollector.addLine(getLine(ind))
   }
   terminalLinesCollector.flush()

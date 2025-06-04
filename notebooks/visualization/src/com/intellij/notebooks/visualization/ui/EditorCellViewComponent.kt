@@ -2,13 +2,12 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.Inlay
+import com.intellij.notebooks.visualization.controllers.NotebookCellController
 import com.intellij.openapi.util.Disposer
 import java.awt.Rectangle
 import java.util.*
 
-abstract class EditorCellViewComponent : Disposable {
+abstract class EditorCellViewComponent : NotebookCellController {
   protected var parent: EditorCellViewComponent? = null
 
   private val _children = mutableListOf<EditorCellViewComponent>()
@@ -30,14 +29,12 @@ abstract class EditorCellViewComponent : Disposable {
     child.parent = null
   }
 
-  override fun dispose() = Unit
-
   fun onViewportChange() {
     _children.forEach { it.onViewportChange() }
     doViewportChange()
   }
 
-  open fun doViewportChange() = Unit
+  open fun doViewportChange(): Unit = Unit
 
   abstract fun calculateBounds(): Rectangle
 
@@ -45,14 +42,6 @@ abstract class EditorCellViewComponent : Disposable {
     _children.forEach {
       it.updateCellFolding(updateContext)
     }
-  }
-
-  fun getInlays(): Sequence<Inlay<*>> {
-    return doGetInlays() + _children.asSequence().flatMap { it.getInlays() }
-  }
-
-  open fun doGetInlays(): Sequence<Inlay<*>> {
-    return emptySequence()
   }
 
   open fun addInlayBelow(presentation: InlayPresentation) {
@@ -63,14 +52,8 @@ abstract class EditorCellViewComponent : Disposable {
     throw UnsupportedOperationException("Operation is not supported")
   }
 
-  /**
-   * As there are so many possible document editing operations that can destroy cell inlays by removing document range they attached to,
-   * the only option we have to preserve consistency is to check inlays validity
-   * and recreate them if needed.
-   * This logic is supposed to be as simple as check `isValid` and `offset` attributes of inlays
-   * so it should not introduce significant performance degradation.
-   */
-  fun checkAndRebuildInlays() {
+
+  final override fun checkAndRebuildInlays() {
     _children.forEach { it.checkAndRebuildInlays() }
     doCheckAndRebuildInlays()
   }

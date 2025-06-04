@@ -6,6 +6,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -34,11 +35,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 public final class EditorHyperlinkSupport {
+  private static final Logger LOG = Logger.getInstance(EditorHyperlinkSupport.class);
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("EDITOR_HYPERLINK_SUPPORT_HYPERLINK");
   private static final Key<Unit> HIGHLIGHTING = Key.create("EDITOR_HYPERLINK_SUPPORT_HIGHLIGHTING");
@@ -49,6 +53,8 @@ public final class EditorHyperlinkSupport {
   private final EditorEx myEditor;
   private final @NotNull Project myProject;
   private final AsyncFilterRunner myFilterRunner;
+
+  private final CopyOnWriteArrayList<EditorHyperlinkListener> myHyperlinkListeners = new CopyOnWriteArrayList<>();
 
   /**
    * If your editor has a project inside, better use {@link #get(Editor)}
@@ -101,6 +107,16 @@ public final class EditorHyperlinkSupport {
       }
     }
     );
+  }
+
+  @ApiStatus.Internal
+  public void addEditorHyperlinkListener(@NotNull EditorHyperlinkListener listener) {
+    myHyperlinkListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  public void removeEditorHyperlinkListener(@NotNull EditorHyperlinkListener listener) {
+    myHyperlinkListeners.remove(listener);
   }
 
   public static @NotNull EditorHyperlinkSupport get(@NotNull Editor editor) {
@@ -198,10 +214,25 @@ public final class EditorHyperlinkSupport {
             hyperlinkInfo.navigate(myProject);
           }
           linkFollowed(myEditor, getHyperlinks(0, myEditor.getDocument().getTextLength(),myEditor), range);
+          fireListeners(hyperlinkInfo);
         };
       }
     }
     return null;
+  }
+
+  private void fireListeners(@NotNull HyperlinkInfo info) {
+    for (EditorHyperlinkListener listener : myHyperlinkListeners) {
+      try {
+        listener.hyperlinkActivated(info);
+      }
+      catch (CancellationException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error("The listener " + listener + " threw an exception", e);
+      }
+    }
   }
 
   public static @Nullable HyperlinkInfo getHyperlinkInfo(@NotNull RangeHighlighter range) {

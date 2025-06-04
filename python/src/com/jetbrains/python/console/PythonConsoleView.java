@@ -50,10 +50,12 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.TitlePanel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
@@ -498,6 +500,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       }
     });
     mySplitView = view;
+
+
+    JBScrollPane scrollPane = (JBScrollPane)SwingUtilities.getAncestorOfClass(JBScrollPane.class, mySplitView.getMainComponent());
+    if (scrollPane != null) {
+      scrollPane.setBorder(JBUI.Borders.empty());
+    }
+
+    //((JBScrollPane)mySplitView.getTree().getParent().getParent()).setBorder(JBUI.Borders.empty());
+    //mySplitView.getMainComponent().setBorder(JBUI.Borders.empty());
+
     Disposer.register(this, view);
     splitWindow();
     consoleCommunication.notifyViewCreated(view);

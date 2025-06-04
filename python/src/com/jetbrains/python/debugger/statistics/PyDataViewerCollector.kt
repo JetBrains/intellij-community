@@ -3,7 +3,6 @@ package com.jetbrains.python.debugger.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
@@ -26,8 +25,8 @@ object PyDataViewerCollector : CounterUsagesCollector() {
                                                             ROWS_COUNT_FIELD,
                                                             COLUMNS_COUNT_FIELD,
                                                             IS_NEW_TABLE_FIELD)
-  val SLICING_APPLIED_EVENT: EventId1<Boolean> = GROUP.registerEvent("slicing.applied", IS_NEW_TABLE_FIELD)
-  val FORMATTING_APPLIED_EVENT: EventId1<Boolean> = GROUP.registerEvent("formatting.applied", IS_NEW_TABLE_FIELD)
+  val SLICING_APPLIED_EVENT = GROUP.registerEvent("slicing.applied", IS_NEW_TABLE_FIELD)
+  val FORMATTING_APPLIED_EVENT = GROUP.registerEvent("formatting.applied", IS_NEW_TABLE_FIELD)
 
   enum class DataType(private val typeName: String?) {
     ARRAY("ndarray"),
@@ -69,7 +68,7 @@ object PyDataViewerCollector : CounterUsagesCollector() {
     }
   }
 
-  override fun getGroup(): EventLogGroup = GROUP
+  override fun getGroup() = GROUP
 
   fun logDataOpened(
     project: Project?,

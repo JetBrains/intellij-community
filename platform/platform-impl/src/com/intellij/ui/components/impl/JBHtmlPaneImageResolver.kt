@@ -2,6 +2,7 @@
 package com.intellij.ui.components.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.Urls.parseEncoded
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -37,6 +38,7 @@ class JBHtmlPaneImageResolver(
   }
 
   private fun getImage(url: URL): Image? {
+    if (!isUrlSafe(url)) return null
     val inMemory = additionalImageResolver?.resolveImage(url.toExternalForm())
     if (inMemory != null) {
       return inMemory
@@ -51,6 +53,15 @@ class JBHtmlPaneImageResolver(
       )
     )
   }
+
+  fun isUrlSafe(url: URL): Boolean =
+    when (url.protocol) {
+      "vbscript", "javascript", "smb" -> false
+      "file" -> {
+        !SystemInfo.isWindows || SAFE_WINDOWS_FILE_LINK.containsMatchIn(url.toExternalForm())
+      }
+      else -> true
+    }
 
   override fun size(): Int {
     throw UnsupportedOperationException()
@@ -77,6 +88,8 @@ class JBHtmlPaneImageResolver(
   }
 
   companion object {
+    private val SAFE_WINDOWS_FILE_LINK = Regex("^file:(/{0,3})?[A-Za-z]:/")
+
     private fun builtinServerUrl(url: URL): URL? {
       val parsedUrl = parseEncoded(url.toExternalForm())
       if (parsedUrl == null) {

@@ -6,16 +6,16 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actions.EditorActionUtil
-import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.block.TerminalFrontendEditorAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 
-internal class TerminalLineUpAction : TerminalPromotedEditorAction(LineUpHandler())
+internal class TerminalLineUpAction : TerminalFrontendEditorAction(LineUpHandler())
 
-internal class TerminalLineDownAction : TerminalPromotedEditorAction(LineDownHandler())
+internal class TerminalLineDownAction : TerminalFrontendEditorAction(LineDownHandler())
 
-internal class TerminalPageUpAction : TerminalPromotedEditorAction(PageUpHandler())
+internal class TerminalPageUpAction : TerminalFrontendEditorAction(PageUpHandler())
 
-internal class TerminalPageDownAction : TerminalPromotedEditorAction(PageDownHandler())
+internal class TerminalPageDownAction : TerminalFrontendEditorAction(PageDownHandler())
 
 private class PageUpHandler : ScrollingHandler(Unit.PAGE, -1)
 

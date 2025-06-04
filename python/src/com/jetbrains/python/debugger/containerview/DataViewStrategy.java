@@ -34,7 +34,7 @@ public abstract class DataViewStrategy {
 
   public abstract AsyncArrayTableModel createTableModel(int rowCount,
                                                         int columnCount,
-                                                        @NotNull PyDataViewerCommunityPanel panel,
+                                                        @NotNull PyDataViewerPanel panel,
                                                         @NotNull PyDebugValue debugValue);
 
   public abstract ColoredCellRenderer createCellRenderer(double minValue, double maxValue, @NotNull ArrayChunk arrayChunk);

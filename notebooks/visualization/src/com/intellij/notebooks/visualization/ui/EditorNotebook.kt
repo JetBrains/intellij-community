@@ -49,6 +49,7 @@ class EditorNotebook(val editor: EditorImpl) : Disposable {
     }, this)
   }
 
+
   @Suppress("UNCHECKED_CAST")
   fun <T : EditorNotebookExtension> getExtension(cls: KClass<T>): T? {
     return extensions[cls] as? T
@@ -94,7 +95,7 @@ class EditorNotebook(val editor: EditorImpl) : Disposable {
     cell.onBeforeRemove()
     val removed = _cells.removeAt(index)
     Disposer.dispose(removed)
-    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed)))
+    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed, index)))
   }
 
   fun <T : EditorNotebookExtension> addExtension(type: KClass<T>, extension: T) {
@@ -118,7 +119,7 @@ class EditorNotebook(val editor: EditorImpl) : Disposable {
     }
     for (i in range) {
       val cell = _cells[i]
-      if (cell.visible.get()) {
+      if (cell.isUnfolded.get()) {
         return cell
       }
     }

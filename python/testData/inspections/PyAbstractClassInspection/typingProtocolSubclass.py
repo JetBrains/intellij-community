@@ -83,7 +83,7 @@ def test_mp5(mp5: MP5):
     pass
 
 
-test_mp5(CMP5())
+test_mp5(<warning descr="Cannot instantiate abstract class 'CMP5'">CMP5()</warning>)
 
 
 # ------------------
@@ -103,7 +103,7 @@ def test_mp6(mp6: MP6):
     pass
 
 
-test_mp6(CMP6())
+test_mp6(<warning descr="Cannot instantiate abstract class 'CMP6'">CMP6()</warning>)
 
 
 # ------------------
@@ -116,3 +116,5 @@ class MP7(Protocol):
 class PMP7(MP7, Protocol):  # ok
     def bar(self) -> int:
         pass
+
+<warning descr="Cannot instantiate abstract class 'PMP7'">PMP7()</warning>

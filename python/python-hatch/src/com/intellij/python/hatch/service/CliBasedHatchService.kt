@@ -10,6 +10,7 @@ import com.intellij.python.hatch.*
 import com.intellij.python.hatch.cli.ENV_TYPE_VIRTUAL
 import com.intellij.python.hatch.cli.HatchEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironments
+import com.intellij.python.hatch.runtime.HatchConstants
 import com.intellij.python.hatch.runtime.HatchRuntime
 import com.intellij.python.hatch.runtime.createHatchRuntime
 import com.jetbrains.python.PythonBinary
@@ -29,12 +30,14 @@ internal class CliBasedHatchService private constructor(
   private val hatchRuntime: HatchRuntime,
 ) : HatchService {
   companion object {
-    suspend operator fun invoke(workingDirectoryPath: Path, hatchExecutablePath: Path?): Result<CliBasedHatchService, PyError> {
+    suspend operator fun invoke(workingDirectoryPath: Path?, hatchExecutablePath: Path? = null, hatchEnvironmentName: String? = null): Result<CliBasedHatchService, PyError> {
+      val envVars = hatchEnvironmentName?.let { mapOf(HatchConstants.AppEnvVars.ENV to it) } ?: emptyMap()
       val hatchRuntime = createHatchRuntime(
         hatchExecutablePath = hatchExecutablePath,
         workingDirectoryPath = workingDirectoryPath,
+        envVars = envVars
       ).getOr { return it }
-      return Result.success(CliBasedHatchService(workingDirectoryPath, hatchRuntime))
+      return Result.success(CliBasedHatchService(workingDirectoryPath!!, hatchRuntime))
     }
 
     private val concurrencyLimit = Semaphore(permits = 5)
@@ -50,7 +53,7 @@ internal class CliBasedHatchService private constructor(
 
   override fun getWorkingDirectoryPath(): Path = workingDirectoryPath
 
-  override suspend fun syncDependencies(envName: String): Result<String, PyError> {
+  override suspend fun syncDependencies(envName: String?): Result<String, PyError> {
     return withContext(Dispatchers.IO) {
       hatchRuntime.hatchCli().run(envName, "python", "--version")
     }

@@ -13,6 +13,11 @@
     <place><![CDATA[pyLiteralExpression().and(pyArgument("path", 0))]]></place>
   </injection>
 
+  <injection language="HTML" injector-id="python">
+    <display-name>HTML injections inside f-strings and t-strings</display-name>
+    <place><![CDATA[templateOrFormattedStringContainsHTML()]]></place>
+  </injection>
+
   <injection language="SQL" injector-id="python">
     <display-name>"SQL select/delete/insert/update/create"</display-name>
 

@@ -1,6 +1,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.bind
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.UpdateContext
@@ -18,11 +19,9 @@ import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class CustomFoldingEditorCellViewComponent(
-  internal val component: JComponent,
-  private val editor: EditorEx,
-  private val cell: EditorCell,
-) : EditorCellViewComponent() {
+class CustomFoldingEditorCellViewComponent(private val cell: EditorCell, internal val component: JComponent)
+  : EditorCellViewComponent() {
+  private val editor: EditorEx = cell.editor
 
   private var foldingRegion: CustomFoldRegion? = null
 
@@ -56,10 +55,9 @@ class CustomFoldingEditorCellViewComponent(
   }
 
   init {
-    cell.gutterAction.afterChange(this) { action ->
+    cell.gutterAction.afterDistinctChange(this) { action ->
       updateGutterIcons(action)
     }
-    updateGutterIcons(cell.gutterAction.get())
     editor.notebookAppearance.editorBackgroundColor.bind(this) {
       bottomContainer.background = it
     }
@@ -108,7 +106,6 @@ class CustomFoldingEditorCellViewComponent(
 
   override fun addInlayBelow(presentation: InlayPresentation) {
     val inlayComponent = object : JComponent() {
-
       init {
         enableEvents(MOUSE_EVENT_MASK or MOUSE_MOTION_EVENT_MASK)
       }

@@ -2,7 +2,6 @@
 package com.intellij.terminal.backend
 
 import com.intellij.terminal.backend.util.write
-import com.intellij.terminal.session.TerminalContentUpdatedEvent
 import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
@@ -31,9 +30,7 @@ internal class TerminalCursorPositionTrackerTest {
     val contentUpdate = contentChangesTracker.getContentUpdate() ?: error("Content update is null")
     val cursorUpdate = cursorPositionTracker.getCursorPositionUpdate() ?: error("Cursor update is null")
 
-    // We expect that moving cursor position to the next line creates this line in the TextBuffer,
-    // and it is being caught by the TerminalContentChangesTracker.
-    assertThat(contentUpdate).isEqualTo(TerminalContentUpdatedEvent("", emptyList(), 1))
+    assertThat(contentUpdate).isEqualTo(TerminalContentUpdate("", emptyList(), 1))
     assertThat(cursorUpdate).isEqualTo(TerminalCursorPositionChangedEvent(1, 0))
   }
 }

@@ -20,6 +20,8 @@ import org.jetbrains.plugins.terminal.DetectedShellInfo
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalShellsDetectorApi
+import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Point
@@ -121,7 +123,8 @@ class TerminalNewPredefinedSessionAction : DumbAwareAction(), ActionRemoteBehavi
       val tabState = TerminalTabState()
       tabState.myTabName = templateText
       tabState.myShellCommand = myCommand
-      TerminalToolWindowManager.getInstance(project).createNewSession(tabState)
+      val startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.START_NEW_PREDEFINED_SESSION)
+      TerminalToolWindowManager.getInstance(project).createNewSession(tabState, startupFusInfo)
     }
   }
 }

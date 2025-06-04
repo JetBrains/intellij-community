@@ -7,12 +7,15 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+/** Floating toolbar appearing for selected and hovered cell in the top right corner of cell.*/
 @ApiStatus.Internal
-class JupyterCellActionsToolbar(  // PY-72283
+class JupyterCellActionsToolbar(
+  // PY-72283
   actionGroup: ActionGroup,
   target: JComponent,
   place: String = ActionPlaces.EDITOR_INLAY,
-) : JupyterAbstractAboveCellToolbar(actionGroup, target, place) {
+  actionsUpdatedCallback: () -> Unit,
+) : JupyterAbstractAboveCellToolbar(actionGroup, target, place, actionsUpdatedCallback) {
 
   init {
     background = EditorColorsManager.getInstance().globalScheme.defaultBackground

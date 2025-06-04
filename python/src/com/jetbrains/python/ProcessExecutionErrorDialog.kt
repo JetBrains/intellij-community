@@ -70,7 +70,7 @@ fun showProcessExecutionErrorDialog(
     override fun createActions(): Array<Action> = arrayOf(okAction)
 
     override fun createCenterPanel(): JComponent = formBuilder.panel.apply {
-      preferredSize = Dimension(600, 300)
+      preferredSize = Dimension(820, 400)
     }
   }.showAndGet()
 }

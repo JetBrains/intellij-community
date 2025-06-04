@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 
 object NotebookDataContext {
   val NOTEBOOK_CELL_LINES_INTERVAL: DataKey<NotebookCellLines.Interval> = DataKey.create("NOTEBOOK_CELL_LINES_INTERVAL")
+  val NOTEBOOK_CELL_INSERT_ABOVE: DataKey<Boolean> = DataKey.create("NOTEBOOK_CELL_INSERT_ABOVE")
+  val SHOW_TEXT: DataKey<Boolean> = DataKey.create("SHOW_ACTION_TEXT")
 
   val NOTEBOOK_CELL_OUTPUT_DATA_KEY: DataKey<EditorCellOutput> = DataKey.create("NOTEBOOK_CELL_OUTPUT")
 
@@ -44,7 +46,7 @@ object NotebookDataContext {
 
   val DataContext.hoveredInterval: NotebookCellLines.Interval?
     get() {
-      return notebookEditor?.notebookEditor?.mouseOverCell?.cell?.interval
+      return notebookEditor?.notebookEditor?.hoveredCell?.get()?.interval
     }
 
   val DataContext.hoveredOrSelectedInterval: NotebookCellLines.Interval?

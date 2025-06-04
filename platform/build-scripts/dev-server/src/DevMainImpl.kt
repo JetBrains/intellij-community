@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.telemetry.withTracer
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 data class BuildDevInfo(
   val classPath: Collection<Path>,
@@ -38,6 +39,7 @@ fun buildDevImpl(): BuildDevInfo {
   @Suppress("TestOnlyProblems")
   val ideaProjectRoot = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!)
   System.setProperty("idea.dev.project.root", ideaProjectRoot.toString().replace(java.io.File.separator, "/"))
+  val additionalClassPaths = System.getProperty("idea.dev.additional.classpath")?.split(",")?.map { Path(it) }?.toTypedArray() ?: emptyArray()
 
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
@@ -50,7 +52,7 @@ fun buildDevImpl(): BuildDevInfo {
         projectDir = ideaProjectRoot,
         keepHttpClient = false,
         platformClassPathConsumer = { classPath, runDir ->
-          newClassPath = classPath
+          newClassPath = setOf(*classPath.toTypedArray(), *additionalClassPaths)
           homePath = runDir.toString().replace(java.io.File.separator, "/")
           environment.putAll(getIdeSystemProperties(runDir).map)
         },

@@ -87,7 +87,7 @@ class PyNavigationTest : PyTestCase() {
           class C:
               def __init__(self, val):
                   self.va<caret>l = val
-          
+
               def __str__(self):
                   return f"{self.val} {self.val}"
           """.trimIndent()
@@ -135,7 +135,7 @@ class PyNavigationTest : PyTestCase() {
     myFixture.configureByText(
       "a.py",
       "class MyMeta(type):\n" +
-      "  def __call__(self, p1, p2):\n" +
+      "  def __call__(self, p1, p2) -> object:\n" +
       "    pass\n" +
       "class MyClass(metaclass=MyMeta):\n" +
       "  def __init__(self, p3, p4):\n" +
@@ -308,6 +308,28 @@ class PyNavigationTest : PyTestCase() {
     val target = PyTypedDictGoToDeclarationProvider().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
     assertInstanceOf(target, PyClass::class.java)
     assertEquals("Foo", (target as PyClass).name)
+  }
+
+  // PY-80432
+  fun testGoToCollectionsAbc() {
+    // ensure that `collections.abc` navigates to `_collections_abc.py`, not `collections/abc.pyi`
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
+      myFixture.configureByFile(getTestName(true) + "/test.py")
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
+      assertNotNull(target)
+      assertEquals("_collections_abc.py", target!!.containingFile.name)
+    }
+  }
+
+  // PY-38169
+  fun testGoToRealDefinitionNotTypeshed() {
+    // ensure that `collections.abc.Mapping` navigates to `_collections_abc.py`, not `typing.pyi`
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
+      myFixture.configureByFile(getTestName(true) + "/test.py")
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
+      assertNotNull(target)
+      assertEquals("_collections_abc.py", target!!.containingFile.name)
+    }
   }
 
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {

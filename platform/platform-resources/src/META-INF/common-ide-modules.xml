@@ -18,6 +18,7 @@
     <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
     <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
     <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
+    <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
     <module name="intellij.platform.jewel.markdown.core"/>
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>

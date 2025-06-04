@@ -12,13 +12,16 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.fus.*
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
+import kotlin.time.TimeMark
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class TerminalInput(
   private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
+  startupFusInfo: TerminalStartupFusInfo?,
   coroutineScope: CoroutineScope,
 ) {
   companion object {
@@ -30,20 +33,43 @@ internal class TerminalInput(
   /**
    * Use this channel to buffer the input events before we get the actual channel from the backend.
    */
-  private val bufferChannel = Channel<TerminalInputEvent>(capacity = 10000, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val bufferChannel = Channel<InputEventSubmission>(
+    capacity = 10000,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
 
   private val inputChannelDeferred: Deferred<SendChannel<TerminalInputEvent>> =
     coroutineScope.async(Dispatchers.IO + CoroutineName("Get input channel")) {
       terminalSessionFuture.await().getInputChannel()
     }
 
+  private val typingLatencyReporter = BatchLatencyReporter(batchSize = 50) { samples ->
+    ReworkedTerminalUsageCollector.logFrontendTypingLatency(
+      totalDuration = samples.totalDuration(),
+      duration90 = samples.percentile(90),
+      secondLargestDuration = samples.secondLargest(),
+    )
+  }
+
   init {
     val job = coroutineScope.launch {
       val targetChannel = inputChannelDeferred.await()
 
+      if (startupFusInfo != null) {
+        // Report it only after receiving the input channel.
+        // Only now we can consider that the shell is fully started, se we can send the input to it.
+        reportShellStartingLatency(startupFusInfo)
+      }
+
       try {
-        for (event in bufferChannel) {
+        for (submission in bufferChannel) {
+          val event = submission.event
           targetChannel.send(event)
+
+          val latency = submission.eventTime?.elapsedNow()
+          if (latency != null) {
+            typingLatencyReporter.update(latency)
+          }
         }
       }
       catch (e: CancellationException) {
@@ -63,7 +89,16 @@ internal class TerminalInput(
 
   fun sendString(data: String) {
     // TODO: should there always be UTF8?
-    sendBytes(data.toByteArray(StandardCharsets.UTF_8))
+    doSendBytes(data.toByteArray(StandardCharsets.UTF_8), eventTime = null)
+  }
+
+  /**
+   * Sends the provided [data] and reports the typing latency from the moment of [eventTime].
+   * This method should be used only for events triggered by the user.
+   * For these events, we track the latency.
+   */
+  fun sendTrackedString(data: String, eventTime: TimeMark) {
+    doSendBytes(data.toByteArray(StandardCharsets.UTF_8), eventTime)
   }
 
   fun sendBracketedString(data: String) {
@@ -76,11 +111,16 @@ internal class TerminalInput(
   }
 
   fun sendBytes(data: ByteArray) {
-    sendEvent(TerminalWriteBytesEvent(data))
+    doSendBytes(data, eventTime = null)
+  }
+
+  private fun doSendBytes(data: ByteArray, eventTime: TimeMark?) {
+    val writeBytesEvent = TerminalWriteBytesEvent(bytes = data)
+    sendEvent(InputEventSubmission(writeBytesEvent, eventTime))
   }
 
   fun sendClearBuffer() {
-    sendEvent(TerminalClearBufferEvent)
+    sendEvent(InputEventSubmission(TerminalClearBufferEvent()))
   }
 
   /**
@@ -88,11 +128,13 @@ internal class TerminalInput(
    */
   fun sendResize(newSize: TermSize) {
     terminalSessionFuture.getNow(null) ?: return
-    sendEvent(TerminalResizeEvent(newSize.toDto()))
+    val event = TerminalResizeEvent(newSize.toDto())
+    sendEvent(InputEventSubmission(event))
   }
 
-  private fun sendEvent(event: TerminalInputEvent) {
+  private fun sendEvent(event: InputEventSubmission) {
     val result = bufferChannel.trySend(event)
+
     if (result.isClosed) {
       LOG.warn("Terminal input channel is closed, $event won't be sent", result.exceptionOrNull())
     }
@@ -100,4 +142,15 @@ internal class TerminalInput(
       LOG.error("Failed to send input event: $event", result.exceptionOrNull())
     }
   }
+
+  private fun reportShellStartingLatency(startupFusInfo: TerminalStartupFusInfo) {
+    val latency = startupFusInfo.triggerTime.elapsedNow()
+    ReworkedTerminalUsageCollector.logStartupShellStartingLatency(startupFusInfo.way, latency)
+    LOG.info("Reworked terminal startup shell starting latency: ${latency.inWholeMilliseconds} ms")
+  }
+
+  private data class InputEventSubmission(
+    val event: TerminalInputEvent,
+    val eventTime: TimeMark? = null,
+  )
 }

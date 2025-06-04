@@ -2,9 +2,9 @@
 package com.intellij.platform.navbar.frontend.actions
 
 import com.intellij.ide.CopyPasteDelegator
+import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.actionSystem.*
 import com.intellij.platform.navbar.NavBarVmItem
-import com.intellij.platform.navbar.impl.extensionData
 import javax.swing.JComponent
 
 internal class NavBarUiDataRule : UiDataRule {
@@ -19,10 +19,8 @@ internal class NavBarUiDataRule : UiDataRule {
     sink[PlatformDataKeys.COPY_PROVIDER] = delegator.copyProvider
     sink[PlatformDataKeys.PASTE_PROVIDER] = delegator.pasteProvider
 
-    DataSink.uiDataSnapshot(sink, DataProvider { dataId ->
-      extensionData(dataId) { innerDataId ->
-        snapshot[DataKey.create(innerDataId)]
-      }
-    })
+    NavBarModelExtension.EP_NAME.forEachExtensionSafe {
+      it.uiDataSnapshot(sink, snapshot)
+    }
   }
 }

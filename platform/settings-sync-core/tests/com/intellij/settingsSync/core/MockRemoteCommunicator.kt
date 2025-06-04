@@ -19,12 +19,14 @@ import javax.swing.Icon
 import kotlin.isInitialized
 
 internal val MOCK_CODE = "MOCK"
+internal val DUMMY_USER_ID = "dummyUserId"
 
 internal class MockRemoteCommunicator(override val userId: String) : AbstractServerCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
   private val versionIdStorage = mutableMapOf<String, String>()
   private val LOG = logger<MockRemoteCommunicator>()
   var isConnected = true
+  var wasDisposed = false
 
   private lateinit var pushedLatch: CountDownLatch
   private lateinit var pushedSnapshot: SettingsSnapshot
@@ -35,8 +37,6 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
       pushedLatch.countDown()
     }
   }
-
-
 
   override fun requestSuccessful() {
     // do nothing
@@ -139,6 +139,11 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
     }
   }
 
+  override fun dispose() {
+    LOG.info("Disposing...")
+    wasDisposed = true
+  }
+
   companion object {
     private val versionRef = AtomicInteger()
     val snapshotForDeletion =
@@ -149,7 +154,7 @@ internal class MockRemoteCommunicator(override val userId: String) : AbstractSer
 
 internal class MockCommunicatorProvider (
   private val remoteCommunicator: SettingsSyncRemoteCommunicator,
-  override val authService: SettingsSyncAuthService = MockAuthService(SettingsSyncUserData("mockId", MOCK_CODE, "", "")),
+  override val authService: SettingsSyncAuthService,
 ): SettingsSyncCommunicatorProvider {
   override val providerCode: String
     get() = MOCK_CODE
@@ -158,7 +163,7 @@ internal class MockCommunicatorProvider (
 }
 
 internal class MockAuthService (
-  private val userData: SettingsSyncUserData
+  internal var userData: SettingsSyncUserData?
 ): SettingsSyncAuthService {
   override val providerCode: String
     get() = MOCK_CODE
@@ -171,7 +176,7 @@ internal class MockAuthService (
     return null
   }
 
-  override fun getUserData(userId: String): SettingsSyncUserData {
+  override fun getUserData(userId: String): SettingsSyncUserData? {
     return userData
   }
 

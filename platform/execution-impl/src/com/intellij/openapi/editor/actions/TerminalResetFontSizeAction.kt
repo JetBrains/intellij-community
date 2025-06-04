@@ -4,19 +4,18 @@ package com.intellij.openapi.editor.actions
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getTerminalWidget
+import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getHandler
 import com.intellij.openapi.project.DumbAwareAction
 
 private class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
-    getTerminalWidget(e)?.resetFontSize()
+    val handler = getHandler(e) ?: return
+    handler.resetTerminalFontSize()
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = getTerminalWidget(e) != null
+    e.presentation.isEnabled = getHandler(e) != null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

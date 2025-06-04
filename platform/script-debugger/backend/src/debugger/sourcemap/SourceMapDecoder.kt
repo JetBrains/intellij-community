@@ -15,23 +15,14 @@
  */
 package org.jetbrains.debugger.sourcemap
 
-import com.google.gson.JsonParseException
-import com.google.gson.stream.JsonToken
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.util.PathUtil
-import com.intellij.util.SmartList
-import com.intellij.util.UriUtil
 import com.intellij.util.Url
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator
-import org.jetbrains.io.JsonReaderEx
 import java.io.IOException
 import java.nio.file.Path
-
+import kotlin.math.min
 
 internal const val UNMAPPED = -1
 
@@ -50,17 +41,19 @@ fun decodeSourceMapSafely(sourceMapData: CharSequence,
   return decodeSourceMap(sourceMapData) { sourceUrls -> SourceResolver(sourceUrls, trimFileScheme, baseUrl, baseUrlIsFile) }
 }
 
+@ApiStatus.Internal
+fun decodeSourceMap(sourceMapData: CharSequence, sourceResolverFactory: (sourceUrls: List<String>) -> SourceResolver): SourceMap? {
+  val data = SourceMapDataCache.getOrCreate(sourceMapData) ?: return null
+  return OneLevelSourceMap(data, sourceResolverFactory(data.sourceMapData.sources))
+}
+
 internal fun parseMapSafely(sourceMapData: CharSequence, mapDebugName: String?): SourceMapDataImpl? {
   try {
     if (sourceMapData.isEmpty()) {
       throw IOException("source map contents cannot be empty")
     }
-    val reader = JsonReaderEx(sourceMapData)
-    reader.isLenient = true
-    return parseMap(reader)
-  }
-  catch (e: JsonParseException) {
-    logger<SourceMap>().warn("Cannot decode sourcemap $mapDebugName", e)
+    val rawMap = readMap(sourceMapData) ?: return null
+    return flattenAndDecodeMappings(rawMap)
   }
   catch (t: Throwable) {
     // WEB-9565
@@ -70,156 +63,122 @@ internal fun parseMapSafely(sourceMapData: CharSequence, mapDebugName: String?):
   return null
 }
 
-// https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
-@ApiStatus.Internal
-fun decodeSourceMap(sourceMapData: CharSequence, sourceResolverFactory: (sourceUrls: List<String>) -> SourceResolver): SourceMap? {
-  val data = SourceMapDataCache.getOrCreate(sourceMapData.toString()) ?: return null
-  return OneLevelSourceMap(data, sourceResolverFactory(data.sourceMapData.sources))
-}
+// The great idea to flatten the source maps was borrowed from
+// https://github.com/jridgewell/trace-mapping/blob/main/src/flatten-map.ts
+// It allows us to simply preprocess the map and leave all the rest of the code untouched
+internal fun flattenAndDecodeMappings(rawMap: SourceMapV3): SourceMapDataImpl? {
+  val mappings = mutableListOf<MutableEntry>()
+  val sources = mutableListOf<String?>()
+  val sourcesContent = mutableListOf<String?>()
+  val names = mutableListOf<String>()
+  val ignoreList = mutableListOf<Int>()
+  traverse(
+    rawMap,
+    mappings,
+    sources,
+    sourcesContent,
+    names,
+    ignoreList,
+    lineOffset = 0,
+    columnOffset = 0,
+    stopLine = Int.MAX_VALUE,
+    stopColumn = Int.MAX_VALUE,
+    null
+  )
 
-internal fun calculateReverseMappings(data: SourceMapData): Array<MappingList?> {
-  val reverseMappingsBySourceUrl = arrayOfNulls<MutableList<MappingEntry>?>(data.sources.size)
-  for (entry in data.mappings) {
-    val sourceIndex = entry.source
-    if (sourceIndex >= 0) {
-      val reverseMappings = getMapping(reverseMappingsBySourceUrl, sourceIndex)
-      reverseMappings.add(entry)
-    }
-  }
-  return Array(reverseMappingsBySourceUrl.size) {
-    val entries = reverseMappingsBySourceUrl[it]
-    if (entries == null) {
-      null
-    }
-    else {
-      SourceMappingList(entries)
-    }
-  }
-}
-
-private fun parseMap(reader: JsonReaderEx): SourceMapDataImpl? {
-  reader.beginObject()
-  var sourceRoot: String? = null
-  var sourcesReader: JsonReaderEx? = null
-  var names: List<String>? = null
-  var encodedMappings: String? = null
-  var file: String? = null
-  var version = -1
-  var sourcesContent: MutableList<String?>? = null
-  val mappings = ArrayList<MappingEntry>()
-  while (reader.hasNext()) {
-    when (reader.nextName()) {
-      "sections" -> throw IOException("sections is not supported yet")
-      "version" -> {
-        version = reader.nextInt()
-      }
-      "sourceRoot" -> {
-        sourceRoot = StringUtil.nullize(readSourcePath(reader))
-        if (sourceRoot != null && sourceRoot != "/") {
-          sourceRoot = UriUtil.trimTrailingSlashes(sourceRoot)
-        }
-      }
-      "sources" -> {
-        sourcesReader = reader.subReader()
-        reader.skipValue()
-      }
-      "names" -> {
-        reader.beginArray()
-        if (reader.hasNext()) {
-          names = ArrayList()
-          do {
-            if (reader.peek() == JsonToken.BEGIN_OBJECT) {
-              // polymer map
-              reader.skipValue()
-              names.add("POLYMER UNKNOWN NAME")
-            }
-            else {
-              names.add(reader.nextString(true))
-            }
-          }
-          while (reader.hasNext())
-        }
-        else {
-          names = emptyList()
-        }
-        reader.endArray()
-      }
-      "mappings" -> {
-        encodedMappings = reader.nextString()
-      }
-      "file" -> {
-        file = reader.nextNullableString()
-      }
-      "sourcesContent" -> {
-        if (reader.peek() == JsonToken.NULL) {
-          reader.nextNull()
-          continue
-        }
-        reader.beginArray()
-        if (reader.peek() != JsonToken.END_ARRAY) {
-          sourcesContent = SmartList<String?>()
-          do {
-            if (reader.peek() == JsonToken.STRING) {
-              sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()))
-            }
-            else if (reader.peek() == JsonToken.NULL) {
-              // null means source file should be resolved by url
-              sourcesContent.add(null)
-              reader.nextNull()
-            }
-            else {
-              logger<SourceMap>().warn("Unknown sourcesContent element: ${reader.peek().name}")
-              reader.skipValue()
-            }
-          }
-          while (reader.hasNext())
-        }
-        reader.endArray()
-      }
-      else -> {
-        // skip file or extensions
-        reader.skipValue()
-      }
-    }
-  }
-  reader.close()
-
-  // check it before other checks, probably it is not a sourcemap file
-  if (encodedMappings.isNullOrEmpty()) {
-    // empty map
+  if (mappings.isEmpty()) {
     return null
   }
 
-  // https://stackoverflow.com/questions/36228177/jspm-system-js-debugging-with-typescript
-  if (Registry.`is`("js.debugger.fix.jspm.source.maps", false) && encodedMappings.startsWith(";") && file != null && file.endsWith(".ts!transpiled")) {
-    encodedMappings = encodedMappings.substring(1)
-  }
-
-  if (version != 3) {
-    throw IOException("Unsupported sourcemap version: $version")
-  }
-
-  if (sourcesReader == null) {
-    throw IOException("sources is not specified")
-  }
-
-  val sources = readSources(sourcesReader, sourceRoot)
-  if (sources.isEmpty()) {
-    // empty map, meteor can report such ugly maps
-    return null
-  }
-
-  readMappings(encodedMappings, mappings, names)
-
-  return SourceMapDataImpl(file, sources, sourcesContent, !names.isNullOrEmpty(), mappings)
+  return SourceMapDataImpl(
+    rawMap.file,
+    sources.map { it ?: "" },
+    sourcesContent,
+    names.isNotEmpty(),
+    mappings,
+    ignoreList
+  )
 }
 
-private fun readSourcePath(reader: JsonReaderEx): String? = PathUtil.toSystemIndependentName(
-  reader.nextNullableString()?.trim { it <= ' ' })
+private fun traverse(
+  map: SourceMapV3,
+  mappings: MutableList<MutableEntry>,
+  sources: MutableList<String?>,
+  sourcesContent: MutableList<String?>,
+  names: MutableList<String>,
+  ignoreList: MutableList<Int>,
+  lineOffset: Int,
+  columnOffset: Int,
+  stopLine: Int,
+  stopColumn: Int,
+  lastEntry: MutableEntry?,
+) {
+  var lastEntry = lastEntry
+  when (map) {
+    is SectionedSourceMap -> {
+      for ((i, section) in map.sections.withIndex()) {
+        val offset = section.offset
 
-private fun readMappings(value: String,
-                         mappings: MutableList<MappingEntry>,
-                         names: List<String>?) {
+        var sl = stopLine
+        var sc = stopColumn
+        if (i + 1 < map.sections.size) {
+          val nextOffset = map.sections[i + 1].offset;
+          sl = min(stopLine, lineOffset + nextOffset.line)
+
+          if (sl == stopLine) {
+            sc = min(stopColumn, columnOffset + nextOffset.column)
+          }
+          else if (sl < stopLine) {
+            sc = columnOffset + nextOffset.column
+          }
+        }
+
+        traverse(section.map,
+                 mappings,
+                 sources,
+                 sourcesContent,
+                 names,
+                 ignoreList,
+                 offset.line + lineOffset,
+                 offset.column + columnOffset,
+                 sl,
+                 sc,
+                 lastEntry
+        )
+        lastEntry = mappings.lastOrNull()
+      }
+    }
+    is FlatSourceMap -> {
+      val sourcesOffset = sources.size
+      sources.addAll(map.sources)
+      if (map.sourcesContent != null) {
+        sourcesContent.addAll(map.sourcesContent)
+      }
+      else {
+        // pad with nulls if sourcesContent is empty
+        repeat(map.sources.size) {
+          sourcesContent.add(null)
+        }
+      }
+      map.ignoreList?.forEach { ignoreList.add(sourcesOffset + it) }
+      map.names?.let { names.addAll(it) }
+
+      readMappings(map.mappings, mappings, map.names, sourcesOffset, lineOffset, columnOffset, stopLine, stopColumn, lastEntry)
+    }
+  }
+}
+
+private fun readMappings(
+  value: CharSequence,
+  mappings: MutableList<MutableEntry>,
+  names: List<String>?,
+  sourcesOffset: Int,
+  lineOffset: Int,
+  columnOffset: Int,
+  stopLine: Int,
+  stopColumn: Int,
+  lastEntry: MutableEntry?,
+) {
   if (value.isEmpty()) {
     return
   }
@@ -227,11 +186,11 @@ private fun readMappings(value: String,
   var line = 0
   var column = 0
   val charIterator = CharSequenceIterator(value)
-  var sourceIndex = 0
+  var sourceIndex = sourcesOffset
   var sourceLine = 0
   var sourceColumn = 0
   var nameIndex = 0
-  var prevEntry: MutableEntry? = null
+  var prevEntry: MutableEntry? = lastEntry
 
   fun addEntry(entry: MutableEntry) {
     if (prevEntry != null) {
@@ -257,8 +216,17 @@ private fun readMappings(value: String,
     }
 
     column += Base64VLQ.decode(charIterator)
+
+    val lineI = lineOffset + line
+    val cOffset = if (line == 0) columnOffset else 0
+    val colI = cOffset + column
+
+    if (lineI >= stopLine && colI >= stopColumn) {
+      return
+    }
+
     if (isSeparator(charIterator)) {
-      addEntry(UnmappedEntry(line, column))
+      addEntry(UnmappedEntry(lineI, colI))
       continue
     }
 
@@ -271,50 +239,15 @@ private fun readMappings(value: String,
 
     val entry: MutableEntry
     if (isSeparator(charIterator)) {
-      entry = UnnamedEntry(line, column, sourceIndex, sourceLine, sourceColumn)
+      entry = UnnamedEntry(lineI, colI, sourceIndex, sourceLine, sourceColumn)
     }
     else {
       nameIndex += Base64VLQ.decode(charIterator)
       assert(names != null)
-      entry = NamedEntry(names!![nameIndex], line, column, sourceIndex, sourceLine, sourceColumn)
+      entry = NamedEntry(names!![nameIndex], lineI, colI, sourceIndex, sourceLine, sourceColumn)
     }
     addEntry(entry)
   }
-}
-
-private fun readSources(reader: JsonReaderEx, sourceRoot: String?): List<String> {
-  reader.beginArray()
-  val sources: List<String>
-  if (reader.peek() == JsonToken.END_ARRAY) {
-    sources = emptyList()
-  }
-  else {
-    sources = SmartList()
-    do {
-      var sourceUrl = readSourcePath(reader) ?: ""
-      if (!sourceRoot.isNullOrEmpty()) {
-        if (sourceRoot == "/") {
-          sourceUrl = "/$sourceUrl"
-        }
-        else {
-          sourceUrl = "$sourceRoot/$sourceUrl"
-        }
-      }
-      sources.add(sourceUrl)
-    }
-    while (reader.hasNext())
-  }
-  reader.endArray()
-  return sources
-}
-
-private fun getMapping(reverseMappingsBySourceUrl: Array<MutableList<MappingEntry>?>, sourceIndex: Int): MutableList<MappingEntry> {
-  var reverseMappings = reverseMappingsBySourceUrl[sourceIndex]
-  if (reverseMappings == null) {
-    reverseMappings = ArrayList()
-    reverseMappingsBySourceUrl[sourceIndex] = reverseMappings
-  }
-  return reverseMappings
 }
 
 private fun isSeparator(charIterator: CharSequenceIterator): Boolean {
@@ -324,44 +257,6 @@ private fun isSeparator(charIterator: CharSequenceIterator): Boolean {
 
   val current = charIterator.peek()
   return current == ',' || current == ';'
-}
-
-internal interface MutableEntry : MappingEntry {
-  override var nextGenerated: MappingEntry?
-}
-
-/**
- * Not mapped to a section in the original source.
- */
-private data class UnmappedEntry(override val generatedLine: Int, override val generatedColumn: Int) : MappingEntry, MutableEntry {
-  override val sourceLine = UNMAPPED
-
-  override val sourceColumn = UNMAPPED
-
-  override var nextGenerated: MappingEntry? = null
-}
-
-/**
- * Mapped to a section in the original source.
- */
-private data class UnnamedEntry(override val generatedLine: Int,
-                                override val generatedColumn: Int,
-                                override val source: Int,
-                                override val sourceLine: Int,
-                                override val sourceColumn: Int) : MappingEntry, MutableEntry {
-  override var nextGenerated: MappingEntry? = null
-}
-
-/**
- * Mapped to a section in the original source, and is associated with a name.
- */
-private data class NamedEntry(override val name: String,
-                              override val generatedLine: Int,
-                              override val generatedColumn: Int,
-                              override val source: Int,
-                              override val sourceLine: Int,
-                              override val sourceColumn: Int) : MappingEntry, MutableEntry {
-  override var nextGenerated: MappingEntry? = null
 }
 
 // java CharacterIterator is ugly, next() impl, so, we reinvent
@@ -375,22 +270,3 @@ private class CharSequenceIterator(private val content: CharSequence) : CharIter
 
   override fun hasNext() = current < length
 }
-
-private class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
-
-  override fun getLine(mapping: MappingEntry) = mapping.sourceLine
-
-  override fun getColumn(mapping: MappingEntry) = mapping.sourceColumn
-}
-
-internal class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
-
-  override fun getLine(mapping: MappingEntry) = mapping.generatedLine
-
-  override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn
-
-  override fun getNext(mapping: MappingEntry): MappingEntry? {
-    return mapping.nextGenerated
-  }
-}
-

@@ -9,8 +9,8 @@
 <!--                    interface="org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService"-->
 <!--                    dynamic="true"/>-->
 
-  <extensions defaultExtensionNs="com.intellij">
-    <moduleBuilder builderClass="org.jetbrains.kotlin.tools.composeProjectWizard.ComposeModuleBuilder"/>
-    <fileTemplateGroup implementation="org.jetbrains.kotlin.tools.composeProjectWizard.ComposeModuleTemplateGroup"/>
-  </extensions>
+<!--  <extensions defaultExtensionNs="com.intellij">-->
+<!--    <moduleBuilder builderClass="org.jetbrains.kotlin.tools.composeProjectWizard.ComposeModuleBuilder"/>-->
+<!--    <fileTemplateGroup implementation="org.jetbrains.kotlin.tools.composeProjectWizard.ComposeModuleTemplateGroup"/>-->
+<!--  </extensions>-->
 </idea-plugin>

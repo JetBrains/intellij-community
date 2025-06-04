@@ -12,16 +12,18 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 internal class ReworkedTerminalWidget(
   private val project: Project,
   settings: JBTerminalSystemSettingsProvider,
+  startupFusInfo: TerminalStartupFusInfo?,
   parentDisposable: Disposable,
 ) : TerminalWidget {
   private val sessionFuture = CompletableFuture<TerminalSession>()
-  private val view = ReworkedTerminalView(project, settings, sessionFuture)
+  private val view = ReworkedTerminalView(project, settings, sessionFuture, startupFusInfo)
 
   override val terminalTitle: TerminalTitle = TerminalTitle()
 

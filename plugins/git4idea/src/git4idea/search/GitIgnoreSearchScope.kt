@@ -3,10 +3,8 @@ package git4idea.search
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.search.ProjectScopeImpl
 import git4idea.i18n.GitBundle
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 import git4idea.index.vfs.filePath
@@ -18,7 +16,7 @@ import org.jetbrains.annotations.VisibleForTesting
 internal class GitIgnoreSearchScope(
   private val project: Project,
   private val rootToIgnoredFiles: Map<VirtualFile, GitRepositoryIgnoredFilesHolder>,
-) : ProjectScopeImpl(project, FileIndexFacade.getInstance(project)) {
+) : GitSearchScope(project) {
   private val singleIgnoredFilesHolder: GitRepositoryIgnoredFilesHolder? = rootToIgnoredFiles.values.singleOrNull()
 
   @Nls

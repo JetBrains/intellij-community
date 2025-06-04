@@ -348,10 +348,19 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
 
   @Override
   public int[] markupOffsets() {
+    return excludedOffsets(TokenKind.markup);
+  }
+
+  @Override
+  public int[] unknownOffsets() {
+    return excludedOffsets(TokenKind.unknown);
+  }
+
+  private int[] excludedOffsets(TokenKind kind) {
     List<Integer> result = new ArrayList<>();
     int offset = 0;
     for (TokenInfo token : tokens) {
-      if (token instanceof PsiToken pt && pt.kind == TokenKind.markup) {
+      if (token instanceof PsiToken pt && pt.kind == kind) {
         result.add(offset);
       }
       offset += token.length();

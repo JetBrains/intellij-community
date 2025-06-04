@@ -5,13 +5,19 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -56,6 +62,11 @@ public final class PyFStringLikeCompletionContributor extends CompletionContribu
           return;
         }
         PyStringLiteralExpression stringLiteral = (PyStringLiteralExpression)stringElem.getParent();
+        boolean templateStringExpected = isTemplateStringExpected(stringLiteral);
+        if (templateStringExpected && LanguageLevel.forElement(stringElem).isOlderThan(LanguageLevel.PYTHON314)) {
+          return;
+        }
+        String newPrefixChar = templateStringExpected ? "t" : "f";
         String stringElemText = stringElem.getText();
         int offset = parameters.getOffset();
         int stringElemStart = stringElem.getTextRange().getStartOffset();
@@ -75,7 +86,7 @@ public final class PyFStringLikeCompletionContributor extends CompletionContribu
         }
 
         String fStringText = new StringBuilder()
-          .append("f").append(stringElemText)
+          .append(newPrefixChar).append(stringElemText)
           .insert(relOffset + 1 + CompletionUtilCore.DUMMY_IDENTIFIER.length(), "} ")
           .toString();
         PyExpression fString = PyUtil.createExpressionFromFragment(fStringText, stringLiteral.getParent());
@@ -102,13 +113,63 @@ public final class PyFStringLikeCompletionContributor extends CompletionContribu
               }
               // It can happen when completion is invoked on multiple carets inside the same string
               String stringElemPrefix = PyStringLiteralCoreUtil.getPrefix(docChars, stringElemStart);
-              if (!PyStringLiteralUtil.isFormattedPrefix(stringElemPrefix)) {
-                document.insertString(stringElemStart, "f");
+              if (!StringUtil.containsIgnoreCase(stringElemPrefix, newPrefixChar)) {
+                document.insertString(stringElemStart, newPrefixChar);
               }
             }
           });
         }
       }
+    });
+  }
+
+  private static boolean isTemplateStringExpected(@NotNull PyStringLiteralExpression stringLiteral) {
+    TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(stringLiteral.getProject(), stringLiteral.getContainingFile());
+    PyPsiFacade psiFacade = PyPsiFacade.getInstance(stringLiteral.getProject());
+    PyClass templateClass = psiFacade.createClassByQName(PyNames.TEMPLATELIB_TEMPLATE, stringLiteral);
+    if (templateClass == null) {
+      return false;
+    }
+    PyClassType templateType = psiFacade.createClassType(templateClass, false);
+    return isArgumentOfFunctionExpectingTemplateString(stringLiteral, templateType, typeEvalContext) ||
+           isAssignedToVariableExpectingTemplateString(stringLiteral, templateType, typeEvalContext);
+  }
+
+  private static boolean isAssignedToVariableExpectingTemplateString(@NotNull PyStringLiteralExpression literal,
+                                                                     @NotNull PyClassType templateType,
+                                                                     @NotNull TypeEvalContext typeEvalContext) {
+    PsiElement unpackedValueParent = PsiTreeUtil.skipParentsOfType(literal, PyParenthesizedExpression.class, PyTupleExpression.class);
+    if (!(unpackedValueParent instanceof PyAssignmentStatement assignment)) {
+      return false;
+    }
+    List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
+    Pair<PyExpression, PyExpression> matchingPair = ContainerUtil.find(mapping, pair -> pair.getSecond() == literal);
+    if (matchingPair == null || !(matchingPair.getFirst() instanceof PyTargetExpression target)) {
+      return false;
+    }
+    return templateType.equals(typeEvalContext.getType(target));
+  }
+
+  private static boolean isArgumentOfFunctionExpectingTemplateString(@NotNull PyStringLiteralExpression stringLiteral,
+                                                                     @NotNull PyClassType templateType,
+                                                                     @NotNull TypeEvalContext typeEvalContext) {
+    PsiElement callArgument = stringLiteral.getParent() instanceof PyKeywordArgument kwArg ? kwArg : stringLiteral;
+    if (!(callArgument.getParent() instanceof PyArgumentList argumentList) ||
+        !(argumentList.getParent() instanceof PyCallExpression call)) {
+      return false;
+    }
+    return ContainerUtil.all(call.multiMapArguments(PyResolveContext.defaultContext(typeEvalContext)), mapping -> {
+      PyCallableParameter param = mapping.getMappedParameters().get(callArgument);
+      if (param == null) return false;
+      PyType paramType = param.getType(typeEvalContext);
+      if (param.isPositionalContainer() && paramType instanceof PyTupleType tupleType && tupleType.isHomogeneous()) {
+        paramType = tupleType.getElementTypes().get(0);
+      }
+      else if (param.isKeywordContainer() && paramType instanceof PyCollectionType dictType &&
+               PyNames.DICT.equals(dictType.getPyClass().getName())) {
+        paramType = ContainerUtil.getOrElse(dictType.getElementTypes(), 1, null);
+      }
+      return templateType.equals(paramType);
     });
   }
 }

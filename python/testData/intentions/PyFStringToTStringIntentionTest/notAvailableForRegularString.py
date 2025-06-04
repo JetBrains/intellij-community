@@ -1,0 +1,1 @@
+s = "<caret>This is a regular string without any prefix"

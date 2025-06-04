@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -446,7 +446,7 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
 }
 
 private val classCheckAndTransform: (Class<*>) -> String = {
-  if (getPluginInfo(it).isSafeToReport()) StringUtil.substringBeforeLast(it.name, "$\$Lambda$", true) else "third.party"
+  if (getPluginInfo(it).isSafeToReport()) StringUtil.substringBeforeLast(it.name, "$\$Lambda", true) else "third.party"
 }
 
 data class ClassEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,

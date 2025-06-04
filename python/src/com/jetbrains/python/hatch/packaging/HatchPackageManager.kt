@@ -3,11 +3,15 @@ package com.jetbrains.python.hatch.packaging
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.hatch.HatchService
+import com.intellij.python.hatch.getHatchService
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.hatch.sdk.HatchSdkAdditionalData
 import com.jetbrains.python.hatch.sdk.isHatch
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
+import com.jetbrains.python.Result
 
 internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackageManager(project, sdk) {
   fun getSdkAdditionalData(): HatchSdkAdditionalData {
@@ -15,6 +19,12 @@ internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackag
            ?: error("SDK [${sdk.name}] has illegal state, " +
                     "additional data has to be ${HatchSdkAdditionalData::class.java.name}, " +
                     "but was ${sdk.sdkAdditionalData?.javaClass?.name}")
+  }
+
+  suspend fun getHatchService(): Result<HatchService, PyError> {
+    val data = getSdkAdditionalData()
+    val workingDirectory = data.hatchWorkingDirectory
+    return workingDirectory.getHatchService(hatchEnvironmentName = data.hatchEnvironmentName)
   }
 }
 

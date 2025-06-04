@@ -1121,9 +1121,14 @@ public final class JavaErrorKinds {
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .<List<JavaResolveResult>>parameterized()
-      .withRawDescription((ref, results) -> message("reference.ambiguous", ref.getReferenceName(),
-                                                    format(requireNonNull(results.get(0).getElement())),
-                                                    format(requireNonNull(results.get(1).getElement()))));
+      .withRawDescription((ref, results) -> {
+        String element1 = format(requireNonNull(results.get(0).getElement()));
+        String element2 = format(requireNonNull(results.get(1).getElement()));
+        boolean comparison = element1.compareTo(element2) < 0;
+        return message("reference.ambiguous", ref.getReferenceName(),
+                       comparison ? element1 : element2,
+                       comparison ? element2 : element1);
+      });
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiElement> REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiElement.class, "reference.non.static.from.static.context")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)

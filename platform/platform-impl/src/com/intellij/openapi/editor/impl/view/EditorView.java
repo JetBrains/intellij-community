@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
@@ -72,9 +73,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private int myTabSize; // guarded by myLock
   private int myTopOverhang; //guarded by myLock
   private int myBottomOverhang; //guarded by myLock
-  private @NotNull DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy = new DefaultDoubleWidthCharacterStrategy();
 
   private final Object myLock = new Object();
+
+  private @Nullable Runnable myPaintCallback;
 
   public EditorView(@NotNull EditorImpl editor) {
     this(editor, editor.getEditorModel());
@@ -98,6 +100,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     Disposer.register(this, myLogicalPositionCache);
     Disposer.register(this, myTextLayoutCache);
     Disposer.register(this, mySizeManager);
+  }
+
+  /**
+   * @see EditorImpl#setPaintCallback(Runnable)
+   */
+  @ApiStatus.Internal
+  public void setPaintCallback(@Nullable Runnable paintCallback) {
+    myPaintCallback = paintCallback;
   }
 
   @RequiresEdt
@@ -212,6 +222,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
     myPainter.paint(g);
+    if (myPaintCallback != null) {
+      myPaintCallback.run();
+    }
   }
 
   @RequiresEdt
@@ -664,14 +677,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout;
   }
 
-  public float getCodePointWidth(int codePoint) {
-    return getCodePointWidth(codePoint, Font.PLAIN);
-  }
-
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    var multiplier = myEditor.getSettings().getCharacterGridWidthMultiplier();
-    if (multiplier != null) {
-      return multiplier * (myDoubleWidthCharacterStrategy.isDoubleWidth(codePoint) ? getMaxCharWidth() * 2.0f : getMaxCharWidth());
+    var grid = myEditor.getCharacterGrid();
+    if (grid != null) {
+      return grid.codePointWidth(codePoint);
     }
     else {
       return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
@@ -779,22 +788,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return true;
   }
 
-  /**
-   * Sets the strategy to differentiate between single and double width characters.
-   * <p>
-   *   Only used when the {@link EditorSettings#setCharacterGridWidthMultiplier(Float) character grid mode}
-   *   is enabled.
-   *   If not set, then the character width will be guessed by its actual width in the font used.
-   *   Such heuristics generally works well for most regular characters,
-   *   but may fail for special characters sometimes used in fancy shell prompts, for example,
-   *   which is why an explicit strategy is needed.
-   * </p>
-   * @param doubleWidthCharacterStrategy the strategy to use
-   */
-  public void setDoubleWidthCharacterStrategy(@NotNull DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
-    myDoubleWidthCharacterStrategy = doubleWidthCharacterStrategy;
-  }
-
   private void checkFontRenderContext(FontRenderContext context) {
     boolean contextUpdated = false;
     synchronized (myLock) {
@@ -836,13 +829,5 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     // And it has different values for component graphics (ON/OFF) and component's font metrics (DEFAULT), causing
     // unnecessary layout cache resets.
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
-  }
-
-  private class DefaultDoubleWidthCharacterStrategy implements DoubleWidthCharacterStrategy {
-    @Override
-    public boolean isDoubleWidth(int codePoint) {
-      int width = Math.round(myCharWidthCache.getCodePointWidth(codePoint, Font.PLAIN) / getMaxCharWidth());
-      return Math.min(2, Math.max(1, width)) == 2;
-    }
   }
 }

@@ -20,6 +20,7 @@ data class TerminalStateDto(
   val isBracketedPasteMode: Boolean,
   val windowTitle: String,
   val isShellIntegrationEnabled: Boolean,
+  val currentDirectory: String,
 )
 
 @ApiStatus.Internal
@@ -37,6 +38,7 @@ fun TerminalState.toDto(): TerminalStateDto {
     isBracketedPasteMode = isBracketedPasteMode,
     windowTitle = windowTitle,
     isShellIntegrationEnabled = isShellIntegrationEnabled,
+    currentDirectory = currentDirectory,
   )
 }
 
@@ -55,5 +57,6 @@ fun TerminalStateDto.toTerminalState(): TerminalState {
     isBracketedPasteMode = isBracketedPasteMode,
     windowTitle = windowTitle,
     isShellIntegrationEnabled = isShellIntegrationEnabled,
+    currentDirectory = currentDirectory,
   )
 }

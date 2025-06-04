@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.update.MergingQueueUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
@@ -183,7 +184,7 @@ public final class MavenShortcutsManager implements Disposable {
         }
       }
 
-      myUpdateQueue.queue(new Update(MavenShortcutsManager.this) {
+      MergingQueueUtil.queueTracked(myUpdateQueue, new Update(MavenShortcutsManager.this) {
         @Override
         public void run() {
           List<MavenProject> projectToUpdate;

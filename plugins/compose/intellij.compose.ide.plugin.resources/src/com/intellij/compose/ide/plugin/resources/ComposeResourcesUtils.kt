@@ -71,6 +71,11 @@ internal val Module.composeResourcesDirsByName: Map<String, ComposeResourcesDir>
 
 internal data class ComposeResourcesDir(val moduleName: String, val sourceSetName: String, val directoryPath: Path, val isCustom: Boolean = false)
 
-internal data class ComposeResources(val moduleName: String, val directoriesBySourceSetName: Map<String, ComposeResourcesDir>)
+internal data class ComposeResources(
+  val moduleName: String,
+  val directoriesBySourceSetName: Map<String, ComposeResourcesDir>,
+  val isPublicResClass: Boolean,
+  val nameOfResClass: String,
+)
 
 private val log by lazy { fileLogger() }

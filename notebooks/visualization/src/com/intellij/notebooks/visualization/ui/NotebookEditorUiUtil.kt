@@ -52,6 +52,7 @@ fun EditorEx.addComponentInlay(
 
   updateUiOnParentResizeImpl(component.parent as JComponent, WeakReference(component))
   component.revalidate()
+  inlay.update()
   return inlay
 }
 

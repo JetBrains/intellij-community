@@ -4,18 +4,44 @@ package com.intellij.terminal.session
 import com.intellij.terminal.session.dto.TerminalSizeDto
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
 @Serializable
-sealed interface TerminalInputEvent
+sealed interface TerminalInputEvent {
+  val id: Int
+}
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalResizeEvent(val newSize: TerminalSizeDto) : TerminalInputEvent
+sealed class TerminalInputEventBase : TerminalInputEvent {
+  override val id: Int = inputEventIdCounter.getAndIncrement()
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TerminalInputEventBase
+
+    return id == other.id
+  }
+
+  override fun hashCode(): Int {
+    return id
+  }
+
+  override fun toString(): String {
+    return "${javaClass.simpleName}(id=$id)"
+  }
+}
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEvent {
+data class TerminalResizeEvent(val newSize: TerminalSizeDto) : TerminalInputEventBase()
+
+@ApiStatus.Internal
+@Serializable
+data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEventBase() {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -32,8 +58,10 @@ data class TerminalWriteBytesEvent(val bytes: ByteArray) : TerminalInputEvent {
 
 @ApiStatus.Internal
 @Serializable
-data object TerminalCloseEvent : TerminalInputEvent
+class TerminalCloseEvent : TerminalInputEventBase()
 
 @ApiStatus.Internal
 @Serializable
-data object TerminalClearBufferEvent : TerminalInputEvent
+class TerminalClearBufferEvent : TerminalInputEventBase()
+
+private val inputEventIdCounter = AtomicInteger(0)

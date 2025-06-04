@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl.productInfo
 
 import com.intellij.platform.buildData.productInfo.*
-import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.exists
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -93,7 +93,7 @@ private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? 
 
 private fun findGitRoot(context: BuildContext): Path? {
   var projectHome = context.paths.projectHome
-  while (projectHome != null && !projectHome.resolve(".git").isDirectory) {
+  while (projectHome != null && !projectHome.resolve(".git").exists()) {
     projectHome = projectHome.parent
   }
   return projectHome

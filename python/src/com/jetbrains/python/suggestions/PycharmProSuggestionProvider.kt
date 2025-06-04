@@ -65,7 +65,7 @@ internal class PycharmProSuggestionProvider : PluginSuggestionProvider {
 
   private fun isUntargetedIDE(): Boolean {
     val productCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
-    return productCode == "PY" || productCode == "IU" || productCode == "DS"
+    return productCode == "PY" || productCode == "PC" || productCode == "IU" || productCode == "DS"
   }
 
   private fun isDismissed(): Boolean = PropertiesComponent.getInstance().isTrueValue(PYCHARM_PRO_SUGGESTION_DISMISSED_KEY)

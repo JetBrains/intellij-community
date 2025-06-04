@@ -3,7 +3,7 @@ package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.InlaysChangedListener
 import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -96,9 +96,7 @@ class UpdateManager(val editor: EditorImpl) : Disposable {
     changedListener?.inlaysChanged()
   }
 
-  override fun dispose() {
-
-  }
+  override fun dispose(): Unit = Unit
 }
 
 private val UPDATE_MANAGER_KEY = Key<UpdateManager>("UPDATE_MANAGER_KEY")

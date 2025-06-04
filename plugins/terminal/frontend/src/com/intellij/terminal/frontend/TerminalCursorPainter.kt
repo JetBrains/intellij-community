@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.view.CharacterGrid
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -24,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.CursorShape
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
@@ -31,6 +34,7 @@ import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal class TerminalCursorPainter private constructor(
   private val editor: EditorEx,
@@ -38,6 +42,8 @@ internal class TerminalCursorPainter private constructor(
   private val sessionModel: TerminalSessionModel,
   private val coroutineScope: CoroutineScope,
 ) {
+  private val listeners = CopyOnWriteArrayList<TerminalCursorPainterListener>()
+
   private var cursorPaintingJob: Job? = null
 
   private var curCursorState: CursorState = CursorState(
@@ -94,7 +100,7 @@ internal class TerminalCursorPainter private constructor(
     // 2. An equal amount of text was removed from the beginning, so that the max document size is maintained.
     // 3. As a result, the logical offset of the cursor stayed the same, but we still need to repaint it.
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(startOffset: Int) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
         // This listener exists to handle the case when the offset has not changed,
         // but it must also work correctly when the offset has in fact changed.
         // In that case, the offset is updated before this listener is invoked,
@@ -105,6 +111,10 @@ internal class TerminalCursorPainter private constructor(
         updateCursor(curCursorState)
       }
     })
+  }
+
+  fun addListener(parentDisposable: Disposable, listener: TerminalCursorPainterListener) {
+    TerminalUtil.addItem(listeners, listener, parentDisposable)
   }
 
   @RequiresEdt
@@ -126,13 +136,13 @@ internal class TerminalCursorPainter private constructor(
     val renderer = when (cursorShape) {
       CursorShape.BLINK_BLOCK, CursorShape.STEADY_BLOCK ->
         if (state.isFocused) {
-          BlockCursorRenderer(editor)
+          BlockCursorRenderer(editor, listeners)
         }
         else {
-          EmptyBlockCursorRenderer(editor)
+          EmptyBlockCursorRenderer(editor, listeners)
         }
-      CursorShape.BLINK_UNDERLINE, CursorShape.STEADY_UNDERLINE -> UnderlineCursorRenderer(editor)
-      CursorShape.BLINK_VERTICAL_BAR, CursorShape.STEADY_VERTICAL_BAR -> VerticalBarCursorRenderer(editor)
+      CursorShape.BLINK_UNDERLINE, CursorShape.STEADY_UNDERLINE -> UnderlineCursorRenderer(editor, listeners)
+      CursorShape.BLINK_VERTICAL_BAR, CursorShape.STEADY_VERTICAL_BAR -> VerticalBarCursorRenderer(editor, listeners)
     }
     if (shouldBlink) {
       paintBlinkingCursor(renderer, state.offset)
@@ -203,7 +213,12 @@ internal class TerminalCursorPainter private constructor(
     fun installCursorHighlighter(offset: Int): RangeHighlighter
   }
 
-  private sealed class CursorRendererBase(private val editor: EditorEx) : CursorRenderer {
+  private sealed class CursorRendererBase(
+    private val editor: EditorEx,
+    private val listeners: List<TerminalCursorPainterListener>,
+  ) : CursorRenderer {
+    private val grid: CharacterGrid = requireNotNull((editor as? EditorImpl)?.characterGrid) { "The editor is not in the grid mode" }
+
     val editorCursorColor: Color
       get() = editor.colorsScheme.getColor(EditorColors.CARET_COLOR) ?: JBColor(CURSOR_DARK, CURSOR_LIGHT)
 
@@ -234,18 +249,25 @@ internal class TerminalCursorPainter private constructor(
         val point = editor.offsetToPoint2D(offset)
         val text = editor.document.immutableCharSequence
         val codePoint = if (offset in text.indices) text.codePointAt(offset) else 'W'.code
-        val cursorWidth = (editor as EditorImpl).view.getCodePointWidth(codePoint)
+        val cursorWidth = grid.codePointWidth(codePoint)
         val cursorHeight = editor.lineHeight
         val rect = Rectangle2D.Double(point.x, point.y, cursorWidth.toDouble(), cursorHeight.toDouble())
         g as Graphics2D
         paintCursor(g, rect)
+
+        for (listener in listeners) {
+          listener.cursorPainted()
+        }
       }
 
       return highlighter
     }
   }
 
-  private class BlockCursorRenderer(editor: EditorEx) : CursorRendererBase(editor) {
+  private class BlockCursorRenderer(
+    editor: EditorEx,
+    listeners: List<TerminalCursorPainterListener>,
+  ) : CursorRendererBase(editor, listeners) {
     override val cursorForeground: Color
       get() = if (ColorUtil.isDark(editorCursorColor)) CURSOR_LIGHT else CURSOR_DARK
 
@@ -256,7 +278,10 @@ internal class TerminalCursorPainter private constructor(
     }
   }
 
-  private class EmptyBlockCursorRenderer(editor: EditorEx) : CursorRendererBase(editor) {
+  private class EmptyBlockCursorRenderer(
+    editor: EditorEx,
+    listeners: List<TerminalCursorPainterListener>,
+  ) : CursorRendererBase(editor, listeners) {
     override val cursorForeground: Color? = null
 
     override fun paintCursor(g: Graphics2D, rect: Rectangle2D.Double) {
@@ -266,7 +291,10 @@ internal class TerminalCursorPainter private constructor(
     }
   }
 
-  private abstract class LineCursorRenderer(editor: EditorEx) : CursorRendererBase(editor) {
+  private abstract class LineCursorRenderer(
+    editor: EditorEx,
+    listeners: List<TerminalCursorPainterListener>,
+  ) : CursorRendererBase(editor, listeners) {
     override val cursorForeground: Color? = null
 
     protected val lineThickness: Double get() = JBUIScale.scale(2.0f).toDouble()
@@ -280,12 +308,18 @@ internal class TerminalCursorPainter private constructor(
     }
   }
 
-  private class UnderlineCursorRenderer(editor: EditorEx) : LineCursorRenderer(editor) {
+  private class UnderlineCursorRenderer(
+    editor: EditorEx,
+    listeners: List<TerminalCursorPainterListener>,
+  ) : LineCursorRenderer(editor, listeners) {
     override fun shape(rect: Rectangle2D.Double): Rectangle2D.Double =
       Rectangle2D.Double(rect.x, rect.y + rect.height - lineThickness, rect.width, lineThickness)
   }
 
-  private class VerticalBarCursorRenderer(editor: EditorEx) : LineCursorRenderer(editor) {
+  private class VerticalBarCursorRenderer(
+    editor: EditorEx,
+    listeners: List<TerminalCursorPainterListener>,
+  ) : LineCursorRenderer(editor, listeners) {
     override fun shape(rect: Rectangle2D.Double): Rectangle2D.Double =
       Rectangle2D.Double(rect.x, rect.y, lineThickness, rect.height)
   }
@@ -295,8 +329,13 @@ internal class TerminalCursorPainter private constructor(
     private val CURSOR_DARK: Color = Gray._0
 
     @RequiresEdt
-    fun install(editor: EditorEx, outputModel: TerminalOutputModel, sessionModel: TerminalSessionModel, coroutineScope: CoroutineScope) {
-      TerminalCursorPainter(editor, outputModel, sessionModel, coroutineScope)
+    fun install(
+      editor: EditorEx,
+      outputModel: TerminalOutputModel,
+      sessionModel: TerminalSessionModel,
+      coroutineScope: CoroutineScope,
+    ): TerminalCursorPainter {
+      return TerminalCursorPainter(editor, outputModel, sessionModel, coroutineScope)
     }
   }
 }

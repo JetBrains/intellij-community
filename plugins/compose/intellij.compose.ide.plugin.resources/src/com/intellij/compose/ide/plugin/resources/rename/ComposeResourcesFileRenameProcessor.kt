@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.rename
 
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageCollector
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesFileBase
 import com.intellij.compose.ide.plugin.resources.withoutExtension
 import com.intellij.psi.PsiElement
@@ -21,5 +22,9 @@ internal class ComposeResourcesFileRenameProcessor : RenamePsiFileProcessor(), C
     val property = getKotlinPropertyFromComposeResource(element) ?: return
     val newNameWithoutExtension = newName.withoutExtension
     RenameKotlinPropertyProcessor().prepareRenaming(property, newNameWithoutExtension, allRenames)
+    ComposeResourcesUsageCollector.logAction(ComposeResourcesUsageCollector.ActionType.RENAME, fusResourceBaseType, null)
   }
+
+  override val fusActionType: ComposeResourcesUsageCollector.ActionType
+    get() = ComposeResourcesUsageCollector.ActionType.RENAME
 }

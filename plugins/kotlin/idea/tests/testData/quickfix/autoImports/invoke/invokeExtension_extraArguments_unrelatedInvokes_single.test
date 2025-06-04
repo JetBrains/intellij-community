@@ -1,0 +1,48 @@
+// FILE: first.before.kt
+// "Import operator 'A.invoke'" "true"
+// ERROR: Unresolved reference. None of the following candidates is applicable because of receiver type mismatch: <br>public operator fun Unrelated.invoke(): Unit defined in test in file first.before.kt
+// IGNORE_K1
+// IGNORE_K2
+
+package test
+
+import a.A
+
+class Unrelated
+
+operator fun Unrelated.invoke() {}
+
+fun main() {
+    val a = A()
+    <caret>a("Hello world")
+}
+//-----------------------
+
+
+// FILE: second.kt
+package a
+
+class A
+operator fun A.invoke() = 42
+//-----------------------
+
+// FILE: first.after.kt
+// "Import operator 'A.invoke'" "true"
+// ERROR: Expression 'a' of type 'A' cannot be invoked as a function. The function 'invoke()' is not found
+// IGNORE_K1
+// IGNORE_K2
+
+package test
+
+import a.A
+import a.invoke
+
+class Unrelated
+
+operator fun Unrelated.invoke() {}
+
+fun main() {
+    val a = A()
+    <caret>a("Hello world")
+}
+//-----------------------

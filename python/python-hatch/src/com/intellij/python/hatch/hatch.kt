@@ -14,6 +14,8 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.sdk.basePath
 import java.nio.file.Path
 
+const val HATCH_TOML: String = "hatch.toml"
+
 sealed class HatchError(message: @NlsSafe String) : PyError.Message(message)
 
 class HatchExecutableNotFoundHatchError(path: Path?) : HatchError(
@@ -79,7 +81,7 @@ data class ProjectStructure(
 interface HatchService {
   fun getWorkingDirectoryPath(): Path
 
-  suspend fun syncDependencies(envName: String): Result<String, PyError>
+  suspend fun syncDependencies(envName: String? = null): Result<String, PyError>
 
   suspend fun isHatchManagedProject(): Result<Boolean, PyError>
 
@@ -97,8 +99,8 @@ interface HatchService {
 /**
  * Hatch Service for working directory (where hatch.toml / pyproject.toml is usually placed)
  */
-suspend fun Path.getHatchService(hatchExecutablePath: Path? = null): Result<HatchService, PyError> {
-  return CliBasedHatchService(hatchExecutablePath = hatchExecutablePath, workingDirectoryPath = this)
+suspend fun Path?.getHatchService(hatchExecutablePath: Path? = null, hatchEnvironmentName: String? = null): Result<HatchService, PyError> {
+  return CliBasedHatchService(hatchExecutablePath = hatchExecutablePath, workingDirectoryPath = this, hatchEnvironmentName = hatchEnvironmentName)
 }
 
 /**

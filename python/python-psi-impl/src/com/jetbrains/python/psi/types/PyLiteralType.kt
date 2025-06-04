@@ -269,9 +269,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           if (operand is PyNumericLiteralExpression && operand.isIntegerLiteral) getPyClass(operand, context) else null
         }
 
-        expression is PyReferenceExpression &&
-        expression.name.let { it == PyNames.TRUE || it == PyNames.FALSE } &&
-        LanguageLevel.forElement(expression).isPython2 -> getPyClass(expression, context)
+        PyEvaluator.getBooleanLiteralValue(expression) != null -> getPyClass(expression, context)
 
         else -> null
       }

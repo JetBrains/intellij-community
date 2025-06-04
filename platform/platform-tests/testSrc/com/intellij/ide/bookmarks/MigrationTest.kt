@@ -4,11 +4,13 @@ package com.intellij.ide.bookmarks
 import com.intellij.ide.bookmark.BookmarksManagerImpl
 import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.testFramework.PlatformTestUtil.waitForAlarm
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 
 class MigrationTest : AbstractEditorTest() {
 
   fun testNoStateLoaded() {
-    val manager = BookmarksManagerImpl(project)
+    val manager = BookmarksManagerImpl(project, CoroutineScope(SupervisorJob()))
     assertEquals(0, manager.bookmarks.size)
     assertEquals(0, manager.groups.size)
     assertNull(manager.defaultGroup)

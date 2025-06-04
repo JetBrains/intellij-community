@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyTestFixtures
 
 import com.intellij.openapi.module.ModuleUtilCore
@@ -7,8 +7,10 @@ import com.intellij.psi.PsiReference
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.impl.references.PyReferenceCustomTargetChecker
+import org.jetbrains.annotations.ApiStatus
 
-class PyTestFixtureTargetChecker : PyReferenceCustomTargetChecker {
+@ApiStatus.Internal
+internal class PyTestFixtureTargetChecker : PyReferenceCustomTargetChecker {
   override fun isReferenceTo(reference: PsiReference, to: PsiElement): Boolean {
     val function = to as? PyFunction ?: return false
     val module = ModuleUtilCore.findModuleForPsiElement(to) ?: return false

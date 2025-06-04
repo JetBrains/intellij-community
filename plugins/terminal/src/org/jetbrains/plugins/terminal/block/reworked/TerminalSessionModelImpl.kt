@@ -32,6 +32,7 @@ class TerminalSessionModelImpl : TerminalSessionModel {
       isBracketedPasteMode = false,
       windowTitle = "",
       isShellIntegrationEnabled = false,
+      currentDirectory = "",
     )
   }
 }

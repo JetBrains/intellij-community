@@ -15,7 +15,7 @@ import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
-import com.jetbrains.python.sdk.poetry.pyProjectToml
+import com.jetbrains.python.sdk.poetry.findPyProjectToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
@@ -47,5 +47,5 @@ internal class PoetryExistingEnvironmentSelector(model: PythonMutableTargetAddIn
     existingEnvironments.value = existingEnvs
   }
 
-  override suspend fun findModulePath(module: Module): Path? = pyProjectToml(module)?.toNioPathOrNull()?.parent
+  override suspend fun findModulePath(module: Module): Path? = findPyProjectToml(module)?.toNioPathOrNull()?.parent
 }

@@ -20,8 +20,10 @@ import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
@@ -63,7 +65,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
 ) : GitLabMergeRequestEditorReviewFileViewModel {
-  private val cs = parentCs.childScope(javaClass.name)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   override val headContent: StateFlow<ComputedResult<String>?> = flow {
     ComputedResult.compute {
@@ -75,7 +77,8 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
     }.let {
       emit(it)
     }
-  }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
+  }.flowOn(Dispatchers.IO)
+    .stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   override val changedRanges: List<Range> = diffData.patch.hunks.withoutContext().toList()
 

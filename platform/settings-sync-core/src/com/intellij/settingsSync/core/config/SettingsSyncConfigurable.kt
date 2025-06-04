@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -65,7 +66,8 @@ import javax.swing.event.HyperlinkEvent
 
 internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineScope) : BoundConfigurable(message("title.settings.sync")),
                                                                                       SettingsSyncEnabler.Listener,
-                                                                                      SettingsSyncStatusTracker.Listener {
+                                                                                      SettingsSyncStatusTracker.Listener,
+                                                                                      SettingsSyncEventListener {
   companion object {
     private val LOG = logger<SettingsSyncConfigurable>()
   }
@@ -96,6 +98,13 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   init {
     syncEnabler.addListener(this)
     SettingsSyncStatusTracker.getInstance().addListener(this)
+    SettingsSyncEvents.getInstance().addListener(this)
+  }
+
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    SettingsSyncStatusTracker.getInstance().removeListener(this)
+    SettingsSyncEvents.getInstance().removeListener(this)
   }
 
   override fun createPanel(): DialogPanel {
@@ -211,7 +220,17 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
 
           row {
             cell(syncConfigPanel)
-              .onReset(syncConfigPanel::reset)
+              .onReset {
+                syncConfigPanel.reset()
+                wasUsedBefore.set(SettingsSyncLocalSettings.getInstance().userId != null)
+                hasMultipleProviders.set(RemoteCommunicatorHolder.getExternalProviders().isNotEmpty())
+                enableCheckbox.isSelected = SettingsSyncSettings.getInstance().syncEnabled
+                if (SettingsSyncLocalSettings.getInstance().userId != null) {
+                  userDropDownLink.selectedItem = userAccountsList.firstOrNull { it.userId == SettingsSyncLocalSettings.getInstance().userId}
+                } else {
+                  userDropDownLink.selectedItem = null
+                }
+              }
               .onIsModified {
                 enableCheckbox.isSelected != SettingsSyncSettings.getInstance().syncEnabled
                 || syncConfigPanel.isModified()
@@ -470,7 +489,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
           return super.setFooterComponent(c)
         }
         super.setFooterComponent(DslLabel(DslLabelType.LABEL).apply {
-          text = "<a>${message("logout.link.text", currentProviderCode ?: "")}</a>"
+          text = "<a>${message("logout.link.text", provider.authService.providerName ?: "")}</a>"
 
           addHyperlinkListener {
             if (it.eventType == HyperlinkEvent.EventType.ACTIVATED) {
@@ -540,12 +559,13 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     syncConfigPanel: DialogPanel,
   ) {
     coroutineScope.launch(ModalityState.current().asContextElement()) {
+      val loginDisposable = Disposer.newDisposable("BackupAndSyncLoginDisposable")
       try {
         val userData = provider.authService.login(syncConfigPanel)
         if (userData != null) {
           withContext(Dispatchers.EDT) {
             updateUserAccountsList()
-            val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userData.id) ?: return@withContext
+            val remoteCommunicator = RemoteCommunicatorHolder.createRemoteCommunicator(provider, userData.id, loginDisposable) ?: return@withContext
             if (checkServerState(syncPanelHolder, remoteCommunicator, provider.authService.crossSyncSupported())) {
               SettingsSyncEvents.getInstance().fireLoginStateChanged()
               userDropDownLink.selectedItem = UserProviderHolder(userData.id, userData, provider.authService.providerCode,
@@ -567,6 +587,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
       catch (ex: Throwable) {
         LOG.warn("Error during login", ex)
+      }
+      finally {
+        Disposer.dispose(loginDisposable)
       }
       syncConfigPanel.requestFocusInWindow()
     }
@@ -674,6 +697,12 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private suspend fun showErrorOnEDT(message: String, title: String = message("notification.title.update.error")) {
     withContext(Dispatchers.EDT) {
       Messages.showErrorDialog(configPanel, message, title)
+    }
+  }
+
+  override fun loginStateChanged() {
+    if (wasUsedBefore.get() && SettingsSyncLocalSettings.getInstance().userId == null) {
+      this.reset()
     }
   }
 

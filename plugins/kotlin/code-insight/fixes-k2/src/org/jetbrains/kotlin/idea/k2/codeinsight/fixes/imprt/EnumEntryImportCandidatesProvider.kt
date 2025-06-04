@@ -14,7 +14,7 @@ internal class EnumEntryImportCandidatesProvider(override val importContext: Imp
     AbstractImportCandidatesProvider() {
 
     init {
-        requireIsInstance<ImportPositionTypeAndReceiver.DefaultCall>(importContext.positionTypeAndReceiver)
+        requireIsInstance<ImportPositionType.DefaultCall>(importContext.positionType)
     }
 
     private fun acceptsKotlinEnumEntry(enumEntry: KtEnumEntry): Boolean {

@@ -79,7 +79,7 @@ class PythonPackageManagerNullAdditionalDataTask(private val pkg: PythonSimplePa
   }
 
   override fun runTestOn(sdkHome: String, existingSdk: Sdk?) {
-    requireNotNull(existingSdk) { "Sdk should be not bull"}
+    requireNotNull(existingSdk) { "Sdk should be not bull" }
 
     val pythonSdkType = PythonSdkType.getInstance()
     val configuredSdk = createSdkWithNullAdditionalData(pythonSdkType, sdkHome, existingSdk)

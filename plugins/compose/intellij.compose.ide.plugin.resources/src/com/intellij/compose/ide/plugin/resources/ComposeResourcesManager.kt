@@ -53,10 +53,16 @@ internal class ComposeResourcesManager(private val project: Project) {
   private fun loadComposeResources(): Map<String, ComposeResources> =
     composeResourcesModels.associateNotNull { node ->
       val moduleName = (node.parent?.data as? ModuleData)?.moduleName ?: return@associateNotNull null
-      val dirs = node.data.customComposeResourcesDirs.mapValues { (sourceSetName, directoryPath) ->
-        ComposeResourcesDir(moduleName, sourceSetName, Path.of(directoryPath))
+      val dirs = node.data.customComposeResourcesDirs.mapValues { (sourceSetName, customDirectoryPath) ->
+        val (directoryPath, isCustom) = customDirectoryPath
+        ComposeResourcesDir(moduleName, sourceSetName, Path.of(directoryPath), isCustom)
       }
-      moduleName to ComposeResources(moduleName, dirs)
+      moduleName to ComposeResources(
+        moduleName = moduleName,
+        directoriesBySourceSetName = dirs,
+        isPublicResClass = node.data.isPublicResClass,
+        nameOfResClass = node.data.nameOfResClass,
+      )
     }
 
   /** Refresh Compose resources directories after project import */

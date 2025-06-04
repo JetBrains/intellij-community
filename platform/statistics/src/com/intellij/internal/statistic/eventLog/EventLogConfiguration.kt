@@ -120,6 +120,10 @@ class EventLogConfiguration {
     return if (str.endsWith(".")) str + "0" else str
   }
 
+  /**
+   * Certain recorders should have ids matching to the default one(FUS).
+   * Since the calculated values are cached make sure to pass correct parameters before the first initialization.
+   */
   @JvmOverloads
   fun getOrCreate(recorderId: String, alternativeRecorderId: String? = null): EventLogRecorderConfiguration {
     if (isDefaultRecorderId(recorderId)) return defaultConfiguration

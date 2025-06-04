@@ -22,7 +22,7 @@ final class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySof
   }
 
   private static final class WeakValue<K, V> extends WeakReference<V> implements ValueReference<K,V> {
-    private volatile @NotNull KeyReference<K, V> myKeyReference; // can't make it final because of circular dependency of KeyReference to ValueReference
+    private volatile KeyReference<K, V> myKeyReference; // can't make it final because of circular dependency of KeyReference to ValueReference
     private WeakValue(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
       super(value, queue);
     }
@@ -41,7 +41,7 @@ final class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySof
     }
 
     @Override
-    public @NotNull KeyReference<K, V> getKeyReference() {
+    public KeyReference<K, V> getKeyReference() {
       return myKeyReference;
     }
  }
