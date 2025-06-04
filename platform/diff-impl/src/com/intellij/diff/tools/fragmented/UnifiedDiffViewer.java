@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -15,8 +15,10 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.fragmented.UnifiedDiffModel.ChangedBlockData;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.tools.util.base.*;
+import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
+import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
 import com.intellij.diff.tools.util.side.OnesideContentPanel;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
@@ -79,6 +81,7 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -1583,7 +1586,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   }
 
   private class UnifiedImaginaryEditor extends ImaginaryEditor {
-    private static final Set<String> ourReportedMockMethods = ContainerUtil.newConcurrentSet();
+    private static final Set<String> ourReportedMockMethods = ConcurrentHashMap.newKeySet();
     private static boolean ourDisableImaginaryEditor = false;
 
     private final Side mySide;

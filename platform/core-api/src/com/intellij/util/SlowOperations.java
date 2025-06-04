@@ -11,7 +11,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -36,7 +36,7 @@ public final class SlowOperations {
     private static final Logger LOG = Logger.getInstance(SlowOperations.class);
   }
 
-  private static final Set<String> ourKnownIssues = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourKnownIssues = ConcurrentHashMap.newKeySet();
 
   private static final String ERROR_EDT = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
   private static final String ERROR_RA = "Non-cancelable slow operations are prohibited inside read action. See SlowOperations.assertNonCancelableSlowOperationsAreAllowed javadoc.";

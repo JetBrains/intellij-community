@@ -172,7 +172,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     }
     if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    Set<SmartPsiElementPointer<?>> duplicates = ContainerUtil.newConcurrentSet();
+    Set<SmartPsiElementPointer<?>> duplicates = ConcurrentHashMap.newKeySet();
     final Map<Configuration, Matcher> compiledPatterns = checkOutCompiledPatterns(configurations, project, holder, duplicates);
     session.putUserData(COMPILED_PATTERNS, compiledPatterns);
     return new SSBasedVisitor(compiledPatterns);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.DebugReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 final class CachedValueLeakChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueLeakChecker.class);
   private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
-  private static final Set<String> ourCheckedKeys = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourCheckedKeys = ConcurrentHashMap.newKeySet();
 
   static void checkProviderDoesNotLeakPSI(@NotNull CachedValueProvider<?> provider, @NotNull Key<?> key, @NotNull UserDataHolder userDataHolder) {
     if (!DO_CHECKS || ApplicationManagerEx.isInStressTest()) {

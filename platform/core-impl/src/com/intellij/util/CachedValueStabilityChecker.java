@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
@@ -61,7 +61,7 @@ import java.util.function.Supplier;
  */
 final class CachedValueStabilityChecker {
   private static final Logger LOG = Logger.getInstance(CachedValueStabilityChecker.class);
-  private static final Set<String> ourReportedKeys = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourReportedKeys = ConcurrentHashMap.newKeySet();
   private static final ConcurrentMap<Class<?>, List<Field>> ourFieldCache = ConcurrentFactoryMap.createMap(ReflectionUtil::collectFields);
   private static final boolean DO_CHECKS = shouldDoChecks();
 

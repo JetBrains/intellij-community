@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.diagnostic.LoadingState;
@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,10 +26,11 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance(OSProcessHandler.class);
-  private static final Set<String> REPORTED_EXECUTIONS = ContainerUtil.newConcurrentSet();
+  private static final Set<String> REPORTED_EXECUTIONS = ConcurrentHashMap.newKeySet();
   private static final long ALLOWED_TIMEOUT_THRESHOLD = 10;
 
   private static final Key<Set<File>> DELETE_FILES_ON_TERMINATION = Key.create("OSProcessHandler.FileToDelete");

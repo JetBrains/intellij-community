@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,7 +27,7 @@ public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
   private final @NotNull BiConsumer<? super @NotNull String, ? super @NotNull List<? super VirtualFile>> myFillDirectoriesByPackage;
   private final @NotNull BiPredicate<? super @NotNull VirtualFile, ? super @NotNull String> myPackageDirectoryFilter;
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = new ConcurrentHashMap<>();
-  private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
+  private final Set<String> myNonExistentPackages = ConcurrentHashMap.newKeySet();
 
   public PackageDirectoryCacheImpl(@NotNull BiConsumer<? super @NotNull String, ? super @NotNull List<? super VirtualFile>> fillFilesAndDirectoriesByPackage,
                                    @NotNull BiPredicate<? super @NotNull VirtualFile, ? super @NotNull String> packageDirectoryFilter) {

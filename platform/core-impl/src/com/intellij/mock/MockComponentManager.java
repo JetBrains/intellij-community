@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusOwner;
 import com.intellij.util.messages.impl.MessageBusFactoryImpl;
@@ -40,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManagerEx, MessageBusOwner {
   private final MessageBus myMessageBus = MessageBusFactoryImpl.createRootBus(this);
@@ -47,7 +47,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   private final ExtensionsAreaImpl myExtensionArea;
 
   private final Map<Class<?>, Object> myComponents = new HashMap<>();
-  private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
+  private final Set<Object> myDisposableComponents = ConcurrentHashMap.newKeySet();
   private boolean myDisposed;
 
   @Internal

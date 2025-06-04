@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.icons.ImageDescriptor
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -30,7 +29,7 @@ private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, flat = false, deprecati
 internal class ImageInfo(
   @JvmField val id: String,
   @JvmField val sourceRoot: JpsModuleSourceRoot,
-  @JvmField val phantom: Boolean
+  @JvmField val phantom: Boolean,
 ) {
   private var flags = EMPTY_IMAGE_FLAGS
   private val images = ArrayList<Path>()
@@ -131,21 +130,21 @@ internal data class DeprecationData(
   @JvmField val comment: String?,
   @JvmField val replacement: String?,
   @JvmField val replacementContextClazz: String?,
-  @JvmField val replacementReference: String?
+  @JvmField val replacementReference: String?,
 )
 
 internal class ImageCollector(
   private val projectHome: Path,
   private val iconsOnly: Boolean = true,
   private val ignoreSkipTag: Boolean = false,
-  private val moduleConfig: IntellijIconClassGeneratorModuleConfig?
+  private val moduleConfig: IntellijIconClassGeneratorModuleConfig?,
 ) {
   // files processed in parallel, so, concurrent data structures must be used
   private val icons = ConcurrentHashMap<String, ImageInfo>()
   private val phantomIcons = ConcurrentHashMap<String, ImageInfo>()
-  private val mergeRoots: MutableSet<String> = ContainerUtil.newConcurrentSet()
+  private val mergeRoots: MutableSet<String> = ConcurrentHashMap.newKeySet()
   private val mergeAdd = ConcurrentHashMap<String, List<String>>()
-  private val usedIconRobots: MutableSet<Path> = ContainerUtil.newConcurrentSet()
+  private val usedIconRobots: MutableSet<Path> = ConcurrentHashMap.newKeySet()
   private var mappingFile: Path? = null
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): Collection<ImageInfo> {
@@ -234,7 +233,7 @@ internal class ImageCollector(
     sourceRoot: JpsModuleSourceRoot,
     robotData: IconRobotsData,
     prefix: String,
-    level: Int
+    level: Int,
   ) {
     // do not process in parallel for if level >= 3 because no sense - parents processed in parallel already
     processChildren(dir, isParallel = level < 3) { file ->
@@ -456,7 +455,7 @@ private data class OwnDeprecatedIcon(val relativeFile: String, val data: Depreca
 internal class IconRobotsData(
   private val parent: IconRobotsData? = null,
   private val ignoreSkipTag: Boolean,
-  private val usedIconRobots: MutableSet<Path>?
+  private val usedIconRobots: MutableSet<Path>?,
 ) {
   private val skip = ArrayList<Pattern>()
   private val used = ArrayList<Pattern>()
@@ -503,32 +502,35 @@ internal class IconRobotsData(
     usedIconRobots?.add(robots)
 
     val answer = IconRobotsData(this, ignoreSkipTag, usedIconRobots)
-    parse(robots,
-          RobotFileHandler("skip:") { value -> answer.skip.add(compilePattern(dir, root, value)) },
-          RobotFileHandler("used:") { value -> answer.used.add(compilePattern(dir, root, value)) },
-          RobotFileHandler("mergeAdd:") { value -> answer.mergeAdd.add(value.trim()) },
-          RobotFileHandler("merge") { answer.mergeToRoot = true },
-          RobotFileHandler("deprecated:") { value ->
-            val comment = value.substringAfter(";", "").trim().takeIf { it.isNotEmpty() }
-            val valueWithoutComment = value.substringBefore(";")
-            val pattern = valueWithoutComment.substringBefore("->").trim()
-            val replacementString = valueWithoutComment.substringAfter("->", "").trim().takeIf { it.isNotEmpty() }
-            val replacement = replacementString?.substringAfter('@')?.trim()
-            val replacementContextClass = replacementString?.substringBefore('@', "")?.trim()?.takeIf { it.isNotEmpty() }
+    parse(
+      robots,
+      RobotFileHandler("skip:") { value -> answer.skip.add(compilePattern(dir, root, value)) },
+      RobotFileHandler("used:") { value -> answer.used.add(compilePattern(dir, root, value)) },
+      RobotFileHandler("mergeAdd:") { value -> answer.mergeAdd.add(value.trim()) },
+      RobotFileHandler("merge") { answer.mergeToRoot = true },
+      RobotFileHandler("deprecated:") { value ->
+        val comment = value.substringAfter(";", "").trim().takeIf { it.isNotEmpty() }
+        val valueWithoutComment = value.substringBefore(";")
+        val pattern = valueWithoutComment.substringBefore("->").trim()
+        val replacementString = valueWithoutComment.substringAfter("->", "").trim().takeIf { it.isNotEmpty() }
+        val replacement = replacementString?.substringAfter('@')?.trim()
+        val replacementContextClass = replacementString?.substringBefore('@', "")?.trim()?.takeIf { it.isNotEmpty() }
 
-            val deprecatedData = DeprecationData(comment, replacement, replacementContextClass,
-                                                 replacementReference = computeReplacementReference(comment))
-            answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
+        val deprecatedData = DeprecationData(
+          comment, replacement, replacementContextClass,
+          replacementReference = computeReplacementReference(comment)
+        )
+        answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
 
-            if (!pattern.contains('*') && !pattern.startsWith('/')) {
-              answer.ownDeprecatedIcons.add(OwnDeprecatedIcon(pattern, deprecatedData))
-            }
-          },
-          RobotFileHandler("name:") { }, // ignore directive for IconsClassGenerator
-          RobotFileHandler("#") { }, // comment
-          RobotFileHandler("forceSync:") { value -> answer.forceSync.add(compilePattern(dir, root, value)) },
-          RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) },
-          RobotFileHandler("flatIconName:") { value -> answer.flat.add(compilePattern(dir, root, value)) }, // generates the icon field without static class wrappers
+        if (!pattern.contains('*') && !pattern.startsWith('/')) {
+          answer.ownDeprecatedIcons.add(OwnDeprecatedIcon(pattern, deprecatedData))
+        }
+      },
+      RobotFileHandler("name:") { }, // ignore directive for IconsClassGenerator
+      RobotFileHandler("#") { }, // comment
+      RobotFileHandler("forceSync:") { value -> answer.forceSync.add(compilePattern(dir, root, value)) },
+      RobotFileHandler("skipSync:") { value -> answer.skipSync.add(compilePattern(dir, root, value)) },
+      RobotFileHandler("flatIconName:") { value -> answer.flat.add(compilePattern(dir, root, value)) }, // generates the icon field without static class wrappers
     )
     return answer
   }

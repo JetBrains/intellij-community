@@ -7,13 +7,13 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
 import com.intellij.openapi.components.*
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -33,7 +33,7 @@ class LocalStatistics : SimplePersistentStateComponent<LocalStatistics.State>(St
    */
   @VisibleForTesting
   object Schema {
-    val registered: MutableSet<String> = ContainerUtil.newConcurrentSet<String>()
+    val registered: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     @VisibleForTesting
     fun register(field: EventField<*>) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ref;
 
 import com.intellij.openapi.util.EmptyRunnable;
@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A utility to garbage-collect specified objects in tests. Create a GCWatcher using {@link #tracking} or {@link #fromClearedRef}
@@ -31,7 +32,7 @@ import java.util.Set;
 @ApiStatus.Internal
 public final class GCWatcher {
   private final ReferenceQueue<Object> myQueue = new ReferenceQueue<>();
-  private final Set<Reference<?>> myReferences = ContainerUtil.newConcurrentSet();
+  private final Set<Reference<?>> myReferences = ConcurrentHashMap.newKeySet();
 
   private GCWatcher(@NotNull Collection<?> objects) {
     for (Object o : objects) {

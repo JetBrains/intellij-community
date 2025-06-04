@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -27,6 +26,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.util.ReflectionUtil.getMethod;
 
@@ -45,7 +45,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
 
   private static final Logger LOG = Logger.getInstance(WideSelectionTreeUI.class);
-  private static final Set<String> LOGGED_RENDERERS = ContainerUtil.newConcurrentSet();
+  private static final Set<String> LOGGED_RENDERERS = ConcurrentHashMap.newKeySet();
 
   private final @NotNull Condition<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;
