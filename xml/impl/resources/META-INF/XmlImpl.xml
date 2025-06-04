@@ -34,6 +34,56 @@
     <listener class="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </applicationListeners>
 
+  <actions>
+    <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
+      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
+    </group>
+
+    <group id="NewXml">
+      <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction" icon="AllIcons.FileTypes.Html"/>
+      <add-to-group group-id="NewWebDevelopment" anchor="first"/>
+    </group>
+
+    <group id="NewXmlDescriptor" class="com.intellij.xml.actions.CreateXmlDescriptorGroup" popup="true" icon="AllIcons.FileTypes.Xml">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
+
+    <action id="GenerateXmlTag" class="com.intellij.xml.actions.GenerateXmlTagAction">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+
+    <action id="EscapeEntities" class="com.intellij.xml.actions.EscapeEntitiesAction">
+      <add-to-group group-id="EditMenu" anchor="last"/>
+    </action>
+
+    <group id="Emmet">
+      <action id="SurroundWithEmmet" class="com.intellij.codeInsight.template.emmet.SurroundWithEmmetAction"/>
+      <action id="EmmetPreview" class="com.intellij.codeInsight.template.emmet.EmmetPreviewAction"/>
+      <action id="EmmetUpdateTag" class="com.intellij.codeInsight.template.emmet.EmmetUpdateTagAction">
+        <add-to-group group-id="EditorLangPopupMenu" anchor="last"/>
+      </action>
+
+      <group id="GoToEditPointGroup">
+        <separator/>
+        <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToErrorGroup"/>
+
+        <action id="EmmetNextEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Forward">
+          <keyboard-shortcut first-keystroke="alt shift CLOSE_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X" replace-all="true"/>
+          <keyboard-shortcut first-keystroke="control alt RIGHT" keymap="Mac OS X 10.5+" replace-all="true"/>
+        </action>
+
+        <action id="EmmetPreviousEditPoint" class="com.intellij.codeInsight.template.emmet.actions.GoToEditPointAction$Backward">
+          <keyboard-shortcut first-keystroke="alt shift OPEN_BRACKET" keymap="$default"/>
+          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X" replace-all="true"/>
+          <keyboard-shortcut first-keystroke="control alt LEFT" keymap="Mac OS X 10.5+" replace-all="true"/>
+        </action>
+      </group>
+    </group>
+
+    <action id="SurroundWithTagTemplate" class="com.intellij.xml.actions.XmlSurroundWithTagTemplateAction" icon="AllIcons.Nodes.Tag"/>
+  </actions>
+
   <projectListeners>
     <listener class="com.intellij.codeInsight.completion.HtmlCompletionContributor$HtmlElementInTextLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
@@ -378,5 +428,10 @@
     <completion.contributor language="HtmlCompatible" implementationClass="com.intellij.html.polySymbols.PolySymbolsHtmlCompletionContributor"/>
 
     <xml.autoPopupEnabler implementation="com.intellij.xml.microservices.UrlReferencesXmlAutoPopupEnabler"/>
+
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
+
+    <lang.floatingToolbar language="XML" minimal="true"/>
   </extensions>
 </idea-plugin>

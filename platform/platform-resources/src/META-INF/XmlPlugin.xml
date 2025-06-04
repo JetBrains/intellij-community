@@ -2,48 +2,20 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.xml"/>
 
-  <projectListeners>
-    <listener class="com.intellij.html.polySymbols.HtmlPolyContextChangeListener"
-              topic="com.intellij.polySymbols.context.PolyContextChangeListener"/>
-  </projectListeners>
-
-  <xi:include href="/META-INF/XmlActions.xml"/>
-
   <xi:include href="/META-INF/XmlImpl.xml"/>
 
-  <xi:include href="/META-INF/XmlAnalysisImpl.xml">
-    <xi:fallback/>
-  </xi:include>
+  <xi:include href="/META-INF/XmlAnalysisImpl.xml"/>
+  <xi:include href="/META-INF/XmlPsiImpl.xml"/>
+  <xi:include href="/META-INF/XmlPsi.xml"/>
 
   <extensionPoints>
-    <extensionPoint name="xml.startTagEndToken" interface="com.intellij.psi.xml.StartTagEndTokenProvider" dynamic="true"/>
-    <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
-    <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
-    <extensionPoint name="xml.xmlTypedHandlersAdditionalSupport" interface="com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport" dynamic="true"/>
-    <extensionPoint name="xml.xmlCustomTagHighlightingStrategy" interface="com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy" dynamic="true"/>
-    <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
-    <extensionPoint name="xml.attributeDescriptorsProvider" interface="com.intellij.xml.XmlAttributeDescriptorsProvider" dynamic="true"/>
-    <extensionPoint name="xml.elementDescriptorProvider" interface="com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider" dynamic="true"/>
+    <extensionPoint name="xmlStructureViewElementProvider" interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider" dynamic="true"/>
 
-    <extensionPoint name="xml.xmlSuppressionProvider"
-                    interface="com.intellij.codeInspection.XmlSuppressionProvider" dynamic="true"/>
-
-    <extensionPoint name="xmlStructureViewElementProvider"
-                    interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider" dynamic="true"/>
-
-    <extensionPoint name="xmlStructureViewBuilderProvider"
-                    interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider" dynamic="true"/>
-
-    <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
-    <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>0
-
-    <extensionPoint name="xml.idContributor" interface="com.intellij.xml.util.XmlIdContributor" dynamic="true"/>
-    <extensionPoint name="xml.implicitNamespaceDescriptorProvider" interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider" dynamic="true"/>
+    <extensionPoint name="xmlStructureViewBuilderProvider" interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider" dynamic="true"/>
 
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider" dynamic="true"/>
     <extensionPoint name="embeddedTokenTypesProvider" interface="com.intellij.lexer.EmbeddedTokenTypesProvider" dynamic="true"/>
     <extensionPoint name="embeddedTokenHighlighter" interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter" dynamic="true"/>
-    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider" dynamic="true"/>
 
 
     <extensionPoint name="html.scriptContentProvider"
@@ -54,27 +26,6 @@
     <extensionPoint name="html.embeddedContentSupport"
                     interface="com.intellij.html.embedding.HtmlEmbeddedContentSupport"
                     dynamic="true"/>
-
-    <extensionPoint name="html.attributeValueProvider"
-                    interface="com.intellij.html.impl.providers.HtmlAttributeValueProvider"
-                    dynamic="true"/>
-
-    <extensionPoint name="xml.psiPolicy"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.psi.impl.source.xml.XmlPsiPolicy"/>
-    </extensionPoint>
-
-    <extensionPoint name="xml.namedReferenceProvider"
-                    dynamic="true"
-                    beanClass="com.intellij.xml.XmlNamedReferenceProviderBean">
-      <with attribute="hostElementClass" implements="com.intellij.psi.xml.XmlNamedReferenceHost"/>
-      <with attribute="targetClass" implements="com.intellij.model.Symbol"/>
-      <with attribute="implementationClass" implements="com.intellij.model.psi.PsiSymbolReferenceProvider"/>
-    </extensionPoint>
-
-    <extensionPoint name="xml.autoPopupEnabler"
-                    interface="com.intellij.xml.psi.codeInsight.XmlAutoPopupEnabler"
-                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -83,43 +34,12 @@
     <fileType name="DTD" implementationClass="com.intellij.ide.highlighter.DTDFileType" fieldName="INSTANCE" language="DTD" extensions="dtd;elt;ent;mod"/>
     <fileType name="XML" implementationClass="com.intellij.ide.highlighter.XmlFileType" fieldName="INSTANCE" language="XML" extensions="ant;fxml;jhm;jnlp;jrxml;rng;tld;wsdl;xml;xsd;xsl;xslt;xul"/>
 
-    <applicationService serviceInterface="com.intellij.lang.xml.BasicXmlElementFactory"
-                        serviceImplementation="com.intellij.lang.xml.BackendXmlElementFactory"/>
-    <applicationService serviceInterface="com.intellij.lang.html.BasicHtmlElementFactory"
-                        serviceImplementation="com.intellij.lang.html.BackendHtmlElementFactory"/>
-    <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
-                        serviceImplementation="com.intellij.lang.html.BackendHtmlElementFactory"/>
-
     <lang.syntaxHighlighterFactory language="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="HTML" implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
 
-    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttributeValue"
-                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator"/>
-    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlAttribute"
-                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeManipulator"/>
-    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlToken"
-                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTokenManipulator"/>
-    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlTag"
-                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTagManipulator"/>
-    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlText"
-                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTextManipulator"/>
-    <lang.elementManipulator forClass="com.intellij.psi.xml.XmlProcessingInstruction"
-                             implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlProcessingInstructionManipulator"/>
-    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
-
-    <standardResourceProvider implementation="com.intellij.javaee.InternalResourceProvider"/>
-
-    <projectService serviceInterface="com.intellij.javaee.ExternalResourceManagerExBase"
-                    serviceImplementation="com.intellij.javaee.ProjectResources"/>
-
     <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
-
-
-    <projectService serviceInterface="com.intellij.psi.XmlElementFactory"
-                    serviceImplementation="com.intellij.psi.XmlElementFactoryImpl"/>
 
     <lang.parserDefinition language="DTD" implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
     <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
@@ -128,81 +48,19 @@
 
     <syntax.elementTypeConverter language="XML" implementationClass="com.intellij.psi.xml.XmlElementTypeConverterExtension"/>
 
-    <lang.treePatcher language="HTML" implementationClass="com.intellij.lang.xml.XmlTemplateTreePatcher"/>
-    <lang.treePatcher language="XML" implementationClass="com.intellij.lang.xml.XmlTemplateTreePatcher"/>
-
-    <documentationCssProvider implementation="com.intellij.documentation.mdn.MdnDocumentationCssProvider"/>
-
-    <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="HTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-    <lang.findUsagesProvider language="XHTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
-
-    <lang.foldingBuilder language="DTD" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="XML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="HTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-    <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
-
-
     <lang.psiStructureViewFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdStructureViewBuilderFactory"/>
     <lang.psiStructureViewFactory language="XML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>
     <lang.psiStructureViewFactory language="HTML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>
     <lang.psiStructureViewFactory language="XHTML" implementationClass="com.intellij.lang.xml.XmlStructureViewBuilderFactory"/>
 
-    <lang.ast.factory language="XML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
-    <lang.ast.factory language="DTD" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
-    <lang.ast.factory language="HTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
-    <lang.ast.factory language="XHTML" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
-    <lang.ast.factory language="JAVA_HOLDER_METHOD_TREE" implementationClass="com.intellij.lang.xml.XmlASTFactory"/>
-
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
 
-    <multiHostInjector implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpInjector"/>
-    <lang.parserDefinition language="XsdRegExp" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpParserDefinition"/>
-
-    <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.XmlReadWriteAccessDetector"/>
-
-    <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
-
-    <iconProvider implementation="com.intellij.xml.util.XmlIconProvider"/>
-
-    <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
-
-    <lang.floatingToolbar language="XML" minimal="true"/>
-
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.XMLColorsPage"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.HTMLColorsPage"/>
 
-    <metaDataContributor implementation="com.intellij.xml.util.XmlApplicationComponent"/>
-
-    <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
-
-    <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
-    <html.scriptContentProvider language="HTML" implementationClass="com.intellij.psi.impl.source.html.TemplateHtmlScriptContentProvider"/>
-
-    <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
     <xmlStructureViewBuilderProvider implementation="com.intellij.lang.html.structureView.HtmlStructureViewBuilderProvider"/>
-
-    <xml.psiPolicy language="HTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.HtmlPsiPolicy"/>
-    <xml.psiPolicy language="XHTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
-
-    <xml.fileNSInfoProvider implementation="com.intellij.xml.util.HtmlFileNSInfoProvider"/>
-
-    <xml.xmlExtension implementation="com.intellij.xml.HtmlXmlExtension" id="html"/>
-
-    <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
-
-    <psi.symbolReferenceProvider hostLanguage="XML"
-                                 hostElementClass="com.intellij.psi.xml.XmlNamedReferenceHost"
-                                 anyReferenceClass="true"
-                                 targetClass="com.intellij.model.Symbol"
-                                 implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
-
-    <multiHostInjector implementation="com.intellij.html.polySymbols.PolySymbolsHtmlTextInjector"
-                       order="before JSConfigurationInjector, after TemporaryPlacesInjector"
-                       id="PolySymbolsHtmlText"/>
 
     <polySymbols.enableInLanguage language="HtmlCompatible"/>
 
@@ -215,31 +73,5 @@
                                       toolShortName="HtmlDeprecatedAttribute"/>
     <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
                                       toolShortName="HtmlDeprecatedTag"/>
-
-    <polySymbols.highlightingCustomizer
-      id="html"
-      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlHighlightingCustomizer"/>
-    <polySymbols.queryConfigurator
-      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator"/>
-    <polySymbols.codeCompletionItemCustomizer
-      id="html"
-      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
-    <xml.attributeDescriptorsProvider
-      implementation="com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptorsProvider"/>
-    <xml.elementDescriptorProvider
-      implementation="com.intellij.html.polySymbols.elements.PolySymbolElementDescriptorsProvider"/>
-
-    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
-                                  hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.polySymbols.elements.PolySymbolInTagNameRefProvider"/>
-    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
-                                  hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.polySymbols.attributes.PolySymbolInAttributeNameRefProvider"/>
-    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
-                                  hostLanguage="HtmlCompatible"
-                                  implementationClass="com.intellij.html.polySymbols.attributeValues.PolySymbolHtmlAttributeValueReferenceProvider"/>
-    <vetoRenameCondition implementation="com.intellij.html.polySymbols.HtmlPolySymbolRenameHandlerVeto"/>
-    <xml.xmlExtension implementation="com.intellij.html.polySymbols.PolySymbolsXmlExtension" id="poly-symbols"
-                      order="before html, after react"/>
   </extensions>
 </idea-plugin>
