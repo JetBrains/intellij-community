@@ -42,9 +42,21 @@ class InEditorGeneratedCodeIntegrator : GeneratedCodeIntegrator {
 
 class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeIntegrator) : ApiCallExtractor {
   override suspend fun extractApiCalls(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): List<String> {
-    val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY) ?: return emptyList()
+    val method = pasteGeneratedCode(code, allCodeSnippets, project, tokenProperties) ?: return emptyList()
+    return smartReadActionBlocking(project) {
+      extractCalledInternalApiMethods(method).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
+    }
+  }
+
+  override suspend fun extractExternalApiCalls(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): List<String> {
+    val method = pasteGeneratedCode(code, allCodeSnippets, project, tokenProperties) ?: return emptyList()
+    return smartReadActionBlocking(project) { extractCalledExternalApiMethodsQualifiedNames(method) }
+  }
+
+  private suspend fun pasteGeneratedCode(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): PsiElement? {
+    val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY) ?: return null
     val psiFileWithGeneratedCode = edtWriteAction { createPsiFile(code, project, "dummy1.java") }
-    val method = extractMethodFromGeneratedSnippet(project, psiFileWithGeneratedCode, methodName) ?: return emptyList()
+    val method = extractMethodFromGeneratedSnippet(project, psiFileWithGeneratedCode, methodName) ?: return null
 
     val imports = allCodeSnippets.flatMap {
       val tempPsifileWithImports = edtWriteAction { createPsiFile(it, project, UUID.randomUUID().toString() + ".java") }
@@ -54,11 +66,10 @@ class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeInt
     val psiFileWithIntegratedCode = edtWriteAction { createPsiFile(integratedCode, project, "dummy2.java") }
 
     return smartReadActionBlocking(project) {
-      val method = psiFileWithIntegratedCode.findMethodsByName(methodName).firstOrNull { it.text == method }
-                   ?: return@smartReadActionBlocking emptyList()
-      extractCalledInternalApiMethods(method).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
+      psiFileWithIntegratedCode.findMethodsByName(methodName).firstOrNull { it.text == method }
     }
   }
+
 
   private fun createPsiFile(code: String, project: Project, name: String): PsiFile {
     return PsiFileFactory.getInstance(project).createFileFromText(
