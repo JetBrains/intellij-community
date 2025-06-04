@@ -729,7 +729,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     final PsiClass aClass = (PsiClass)element;
     if (aClass instanceof PsiSyntheticClass) return null;
-    if (file instanceof PsiJavaFile javaFile) {
+    if (aClass == null && file instanceof PsiJavaFile javaFile) {
       PsiClass[] classes = javaFile.getClasses();
       if (classes.length == 1 && classes[0] instanceof PsiImplicitClass implicitClass &&
           implicitClass.getFirstChild() != null && PsiMethodUtil.hasMainMethod(implicitClass)) {
@@ -740,10 +740,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
 
-  public static @NotNull List<PsiMethod> overrideOrImplementMethodCandidates(@NotNull PsiClass aClass, @NotNull Collection<? extends CandidateInfo> candidatesToImplement,
+  public static @NotNull List<PsiMethod> overrideOrImplementMethodCandidates(@NotNull PsiClass aClass,
+                                                                             @NotNull Collection<? extends CandidateInfo> candidatesToImplement,
                                                                              boolean copyJavadoc) throws IncorrectOperationException {
-    boolean insert =
-      JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
+    boolean insert = JavaCodeStyleSettings.getInstance(aClass.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
     return overrideOrImplementMethodCandidates(aClass, candidatesToImplement, copyJavadoc, insert);
   }
 }
