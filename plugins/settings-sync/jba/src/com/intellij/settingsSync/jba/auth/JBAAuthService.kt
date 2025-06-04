@@ -245,6 +245,10 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
 
       return null
     }
+
+  internal var authRequiredAction: SettingsSyncAuthService.PendingUserAction? = null
+
+  override fun getPendingUserAction(userId: String): SettingsSyncAuthService.PendingUserAction? = authRequiredAction
 }
 
 private class LogInProgressDialog(parent: JComponent) : DialogWrapper(parent, false) {
