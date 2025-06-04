@@ -128,7 +128,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * Does not handle array types correctly
    * @deprecated use {@link DebuggerUtils#instanceOf(Type, String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isAssignableFrom(@NotNull String baseQualifiedName, @NotNull Type checkedType) {
     if (checkedType instanceof ReferenceType) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {

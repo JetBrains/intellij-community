@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReferenceParser extends BasicReferenceParser {
 
   /** @deprecated use {@link BasicReferenceParser#EAT_LAST_DOT} instead **/
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final int EAT_LAST_DOT = 0x01;
   /** @deprecated use {@link BasicReferenceParser#ELLIPSIS} instead **/
@@ -20,6 +21,7 @@ public class ReferenceParser extends BasicReferenceParser {
   @Deprecated
   public static final int ELLIPSIS = 0x02;
   /** @deprecated use {@link BasicReferenceParser#WILDCARD} instead **/
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final int WILDCARD = 0x04;
   /** @deprecated use {@link BasicReferenceParser#DIAMONDS} instead **/

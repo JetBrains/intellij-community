@@ -253,7 +253,7 @@ public class BreakpointManager {
   /**
    * @deprecated use {@link #addExceptionBreakpoint(String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable ExceptionBreakpoint addExceptionBreakpoint(final @NotNull String exceptionClassName, final String packageName) {
     return addExceptionBreakpoint(exceptionClassName);
   }

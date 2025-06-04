@@ -27,6 +27,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -69,6 +70,7 @@ public final class JavaParserUtil {
   /**
    * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER =
     WhiteSpaceAndCommentSetHolder.INSTANCE.getPrecedingCommentBinder(LanguageLevel.HIGHEST);
@@ -76,6 +78,7 @@ public final class JavaParserUtil {
   /**
    * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER =
     WhiteSpaceAndCommentSetHolder.INSTANCE.getSpecialPrecedingCommentBinder(LanguageLevel.HIGHEST);
@@ -83,6 +86,7 @@ public final class JavaParserUtil {
   /**
    * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER =
     WhiteSpaceAndCommentSetHolder.INSTANCE.getTrailingCommentBinder();
