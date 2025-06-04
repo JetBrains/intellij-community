@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTipsProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode as withKotlinSampleCodeImpl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips as prepareKotlinSampleOnboardingTipsImpl
+import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode as withKotlinSampleCodeImpl
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use AssetsKotlin util instead")
 abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
 
