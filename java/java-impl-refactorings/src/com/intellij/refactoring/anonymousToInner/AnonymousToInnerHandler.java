@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.ig.jdk.VarargParameterInspection;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
 
   protected VariableInfo[] myVariableInfos;
   protected boolean myMakeStatic;
-  private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<>();
+  private final List<PsiTypeParameter> myTypeParametersToCreate = new ArrayList<>();
 
   @Override
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
@@ -224,10 +225,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     buf.append(innerClass.getName());
     if (!myTypeParametersToCreate.isEmpty()) {
       buf.append("<");
-      int idx = 0;
-      for (Iterator<PsiTypeParameter> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
+      for (int idx = 0; idx < myTypeParametersToCreate.size(); idx++) {
         if (idx > 0) buf.append(", ");
-        String typeParamName = it.next().getName();
+        String typeParamName = myTypeParametersToCreate.get(idx).getName();
         buf.append(typeParamName);
       }
       buf.append(">");
@@ -714,8 +714,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     }
   }
 
-  private void calculateTypeParametersToCreate () {
+  private void calculateTypeParametersToCreate() {
+    Deque<PsiElement> visitQueue = new ArrayDeque<>();
+
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+      private final Set<PsiTypeParameter> myAddedTypeParameters = new HashSet<>();
+
       @Override
       public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
@@ -724,18 +728,28 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
           final PsiTypeParameterListOwner owner = typeParameter.getOwner();
           if (owner != null && !PsiTreeUtil.isAncestor(myAnonOrLocalClass, owner, false) &&
               (!PsiTreeUtil.isAncestor(owner, myTargetClass, false) || myMakeStatic)) {
-            myTypeParametersToCreate.add(typeParameter);
+            if (myAddedTypeParameters.add(typeParameter)) {
+              myTypeParametersToCreate.add(typeParameter);
+              visitQueue.add(typeParameter.getExtendsList());
+            }
           }
         }
       }
     };
-    myAnonOrLocalClass.accept(visitor);
+
+    visitQueue.add(myAnonOrLocalClass);
     for (VariableInfo info : myVariableInfos) {
       PsiTypeElement typeElement = info.variable.getTypeElement();
       if (typeElement != null) {
-        typeElement.accept(visitor);
+        visitQueue.add(typeElement);
       }
     }
+    while (!visitQueue.isEmpty()) {
+      visitQueue.remove().accept(visitor);
+    }
+
+    // Need the elements to appear in order so that type parameters aren't used before their declaration
+    myTypeParametersToCreate.sort(PsiElementOrderComparator.getInstance());
   }
 
   @Override
