@@ -68,5 +68,8 @@
     <orderEntry type="library" name="ktor-client-core" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.mcpserver.stdio" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-debug" level="project" />
   </component>
 </module>

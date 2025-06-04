@@ -51,6 +51,9 @@ jvm_library(
     "@lib//:ktor-client-core",
     "@lib//:netty-codec-http",
     "@lib//:netty-buffer",
+    "//plugins/mcp-server/mcpserver.stdio",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-debug",
   ],
   exports = ["@lib//:jetbrains-annotations"],
   runtime_deps = [":mcpserver_resources"]

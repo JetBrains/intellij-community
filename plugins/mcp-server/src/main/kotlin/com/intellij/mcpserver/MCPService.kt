@@ -164,6 +164,7 @@ data class ToolInfo(
     val inputSchema: JsonSchemaObject
 )
 
+// keep in sync with com.intellij.mcpserver.stdio.Response
 @Serializable
 data class Response(
     val status: String? = null,
