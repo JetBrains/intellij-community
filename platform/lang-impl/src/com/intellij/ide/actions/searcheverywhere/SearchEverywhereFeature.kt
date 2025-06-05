@@ -6,6 +6,7 @@ import com.intellij.frontend.FrontendType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 object SearchEverywhereFeature {
@@ -20,4 +21,10 @@ object SearchEverywhereFeature {
     if (PlatformUtils.isRider()) "search.everywhere.new.rider.enabled"
     else if (isCwmClient) "search.everywhere.new.cwm.client.enabled"
     else "search.everywhere.new.enabled"
+
+  @get:TestOnly
+  val additionalRegistryToTurnOffSplitInTests: Map<String, String>
+    get() = mapOf("search.everywhere.new.enabled" to "false",
+                  "search.everywhere.new.rider.enabled" to "false",
+                  "search.everywhere.new.cwm.client.enabled" to "false")
 }
