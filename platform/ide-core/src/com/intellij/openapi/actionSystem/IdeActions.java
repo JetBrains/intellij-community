@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
  * Identifiers for standard actions and action groups.
  */
@@ -173,6 +171,7 @@ public interface IdeActions {
 
   String ACTION_FIND_USAGES = "FindUsages";
   String ACTION_FIND_IN_PATH = "FindInPath";
+  String ACTION_FIND_SELECTION_IN_PATH = "FindSelectionInPath";
   String ACTION_REPLACE_IN_PATH = "ReplaceInPath";
 
   String ACTION_TYPE_HIERARCHY = "TypeHierarchy";
