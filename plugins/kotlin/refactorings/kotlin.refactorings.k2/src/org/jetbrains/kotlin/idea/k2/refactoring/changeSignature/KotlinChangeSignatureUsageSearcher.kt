@@ -69,7 +69,7 @@ internal object KotlinChangeSignatureUsageSearcher {
         }
         if (ktCallableDeclaration is KtFunction &&
             changeInfo is KotlinChangeInfo &&
-            (changeInfo.oldReceiverInfo == null || changeInfo.newParameters.any { it.oldIndex == changeInfo.oldReceiverInfo!!.oldIndex }) &&
+            (changeInfo.oldReceiverInfo == null || changeInfo.newParameters.any { it.oldIndex == changeInfo.oldReceiverInfo.oldIndex && !it.wasContextParameter }) &&
             changeInfo.receiverParameterInfo?.oldIndex != changeInfo.oldReceiverInfo?.oldIndex
         ) {
             findReceiverReferences(ktCallableDeclaration, result, changeInfo)
@@ -133,7 +133,7 @@ internal object KotlinChangeSignatureUsageSearcher {
 
     internal fun findReceiverReferences(ktCallableDeclaration: KtCallableDeclaration, result: MutableList<in UsageInfo>, changeInfo: KotlinChangeInfo) {
         analyze(ktCallableDeclaration) {
-            val originalReceiverInfo = changeInfo.oldReceiverInfo
+            val originalReceiverInfo = changeInfo.newParameters.find { it.oldIndex == 0 && !it.wasContextParameter }.takeIf { changeInfo.oldReceiverInfo != null } ?: changeInfo.oldReceiverInfo
             val originalReceiverType = ktCallableDeclaration.receiverTypeReference?.type
             ktCallableDeclaration.accept(object : KtTreeVisitorVoid() {
 
