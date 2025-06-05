@@ -64,7 +64,8 @@ interface FindRemoteApi : RemoteApi<Unit> {
  * @property length The length of the search result in characters.
  * @property originalLength The original length of the search result text before the merging results, if applicable.
  * @property fileId The unique identifier of the file containing the search result.
- * @property presentablePath A user-readable path to the file containing the search result.
+ * @property presentablePath A user-readable path to the file containing the search result in the preview line.
+ * @property shortenPresentablePath A user-readable path to the file containing the search result in the list of results.
  * @property backgroundColor The background color depends on the search scope.
  * @property tooltipText The tooltip text to be displayed when hovering over the result, if available.
  * @property iconId The identifier for an icon, if any.
@@ -80,6 +81,7 @@ data class FindInFilesResult(
   val originalLength: Int,
   val fileId: VirtualFileId,
   val presentablePath: @NlsSafe String,
+  val shortenPresentablePath: @NlsSafe String,
   val backgroundColor: ColorId?,
   val tooltipText: @NlsContexts.Tooltip String?,
   val iconId: IconId?,

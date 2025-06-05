@@ -14,6 +14,6 @@ private class UsageInfoModelPresentationProvider: UsagePresentationProvider {
     if (usageInfo !is UsageInfoModel) return null
     val model = usageInfo.model
     return UsagePresentation(model.presentation.map { it.textChunk() }.toTypedArray(),
-                             model.backgroundColor?.color(), model.presentablePath)
+                             model.backgroundColor?.color(), model.shortenPresentablePath)
   }
 }
