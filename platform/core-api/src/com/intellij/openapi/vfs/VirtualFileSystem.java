@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstanceEP;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +51,18 @@ public abstract class VirtualFileSystem {
   public abstract @Nullable VirtualFile findFileByPath(@NotNull @NonNls String path);
 
   /**
+   * Searches for a file specified by the given ID.
+   * The ID is a number that uniquely identifies file within given {@link VirtualFileSystem}.
+   *
+   * @param id the ID to find file by
+   * @return a virtual file if found, {@code null} otherwise
+   */
+  @ApiStatus.Internal
+  public @Nullable VirtualFile findFileById(int id) {
+    return null;
+  }
+
+  /**
    * Fetches presentable URL of file with the given path in this file system.
    *
    * @param path the path to get presentable URL for
@@ -88,6 +101,23 @@ public abstract class VirtualFileSystem {
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    */
   public abstract @Nullable VirtualFile refreshAndFindFileByPath(@NotNull String path);
+
+  /**
+   * Refreshes only the part of the file system needed for searching the file by the given ID and finds file by the given ID.
+   * <p>
+   * This method is useful when the file was created externally, and you need to find a corresponding {@link VirtualFile}.
+   * <p>
+   * If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action. The reason is that
+   * then the method call won't return until proper VFS events are fired, which happens on Swing thread and in write action. So invoking
+   * this method in a read action would result in a deadlock.
+   *
+   * @param id the ID
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   */
+  @ApiStatus.Internal
+  public @Nullable VirtualFile refreshAndFindFileById(int id) {
+    return null;
+  }
 
   /**
    * Adds listener to the file system. Normally one should use {@link VirtualFileManager#VFS_CHANGES} message bus topic.

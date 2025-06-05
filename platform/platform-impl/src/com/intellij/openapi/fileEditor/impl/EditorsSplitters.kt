@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileTooBigException
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -288,7 +289,7 @@ open class EditorsSplitters internal constructor(
       removeAll()
     }
 
-    if (PlatformUtils.isJetBrainsClient()) {
+    if (PlatformUtils.isJetBrainsClient() && !Registry.`is`("editor.rd.reopen.editors.on.frontend")) {
       // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
       return
     }
@@ -315,7 +316,7 @@ open class EditorsSplitters internal constructor(
 
   internal suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    if (PlatformUtils.isJetBrainsClient()) {
+    if (PlatformUtils.isJetBrainsClient() && !Registry.`is`("editor.rd.reopen.editors.on.frontend")) {
       // Don't reopen editors from local files on JetBrains Client, it is done from the backend
       return
     }
@@ -1088,7 +1089,8 @@ private fun computeFileEntry(
   // do not expose `file` variable to avoid using it instead of `fileProvider`
   val fileProviderDeferred = compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
     // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
-    if (notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
+    // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
+    if (!PlatformUtils.isJetBrainsClient() && notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
       ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
         try {
           notFullyPreparedFile.contentsToByteArray(true)
@@ -1108,12 +1110,18 @@ private fun computeFileEntry(
 
   val fileProvider = suspend { fileProviderDeferred.await() }
 
-  val model = fileEditorManager.createEditorCompositeModelOnStartup(
-    compositeCoroutineScope = compositeCoroutineScope,
-    fileProvider = fileProvider,
-    fileEntry = fileEntry,
-    isLazy = !fileEntry.currentInTab && isLazyComposite,
-  )
+  // In the case of the JetBrains client, the model isn't used since the editor composite is requested from the backend
+  val model = if (PlatformUtils.isJetBrainsClient()) {
+    emptyFlow()
+  }
+  else {
+    fileEditorManager.createEditorCompositeModelOnStartup(
+      compositeCoroutineScope = compositeCoroutineScope,
+      fileProvider = fileProvider,
+      fileEntry = fileEntry,
+      isLazy = !fileEntry.currentInTab && isLazyComposite,
+    )
+  }
 
   val tabTitleTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
     EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileProvider())
@@ -1258,7 +1266,14 @@ internal data class FileToOpen(
 )
 
 private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: VirtualFileManager): VirtualFile? {
-  val file = virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
+  // In the case of the JetBrains client, it's better to find the file by its ID to avoid a blocking protocol call inside
+  // [VirtualFileManager.findFileByUrl]
+  val file = if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
+    virtualFileManager.findFileByUrlPreferringId(fileEntry.url, fileEntry.id) ?: virtualFileManager.refreshAndFindFileByUrlPreferringId(fileEntry.url, fileEntry.id)
+  }
+  else {
+    virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
+  }
   if (file != null && file.isValid) {
     return file
   }

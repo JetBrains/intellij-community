@@ -80,6 +80,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
@@ -2176,11 +2177,17 @@ open class FileEditorManagerImpl(
     for (item in items) {
       val fileEntry = item.fileEntry
       val file = item.file
-      val composite = createCompositeByEditorWithModel(
-        file = file,
-        model = item.model,
-        coroutineScope = item.scope,
-      ) ?: continue
+      // In the case of the JetBrains client, the editor composite is requested from the backend
+      val composite = if (PlatformUtils.isJetBrainsClient()) {
+        createCompositeAndModel(file, window, fileEntry)
+      }
+      else {
+        createCompositeByEditorWithModel(
+          file = file,
+          model = item.model,
+          coroutineScope = item.scope,
+        )
+      } ?: continue
 
       if (fileEntry.currentInTab || !isLazyComposite) {
         composite.initDeferred.complete(Unit)

@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignC
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
+import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ID_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -35,6 +36,8 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -764,6 +767,7 @@ open class EditorComposite internal constructor(
     }
     return FileEntry(
       url = file.url,
+      id = (file as? VirtualFileWithId)?.id.takeIf { it != FSRecords.NULL_FILE_ID },
       selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
       isPreview = isPreview,
       providers = stateMap,
@@ -778,6 +782,7 @@ open class EditorComposite internal constructor(
     val selectedEditorWithProvider = selectedEditorWithProvider.value
     val element = Element(TAG)
     element.setAttribute(FILE_ATTRIBUTE, file.url)
+    (file as? VirtualFileWithId)?.id?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
     for (fileEditorWithProvider in fileEditorWithProviders.value) {
       val providerElement = Element(PROVIDER_ELEMENT)
       val provider = fileEditorWithProvider.provider
@@ -803,6 +808,7 @@ open class EditorComposite internal constructor(
   internal fun writeDelayedStateAsHistoryEntry(entry: FileEntry): Element {
     val element = Element(TAG)
     element.setAttribute(FILE_ATTRIBUTE, entry.url)
+    entry.id?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
     for ((typeId, stateElement) in entry.providers) {
       val providerElement = Element(PROVIDER_ELEMENT)
       providerElement.setAttribute(EDITOR_TYPE_ID_ATTRIBUTE, typeId)

@@ -85,6 +85,24 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
+   * Searches for a file specified by the given {@link VirtualFile#getUrl() URL} using the given {@link VirtualFileWithId#getId() ID}
+   * instead of the URL path if possible.
+   *
+   * @param url the URL to find a file by
+   * @param id the ID to use instead of the URl path if possible
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   * @see VirtualFile#getUrl
+   * @see VirtualFileWithId#getId
+   * @see VirtualFileSystem#findFileById
+   * @see VirtualFileSystem#findFileByPath
+   * @see #refreshAndFindFileByUrlPreferringId
+   */
+  @ApiStatus.Internal
+  public @Nullable VirtualFile findFileByUrlPreferringId(@NotNull String url, int id) {
+    return null;
+  }
+
+  /**
    * Looks for a related {@link VirtualFile} for a given {@link Path}
    *
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
@@ -109,6 +127,27 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileSystem#refreshAndFindFileByPath
    */
   public @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
+    return null;
+  }
+
+  /**
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds a file by the given URL using
+   * the given ID instead of the URL path if possible.</p>
+   *
+   * <p>This method is useful when the file was created externally, and you need to find a {@link VirtualFile} corresponding to it.</p>
+   *
+   * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
+   *
+   * @param url the URL
+   * @param id the ID
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   * @see VirtualFileSystem#findFileById
+   * @see VirtualFileSystem#findFileByPath
+   * @see VirtualFileSystem#refreshAndFindFileById
+   * @see VirtualFileSystem#refreshAndFindFileByPath
+   */
+  @ApiStatus.Internal
+  public @Nullable VirtualFile refreshAndFindFileByUrlPreferringId(@NotNull String url, int id) {
     return null;
   }
 
