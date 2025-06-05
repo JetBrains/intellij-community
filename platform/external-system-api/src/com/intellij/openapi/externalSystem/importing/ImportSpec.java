@@ -45,6 +45,8 @@ public interface ImportSpec {
 
   boolean isPreviewMode();
 
+  boolean shouldImportProjectData();
+
   boolean shouldCreateDirectoriesForEmptyContentRoots();
 
   boolean isActivateBuildToolWindowOnStart();

@@ -315,6 +315,7 @@ com.intellij.openapi.externalSystem.importing.ImportSpec
 - a:isNavigateToError():com.intellij.util.ThreeState
 - a:isPreviewMode():Z
 - a:shouldCreateDirectoriesForEmptyContentRoots():Z
+- a:shouldImportProjectData():Z
 c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - <init>(com.intellij.openapi.externalSystem.importing.ImportSpec):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
@@ -331,6 +332,10 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withActivateToolWindowOnFailure(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withActivateToolWindowOnStart(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withArguments(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withCallback(com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withCallback(java.util.concurrent.CompletableFuture):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withCallback(java.util.function.Consumer):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withImportProjectData(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withPreviewMode(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withRerunAction(java.lang.Runnable):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder

@@ -1181,6 +1181,8 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 - s:isNewProject(com.intellij.openapi.project.Project):Z
 - s:isNoBackgroundMode():Z
 - s:linkExternalProject(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.settings.ExternalProjectSettings,com.intellij.openapi.project.Project,com.intellij.util.Consumer,Z,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):V
+- s:linkExternalProject(com.intellij.openapi.externalSystem.settings.ExternalProjectSettings,com.intellij.openapi.externalSystem.importing.ImportSpec):V
+- s:linkExternalProject(com.intellij.openapi.externalSystem.settings.ExternalProjectSettings,com.intellij.openapi.externalSystem.importing.ImportSpecBuilder):V
 - s:naturalJoinSystemIds(java.util.Collection):java.lang.String
 - s:refreshAndFindFileByIoFile(java.io.File):com.intellij.openapi.vfs.VirtualFile
 - s:refreshProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback,Z,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):V

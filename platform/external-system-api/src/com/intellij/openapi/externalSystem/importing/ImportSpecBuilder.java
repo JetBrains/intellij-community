@@ -15,6 +15,9 @@ import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -30,6 +33,7 @@ public class ImportSpecBuilder {
   private @NotNull ThreeState isNavigateToError = ThreeState.UNSURE;
   private @Nullable String myVmOptions = null;
   private @Nullable String myArguments = null;
+  private boolean myImportProjectData = true;
   private boolean myCreateDirectoriesForEmptyContentRoots = false;
   private @Nullable ProjectResolverPolicy myProjectResolverPolicy = null;
   private @Nullable Runnable myRerunAction = null;
@@ -51,6 +55,7 @@ public class ImportSpecBuilder {
     isNavigateToError = importSpec.isNavigateToError();
     myVmOptions = importSpec.getVmOptions();
     myArguments = importSpec.getArguments();
+    myImportProjectData = importSpec.shouldImportProjectData();
     myCreateDirectoriesForEmptyContentRoots = importSpec.shouldCreateDirectoriesForEmptyContentRoots();
     myProjectResolverPolicy = importSpec.getProjectResolverPolicy();
     myRerunAction = importSpec.getRerunAction();
@@ -71,9 +76,52 @@ public class ImportSpecBuilder {
     return this;
   }
 
+
+  /**
+   * @deprecated Use {@link #withCallback} function instead.
+   */
+  @Deprecated
   public ImportSpecBuilder callback(@Nullable ExternalProjectRefreshCallback callback) {
+    if (callback != null) {
+      myImportProjectData = false;
+    }
     myCallback = callback;
     return this;
+  }
+
+  public ImportSpecBuilder withCallback(@NotNull ExternalProjectRefreshCallback callback) {
+    myCallback = callback;
+    return this;
+  }
+
+  public ImportSpecBuilder withCallback(@NotNull CompletableFuture<Void> future) {
+    return withCallback(new ExternalProjectRefreshCallback() {
+
+      @Override
+      public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
+        future.complete(null);
+      }
+
+      @Override
+      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+        future.completeExceptionally(new RuntimeException(errorMessage));
+      }
+    });
+  }
+
+  public ImportSpecBuilder withCallback(@NotNull Consumer<Boolean> callback) {
+    return withCallback(new ExternalProjectRefreshCallback() {
+
+      @Override
+      public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
+        callback.accept(true);
+      }
+
+      @Override
+      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+        callback.accept(false);
+      }
+    });
   }
 
   public ImportSpecBuilder usePreviewMode() {
@@ -83,6 +131,12 @@ public class ImportSpecBuilder {
   @CheckReturnValue
   public ImportSpecBuilder withPreviewMode(boolean isPreviewMode) {
     this.isPreviewMode = isPreviewMode;
+    return this;
+  }
+
+  @CheckReturnValue
+  public ImportSpecBuilder withImportProjectData(boolean importProjectData) {
+    myImportProjectData = importProjectData;
     return this;
   }
 
@@ -133,6 +187,9 @@ public class ImportSpecBuilder {
 
   @ApiStatus.Experimental
   public ImportSpecBuilder projectResolverPolicy(@NotNull ProjectResolverPolicy projectResolverPolicy) {
+    if (projectResolverPolicy.isPartialDataResolveAllowed()) {
+      myImportProjectData = false;
+    }
     myProjectResolverPolicy = projectResolverPolicy;
     return this;
   }
@@ -154,6 +211,7 @@ public class ImportSpecBuilder {
       myProgressExecutionMode,
       myCallback,
       isPreviewMode,
+      myImportProjectData,
       myCreateDirectoriesForEmptyContentRoots,
       isActivateBuildToolWindowOnStart,
       isActivateBuildToolWindowOnFailure,
@@ -166,12 +224,20 @@ public class ImportSpecBuilder {
     );
   }
 
+  /**
+   * @deprecated use {@link ImportSpecBuilder#withCallback} instead
+   */
+  @Deprecated
   @ApiStatus.Internal
   public static final class DefaultProjectRefreshCallback implements ExternalProjectRefreshCallback {
     private final Project myProject;
 
     public DefaultProjectRefreshCallback(ImportSpec spec) {
-      myProject = spec.getProject();
+      this(spec.getProject());
+    }
+
+    public DefaultProjectRefreshCallback(@NotNull Project project) {
+      myProject = project;
     }
 
     @Override
