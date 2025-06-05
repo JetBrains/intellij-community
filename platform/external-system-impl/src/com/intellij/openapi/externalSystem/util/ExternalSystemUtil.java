@@ -48,10 +48,7 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.manage.*;
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
@@ -84,6 +81,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.util.Consumer;
@@ -1022,18 +1020,24 @@ public final class ExternalSystemUtil {
     @NotNull ExternalProjectSettings projectSettings,
     @NotNull ImportSpec importSpec
   ) {
-    var systemSettings = ExternalSystemApiUtil.getSettings(importSpec.getProject(), importSpec.getExternalSystemId());
-    var existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
-    if (existingSettings != null) {
-      return;
-    }
+    TrackingUtil.trackActivity(importSpec.getProject(), ExternalSystemActivityKey.INSTANCE, () -> {
+      var systemSettings = ExternalSystemApiUtil.getSettings(importSpec.getProject(), importSpec.getExternalSystemId());
+      var existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
+      if (existingSettings != null) {
+        return;
+      }
 
-    //noinspection unchecked
-    systemSettings.linkProject(projectSettings);
+      //noinspection unchecked
+      systemSettings.linkProject(projectSettings);
 
-    refreshProject(projectSettings.getExternalProjectPath(), new ImportSpecBuilder(importSpec)
-      .withSelectProjectDataToImport(systemSettings.showSelectiveImportDialogOnInitialImport())
-    );
+      if (!Registry.is("external.system.auto.import.disabled")) {
+        ExternalProjectsManager.getInstance(importSpec.getProject()).runWhenInitialized(() -> {
+          refreshProject(projectSettings.getExternalProjectPath(), new ImportSpecBuilder(importSpec)
+            .withSelectProjectDataToImport(systemSettings.showSelectiveImportDialogOnInitialImport())
+          );
+        });
+      }
+    });
   }
 
   public static @Nullable VirtualFile refreshAndFindFileByIoFile(final @NotNull File file) {
