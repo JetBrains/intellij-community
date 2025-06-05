@@ -1285,6 +1285,70 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob")
+        public static class ForEachJoinOnCollectionOfJob extends AbstractSharedK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("arrayReceiver.kt")
+            public void testArrayReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/arrayReceiver.kt");
+            }
+
+            @TestMetadata("basicCall.kt")
+            public void testBasicCall() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/basicCall.kt");
+            }
+
+            @TestMetadata("basicCall_caretInsideLambda.kt")
+            public void testBasicCall_caretInsideLambda() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/basicCall_caretInsideLambda.kt");
+            }
+
+            @TestMetadata("basicCall_withStarImport.kt")
+            public void testBasicCall_withStarImport() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/basicCall_withStarImport.kt");
+            }
+
+            @TestMetadata("customParameterName.kt")
+            public void testCustomParameterName() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/customParameterName.kt");
+            }
+
+            @TestMetadata("implicitReceiver.kt")
+            public void testImplicitReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/implicitReceiver.kt");
+            }
+
+            @TestMetadata("jobSubclass.kt")
+            public void testJobSubclass() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/jobSubclass.kt");
+            }
+
+            @TestMetadata("multipleStatementsInLambda.kt")
+            public void testMultipleStatementsInLambda() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/multipleStatementsInLambda.kt");
+            }
+
+            @TestMetadata("nonJoinLambda.kt")
+            public void testNonJoinLambda() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/nonJoinLambda.kt");
+            }
+
+            @TestMetadata("wrongJoinReceiver.kt")
+            public void testWrongJoinReceiver() throws Exception {
+                runTest("../testData/inspectionsLocal/coroutines/forEachJoinOnCollectionOfJob/wrongJoinReceiver.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspectionsLocal/coroutines/mapAwaitOnCollectionOfDeferred")
         public static class MapAwaitOnCollectionOfDeferred extends AbstractSharedK2LocalInspectionTest {
             @java.lang.Override
