@@ -419,7 +419,7 @@ object K2UnusedSymbolUtil {
 
             if (declaration is KtEnumEntry) {
                 val enumClass = declarationContainingClass?.takeIf { it.isEnum() }
-                if (hasBuiltInEnumFunctionReference(enumClass, useScope, declaration)) return true
+                if (hasBuiltInEnumFunctionReference(enumClass, useScope)) return true
             }
         }
 
@@ -493,10 +493,11 @@ object K2UnusedSymbolUtil {
     }
 
     context(KaSession)
-    private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope, declaration: KtNamedDeclaration): Boolean {
+    private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
         if (enumClass == null) return false
         val isFoundEnumFunctionReferenceViaSearch = referenceExists(enumClass, useScope) {
-            analyze(declaration) {
+            val ktElement = it.element as? KtElement ?: return@referenceExists false
+            analyze(ktElement) {
                 hasBuiltInEnumFunctionReference(it, enumClass)
             }
         }
