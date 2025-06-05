@@ -3,11 +3,13 @@ package com.intellij.internal.inspector.themePicker
 
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.MouseShortcut
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.awt.*
+import java.awt.event.InputEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
@@ -44,6 +47,8 @@ import javax.swing.*
 private const val THEME_VIEWER_UI_MARKER_KEY = "ThemeColorPopupIdentity"
 private const val TOOL_WINDOW_ID = "UI Theme Color Picker"
 
+private val UPDATE_TABLE_SHORTCUT = MouseShortcut(MouseEvent.BUTTON1, InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK, 1)
+
 @Service(Service.Level.APP)
 @State(name = "UiThemeColorPickerState", storages = [Storage("other.xml")])
 internal class UiThemeColorPickerState : SimplePersistentStateComponent<UiThemeColorPickerState.State>(State()) {
@@ -54,6 +59,7 @@ internal class UiThemeColorPickerState : SimplePersistentStateComponent<UiThemeC
 
 @Service(Service.Level.APP)
 internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
+
   private var disposable: Disposable? = null
 
   private val colorMap = WeakHashMap<Window, PixelColorMap>()
@@ -138,7 +144,7 @@ internal class UiThemeColorPicker(internal val coroutineScope: CoroutineScope) {
     }
     val mouseClickListener = object : MouseAdapter() {
       override fun mousePressed(e: MouseEvent) {
-        if (e.isControlDown && e.isShiftDown && e.isAltDown && e.button == MouseEvent.BUTTON1) {
+        if (UPDATE_TABLE_SHORTCUT == KeymapUtil.createMouseShortcut(e)) {
           val point = RelativePoint(e)
           if (isOurOwnUi(point)) return
 
@@ -250,6 +256,7 @@ internal class UiThemeColorPickerToolWindowFactory : ToolWindowFactory, DumbAwar
         val mixerRegistry = Registry.get("ide.color.mixture.mark.colors")
         checkBox("Enable color markers in runtime").applyToComponent {
           isSelected = editorRegistry.asBoolean() && mixerRegistry.asBoolean()
+          toolTipText = "May affect IDE performance and behavior on theme changes"
           addItemListener {
             invokeLater { // swing weirdness
               if (isSelected) {
@@ -273,7 +280,7 @@ internal class UiThemeColorPickerToolWindowFactory : ToolWindowFactory, DumbAwar
         }
       }
       row {
-        comment("Use Ctrl-Shift-Alt-Click to show hovered colors below")
+        comment("Use ${KeymapUtil.getShortcutText(UPDATE_TABLE_SHORTCUT)} to show hovered colors below")
       }
       row {
         scrollCell(createThemeColorList())
