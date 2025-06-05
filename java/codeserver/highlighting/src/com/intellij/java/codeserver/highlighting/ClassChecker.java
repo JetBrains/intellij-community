@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -402,8 +403,22 @@ final class ClassChecker {
     PsiMethod[] methods = implicitClass.getMethods();
     boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method));
     if (!hasMainMethod) {
+      //don't show errors if the file contains broken {}
+      if(hasErrorElementWithBraces(file)) return;
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_NO_MAIN_METHOD.create(file, implicitClass));
     }
+  }
+
+  private static boolean hasErrorElementWithBraces(@NotNull PsiElement parentElement) {
+    Ref<Boolean> result = new Ref<>(false);
+    PsiWalkingState.processAll(parentElement, el -> {
+      if (el instanceof PsiErrorElement element &&
+          (element.getText().contains("}") || element.getText().contains("{"))) {
+        result.set(true);
+        return false;
+      } else return true;
+    });
+    return result.get();
   }
 
   void checkImplicitClassMember(@NotNull PsiMember member) {
@@ -448,7 +463,9 @@ final class ClassChecker {
   }
 
   void checkPackageNotAllowedInImplicitClass(@NotNull PsiPackageStatement statement) {
-    if (myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASSES) && JavaImplicitClassUtil.isFileWithImplicitClass(myVisitor.file())) {
+    if (myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASSES) &&
+        JavaImplicitClassUtil.isFileWithImplicitClass(myVisitor.file()) &&
+        !hasErrorElementWithBraces(myVisitor.file())) {
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_PACKAGE.create(statement));
     }
   }
