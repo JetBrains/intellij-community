@@ -69,6 +69,23 @@ fun PluginSpecBuilder.appService(classFqn: String) {
 
 inline fun <reified T> PluginSpecBuilder.appService(): Unit = appService(T::class.java.name)
 
+fun PluginSpecBuilder.extensionPoint(interfaceFqn: String, epFqn: String, dynamic: Boolean) {
+  extensionPoints += """
+    <extensionPoint qualifiedName="$epFqn" interface="$interfaceFqn" dynamic="$dynamic"/>
+  """.trimIndent()
+}
+
+inline fun <reified T> PluginSpecBuilder.extensionPoint(epFqn: String, dynamic: Boolean): Unit = extensionPoint(T::class.java.name, epFqn, dynamic)
+
+fun PluginSpecBuilder.extension(classFqn: String, epFqn: String) {
+  require(epFqn.contains('.')) { "extension point fqn must contain a dot: $epFqn" }
+  val ns = epFqn.substringBefore('.')
+  val ep = epFqn.substringAfter('.')
+  extensions("""<$ep implementation="$classFqn"/>""", ns)
+}
+
+inline fun <reified T> PluginSpecBuilder.extension(epFqn: String): Unit = extension(T::class.java.name, epFqn)
+
 fun PluginSpecBuilder.pluginAlias(id: String) {
   pluginAliases += id
 }
