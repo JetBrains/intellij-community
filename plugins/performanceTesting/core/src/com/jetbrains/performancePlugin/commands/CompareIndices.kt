@@ -42,6 +42,8 @@ import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import com.jetbrains.performancePlugin.utils.errors.ErrorCollector
 import com.jetbrains.performancePlugin.utils.errors.ToDirectoryWritingErrorCollector
 import com.jetbrains.performancePlugin.utils.indexes.CurrentIndexedFileResolver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 import java.io.File
@@ -53,6 +55,8 @@ import kotlin.io.path.readText
 
 internal const val PREFIX = AbstractCommand.CMD_PREFIX + "compareIndices"
 private val LOG = logger<CompareIndices>()
+
+private const val LIMIT_OF_ERRORS_PER_COLLECTOR = 100
 
 /**
  * Fully compares two indexes built for the same project: the *stored* index and the *current* index,
@@ -77,11 +81,6 @@ private val LOG = logger<CompareIndices>()
  * The folder with the stored indices should be defined by the parameter '-Dcompare.indices.command.stored.indexes.directory'.
  */
 internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, line) {
-
-  private companion object {
-    private const val LIMIT_OF_ERRORS_PER_COLLECTOR = 100
-  }
-
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback = ActionCallbackProfilerStopper()
     val storedIndexDir = getStoredIndicesDirectory()
@@ -159,6 +158,7 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     System.getProperty("compare.indices.file.types.with.no.stub.tree", "").split(",").filterNot { it.isEmpty() }.toSet()
   }
 
+  @Suppress("RAW_RUN_BLOCKING")
   private fun compareIndexes(storedIndexDir: Path, indicator: ProgressIndicator, project: Project) {
     val failureDiagnosticDirectory = getFailureDiagnosticDirectory()
     (FileBasedIndex.getInstance() as FileBasedIndexImpl).flushIndexes()
@@ -199,23 +199,25 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     val comparisonTaskProgressManager = ConcurrentTasksProgressManager(indicator, idsToCompare.size)
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(idsToCompare, indicator, Processor { id ->
       val subIndicator = comparisonTaskProgressManager.createSubTaskIndicator(1)
-      val (extension, disposable) = runReadAction { findFileBasedIndexExtension(id, storedIndexDir) }
-      try {
-        val errorCollector = errorCollectors.getValue(id)
-        compareCurrentAndStoredIndexData(
-          resolvedFiles,
-          extension,
-          storedIndexDir,
-          subIndicator,
-          errorCollector,
-          project
-        )
-      }
-      catch (e: Exception) {
-        LOG.warn("Index comparison for ${id.name} has failed", e)
-      }
-      finally {
-        runCatching { Disposer.dispose(disposable) }.onFailure { LOG.warn(it) }
+      runBlocking {
+        val (extension, disposable) = runReadAction { findFileBasedIndexExtension(id, storedIndexDir, coroutineScope = this@runBlocking) }
+        try {
+          val errorCollector = errorCollectors.getValue(id)
+          compareCurrentAndStoredIndexData(
+            resolvedFiles,
+            extension,
+            storedIndexDir,
+            subIndicator,
+            errorCollector,
+            project
+          )
+        }
+        catch (e: Exception) {
+          LOG.warn("Index comparison for ${id.name} has failed", e)
+        }
+        finally {
+          runCatching { Disposer.dispose(disposable) }.onFailure { LOG.warn(it) }
+        }
       }
       LOG.info("Index comparison has finished for ${finishedCounter.incrementAndGet()} / ${idsToCompare.size}")
       true
@@ -229,9 +231,13 @@ internal class CompareIndices(text: String, line: Int) : AbstractCommand(text, l
     LOG.info("Success. All indices are equal: ${idsToCompare.joinToString { it.name }}")
   }
 
-  private fun findFileBasedIndexExtension(id: ID<*, *>, storedIndexDir: Path): Pair<FileBasedIndexExtension<*, *>, Disposable> {
+  private fun findFileBasedIndexExtension(
+    id: ID<*, *>,
+    storedIndexDir: Path,
+    coroutineScope: CoroutineScope,
+  ): Pair<FileBasedIndexExtension<*, *>, Disposable> {
     return if (id.name == "Stubs") {
-      val storedSerializationManager = SerializationManagerImpl(storedIndexDir.resolve("rep.names"), true)
+      val storedSerializationManager = SerializationManagerImpl(storedIndexDir.resolve("rep.names"), true, coroutineScope)
       // Stored indexes must have been dumped with -D${com.intellij.psi.stubs.StubForwardIndexExternalizer.USE_SHAREABLE_STUBS_PROP}=true option specified
       // to make stubs be serialized in shareable form (when [ID.getUniqueId()] is not serialized but the [ID.getName()] ID name is).
       val nameStorageDump = storedSerializationManager.dumpNameStorage()

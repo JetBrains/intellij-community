@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.LanguageParserDefinitions;
@@ -20,13 +20,17 @@ import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.InMemoryDataEnumerator;
 import com.intellij.util.io.PersistentStringEnumerator;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -49,26 +53,28 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private volatile StubSerializerEnumerator mySerializerEnumerator;
   private volatile boolean mySerializersLoaded;
 
-  public SerializationManagerImpl() {
-    this(() -> FileBasedIndex.USE_IN_MEMORY_INDEX ? null : PathManager.getIndexRoot().resolve("rep.names"), false);
+  public SerializationManagerImpl(@NotNull CoroutineScope coroutineScope) {
+    this(() -> FileBasedIndex.USE_IN_MEMORY_INDEX ? null : PathManager.getIndexRoot().resolve("rep.names"), false, coroutineScope);
   }
 
   @NonInjectable
-  public SerializationManagerImpl(@NotNull Path nameStorageFile, boolean unmodifiable) {
-    this(() -> nameStorageFile, unmodifiable);
+  public SerializationManagerImpl(@NotNull Path nameStorageFile, boolean unmodifiable, @NotNull CoroutineScope coroutineScope) {
+    this(() -> nameStorageFile, unmodifiable, coroutineScope);
   }
 
   @NonInjectable
-  public SerializationManagerImpl(@NotNull Supplier<? extends @Nullable Path> nameStorageFile, boolean unmodifiable) {
+  public SerializationManagerImpl(@NotNull Supplier<? extends @Nullable Path> nameStorageFile,
+                                  boolean unmodifiable,
+                                  @NotNull CoroutineScope coroutineScope) {
     myFile = nameStorageFile;
     myUnmodifiable = unmodifiable;
     initialize();
-    StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
+    StubElementTypeHolderEP.EP_NAME.addChangeListener(coroutineScope, this::dropSerializerData);
     // todo IJPL-562 is this correct???
-    StubElementRegistryServiceImplKt.STUB_REGISTRY_EP.addChangeListener(this::dropSerializerData, this);
+    StubElementRegistryServiceImplKt.STUB_REGISTRY_EP.addChangeListener(coroutineScope, this::dropSerializerData);
     ExtensionPoint<@NotNull KeyedLazyInstance<@NotNull LanguageStubDefinition>> point = StubElementRegistryServiceImplKt.STUB_DEFINITION_EP.getPoint();
     if (point != null) {
-      point.addChangeListener(this::dropSerializerData, this);
+      point.addChangeListener(coroutineScope, this::dropSerializerData);
     }
   }
 
