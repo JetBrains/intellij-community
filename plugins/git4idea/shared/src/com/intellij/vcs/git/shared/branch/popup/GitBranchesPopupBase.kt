@@ -2,21 +2,17 @@
 package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.dvcs.branch.BranchType
+import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.util.*
-import com.intellij.platform.project.projectId
 import com.intellij.ui.*
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.popup.NextStepHandler
@@ -43,7 +39,6 @@ import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.selectFirst
 import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.selectLast
 import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.selectNext
 import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil.selectPrev
-import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import git4idea.GitBranch
 import git4idea.GitDisposable
 import git4idea.GitReference
@@ -87,13 +82,16 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
   protected lateinit var tree: Tree
     private set
 
-  private val treeStateHolder = project.service<GitBranchesPopupTreeStateHolder>()
-
   private var showingChildPath: TreePath? = null
   private var pendingChildPath: TreePath? = null
 
   protected val treeStep: T
     get() = step as T
+
+  protected val popupScope: CoroutineScope =
+    GitDisposable.getInstance(project).childScope("Git Branches Tree Popup").also {
+      Disposer.register(this) { it.cancel() }
+    }
 
   final override var userResized: Boolean
     private set
@@ -129,10 +127,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
       sink[GitBranchesPopupKeys.SELECTED_REPOSITORY] = treeStep.selectedRepository
     }
 
-    val widgetScope = GitDisposable.getInstance(project).childScope("Git Branches Tree Popup")
-    Disposer.register(this) { widgetScope.cancel() }
-
-    widgetScope.launch {
+    popupScope.launch {
       searchPatternStateFlow.drop(1).debounce(GitBranchesTreeUtil.FILTER_DEBOUNCE_MS).collectLatest { pattern ->
         withContext(Dispatchers.EDT) {
           applySearchPattern(pattern)
@@ -140,13 +135,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
       }
     }
 
-    if (!isNestedPopup()) {
-      widgetScope.launch {
-        GitUiSettingsApi.getInstance().initBranchSyncPolicyIfNotInitialized(project.projectId())
-      }
-    }
-
-    subscribeOnUpdates(widgetScope, project, step)
+    subscribeOnUpdates(popupScope, project, step)
   }
 
   protected abstract fun getSearchFiledEmptyText(): @Nls String
@@ -222,20 +211,15 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
   protected open fun getOldUiHeaderComponent(c: JComponent?): JComponent? = c
 
-  override fun createContent(): JComponent {
+  final override fun createContent(): JComponent {
     return installTree()
   }
 
-  @VisibleForTesting
-  internal fun installTree(): Tree {
+  protected open fun installTree(): Tree {
     tree = BranchesTree(treeStep.treeModel).also {
       configureTreePresentation(it)
       overrideTreeActions(it)
       addTreeListeners(it)
-      Disposer.register(this) {
-        treeStateHolder.saveStateFrom(it)
-        it.model = null
-      }
     }
     speedSearch.installSupplyTo(tree, false)
 
@@ -323,26 +307,23 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
       onSpeedSearchPatternChanged()
     }
     val group = am.getAction(GitBranchesPopupActions.SPEED_SEARCH_ACTION_GROUP) as DefaultActionGroup
+    val speedSearchDataContext = CustomizedDataContext.withSnapshot(DataManager.getInstance().getDataContext(mySpeedSearchPatternField.textEditor)) { sink ->
+      sink[CommonDataKeys.PROJECT] = project
+    }
     for (action in group.getChildren(am)) {
-      registerAction(am.getId(action),
-                     KeymapUtil.getKeyStroke(action.shortcutSet),
-                     createShortcutAction(action, false, mySpeedSearchPatternField.textEditor, updateSpeedSearch))
+      registerShortcutAction(action, closePopup = false, dataContext = speedSearchDataContext, afterActionPerformed = updateSpeedSearch)
     }
   }
 
   private fun installShortcutActions(model: TreeModel) {
-    val root = model.root
-    (0 until model.getChildCount(root))
-      .asSequence()
-      .map { model.getChild(root, it) }
-      .filterIsInstance<PopupFactoryImpl.ActionItem>()
-      .map(PopupFactoryImpl.ActionItem::getAction)
-      .forEach { action ->
-        registerAction(am.getId(action),
-                       KeymapUtil.getKeyStroke(action.shortcutSet),
-                       createShortcutAction(action, true, null, null))
-      }
+    val dataContext = createShortcutActionDataContext()
+    TreeUtil.nodeChildren(model.root, model).forEach { child ->
+      val actionItem = child as? PopupFactoryImpl.ActionItem ?: return@forEach
+      registerShortcutAction(actionItem.action, closePopup = true, dataContext = dataContext)
+    }
   }
+
+  protected abstract fun createShortcutActionDataContext(): DataContext
 
   private fun installTitleToolbar() {
     val toolbar = getHeaderToolbar() ?: return
@@ -353,28 +334,27 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
   abstract fun getHeaderToolbar(): ActionToolbar?
 
-  private fun createShortcutAction(
+  private fun registerShortcutAction(
     action: AnAction,
     closePopup: Boolean,
-    contextComponent: JComponent?,
-    afterActionPerformed: (() -> Unit)?,
-  ): AbstractAction = object : AbstractAction() {
-    override fun actionPerformed(e: ActionEvent?) {
-      if (closePopup) {
-        cancel()
-        if (isNestedPopup()) {
-          parent.cancel()
+    dataContext: DataContext,
+    afterActionPerformed: (() -> Unit)? = null,
+  ) {
+    val actionPlace =
+      if (isNestedPopup()) GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE
+      else GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE
+    val wrappedAction = object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        if (closePopup) {
+          cancel()
+          parent?.cancel()
         }
+        ActionUtil.invokeAction(action, dataContext, actionPlace, null, afterActionPerformed)
       }
-      val resultContext = GitDefaultBranchesPopupStep.createDataContext(
-        project, treeStep.selectedRepository, treeStep.affectedRepositories, component = contextComponent,
-      )
-      val actionPlace = getShortcutActionPlace()
-      ActionUtil.invokeAction(action, resultContext, actionPlace, null, afterActionPerformed)
     }
-  }
 
-  protected open fun getShortcutActionPlace(): String = GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE
+    registerAction(am.getId(action), KeymapUtil.getKeyStroke(action.shortcutSet), wrappedAction)
+  }
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
     val topBorder = if (step.title.isNullOrEmpty()) JBUIScale.scale(5) else 0
@@ -507,12 +487,9 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
 
   final override fun getInputMap(): InputMap = tree.inputMap
 
-  final override fun afterShow() {
+  override fun afterShow() {
     selectPreferred()
     traverseNodesAndExpand()
-    if (!isNestedPopup()) {
-      treeStateHolder.applyStateTo(tree)
-    }
     if (treeStep.isSpeedSearchEnabled) {
       installSpeedSearchActions()
     }
@@ -753,5 +730,4 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
   override fun getExpandedPathsSize(): Int {
     return tree.expandedPaths.size
   }
-
 }

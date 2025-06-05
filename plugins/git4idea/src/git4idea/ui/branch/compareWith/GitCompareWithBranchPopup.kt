@@ -3,6 +3,7 @@ package git4idea.ui.branch.compareWith
 
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
@@ -106,6 +107,9 @@ internal class GitCompareWithBranchPopup(
         component.isOpaque = false
       }
   }
+
+  // Shortcut actions are not supported in this popup
+  override fun createShortcutActionDataContext(): DataContext = DataContext.EMPTY_CONTEXT
 
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Compare.With.Branch.Popup"

@@ -2,7 +2,6 @@
 package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.dvcs.ui.DvcsBundle
-import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
@@ -25,7 +24,6 @@ import git4idea.GitReference
 import git4idea.config.GitVcsSettings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import javax.swing.JComponent
 
 @ApiStatus.Internal
 class GitDefaultBranchesPopupStep private constructor(
@@ -177,9 +175,8 @@ class GitDefaultBranchesPopupStep private constructor(
       selectedRepository: GitRepositoryModel?,
       repositories: List<GitRepositoryModel>,
       reference: GitReference? = null,
-      component: JComponent? = null,
     ): DataContext =
-      CustomizedDataContext.withSnapshot(DataManager.getInstance().getDataContext(component)) { sink ->
+      CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
         sink[CommonDataKeys.PROJECT] = project
         sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = reference
         sink[GitBranchesPopupKeys.SELECTED_REPOSITORY] = selectedRepository

@@ -11,7 +11,7 @@ import com.intellij.vcs.git.shared.ui.GitBranchPresentation
 import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
-class GitBranchesClippedNamesCache(private val project: Project) : Disposable {
+internal class GitBranchesClippedNamesCache(private val project: Project) : Disposable {
   private data class ClippedBranch(val clippedName: String, val length: Int)
 
   private val cache: Cache<String, ClippedBranch> =

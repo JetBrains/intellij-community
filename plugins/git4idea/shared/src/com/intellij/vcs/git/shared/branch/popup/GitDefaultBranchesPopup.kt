@@ -4,12 +4,16 @@ package com.intellij.vcs.git.shared.branch.popup
 import com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.project.projectId
 import com.intellij.ui.popup.WizardPopup
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeFilters
 import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel.RefUnderRepository
@@ -18,8 +22,10 @@ import com.intellij.vcs.git.shared.ref.GitReferenceName
 import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.repo.GitRepositoryModel
 import com.intellij.vcs.git.shared.rpc.GitRepositoryApi
+import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
 import git4idea.GitReference
 import git4idea.i18n.GitBundle
+import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -32,10 +38,15 @@ internal class GitDefaultBranchesPopup private constructor(
   parent: JBPopup? = null,
   parentValue: Any? = null,
 ) : GitBranchesPopupBase<GitDefaultBranchesPopupStep>(project, step, parent, parentValue, DIMENSION_SERVICE_KEY) {
+  private val treeStateHolder = project.service<GitBranchesPopupTreeStateHolder>()
+
   init {
     installGeneralShortcutActions()
     if (!isNestedPopup()) {
       warnThatBranchesDivergedIfNeeded()
+      popupScope.launch {
+        GitUiSettingsApi.getInstance().initBranchSyncPolicyIfNotInitialized(project.projectId())
+      }
     }
   }
 
@@ -117,7 +128,22 @@ internal class GitDefaultBranchesPopup private constructor(
     return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
   }
 
-  override fun getShortcutActionPlace(): String = if (isNestedPopup()) GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE else GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE
+  override fun createShortcutActionDataContext(): DataContext =
+    GitDefaultBranchesPopupStep.createDataContext(project, treeStep.selectedRepository, treeStep.affectedRepositories)
+
+  override fun afterShow() {
+    super.afterShow()
+    if (!isNestedPopup()) {
+      treeStateHolder.applyStateTo(tree)
+    }
+  }
+
+  override fun installTree(): Tree = super.installTree().also { installedTree ->
+    Disposer.register(this) {
+      treeStateHolder.saveStateFrom(installedTree)
+      installedTree.model = null
+    }
+  }
 
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
