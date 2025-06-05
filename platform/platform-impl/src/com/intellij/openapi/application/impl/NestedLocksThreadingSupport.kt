@@ -1466,45 +1466,52 @@ private class RunSuspend<T>(val job: Job?, val interceptor: PermitWaitingInterce
 
   val resultDeferred: CompletableDeferred<T> = CompletableDeferred()
 
-  override fun resumeWith(result: Result<T>) = synchronized(this) {
+  override fun resumeWith(result: Result<T>) {
     if (result.isSuccess) {
       resultDeferred.complete(result.getOrThrow())
     }
     else {
       resultDeferred.completeExceptionally(result.exceptionOrNull()!!)
     }
-    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).notifyAll()
+    synchronized(this) {
+      @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).notifyAll()
+    }
   }
 
-  fun await(): T {
+  private fun doAwait(): T {
     if (interceptor == null) {
-      synchronized(this) {
-        var interrupted = false
-        while (true) {
-          if (resultDeferred.isCompleted) {
-            if (interrupted) {
-              // Restore "interrupted" flag
-              Thread.currentThread().interrupt()
-            }
-            return resultDeferred.getOrThrow()
+      var interrupted = false
+      while (true) {
+        if (resultDeferred.isCompleted) {
+          if (interrupted) {
+            // Restore "interrupted" flag
+            Thread.currentThread().interrupt()
           }
-          else {
-            try {
-              @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-              ((this as Object).wait())
-            }
-            catch (_: InterruptedException) {
-              // Suppress exception or token could be lost.
-              interrupted = true
-            }
+          return resultDeferred.getOrThrow()
+        }
+        else {
+          try {
+            @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+            ((this as Object).wait())
+          }
+          catch (_: InterruptedException) {
+            // Suppress exception or token could be lost.
+            interrupted = true
           }
         }
       }
-    } else {
+    }
+    else {
       if (!resultDeferred.isCompleted) {
         interceptor.consumer(resultDeferred)
       }
       return resultDeferred.getOrThrow() // consumer returns when `result` gets non-nullable value
+    }
+  }
+
+  fun await(): T {
+    return synchronized(this) {
+      doAwait()
     }
   }
 }
