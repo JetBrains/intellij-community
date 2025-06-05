@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

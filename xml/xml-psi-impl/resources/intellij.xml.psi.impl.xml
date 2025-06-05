@@ -1,4 +1,9 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.xml.psi"/>
+  </dependencies>
+
   <projectListeners>
     <listener class="com.intellij.html.polySymbols.HtmlPolyContextChangeListener"
               topic="com.intellij.polySymbols.context.PolyContextChangeListener"/>

@@ -5,8 +5,6 @@
   <xi:include href="/META-INF/XmlImpl.xml"/>
 
   <xi:include href="/META-INF/XmlAnalysisImpl.xml"/>
-  <xi:include href="/META-INF/XmlPsiImpl.xml"/>
-  <xi:include href="/META-INF/XmlPsi.xml"/>
 
   <extensionPoints>
     <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider" dynamic="true"/>

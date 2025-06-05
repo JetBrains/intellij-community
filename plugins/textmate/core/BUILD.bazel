@@ -22,7 +22,8 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:slf4j-api",
     "@lib//:kotlinx-collections-immutable",
-  ]
+  ],
+  runtime_deps = ["//platform/backend"]
 )
 
 jvm_library(

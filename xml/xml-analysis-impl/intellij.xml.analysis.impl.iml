@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
   </component>
 </module>
