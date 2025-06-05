@@ -96,6 +96,7 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:addExtensionPointListener(com.intellij.openapi.extensions.AreaInstance,com.intellij.openapi.extensions.ExtensionPointListener):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 - f:addExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener,com.intellij.openapi.Disposable):V
+- f:computeIfAbsent(java.lang.Class,java.util.function.Supplier):java.lang.Object
 - f:computeSafeIfAny(java.util.function.Function):java.lang.Object
 - sf:create(java.lang.String):com.intellij.openapi.extensions.ExtensionPointName
 - f:extensions():java.util.stream.Stream

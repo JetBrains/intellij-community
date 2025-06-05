@@ -186,6 +186,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     getRootPoint().removeExtensionPointListener(listener)
   }
 
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated("Pass CoroutineScope to addChangeListener")
   fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
     getRootPoint().addChangeListener(listener = listener, parentDisposable = parentDisposable)
   }
@@ -244,7 +246,6 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   /**
    * Cache some value per extension point.
    */
-  @ApiStatus.Experimental
   fun <V : Any> computeIfAbsent(cacheId: Class<*>, valueMapper: Supplier<V>): V {
     return computeIfAbsent(point = getRootPoint(), cacheId = cacheId, valueProducer = valueMapper)
   }
