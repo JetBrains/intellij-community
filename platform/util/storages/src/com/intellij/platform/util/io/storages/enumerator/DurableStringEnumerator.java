@@ -1,15 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.util.io.storages.enumerator;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
-import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator;
-import com.intellij.util.io.*;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.platform.util.io.storages.intmultimaps.Int2IntMultimap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +16,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -29,8 +28,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Uses append-only log to store strings, and in-memory Map[string.hash->id*].
  * Suitable for moderately big enumerators that are used very intensively, so
  * increased heap consumption pays off. For general cases use {@link DurableEnumerator}
- *
- * TODO RC: move it to platform.util.storages as soon, as VFSAsyncTaskExecutor will be moved to some shared util package/module
  */
 @ApiStatus.Internal
 public final class DurableStringEnumerator implements DurableDataEnumerator<String>,
@@ -96,8 +93,14 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
     );
   }
 
-  public static @NotNull DurableStringEnumerator openAsync(@NotNull Path storagePath,
-                                                           @NotNull VFSAsyncTaskExecutor executor) throws IOException {
+  public interface AsyncExecutor {
+    <T> @NotNull CompletableFuture<T> async(@NotNull Callable<T> task);
+  }
+
+  public static @NotNull DurableStringEnumerator openAsync(
+    @NotNull Path storagePath,
+    @NotNull AsyncExecutor executor
+  ) throws IOException {
     return VALUES_LOG_FACTORY.wrapStorageSafely(
       storagePath,
       valuesLog -> {

@@ -9,12 +9,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapter;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.VFSContentStorageOverMMappedFile;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverMMappedFile;
+import com.intellij.platform.util.io.storages.enumerator.DurableStringEnumerator;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -526,7 +526,7 @@ public final class PersistentFSLoader {
     //MAYBE RC: remove .mmap suffix, and use namesFile directly? Suffix was needed during transition from regular to mmapped impls,
     //          and long unused
     Path namesPathEx = Path.of(namesFile + ".mmap");
-    return DurableStringEnumerator.openAsync(namesPathEx, executorService);
+    return DurableStringEnumerator.openAsync(namesPathEx, executorService::async);
   }
 
   public @NotNull VFSContentStorage createContentStorage(@NotNull Path contentsHashesFile,
