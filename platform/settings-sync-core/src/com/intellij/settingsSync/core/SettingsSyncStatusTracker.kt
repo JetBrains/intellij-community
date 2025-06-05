@@ -19,7 +19,7 @@ class SettingsSyncStatusTracker {
   val currentStatus: SyncStatus
     get() {
       if (RemoteCommunicatorHolder.isPendingAction())
-        return SyncStatus.ActionRequired
+        return SyncStatus.UserActionRequired
       return state
     }
 
@@ -59,6 +59,16 @@ class SettingsSyncStatusTracker {
     eventDispatcher.multicaster.syncStatusChanged()
   }
 
+  @Deprecated("Use SettingsSyncAuthService.PendingUserAction instead")
+  fun setActionRequired(message: @Nls String, actionTitle: @Nls String, action: suspend (Component?) -> Unit) {
+    logger<SettingsSyncStatusTracker>().warn("setActionRequired is no longer supported")
+  }
+
+  @Deprecated("Use SettingsSyncAuthService.PendingUserAction instead")
+  fun clearActionRequired() {
+    logger<SettingsSyncStatusTracker>().warn("clearActionRequired is no longer supported")
+  }
+
   fun isSyncSuccessful() = state == SyncStatus.Success
 
   fun getLastSyncTime() = lastSyncTime
@@ -79,6 +89,21 @@ class SettingsSyncStatusTracker {
     object Success: SyncStatus()
     class Error(val errorMessage: @Nls String): SyncStatus()
 
-    object ActionRequired : SyncStatus()
+    object UserActionRequired : SyncStatus()
+
+    /**
+     * @param message - text message that will be shown in the configurable label
+     * @param actionTitle - text to use in the button
+     * @param action - action to perform when clicked the button. The action will be performed under EDT
+     */
+    @Deprecated("Use SettingsSyncAuthService.PendingUserAction instead")
+    class ActionRequired(val message: @Nls String,
+                         val actionTitle: @Nls String,
+                         private val action: suspend(Component?) -> Unit): SyncStatus() {
+      companion object {
+        val DUMMY_INSTANCE = ActionRequired("", "") { _ -> }
+      }
+      suspend fun execute(component: Component?) = action(component)
+    }
   }
 }
