@@ -269,6 +269,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_FIND_NEXT:java.lang.String
 - sf:ACTION_FIND_PREVIOUS:java.lang.String
 - sf:ACTION_FIND_PREV_WORD_AT_CARET:java.lang.String
+- sf:ACTION_FIND_SELECTION_IN_PATH:java.lang.String
 - sf:ACTION_FIND_USAGES:java.lang.String
 - sf:ACTION_FIND_WORD_AT_CARET:java.lang.String
 - sf:ACTION_FOCUS_EDITOR:java.lang.String
