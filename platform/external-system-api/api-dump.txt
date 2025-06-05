@@ -1038,11 +1038,6 @@ com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallba
 - onFailure(java.lang.String,java.lang.String):V
 - onSuccess(com.intellij.openapi.externalSystem.model.DataNode):V
 - onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.DataNode):V
-com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor
-- sf:Companion:com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor$Companion
-- findLibraryCoordinate(com.intellij.openapi.roots.libraries.Library):com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
-- findModuleCoordinate(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
-f:com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor$Companion
 com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 - a:cancelTask(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):Z
 - resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.model.DataNode
