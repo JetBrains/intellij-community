@@ -12,6 +12,7 @@
   modules:
   - name: intellij.evaluationPlugin
   - name: intellij.tools.ide.metrics.collector
+  - name: intellij.tools.ide.util.common
   - name: intellij.evaluationPlugin.languages
     reason: <- intellij.evaluationPlugin
   - name: intellij.evaluationPlugin.core
