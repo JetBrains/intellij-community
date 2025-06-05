@@ -194,22 +194,25 @@ public final class PyArgumentListInspection extends PyInspection {
 
   private static void highlightStarArgumentTypeMismatch(PyArgumentList node, ProblemsHolder holder, TypeEvalContext context) {
     for (PyExpression arg : node.getArguments()) {
-      if (arg instanceof PyStarArgument) {
-        PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
-        if (content != null) {
-          PyType inside_type = context.getType(content);
-          if (inside_type != null && !PyTypeChecker.isUnknown(inside_type, context)) {
-            if (((PyStarArgument)arg).isKeyword()) {
-              if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING, context)) {
-                // TODO: check that the key type is compatible with `str`
-                holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.dict.got.type", inside_type.getName()));
-              }
-            }
-            else { // * arg
-              if (!PyABCUtil.isSubtype(inside_type, PyNames.ITERABLE, context)) {
-                holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.iterable.got.type", inside_type.getName()));
-              }
-            }
+      if (!(arg instanceof PyStarArgument starArgument)) {
+        continue;
+      }
+      PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
+      if (content == null) {
+        continue;
+      }
+      PyType argType = context.getType(content);
+      if (argType != null && !PyTypeChecker.isUnknown(argType, context)) {
+        if (starArgument.isKeyword()) {
+          if (!PyABCUtil.isSubtype(argType, PyNames.MAPPING, context)) {
+            // TODO: check that the key type is compatible with `str`
+            holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.dict.got.type", argType.getName()));
+          }
+        }
+        else {
+          // *
+          if (!PyABCUtil.isSubtype(argType, PyNames.ITERABLE, context)) {
+            holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.iterable.got.type", argType.getName()));
           }
         }
       }
