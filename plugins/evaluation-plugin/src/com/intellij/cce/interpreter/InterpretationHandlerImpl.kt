@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import java.io.File
 import java.util.*
+import kotlin.coroutines.cancellation.CancellationException
 
 class InterpretationHandlerImpl(
   private val indicator: Progress,
@@ -39,7 +40,8 @@ class InterpretationHandlerImpl(
 
   override fun onErrorOccurred(error: Throwable, sessionsSkipped: Int) {
     completed += sessionsSkipped
-    if (!ApplicationManager.getApplication().isUnitTestMode) LOG.error("Actions interpretation error", error)
+    val logSafeError = if(error is CancellationException) error.cause else error
+    if (!ApplicationManager.getApplication().isUnitTestMode) LOG.error("Actions interpretation error $logSafeError")
   }
 
   override fun isCancelled(): Boolean {
