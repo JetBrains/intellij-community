@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
@@ -395,11 +394,10 @@ internal class WindowsDistributionBuilder(
           .setAttribute("zipPath", zipPath.toString())
           .setAttribute("exePath", exePath.toString())
           .use {
-
             runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe)
             // deleting NSIS-related files that appear after manual unpacking of .exe installer and do not belong to its contents
             @Suppress("SpellCheckingInspection")
-            NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
+            NioFiles.deleteRecursively(tempExe.resolve($$"$PLUGINSDIR"))
             Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe.nsis"))
             Files.deleteIfExists(tempExe.resolve("bin/Uninstall.exe"))
 
@@ -426,7 +424,7 @@ internal class WindowsDistributionBuilder(
                     else if (!compareStreams(fileInExe.inputStream().buffered(FileUtilRt.MEGABYTE), zipFile.getInputStream(entry).buffered(FileUtilRt.MEGABYTE))) {
                       differ.add(entryPath.toString())
                     }
-                    FileUtil.delete(fileInExe)
+                    NioFiles.deleteRecursively(fileInExe)
                   }
                 }
             }

@@ -358,25 +358,23 @@ data class BuildOptions(
   var useLocalLauncher: Boolean = false
 
   /**
-   * When `true`, cross-platform distribution will be packed using zip64 in AlwaysWithCompatibility mode
+   * When `true`, cross-platform distribution will be packed using zip64 in AlwaysWithCompatibility mode.
    */
   var useZip64ForCrossPlatformDistribution: Boolean = getBooleanProperty("intellij.build.cross.platform.dist.zip64", false)
 
   /**
-   * Pass `true` to this system property to produce .snap packages.
-   * Requires Docker.
+   * Pass `true` to this system property to produce .snap packages. Requires Docker.
    */
   var buildUnixSnaps: Boolean = getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
-   * Docker image for snap package creation
+   * Docker image for snap package creation.
    */
   var snapDockerImage: String = System.getProperty("intellij.build.snap.docker.image") ?: DEPENDENCIES_PROPERTIES["snapDockerImage"]
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin")?.toLong() ?: 20
 
   /**
-   * When `true`, `.resx` files are generated and bundled in the localization plugins.
-   * Requires Docker.
+   * When `true`, `.resx` files are generated and bundled in the localization plugins. Requires Docker.
    */
   var bundleLocalizationPluginResources: Boolean = getBooleanProperty("intellij.build.localization.plugin.resources", false)
 
