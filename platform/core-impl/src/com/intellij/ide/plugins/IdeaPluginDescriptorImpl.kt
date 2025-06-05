@@ -262,7 +262,7 @@ class PluginMainDescriptor(
   private val version: String? = raw.version
   private val sinceBuild: String? = raw.sinceBuild
   @Suppress("DEPRECATION")
-  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargets243OrLater(raw.untilBuild, raw.name ?: raw.id)
+  private val untilBuild: String? = UntilBuildDeprecation.nullizeIfTargetsMinimalApiOrLater(raw.untilBuild, raw.name ?: raw.id)
 
   @Volatile
   private var loadedDescriptionText: @Nls String? = null
