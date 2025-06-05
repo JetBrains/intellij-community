@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
+import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
 import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -44,12 +45,16 @@ class SeItemData(
       val additionalInfo = additionalInfo.toMutableMap()
 
       if (item is SeLegacyItem) {
-        PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
-          additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
+        computeCatchingOrNull(true, { e-> "Couldn't add language info (${providerId.value}): $e" }) {
+          PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
+            additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
+          }
         }
 
-        val isSemanticElement = (item.contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(item.rawObject) ?: false
-        additionalInfo[SeItemDataKeys.IS_SEMANTIC] = isSemanticElement.toString()
+        computeCatchingOrNull(true, { e-> "Couldn't add isSemantic info (${providerId.value}): $e" }) {
+          val isSemanticElement = (item.contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(item.rawObject) ?: false
+          additionalInfo[SeItemDataKeys.IS_SEMANTIC] = isSemanticElement.toString()
+        }
       }
 
       return SeItemData(uuid, providerId, weight, presentation, uuidToReplace, additionalInfo, entityRef)
