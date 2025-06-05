@@ -492,26 +492,24 @@ FunctionEnd
 
 
 function silentInstallDirValidate
-; use current user path as install dir if installation run in user mode
-  push $0
   ${If} $silentMode == "user"
-    ${StrLoc} $0 $INSTDIR "$PROGRAMFILES\${MANUFACTURER}" ">"
-    StrCmp $0 "" check_if_install_dir_contains_PROGRAMFILES64 update_install_dir
-check_if_install_dir_contains_PROGRAMFILES64:
-    ${StrLoc} $0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
-    StrCmp $0 "" done update_install_dir
-update_install_dir:
+    ${StrLoc} $R0 $INSTDIR "$PROGRAMFILES\${MANUFACTURER}" ">"
+    ${If} $R0 == ""
+      ${StrLoc} $R0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
+      ${If} $R0 == ""
+        ${LogText} "Silent installation dir: $INSTDIR"
+        Return
+      ${EndIf}
+    ${EndIf}
+
     ${LogText} ""
-    ${LogText} "  NOTE: Specified install dir: $INSTDIR is required administrative rights."
-    ${LogText} "  It is corresponding with the admin mode in silent config file."
-    ${LogText} "  But installation has been run with user mode. So install folder has been changed to the default: "
-    StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${LogText} "  NOTE: Specified directory '$INSTDIR' requires administrative rights."
+    ${LogText} "  It is corresponding to the 'admin' mode in the silent config file."
+    ${LogText} "  But installation has been run in the 'user' mode. So the directory has been changed to the default: "
+    StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${PRODUCT_WITH_VER}"
     ${LogText} "  $INSTDIR "
     ${LogText} ""
   ${EndIf}
-done:
-  pop $0
-  ${LogText} "Silent installation dir: $INSTDIR"
 FunctionEnd
 
 
@@ -1299,7 +1297,7 @@ uac_elevation_aborted:
   ${LogText} ""
   ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir will be changed."
   ${LogText} ""
-  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
+  StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   goto installdir_is_empty
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
