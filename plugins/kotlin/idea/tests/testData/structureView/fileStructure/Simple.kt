@@ -7,4 +7,4 @@ class Test(
     public fun other() {}
 }
 
-// EXTRA_INFO_KEYS: visibility
+// EXTRA_INFO_KEYS: visibility, icon

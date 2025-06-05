@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
+import com.intellij.ui.icons.RowIcon
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -79,6 +80,9 @@ class KotlinFirStructureViewElement(
         info["text"] = presentableText
         info["location"] = locationString
         allowAnalysisOnEdt {
+            info["icon"] = with(getIcon(false)) {
+                (this as? RowIcon)?.allIcons?.joinToString(transform = Icon::toString) ?: this?.toString()
+            }
             info["visibility"] = visibility.name ?: "none"
         }
     }
