@@ -4,7 +4,6 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,7 +58,7 @@ public class PyUnionType implements PyType {
 
   @Override
   public String getName() {
-    return StringUtil.join(myMembers, (NullableFunction<PyType, String>)type -> type != null ? type.getName() : null, " | ");
+    return StringUtil.join(myMembers, t -> t == null ? "Any" : t.getName(), " | ");
   }
 
   /**
