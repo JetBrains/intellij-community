@@ -265,7 +265,11 @@ public final class ExternalSystemUtil {
     refreshProjectImpl(Collections.singleton(externalProjectPath), importSpec);
   }
 
-  private static void refreshProjectImpl(final @NotNull Set<String> externalProjectPaths, final @NotNull ImportSpec importSpec) {
+  private static void refreshProjectImpl(final @NotNull Set<String> externalProjectPaths, final @NotNull ImportSpec _importSpec) {
+    var importSpec = new ImportSpecBuilder(_importSpec)
+      .withPreviewMode(_importSpec.isPreviewMode() || !TrustedProjects.isProjectTrusted(_importSpec.getProject()))
+      .build();
+
     var project = importSpec.getProject();
     var externalSystemId = importSpec.getExternalSystemId();
     var isPreviewMode = importSpec.isPreviewMode();
@@ -276,12 +280,6 @@ public final class ExternalSystemUtil {
       throw new IllegalArgumentException("Please, use progress for the project import!");
     }
 
-    if (!isPreviewMode && !TrustedProjects.isProjectTrusted(project)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
-      }
-      return;
-    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Stated " + externalSystemId + " load", new Throwable());
     }
