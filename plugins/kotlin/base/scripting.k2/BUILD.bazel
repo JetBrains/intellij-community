@@ -11,7 +11,7 @@ jvm_library(
   name = "scripting.k2",
   module_name = "kotlin.base.scripting.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/kotlin/base/scripting",
     "@lib//:kotlin-stdlib",
@@ -26,7 +26,6 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//plugins/kotlin/base/compiler-configuration",
     "//platform/util/progress",
-    "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",
     "//platform/platform-impl:ide-impl",
