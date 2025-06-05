@@ -364,7 +364,7 @@ class PolySymbolsQueryExecutorImpl(
         }
         else {
           items
-            .sortedWith(Comparator.comparing { it: PolySymbolCodeCompletionItem -> -(it.priority ?: PolySymbol.Priority.NORMAL).ordinal }
+            .sortedWith(Comparator.comparing { it: PolySymbolCodeCompletionItem -> -(it.priority ?: PolySymbol.Priority.NORMAL).value }
                           .thenComparingInt { -(it.proximity ?: 0) })
             .firstOrNull()
         }

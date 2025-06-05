@@ -73,17 +73,18 @@
 - f:getJS_PROPERTIES():com.intellij.polySymbols.PolySymbolQualifiedKind
 - f:getJS_STRING_LITERALS():com.intellij.polySymbols.PolySymbolQualifiedKind
 - f:getJS_SYMBOLS():com.intellij.polySymbols.PolySymbolQualifiedKind
-*e:com.intellij.polySymbols.PolySymbol$Priority
-- java.lang.Enum
+*:com.intellij.polySymbols.PolySymbol$Priority
+- java.lang.Comparable
+- *sf:Companion:com.intellij.polySymbols.PolySymbol$Priority$Companion
 - sf:HIGH:com.intellij.polySymbols.PolySymbol$Priority
 - sf:HIGHEST:com.intellij.polySymbols.PolySymbol$Priority
 - sf:LOW:com.intellij.polySymbols.PolySymbol$Priority
 - sf:LOWEST:com.intellij.polySymbols.PolySymbol$Priority
 - sf:NORMAL:com.intellij.polySymbols.PolySymbol$Priority
-- s:getEntries():kotlin.enums.EnumEntries
-- f:getValue():D
-- s:valueOf(java.lang.String):com.intellij.polySymbols.PolySymbol$Priority
-- s:values():com.intellij.polySymbols.PolySymbol$Priority[]
+- s:custom(D):com.intellij.polySymbols.PolySymbol$Priority
+- a:getValue():D
+*f:com.intellij.polySymbols.PolySymbol$Priority$Companion
+- f:custom(D):com.intellij.polySymbols.PolySymbol$Priority
 *:com.intellij.polySymbols.PolySymbolApiStatus
 - *sf:Companion:com.intellij.polySymbols.PolySymbolApiStatus$Companion
 - sf:Deprecated:com.intellij.polySymbols.PolySymbolApiStatus$Deprecated

@@ -47,19 +47,19 @@ internal fun <T> List<T>.selectBest(
   isExtension: (T) -> Boolean,
 ) =
   if (size > 1) {
-    var bestWeight: IntArray = intArrayOf(0, 0, 0)
+    var bestWeight: DoubleArray = doubleArrayOf(0.0, 0.0, 0.0)
 
-    val results = mutableListOf<Pair<T, IntArray>>()
+    val results = mutableListOf<Pair<T, DoubleArray>>()
     val extensions = mutableListOf<T>()
     forEach { item ->
       if (!isExtension(item)) {
-        val weight: IntArray = intArrayOf(
+        val weight: DoubleArray = doubleArrayOf(
           // match length without a problem
-          segmentsProvider(item).find { it.problem != null }?.start ?: Int.MAX_VALUE,
+          (segmentsProvider(item).find { it.problem != null }?.start ?: Int.MAX_VALUE).toDouble(),
           // priority
-          (priorityProvider(item) ?: PolySymbol.Priority.NORMAL).ordinal,
-          //  match length of static part of RegExp
-          segmentsProvider(item).sumOf { it.matchScore }
+          (priorityProvider(item) ?: PolySymbol.Priority.NORMAL).value,
+          // match length of static part of RegExp
+          segmentsProvider(item).sumOf { it.matchScore }.toDouble(),
         )
         results.add(Pair(item, weight))
         for (i in 0..2) {
@@ -92,7 +92,7 @@ val PolySymbol.proximity: Int?
 
 internal fun List<PolySymbol>.sortSymbolsByPriority(extensionsLast: Boolean = true): List<PolySymbol> =
   sortedWith(Comparator.comparingInt<PolySymbol> { if (it.extension && extensionsLast) 1 else 0 }
-               .thenComparingInt { -(it.priority ?: PolySymbol.Priority.NORMAL).ordinal }
+               .thenComparingDouble { -(it.priority ?: PolySymbol.Priority.NORMAL).value }
                .thenComparingInt { -(it.proximity ?: 0) })
 
 internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: PolySymbolsQueryParams): Sequence<T> =

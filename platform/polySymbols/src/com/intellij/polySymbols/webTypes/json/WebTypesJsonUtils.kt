@@ -309,8 +309,14 @@ internal fun DisablementRules.wrap(): PolyContextKindRules.DisablementRules =
     fileNamePatterns(fileNamePatterns.mapNotNull { it.toRegex() })
   }
 
-internal fun BaseContribution.Priority.wrap() =
-  PolySymbol.Priority.values()[ordinal]
+internal fun BaseContribution.Priority.wrap(): PolySymbol.Priority =
+  when (this) {
+    BaseContribution.Priority.LOWEST -> PolySymbol.Priority.LOWEST
+    BaseContribution.Priority.LOW -> PolySymbol.Priority.LOW
+    BaseContribution.Priority.NORMAL -> PolySymbol.Priority.NORMAL
+    BaseContribution.Priority.HIGH -> PolySymbol.Priority.HIGH
+    BaseContribution.Priority.HIGHEST -> PolySymbol.Priority.HIGHEST
+  }
 
 internal val BaseContribution.attributeValue: HtmlAttributeValue?
   get() =
