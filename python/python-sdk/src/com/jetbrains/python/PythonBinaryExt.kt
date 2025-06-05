@@ -59,7 +59,7 @@ private suspend fun PythonBinary.executeWithResult(vararg args: String): PyResul
       Result.success(output)
     }
   } catch (e : ExecuteProcessException) {
-    return PyResult.localizedError(e.message)
+    return PyResult.localizedError(e.localizedMessage)
   }
 }
 
