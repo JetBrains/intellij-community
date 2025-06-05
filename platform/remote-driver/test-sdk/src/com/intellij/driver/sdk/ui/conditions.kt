@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui
 import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.JListUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration
 
@@ -83,6 +84,14 @@ fun JListUiComponent.shouldBeEqualTo(expected: List<String>, message: String? = 
   return should(message ?: "items should be equal to $expected", timeout, { "expected: $expected, but found: $lastItems" }) {
     lastItems = items
     lastItems == expected
+  }
+}
+
+fun JTextFieldUI.shouldBeEqualTo(expected: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): JTextFieldUI {
+  var lastText: String? = null
+  return should(message ?: "text should be equal to $expected", timeout, { "expected: $expected, but found: $lastText" }) {
+    lastText = text
+    lastText == expected
   }
 }
 
