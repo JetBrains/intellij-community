@@ -14,42 +14,22 @@ interface KLoggerFactory {
   fun getLoggingContext(): Map<String, String>?
 }
 
-abstract class LoggingContextContextElement(val contextAddition: Map<String, String>) : ThreadContextElement<Map<String, String>?> {
+//todo [MM] make it abstract with next dock breaking change
+open class LoggingContextContextElement(val contextMap/*todo [MM] rename to AdditionMap*/: Map<String, String>) : ThreadContextElement<Map<String, String>?> {
   override fun restoreThreadContext(context: CoroutineContext, oldState: Map<String, String>?) {
     KLoggers.loggerFactory.setLoggingContext(oldState)
   }
 
   override fun updateThreadContext(context: CoroutineContext): Map<String, String>? {
     val oldState = KLoggers.loggerFactory.getLoggingContext()
-    KLoggers.loggerFactory.setLoggingContext((oldState ?: emptyMap()) + contextAddition)
+    KLoggers.loggerFactory.setLoggingContext((oldState ?: emptyMap()) + contextMap)
     return oldState
   }
+
+  @Deprecated("Use ShipIdLoggingContextElement/RoleLoggingContextElement", level = DeprecationLevel.WARNING)
+  override val key: CoroutineContext.Key<*> get() = LoggingContextContextElement
+
+  @Deprecated("Use ShipIdLoggingContextElement/RoleLoggingContextElement", level = DeprecationLevel.WARNING)
+  companion object : CoroutineContext.Key<LoggingContextContextElement>
 }
 
-class ShipIdContextElement(shipId: String, workspaceId: String) : LoggingContextContextElement(
-  mapOf(WORKSPACE_UID_MDC_KEY to workspaceId, SHIP_ID_MDC_KEY to shipId)
-) {
-  override val key: CoroutineContext.Key<*> get() = ShipIdContextElement
-
-  companion object : CoroutineContext.Key<ShipIdContextElement> {
-    private const val WORKSPACE_UID_MDC_KEY: String = "workspaceUID"
-    private const val SHIP_ID_MDC_KEY: String = "shipId"
-
-    fun workspaceId(mdcMap: Map<String, String>): String? = mdcMap[WORKSPACE_UID_MDC_KEY]
-    fun shipId(mdcMap: Map<String, String>): String? = mdcMap[SHIP_ID_MDC_KEY]
-  }
-}
-
-class RoleContextElement(role: String) : LoggingContextContextElement(
-  mapOf(ROLE_MDC_KEY to role)
-) {
-  override val key: CoroutineContext.Key<*> get() = RoleContextElement
-
-  companion object : CoroutineContext.Key<RoleContextElement> {
-    const val ROLE_MDC_KEY: String = "role"
-    fun workspace(): RoleContextElement = RoleContextElement("WS")
-    fun frontend(): RoleContextElement = RoleContextElement("FR")
-
-    fun role(mdcMap: Map<String, String>): String? = mdcMap[ROLE_MDC_KEY]
-  }
-}
