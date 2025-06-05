@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
+import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
@@ -37,6 +38,7 @@ import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.IconUtil
+import com.intellij.util.application
 import com.intellij.util.ui.*
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.awaitCancellation
@@ -149,6 +151,12 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
     if (result is ListPopupImpl) {
       ClientProperty.put(result.list, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+
+      application.messageBus.connect(result).subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
+        override fun change() {
+          result.list.repaint()
+        }
+      })
     }
 
     return result
