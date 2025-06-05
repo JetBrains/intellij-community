@@ -242,6 +242,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveKotlinPropertyAccessor(myFixture)
     }
 
+    fun testResolveKotlinPropertyAccessor_binary() {
+        checkResolveKotlinPropertyAccessor_binary(myFixture)
+    }
+
     fun testResolveBackingField() {
         checkResolveBackingField(myFixture)
     }

@@ -1718,6 +1718,73 @@ interface UastResolveApiFixtureTestBase {
         }
     }
 
+    fun checkResolveKotlinPropertyAccessor_binary(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "test/pkg/Test.kt", """
+                package my.compose.runtime
+
+                fun mutableIntStateOf(initialValue: Int): MutableIntState =
+                    throw UnsupportedOperationException("Stub!")
+
+                interface State<T> {
+                    val value: T
+                }
+
+                interface MutableState<T> : State<T> {
+                    override var value: T
+                }
+
+                interface IntState : State<Int> {
+                    override val value: Int
+                        get() = intValue
+
+                    val intValue: Int
+                }
+
+                interface MutableIntState : IntState, MutableState<Int> {
+                    override var value: Int
+                        get() = intValue
+                        set(value) { intValue = value }
+
+                    override var intValue: Int
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import my.compose.runtime.mutableIntStateOf
+
+                fun valueAssignment() {
+                    val state = mutableIntStateOf(42)
+                    val local = state.value
+                }
+            """.trimIndent()
+        )
+        try {
+            val uFile = myFixture.file.toUElement()!!
+            var cnt = 0
+            uFile.accept(
+                object : AbstractUastVisitor() {
+                    override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+                        val txt = node.sourcePsi?.text
+                        if (txt != "value") {
+                            return super.visitSimpleNameReferenceExpression(node)
+                        }
+                        val resolved = node.resolve() as? PsiMethod
+                        TestCase.assertNotNull(resolved)
+                        TestCase.assertEquals("getValue", resolved!!.name)
+                        TestCase.assertEquals("getValue", node.resolvedName)
+                        cnt++
+                        return super.visitSimpleNameReferenceExpression(node)
+                    }
+                }
+            )
+            TestCase.assertEquals(1, cnt)
+        } finally {
+          mockLibraryFacility.tearDown(myFixture.module)
+        }
+    }
+
     fun checkResolveBackingField(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
