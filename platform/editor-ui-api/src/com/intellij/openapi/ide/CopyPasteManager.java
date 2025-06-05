@@ -5,14 +5,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Key;
-import com.intellij.ui.ClientProperty;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -22,8 +19,6 @@ import java.util.EventListener;
 @ApiStatus.NonExtendable
 public abstract class CopyPasteManager {
   private static final Logger LOG = Logger.getInstance(CopyPasteManager.class);
-
-  private static final Key<Boolean> COPY_ACTION_DISABLED = Key.create("COPY_ACTION_DISABLED");
 
   /**
    * @deprecated use {@link #getCutColor()} instead
@@ -118,15 +113,5 @@ public abstract class CopyPasteManager {
     } catch (Exception e) {
       LOG.debug(e);
     }
-  }
-
-  @ApiStatus.Internal
-  public static void disableCopy(@NotNull JComponent component) {
-    ClientProperty.put(component, COPY_ACTION_DISABLED, true);
-  }
-
-  @ApiStatus.Internal
-  public static boolean isCopyEnabled(@NotNull JComponent component) {
-    return !ClientProperty.isSetInHierarchy(component, COPY_ACTION_DISABLED);
   }
 }
