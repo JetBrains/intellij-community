@@ -462,10 +462,10 @@ class DynamicPluginsTest {
       includePackageClassFiles<BarService>()
     }.buildMainJar(barJar)
 
-    val fooDescriptor = loadDescriptorInTest(fooJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
+    val fooDescriptor = loadDescriptorInTest(fooJar)
     try {
       assertThat(DynamicPlugins.loadPlugin(fooDescriptor)).isTrue()
-      val barDescriptor = loadDescriptorInTest(barJar, isBundled = true) // FIXME isBundled is needed so that implicit dependencies on vcs modules are not added
+      val barDescriptor = loadDescriptorInTest(barJar)
       try {
         // FIXME perhaps it should return false to indicate that restart is needed to load more stuff
         assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
@@ -518,7 +518,7 @@ class DynamicPluginsTest {
       assertThat(fooBar.pluginClassLoader).isNull()
     }
     finally {
-      assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null))
+      assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
     }
   }
 
