@@ -54,6 +54,13 @@ public class InspectionCommand extends AbstractCommand {
           context.message(PerformanceTestingBundle.message("command.inspection.finish"), getLine());
           actionCallback.setDone();
         }
+
+        @Override
+        protected void canceled() {
+          super.canceled();
+          context.message("inspection was canceled", getLine());
+          actionCallback.reject("inspection was canceled");
+        }
       };
 
       //set up list of files

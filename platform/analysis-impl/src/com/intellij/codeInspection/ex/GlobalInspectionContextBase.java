@@ -282,6 +282,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     indicatorEx.addStateDelegate(new AbstractProgressIndicatorExBase(){
       @Override
       public void cancel() {
+        LOG.info("Cancelling inspection progress");
         super.cancel();
         canceled();
       }
