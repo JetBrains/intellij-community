@@ -7,8 +7,9 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.xml.index.XmlNamespaceIndex
+import kotlinx.coroutines.CoroutineScope
 
-class ExternalResourceManagerExImpl: ExternalResourceManagerExBase() {
+class ExternalResourceManagerExImpl(coroutineScope: CoroutineScope): ExternalResourceManagerExBase(coroutineScope) {
   private val urlByNamespaceProvider = CachedValueProvider {
     val result = MultiMap<String, String>()
     for (map in standardResources.value.values) {

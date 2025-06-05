@@ -7,12 +7,7 @@ import com.intellij.application.options.PathMacrosImpl
 import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ExpandMacroToPathMap
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
@@ -29,16 +24,13 @@ import com.intellij.util.io.URLUtil
 import com.intellij.xml.Html5SchemaProvider
 import com.intellij.xml.XmlSchemaProvider
 import com.intellij.xml.util.XmlUtil
+import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.File
-import java.util.Collections
-import java.util.HashMap
-import java.util.HashSet
-import java.util.LinkedList
-import java.util.TreeSet
+import java.util.*
 
 private val LOG = logger<ExternalResourceManagerExBase>()
 private const val DEFAULT_VERSION = ""
@@ -60,7 +52,7 @@ private const val HTML_DEFAULT_DOCTYPE_ELEMENT: @NonNls String = "default-html-d
 private const val XML_SCHEMA_VERSION: @NonNls String = "xml-schema-version"
 
 @State(name = "ExternalResourceManagerImpl", storages = [Storage("javaeeExternalResources.xml")], category = SettingsCategory.CODE)
-open class ExternalResourceManagerExBase : ExternalResourceManagerEx(), PersistentStateComponent<Element?> {
+open class ExternalResourceManagerExBase(coroutineScope: CoroutineScope) : ExternalResourceManagerEx(), PersistentStateComponent<Element?> {
   private val resources = HashMap<String, MutableMap<String, String>>()
   private val resourceLocations = HashSet<String>()
 
@@ -76,8 +68,8 @@ open class ExternalResourceManagerExBase : ExternalResourceManagerEx(), Persiste
   private var myCatalogManager: XMLCatalogManager? = null
 
   init {
-    StandardResourceProvider.EP_NAME.addChangeListener(::dropCache, null)
-    StandardResourceEP.EP_NAME.addChangeListener(::dropCache, null)
+    StandardResourceProvider.EP_NAME.addChangeListener(coroutineScope, ::dropCache)
+    StandardResourceEP.EP_NAME.addChangeListener(coroutineScope, ::dropCache)
   }
 
   companion object {
