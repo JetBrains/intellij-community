@@ -39,7 +39,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private int myUiIndex;
   private String myName = null;
   private Location myLocation;
-  private MethodsTracker.MethodOccurrence myMethodOccurrence;
+  private @Nullable Method myMethod;
+  private @Nullable MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
   private boolean myIsFiltered;
@@ -48,8 +49,31 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   private Icon myIcon = EmptyIcon.ICON_16;
 
+  /**
+   * Prefer this constructor over {@link #StackFrameDescriptorImpl(MethodsTracker, StackFrameProxyImpl)} if tracking recursive calls is not required.
+   */
+  public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame) {
+    this(frame, null);
+  }
+
+  /**
+   * @deprecated Use {@link #StackFrameDescriptorImpl(MethodsTracker, StackFrameProxyImpl)} if you aim at tracking recusrion calls,
+   *             or {@link #StackFrameDescriptorImpl(StackFrameProxyImpl)} otherwise.
+   */
+  @Deprecated
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
-                                  @NotNull MethodsTracker tracker) {
+                                  @Nullable MethodsTracker tracker) {
+    this(frame, false, null, tracker,
+         ContextUtil.getSourcePosition(new SimpleStackFrameContext(frame, frame.getVirtualMachine().getDebugProcess())));
+  }
+
+  /**
+   * @param tracker Used to show recursion count. If your implementation doesn't need it,
+   *                consider using {@link #StackFrameDescriptorImpl(StackFrameProxyImpl)} instead.
+   *                <b>{@code tracker} should be shared between all frames in the stacktrace!</b>
+   */
+  public StackFrameDescriptorImpl(@NotNull MethodsTracker tracker,
+                                  @NotNull StackFrameProxyImpl frame) {
     this(frame, false, null, tracker,
          ContextUtil.getSourcePosition(new SimpleStackFrameContext(frame, frame.getVirtualMachine().getDebugProcess())));
   }
@@ -57,7 +81,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
                                    boolean useMethod,
                                    @Nullable Method method,
-                                   @NotNull MethodsTracker tracker,
+                                   @Nullable MethodsTracker tracker,
                                    SourcePosition sourcePosition) {
     myFrame = frame;
 
@@ -67,9 +91,9 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       if (!getValueMarkers().isEmpty()) {
         getThisObject(); // init this object for markup
       }
-      myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex,
-                                                       useMethod ? method : DebuggerUtilsEx.getMethod(myLocation));
-      myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
+      myMethod = useMethod ? method : DebuggerUtilsEx.getMethod(myLocation);
+      myMethodOccurrence = tracker == null ? null : tracker.getMethodOccurrence(myUiIndex, myMethod);
+      myIsSynthetic = DebuggerUtils.isSynthetic(myMethod);
       mySourcePosition = sourcePosition;
       PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
       myIsInLibraryContent =
@@ -79,7 +103,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     catch (InternalException | EvaluateException e) {
       LOG.info(e);
       myLocation = null;
-      myMethodOccurrence = tracker.getMethodOccurrence(0, null);
+      myMethodOccurrence = null;
       myIsSynthetic = false;
       myIsInLibraryContent = false;
       myIsFiltered = false;
@@ -136,15 +160,15 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   }
 
   public @Nullable Method getMethod() {
-    return myMethodOccurrence.getMethod();
+    return myMethod;
   }
 
   public int getOccurrenceIndex() {
-    return myMethodOccurrence.getIndex();
+    return myMethodOccurrence == null ? 0 : myMethodOccurrence.getIndex();
   }
 
   public boolean isRecursiveCall() {
-    return myMethodOccurrence.isRecursive();
+    return myMethodOccurrence != null && myMethodOccurrence.isRecursive();
   }
 
   public ThreeState canDrop() {
@@ -157,7 +181,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return CanDropFrameUtilsKt.canDropFrameAsync(this);
   }
 
-  MethodsTracker.MethodOccurrence getMethodOccurrence() {
+  @Nullable MethodsTracker.MethodOccurrence getMethodOccurrence() {
     return myMethodOccurrence;
   }
 
@@ -194,12 +218,11 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
     @NlsSafe StringBuilder label = new StringBuilder();
-    Method method = myMethodOccurrence.getMethod();
-    if (method != null) {
+    if (myMethod != null) {
       if (myName == null) {
-        myName = method.name();
+        myName = myMethod.name();
       }
-      label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
+      label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(myMethod) : myName);
     }
     if (settings.SHOW_LINE_NUMBER) {
       label.append(':').append(DebuggerUtilsEx.getLineNumber(myLocation, false));

@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture
 
 internal fun StackFrameDescriptorImpl.canDropFrameSync(): ThreeState {
   return isSafeToDropFrame(uiIndex, unsureIfCallerFrameAbsent = true) { i ->
-    methodOccurrence.getMethodOccurrence(i)?.method
+    methodOccurrence?.getMethodOccurrence(i)?.method
   }
 }
 
@@ -42,7 +42,7 @@ internal fun StackFrameDescriptorImpl.canDropFrameAsync(): CompletableFuture<Boo
     }
 
     isSafeToDropFrame(uiIndex, unsureIfCallerFrameAbsent = false) { i ->
-      methodOccurrence.getMethodOccurrence(i)?.method ?: computeMethod(i)
+      methodOccurrence?.getMethodOccurrence(i)?.method ?: computeMethod(i)
     }.toBoolean()
   }
 }

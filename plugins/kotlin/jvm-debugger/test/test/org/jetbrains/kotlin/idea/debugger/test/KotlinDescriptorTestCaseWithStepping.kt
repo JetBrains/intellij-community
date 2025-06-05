@@ -11,7 +11,6 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.impl.PositionUtil
-import com.intellij.debugger.ui.impl.watch.MethodsTracker
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
@@ -88,7 +87,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private fun SuspendContextImpl.getFirstFrame(): KotlinStackFrame? {
         val frameProxy = getFrameProxy(this) ?: return null
-        val descriptor = StackFrameDescriptorImpl(frameProxy, MethodsTracker())
+        val descriptor = StackFrameDescriptorImpl(frameProxy)
         val frames = if (myInProgress) {
             KotlinPositionManager(debugProcess).createStackFrames(descriptor)
         } else {
