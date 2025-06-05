@@ -1131,7 +1131,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractMultiplatformAnalysisTest> {
-            model("multiplatform", isRecursive = false, pattern = DIRECTORY)
+            model("multiplatform", isRecursive = false, pattern = DIRECTORY, excludedDirectories = listOf("ambiguousActuals"))
+            model("multiplatform/ambiguousActuals", isRecursive = false, pattern = DIRECTORY)
         }
 
         testClass<AbstractBytecodeToolWindowTest> {

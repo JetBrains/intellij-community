@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2MultiFileQuickFixTe
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 
 
 internal fun MutableTWorkspace.generateK2InspectionTests() {
@@ -168,6 +169,10 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/multiFileLocalInspections/reconcilePackageWithDirectory", pattern = pattern)
             model("${idea}/multiFileLocalInspections/redundantQualifierName", pattern = pattern)
             model("code-insight/inspections-k2/tests/testData/multiFileInspectionsLocal", pattern = pattern)
+        }
+
+        testClass<AbstractK2AmbiguousActualsTest> {
+            model("${idea}/multiplatform/ambiguousActuals", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractK2ActualExpectTest> {
