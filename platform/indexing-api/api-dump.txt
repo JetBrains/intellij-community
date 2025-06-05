@@ -101,6 +101,7 @@ com.intellij.find.FindModel$FindModelObserver
 e:com.intellij.find.FindModel$SearchContext
 - java.lang.Enum
 - sf:ANY:com.intellij.find.FindModel$SearchContext
+- sf:Companion:com.intellij.find.FindModel$SearchContext$Companion
 - sf:EXCEPT_COMMENTS:com.intellij.find.FindModel$SearchContext
 - sf:EXCEPT_COMMENTS_AND_STRING_LITERALS:com.intellij.find.FindModel$SearchContext
 - sf:EXCEPT_STRING_LITERALS:com.intellij.find.FindModel$SearchContext
@@ -109,6 +110,8 @@ e:com.intellij.find.FindModel$SearchContext
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.find.FindModel$SearchContext
 - s:values():com.intellij.find.FindModel$SearchContext[]
+f:com.intellij.find.FindModel$SearchContext$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 c:com.intellij.lang.cacheBuilder.SimpleWordsScanner
 - com.intellij.lang.cacheBuilder.VersionedWordsScanner
 - <init>():V

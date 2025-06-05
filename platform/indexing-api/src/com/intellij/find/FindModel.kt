@@ -749,6 +749,7 @@ open class FindModel : UserDataHolder, Cloneable {
     }
   }
 
+  @Serializable
   enum class SearchContext {
     ANY, IN_STRING_LITERALS, IN_COMMENTS, EXCEPT_STRING_LITERALS, EXCEPT_COMMENTS, EXCEPT_COMMENTS_AND_STRING_LITERALS
   }
