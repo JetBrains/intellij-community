@@ -5,6 +5,7 @@ import com.jetbrains.rhizomedb.*
 import fleet.kernel.rete.impl.*
 import fleet.kernel.rete.impl.DummyQueryScope
 import fleet.kernel.rete.impl.distinct
+import kotlinx.coroutines.flow.first
 
 /**
  * Emits a single unconditional match with the given value [t]
@@ -153,6 +154,17 @@ fun <T> Query<T>.filter(p: (T) -> Boolean): Query<T> =
  * */
 inline fun <reified R> Query<*>.filterIsInstance(): Query<R> =
   flatMap { t -> if (t is R) setOf(t) else emptySet() }
+
+/**
+ * returns first value of [Query] [Match]es
+ * */
+suspend fun <T> Query<T>.first(): T = asValuesFlow().first()
+
+/**
+ * returns first value of [Query] [Match]es that satisfies [p] to true,
+ * [p] is being read-tracked
+ * */
+suspend fun <T> Query<T>.first(p: (T) -> Boolean): T = filter(p).first()
 
 /**
  * version of [filter] working with [Match]
@@ -454,5 +466,5 @@ fun <T> Query<T>.intern(firstKey: Any, vararg keys: Any): Query<T> =
   internImpl(listOf(firstKey, *keys))
 
 @PublishedApi
-internal fun <T> Query<T>.internImpl(key: Any): Query<T> = 
+internal fun <T> Query<T>.internImpl(key: Any): Query<T> =
   InternedQuery(key, this)
