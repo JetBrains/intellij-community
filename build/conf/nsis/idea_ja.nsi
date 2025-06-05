@@ -1,5 +1,5 @@
 ; Installation pages headers
-LangString choose_install_location  ${LANG_JAPANESE} "  インストール場所の選択"
+LangString choose_install_location ${LANG_JAPANESE} "  インストール場所の選択"
 LangString choose_start_menu_folder ${LANG_JAPANESE} "  スタートメニューフォルダーの選択"
 LangString installing_product ${LANG_JAPANESE} "  イントール中"
 

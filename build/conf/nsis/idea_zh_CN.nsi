@@ -1,5 +1,5 @@
 ; Installation pages headers
-LangString choose_install_location  ${LANG_SIMPCHINESE} "  选择安装位置"
+LangString choose_install_location ${LANG_SIMPCHINESE} "  选择安装位置"
 LangString choose_start_menu_folder ${LANG_SIMPCHINESE} "  选择“开始”菜单文件夹"
 LangString installing_product ${LANG_SIMPCHINESE} "  正在安装"
 

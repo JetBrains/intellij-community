@@ -1,5 +1,5 @@
 ; Installation pages headers
-LangString choose_install_location  ${LANG_KOREAN} "  설치 위치 선택"
+LangString choose_install_location ${LANG_KOREAN} "  설치 위치 선택"
 LangString choose_start_menu_folder ${LANG_KOREAN} "  시작 메뉴 폴더 선택"
 LangString installing_product ${LANG_KOREAN} "  설치 중"
 

@@ -59,12 +59,13 @@ Var updateContextMenu
 !include StrFunc.nsh
 !include LogicLib.nsh
 
-${UnStrStr}
+; `StrFunc.nsh` requires priming the commands which actually get used later
 ${StrStr}
+${UnStrStr}
 ${StrLoc}
 ${UnStrLoc}
-${UnStrRep}
 ${StrRep}
+${UnStrRep}
 
 !include "customInstallActions.nsi"
 
@@ -1100,9 +1101,8 @@ Section "IDEA Files" CopyIdeaFiles
 
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $launcherShortcut" "State"
   ${If} $R0 == 1
-    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
-                   "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-    ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
+    ${LogText} "Creating shortcut: '$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk' -> '$INSTDIR\bin\${PRODUCT_EXE_FILE}'"
+    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
   ${EndIf}
 
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"

@@ -1,5 +1,5 @@
 ; Installation pages headers
-LangString choose_install_location  ${LANG_ENGLISH} "  Choose Install Location"
+LangString choose_install_location ${LANG_ENGLISH} "  Choose Install Location"
 LangString choose_start_menu_folder ${LANG_ENGLISH} "  Choose Start Menu Folder"
 LangString installing_product ${LANG_ENGLISH} "  Installing"
 
