@@ -1,20 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.uast.UastLanguagePlugin
 
 @Service(Service.Level.PROJECT)
-class KotlinUastOutOfCodeBlockModificationTracker internal constructor(private val project: Project): Disposable, ModificationTracker {
+class KotlinUastOutOfCodeBlockModificationTracker internal constructor(private val project: Project, coroutineScope: CoroutineScope) : ModificationTracker {
     private val modificationTracker = SimpleModificationTracker()
 
     @Volatile
@@ -23,7 +23,7 @@ class KotlinUastOutOfCodeBlockModificationTracker internal constructor(private v
     init {
         refresh()
 
-        UastLanguagePlugin.EP.addChangeListener({ refresh() }, this)
+        UastLanguagePlugin.EP.addChangeListener(coroutineScope) { refresh() }
     }
 
     private fun refresh() {
@@ -31,7 +31,7 @@ class KotlinUastOutOfCodeBlockModificationTracker internal constructor(private v
     }
 
     init {
-        project.analysisMessageBus.connect(this).subscribe(
+        project.analysisMessageBus.connect(coroutineScope).subscribe(
             KotlinModificationEvent.TOPIC,
             KotlinModificationEventListener { event ->
                 when (event) {
@@ -44,9 +44,6 @@ class KotlinUastOutOfCodeBlockModificationTracker internal constructor(private v
                 }
             }
         )
-    }
-
-    override fun dispose() {
     }
 
     override fun getModificationCount(): Long = modificationTracker.modificationCount + uastLanguageTrackers.sumOf { it.modificationCount }
