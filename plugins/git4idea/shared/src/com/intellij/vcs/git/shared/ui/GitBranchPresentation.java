@@ -16,6 +16,13 @@ public final class GitBranchPresentation {
   public static final int BRANCH_NAME_LENGTH_DELTA = 4;
   public static final int BRANCH_NAME_SUFFIX_LENGTH = 5;
 
+  private static final int DEFAULT_MAX_BRANCH_NAME_LENGTH = 80;
+
+  public static @NlsSafe @NotNull String truncateBranchName(@NotNull Project project,
+                                                            @NotNull @NlsSafe String branchName) {
+    return truncateBranchName(project, branchName, DEFAULT_MAX_BRANCH_NAME_LENGTH);
+  }
+
   public static @NlsSafe @NotNull String truncateBranchName(@NotNull Project project,
                                                             @NotNull @NlsSafe String branchName,
                                                             int maxBranchNameLength) {

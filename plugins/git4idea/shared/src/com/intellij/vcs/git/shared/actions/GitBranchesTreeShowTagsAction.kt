@@ -6,6 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 import git4idea.config.GitVcsSettings
 
+/**
+ * [GitBranchesTreeShowTagsAction] is updated and executed at backend.
+ *
+ * The state of the pop-up tree is updated by receiving
+ * [com.intellij.vcs.git.shared.rpc.GitRepositoryEvent.TagsHidden] and
+ * [com.intellij.vcs.git.shared.rpc.GitRepositoryEvent.TagsLoaded] events.
+ */
 internal class GitBranchesTreeShowTagsAction : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)

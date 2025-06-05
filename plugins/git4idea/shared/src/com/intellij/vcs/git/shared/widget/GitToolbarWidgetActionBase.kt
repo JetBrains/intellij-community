@@ -15,13 +15,19 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.ui.RowIcon
+import com.intellij.ui.util.maximumWidth
 import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopup
 import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import git4idea.i18n.GitBundle
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
+/**
+ * This class should be converted to the regular class and registered as a single branches pop-up action
+ * in the frontend module.
+ */
 @ApiStatus.Internal
 abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -54,12 +60,18 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
     }
   }
 
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return super.createCustomComponent(presentation, place).apply { maximumWidth = Int.MAX_VALUE }
+  }
+
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    super.updateCustomComponent(component, presentation)
+  }
+
   protected open fun doUpdate(e: AnActionEvent, project: Project) {
-    val state = if (GitRepositoriesHolder.getInstance(project).initialized) {
-      GitWidgetStateHolder.Companion.getInstance(project).currentState
-    } else {
-      GitWidgetState.DoNotShow
-    }
+    val state =
+      if (GitRepositoriesHolder.getInstance(project).initialized) GitWidgetStateHolder.getInstance(project).currentState
+      else GitWidgetState.DoNotShow
 
     if (state is GitWidgetState.OnRepository) {
       GitWidgetPlaceholder.updatePlaceholder(project, state.presentationData.text)

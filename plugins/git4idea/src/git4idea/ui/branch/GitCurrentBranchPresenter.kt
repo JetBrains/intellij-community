@@ -22,14 +22,14 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitCurrentBranchPresenter.Companion.PRESENTATION_UPDATED
-import git4idea.ui.toolbar.GitToolbarWidgetAction
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 /**
- * Supplies a branch presentation to [git4idea.ui.toolbar.GitToolbarWidgetAction]
+ * Supplies a branch presentation to the git toolbar widget through via
+ * [com.intellij.vcs.git.shared.rpc.GitWidgetApi.getWidgetState]
  */
 interface GitCurrentBranchPresenter {
   companion object {
@@ -85,7 +85,7 @@ private fun getDefaultPresentation(repository: GitRepository): GitCurrentBranchP
 
 private fun calcText(repository: GitRepository): @NlsSafe String =
   StringUtil.escapeMnemonics(GitBranchUtil.getDisplayableBranchText(repository) { branchName ->
-    GitBranchPresentation.truncateBranchName(repository.project, branchName, GitToolbarWidgetAction.BRANCH_NAME_MAX_LENGTH)
+    GitBranchPresentation.truncateBranchName(repository.project, branchName)
   })
 
 private fun GitRepository.calcIcon(): Icon? {
