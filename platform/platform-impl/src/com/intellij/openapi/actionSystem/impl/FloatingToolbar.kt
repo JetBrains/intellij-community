@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -121,7 +120,6 @@ abstract class FloatingToolbar(
       showHint (hint)
     }
     hint.addHintListener {
-      ClientProperty.remove(hint.component, LightweightHint.HINT_COMPONENT_EDITOR_KEY)
       this.hint = null
     }
     this.hint = hint
@@ -141,7 +139,6 @@ abstract class FloatingToolbar(
     val component = BorderLayoutPanel().apply {
       addToCenter(toolbar.component)
     }
-    ClientProperty.put(component, LightweightHint.HINT_COMPONENT_EDITOR_KEY, editor)
     val hint = LightweightHint(component).apply {
       setForceShowAsPopup(true)
     }
