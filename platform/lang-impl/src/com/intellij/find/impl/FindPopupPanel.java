@@ -522,13 +522,22 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     myReplaceAllButton.setToolTipText(KeymapUtil.getKeystrokeText(REPLACE_ALL));
 
     List<Shortcut> navigationKeyStrokes = new ArrayList<>();
-    KeyStroke viewSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getViewSource());
-    if (viewSourceKeyStroke != null && !Comparing.equal(viewSourceKeyStroke, ENTER_WITH_MODIFIERS) && !Comparing.equal(viewSourceKeyStroke, ENTER)) {
-      navigationKeyStrokes.add(new KeyboardShortcut(viewSourceKeyStroke, null));
+    @NotNull Collection<KeyStroke> viewSourceKeyStrokes = KeymapUtil.getKeyStrokes(CommonShortcuts.getViewSource());
+    for(KeyStroke viewSourceKeyStroke : viewSourceKeyStrokes) {
+      if (viewSourceKeyStroke != null &&
+          !Comparing.equal(viewSourceKeyStroke, ENTER_WITH_MODIFIERS) &&
+          !Comparing.equal(viewSourceKeyStroke, ENTER)) {
+        navigationKeyStrokes.add(new KeyboardShortcut(viewSourceKeyStroke, null));
+      }
     }
-    KeyStroke editSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getEditSource());
-    if (editSourceKeyStroke != null && !Comparing.equal(editSourceKeyStroke, ENTER_WITH_MODIFIERS) && !Comparing.equal(editSourceKeyStroke, ENTER)) {
-      navigationKeyStrokes.add(new KeyboardShortcut(editSourceKeyStroke, null));
+
+    @NotNull Collection<KeyStroke> editSourceKeyStrokes = KeymapUtil.getKeyStrokes(CommonShortcuts.getEditSource());
+    for (KeyStroke editSourceKeyStroke: editSourceKeyStrokes) {
+      if (editSourceKeyStroke != null &&
+          !Comparing.equal(editSourceKeyStroke, ENTER_WITH_MODIFIERS) &&
+          !Comparing.equal(editSourceKeyStroke, ENTER)) {
+        navigationKeyStrokes.add(new KeyboardShortcut(editSourceKeyStroke, null));
+      }
     }
     if (!navigationKeyStrokes.isEmpty()) {
       DumbAwareAction.create(e -> navigateToSelectedUsage(e))
