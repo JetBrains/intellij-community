@@ -377,8 +377,8 @@ internal class KotlinFunctionCallUsage(
             }
         }
         val receiver: PsiElement?  =
-            if (newReceiverInfo?.oldIndex != originalReceiverInfo?.oldIndex && newReceiverInfo != null && !newReceiverInfo.wasContextParameter) {
-                val receiverArgument = argumentMapping[newReceiverInfo.oldIndex]?.element
+            if (newReceiverInfo?.oldIndex != originalReceiverInfo?.oldIndex && newReceiverInfo != null) {
+                val receiverArgument = if (!newReceiverInfo.wasContextParameter) argumentMapping[newReceiverInfo.oldIndex]?.element else contextParameters?.get(newReceiverInfo.oldIndex)?.element
                 val defaultValueForCall = newReceiverInfo.defaultValueForCall
                 receiverArgument?.let { psiFactory.createExpression(it.text) }
                     ?: defaultValueForCall
@@ -414,7 +414,7 @@ internal class KotlinFunctionCallUsage(
 
         var newElement: KtElement = element
         if (newReceiverInfo?.oldIndex != originalReceiverInfo?.oldIndex) {
-            val replacingElement: PsiElement = if (newReceiverInfo != null && !newReceiverInfo.wasContextParameter) {
+            val replacingElement: PsiElement = if (newReceiverInfo != null) {
                 psiFactory.createExpressionByPattern("$0.$1", receiver!!, element)
             } else {
                 element.copy()
