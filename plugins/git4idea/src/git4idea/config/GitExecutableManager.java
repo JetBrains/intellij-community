@@ -69,7 +69,7 @@ public class GitExecutableManager {
     return getExecutable(project, (Path)null);
   }
 
-  // TODO remove all usages without either project or diretory
+  // TODO remove all usages without either project or directory
   public @NotNull GitExecutable getExecutable(@Nullable Project project, @Nullable Path gitDirectory) {
     String path = getPathToGit(project, gitDirectory, true);
     if (path == null) path = GitExecutableDetector.getDefaultExecutable();

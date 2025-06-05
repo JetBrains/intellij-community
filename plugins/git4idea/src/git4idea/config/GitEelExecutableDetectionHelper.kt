@@ -3,6 +3,7 @@ package git4idea.config
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
@@ -29,6 +30,12 @@ internal class GitEelExecutableDetectionHelper private constructor(private val s
   @OptIn(ExperimentalCoroutinesApi::class)
   fun getExecutablePathIfReady(eelApi: EelApi, rootDir: String): String? {
     return getExecutablePathPromise(eelApi, rootDir).takeIf { it.isCompleted }?.getCompleted()
+  }
+
+  fun getExecutablePathBlocking(eelApi: EelApi, rootDir: String): String? {
+    return runBlockingMaybeCancellable {
+      getExecutablePathPromise(eelApi, rootDir).await();
+    }
   }
 
   fun getExecutablePathPromise(eelApi: EelApi, rootDir: String): Deferred<String?> {
