@@ -242,6 +242,10 @@ fun PluginUiModel.getTrialPeriodByProductCode(code: String): Int? {
   return customTrialPeriods?.getOrDefault(code, defaultTrialPeriod!!)
 }
 
+@ApiStatus.Internal
+fun PluginUiModel.isPaidPlugin(): Boolean = isPaid || isConverted
+
+@ApiStatus.Internal
 fun PluginUiModel.addInstalledSource(pluginSource: PluginSource) {
   if (source == null || source == pluginSource) {
     source = pluginSource

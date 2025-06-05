@@ -5,10 +5,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.newui.ColorButton.setWidth
 import com.intellij.ide.plugins.newui.ColorButton.setWidth72
 import com.intellij.ide.plugins.newui.PluginInstallButton
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class InstallOptionButton @JvmOverloads constructor(
   isUpgradeRequired: Boolean = false,
   action: Action? = null,

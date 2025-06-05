@@ -3609,15 +3609,6 @@ c:com.intellij.ide.plugins.newui.HorizontalLayout
 - <init>(I):V
 - layoutContainer(java.awt.Container):V
 - preferredLayoutSize(java.awt.Container):java.awt.Dimension
-c:com.intellij.ide.plugins.newui.InstallButton
-- com.intellij.ide.plugins.newui.ColorButton
-- <init>(java.lang.String,Z):V
-- <init>(Z):V
-- <init>(Z,Z):V
-- setButtonColors(Z):V
-- setEnabled(Z,java.lang.String):V
-- p:setTextAndSize():V
-- updateUI():V
 c:com.intellij.ide.plugins.newui.LinkComponent
 - com.intellij.ui.components.labels.LinkLabel
 - <init>():V

@@ -3,10 +3,12 @@ package com.intellij.ide.plugins.newui.buttons
 
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import javax.swing.Action
 import javax.swing.JButton
 
+@ApiStatus.Internal
 open class OptionButton @JvmOverloads constructor(
   action: Action? = null,
   options: Array<Action>? = null

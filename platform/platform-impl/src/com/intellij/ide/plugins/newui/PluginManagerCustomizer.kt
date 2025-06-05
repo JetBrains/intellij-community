@@ -5,9 +5,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
 
+@ApiStatus.Internal
 interface PluginManagerCustomizer {
   fun getInstallButonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
@@ -37,6 +39,7 @@ interface PluginManagerCustomizer {
   }
 }
 
+@ApiStatus.Internal
 data class OptionsButonCustomizationModel(
   val additionalActions: List<AnAction>,
   val isVisible: Boolean = true,
@@ -44,6 +47,7 @@ data class OptionsButonCustomizationModel(
   @param:NlsSafe val text: String? = null,
 )
 
+@ApiStatus.Internal
 data class UpdateButtonCustomizationModel(
   val action: () -> Unit,
 )

@@ -5,7 +5,9 @@ import com.intellij.history.Label
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class VersionPanel(private val versionLabel: JBLabel) : NonOpaquePanel(HorizontalLayout(JBUI.scale(8))) {
   override fun getBaseline(width: Int, height: Int): Int {
     // Return the baseline of the version label component, using preferred size if not yet laid out
