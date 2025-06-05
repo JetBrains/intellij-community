@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver
 
+import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
@@ -39,7 +40,14 @@ class MCPService : RestService() {
 
     override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
         val path = urlDecoder.path().split(serviceName).last().trimStart('/')
-        val project = getLastFocusedOrOpenedProject() ?: return null
+        val projectPath = request.headers().get(IJ_MCP_SERVER_PROJECT_PATH)
+        val project = if (!projectPath.isNullOrBlank()) {
+          ProjectManager.getInstance().openProjects.find { it.basePath == projectPath } ?: getLastFocusedOrOpenedProject()
+        }
+        else {
+          getLastFocusedOrOpenedProject()
+        } ?: return null
+
         val tools = McpToolManager.getAllTools()
 
         val result = when (path) {

@@ -1,15 +1,6 @@
 package com.intellij.mcpserver.stdio
 
-import com.intellij.mcpserver.stdio.mcpProto.CallToolRequest
-import com.intellij.mcpserver.stdio.mcpProto.CallToolResult
-import com.intellij.mcpserver.stdio.mcpProto.Implementation
-import com.intellij.mcpserver.stdio.mcpProto.ListToolsRequest
-import com.intellij.mcpserver.stdio.mcpProto.ListToolsResult
-import com.intellij.mcpserver.stdio.mcpProto.Method
-import com.intellij.mcpserver.stdio.mcpProto.Response
-import com.intellij.mcpserver.stdio.mcpProto.ServerCapabilities
-import com.intellij.mcpserver.stdio.mcpProto.TextContent
-import com.intellij.mcpserver.stdio.mcpProto.Tool
+import com.intellij.mcpserver.stdio.mcpProto.*
 import com.intellij.mcpserver.stdio.mcpProto.server.Server
 import com.intellij.mcpserver.stdio.mcpProto.server.ServerOptions
 import com.intellij.mcpserver.stdio.mcpProto.server.StdioServerTransport
@@ -28,9 +19,10 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.io.asSink
 import kotlinx.io.buffered
 
-const val IJ_MCP_SERVER_PORT: String = "IJ_MCP_SERVER_PORT"
-const val IJ_MCP_SERVER_NAME: String = "IJ_MCP_SERVER_NAME"
-const val IJ_MCP_SERVER_VERSION: String = "IJ_MCP_SERVER_VERSION"
+val IJ_MCP_SERVER_PORT: String = ::IJ_MCP_SERVER_PORT.name
+val IJ_MCP_SERVER_NAME: String = ::IJ_MCP_SERVER_NAME.name
+val IJ_MCP_SERVER_VERSION: String = ::IJ_MCP_SERVER_VERSION.name
+val IJ_MCP_SERVER_PROJECT_PATH: String = ::IJ_MCP_SERVER_PROJECT_PATH.name
 
 suspend fun main() {
   val inputStream = System.`in`
@@ -56,7 +48,14 @@ suspend fun main() {
   val stdioServerTransport = StdioServerTransport(inputStream.asInput(), outputStream.asSink().buffered())
 
   server.setRequestHandler<ListToolsRequest>(Method.Defined.ToolsList) { request, extra ->
-    val response = httpClient.get(urlString = endpoint + "list_tools")
+    val response = httpClient.get(urlString = endpoint + "list_tools") {
+      headers {
+        val projectPath = System.getenv(IJ_MCP_SERVER_PROJECT_PATH)
+        if (!projectPath.isNullOrBlank()) {
+          this.append(IJ_MCP_SERVER_PROJECT_PATH, projectPath)
+        }
+      }
+    }
     when (response.status) {
       HttpStatusCode.OK -> {
         val responseText = response.bodyAsText()
@@ -74,6 +73,10 @@ suspend fun main() {
     val response = httpClient.post(urlString = endpoint + request.name) {
       headers {
         contentType(ContentType.Application.Json)
+        val projectPath = System.getenv(IJ_MCP_SERVER_PROJECT_PATH)
+        if (!projectPath.isNullOrBlank()) {
+          this.append(IJ_MCP_SERVER_PROJECT_PATH, projectPath)
+        }
       }
       setBody(McpJson.encodeToString(request.arguments))
     }
