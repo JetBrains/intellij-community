@@ -38,6 +38,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/base/fe10/analysis",
     "//platform/lang-impl",
+    "//plugins/kotlin/base/scripting.k1",
   ],
   runtime_deps = [":kotlin-compiler-plugins-assignment-common-k1_resources"]
 )

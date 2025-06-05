@@ -80,10 +80,6 @@
             order="last"
             implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
 
-    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
-
-    <idea.base.projectStructure.moduleInfoProviderExtension implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
-
     <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
     <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
 

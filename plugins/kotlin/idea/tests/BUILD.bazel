@@ -175,6 +175,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
     "//plugins/kotlin/jvm/k1",
+    "//plugins/kotlin/base/scripting.k1",
   ],
   runtime_deps = [
     "//plugins/kotlin/gradle/gradle",

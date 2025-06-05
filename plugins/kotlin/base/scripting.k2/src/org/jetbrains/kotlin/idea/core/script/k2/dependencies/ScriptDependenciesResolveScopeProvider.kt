@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.core.script.dependencies
+package org.jetbrains.kotlin.idea.core.script.k2.dependencies
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -8,8 +8,7 @@ import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 
 /**
@@ -38,14 +37,6 @@ class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
             return null
         }
 
-        @OptIn(K1ModeProjectStructureApi::class)
-        val scope = GlobalSearchScope.union(
-            arrayOf(
-                GlobalSearchScope.fileScope(project, file),
-                *ScriptDependenciesInfo.ForProject(project).dependencies().map { it.contentScope }.toTypedArray()
-            )
-        )
-
-        return KotlinScriptSearchScope(project, scope)
+        return KotlinScriptSearchScope(project, GlobalSearchScope.fileScope(project, file))
     }
 }

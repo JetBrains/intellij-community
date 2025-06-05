@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.scripting
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k1.modules
 
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
@@ -15,9 +15,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProviderExtensi
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.register
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
@@ -29,9 +26,9 @@ import org.jetbrains.kotlin.utils.yieldIfNotNull
 @OptIn(K1ModeProjectStructureApi::class)
 internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtension {
     override suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByElement(
-        element: PsiElement,
-        file: PsiFile,
-        virtualFile: VirtualFile
+      element: PsiElement,
+      file: PsiFile,
+      virtualFile: VirtualFile
     ) {
         val ktFile = file as? KtFile ?: return
         val isScript = runReadAction { ktFile.isValid && ktFile.isScript() }
@@ -45,10 +42,10 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
     }
 
     override suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByFile(
-        project: Project,
-        virtualFile: VirtualFile,
-        isLibrarySource: Boolean,
-        config: ModuleInfoProvider.Configuration,
+      project: Project,
+      virtualFile: VirtualFile,
+      isLibrarySource: Boolean,
+      config: ModuleInfoProvider.Configuration,
     ) {
         val isBinary = virtualFile.fileType.isKotlinBinary
 
@@ -89,7 +86,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
 
     override suspend fun SequenceScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile) {
         if (ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType) {
-            ScriptRelatedModuleNameFile[project, virtualFile]?.let { scratchModuleName ->
+            ScriptRelatedModuleNameFile.Companion[project, virtualFile]?.let { scratchModuleName ->
                 val moduleManager = ModuleManager.getInstance(project)
                 yieldIfNotNull(moduleManager.findModuleByName(scratchModuleName))
             }

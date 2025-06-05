@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduc
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
 import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.scriptModuleEntity
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
-import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.idea.core.script.k2.modules.K2IdeScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.platform.TargetPlatform

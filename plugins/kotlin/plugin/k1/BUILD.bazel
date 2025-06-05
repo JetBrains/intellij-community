@@ -31,6 +31,7 @@ java_library(
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/scripting.k1",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/analysis-api-platform",
     "//plugins/kotlin/base/facet",

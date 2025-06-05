@@ -121,5 +121,7 @@
     <module name="kotlin.compiler-reference-index"/>
 
     <module name="kotlin.performanceExtendedPlugin"/>
+
+    <module name="kotlin.base.scripting.k1"/>
   </content>
 </idea-plugin>

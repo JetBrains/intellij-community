@@ -49,6 +49,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "//plugins/kotlin/base/plugin",
     "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/scripting.k1",
   ]
 )
 ### auto-generated section `build kotlin.base.fe10.analysis` end

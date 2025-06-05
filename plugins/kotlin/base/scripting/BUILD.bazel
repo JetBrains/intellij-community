@@ -76,7 +76,7 @@ jvm_library(
 jvm_library(
   name = "scripting_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   associates = [":scripting"],
   deps = [

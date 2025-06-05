@@ -1,6 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.core.script.dependencies
+package org.jetbrains.kotlin.idea.core.script.k2.dependencies
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
@@ -8,12 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.ResolveScopeProvider
-import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compilerAllowsAnyScriptsInSourceRoots
@@ -23,13 +20,11 @@ import org.jetbrains.kotlin.idea.hasNoExceptionsToBeUnderSourceRoot
 import org.jetbrains.kotlin.idea.isEnabled
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.isStandalone
-
-class KotlinScriptSearchScope(project: Project, baseScope: GlobalSearchScope) : DelegatingGlobalSearchScope(project, baseScope)
 
 class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
 
@@ -54,17 +49,9 @@ class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
             return ktFile.getScopeAccordingToLanguageFeature(file, project, scriptDefinition)
         }
 
-        if (!ktFile.isStandaloneScript()) {
-            ktFile.debugLog { "=> in-module" }
-            return null /* module scope, see method kdoc */
-        }
-
         scriptingDebugLog(ktFile) { "resolving as standalone" }
         return ktFile.calculateScopeForStandaloneScript(file, project)
     }
-
-    @OptIn(K1ModeProjectStructureApi::class)
-    private fun KtFile.isStandaloneScript(): Boolean = moduleInfoOrNull is ScriptModuleInfo // not ModuleSourceInfo (production|test)
 
     private fun KtFile.getScopeAccordingToLanguageFeature(
         file: VirtualFile,

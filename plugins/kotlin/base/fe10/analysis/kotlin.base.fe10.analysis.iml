@@ -55,5 +55,6 @@
     <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k1" />
   </component>
 </module>

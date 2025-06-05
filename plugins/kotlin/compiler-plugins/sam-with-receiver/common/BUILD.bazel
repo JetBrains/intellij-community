@@ -30,6 +30,7 @@ jvm_library(
     "//platform/util",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
     "//platform/core-api:core",
+    "//plugins/kotlin/base/scripting.k1",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.sam-with-receiver.common` end

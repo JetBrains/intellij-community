@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.scripting.projectStructure
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k1.modules
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,9 +24,10 @@ import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
 import org.jetbrains.kotlin.idea.base.scripting.getTargetPlatformVersion
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptSearchScope
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.scriptModuleEntity
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
-import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -59,7 +60,7 @@ data class ScriptModuleInfo(
             val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
 
             scriptFile.workspaceEntities(project, snapshot).filterIsInstance<ModuleEntity>().firstOrNull()
-                ?.let<ModuleEntity, GlobalSearchScope?> {
+                ?.let {
                     it.findModule(snapshot)?.let<ModuleBridge, GlobalSearchScope> { module ->
                         val scope = KotlinResolveScopeEnlarger.enlargeScope(
                             module.getModuleWithDependenciesAndLibrariesScope(false),
@@ -139,13 +140,6 @@ fun VirtualFile.workspaceEntities(project: Project, snapshot: EntityStorage): Se
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val virtualFileUrl = toVirtualFileUrl(virtualFileUrlManager)
     return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
-}
-
-@ApiStatus.Internal
-fun VirtualFile.scriptModuleEntity(project: Project, snapshot: EntityStorage): ModuleEntity? {
-    val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-    val virtualFileUrl = toVirtualFileUrl(virtualFileUrlManager)
-    return snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).firstNotNullOfOrNull { it as? ModuleEntity }
 }
 
 @K1ModeProjectStructureApi

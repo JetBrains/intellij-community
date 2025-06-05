@@ -75,6 +75,7 @@ jvm_library(
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/scripting",
+    "//plugins/kotlin/base/scripting.k1",
     "//platform/util/progress",
     "//plugins/kotlin/base/external-build-system",
     "//plugins/kotlin/base/analysis",

@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(K1ModeProjectStructureApi::class)
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(K1ModeProjectStructureApi::class, KaPlatformInterface::class)
 
-package org.jetbrains.kotlin.idea.base.scripting.projectStructure
+package org.jetbrains.kotlin.idea.core.script.k1.modules
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaContentScopeProvider
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.nio.file.Path
 
 internal class ScriptingKaModuleFactory : KaModuleFactory {
@@ -29,10 +28,10 @@ internal class ScriptingKaModuleFactory : KaModuleFactory {
             is ScriptModuleInfo -> KtScriptModuleByModuleInfo(moduleInfo)
             is ScriptDependenciesInfo -> KtScriptDependencyModuleByModuleInfo(moduleInfo)
             is ScriptDependenciesSourceInfo -> KtScriptDependencySourceModuleByModuleInfo(moduleInfo)
-            is JvmLibraryInfo -> moduleInfo.source?.safeAs<KotlinScriptEntitySource>()?.let {
+            is JvmLibraryInfo -> (moduleInfo.source as? KotlinScriptEntitySource)?.let {
                 KtScriptLibraryModuleByModuleInfo(moduleInfo)
             }
-            is LibrarySourceInfo -> moduleInfo.source?.safeAs<KotlinScriptEntitySource>()?.let {
+            is LibrarySourceInfo -> (moduleInfo.source as? KotlinScriptEntitySource)?.let {
                 KtScriptLibrarySourceModuleByModuleInfo(moduleInfo)
             }
             else -> null
