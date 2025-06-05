@@ -5,6 +5,7 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -29,47 +30,62 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryIdCache
 import git4idea.repo.GitRepositoryStateChangeListener
 import git4idea.ui.branch.GitCurrentBranchPresenter
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
 
 internal class GitWidgetApiImpl : GitWidgetApi {
   override suspend fun getWidgetState(projectId: ProjectId, selectedFile: VirtualFileId?): Flow<GitWidgetState> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
     val file = selectedFile?.virtualFile()
-    return flowWithMessageBus(project, GitDisposable.getInstance(project).coroutineScope) { connection ->
-      fun trySendNewState() {
-        val widgetState = getWidgetState(project, file)
-        if (widgetState is GitWidgetState.OnRepository) {
-          val rootPath = GitRepositoryIdCache.getInstance(project).get(widgetState.repository)?.root
-          if (rootPath != null) {
-            GitVcsSettings.getInstance(project).setRecentRoot(rootPath.path)
-          }
-        }
 
-        trySend(widgetState)
+    return callbackFlow {
+      val messageBusConnection = readAction {
+        if (project.isDisposed) {
+          close()
+          return@readAction null
+        }
+        project.messageBus.connect(GitDisposable.getInstance(project).coroutineScope).also {
+          it.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+            LOG.debug("VCS mapping changed. Sending new value")
+            trySendNewState(project, file)
+          })
+          it.subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
+            override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
+              LOG.debug("Git repository state changed: $repository. Sending new value")
+              trySendNewState(project, file)
+            }
+          })
+          it.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
+            LOG.debug("Git incoming outgoing state changed. Sending new value")
+            trySendNewState(project, file)
+          })
+          it.subscribe(GitCurrentBranchPresenter.PRESENTATION_UPDATED, GitCurrentBranchPresenter.PresentationUpdatedListener {
+            LOG.debug("Branch presentation for the widget updated. Sending new value")
+            trySendNewState(project, file)
+          })
+        }
       }
 
-      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
-        LOG.debug("VCS mapping changed. Sending new value")
-        trySendNewState()
-      })
-      connection.subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
-        override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
-          LOG.debug("Git repository state changed: $repository. Sending new value")
-          trySendNewState()
-        }
-      })
-      connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
-        LOG.debug("Git incoming outgoing state changed. Sending new value")
-        trySendNewState()
-      })
-      connection.subscribe(GitCurrentBranchPresenter.PRESENTATION_UPDATED, GitCurrentBranchPresenter.PresentationUpdatedListener {
-        LOG.debug("Branch presentation for the widget updated. Sending new value")
-        trySendNewState()
-      })
-
-      trySendNewState()
+      awaitClose {
+        LOG.debug("Connection closed")
+        messageBusConnection?.disconnect()
+      }
     }
+  }
+
+  fun ProducerScope<GitWidgetState>.trySendNewState(project: Project, file: VirtualFile?) {
+    val widgetState = getWidgetState(project, file)
+    if (widgetState is GitWidgetState.OnRepository) {
+      val rootPath = GitRepositoryIdCache.getInstance(project).get(widgetState.repository)?.root
+      if (rootPath != null) {
+        GitVcsSettings.getInstance(project).setRecentRoot(rootPath.path)
+      }
+    }
+
+    trySend(widgetState)
   }
 
   companion object {

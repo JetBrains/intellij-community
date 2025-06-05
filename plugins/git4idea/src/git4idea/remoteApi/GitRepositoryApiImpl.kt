@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remoteApi
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -18,10 +19,13 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 private typealias SharedRefUtil = com.intellij.vcs.git.shared.ref.GitRefUtil
@@ -29,17 +33,34 @@ private typealias SharedRefUtil = com.intellij.vcs.git.shared.ref.GitRefUtil
 class GitRepositoryApiImpl : GitRepositoryApi {
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    return flowWithMessageBus(project, GitDisposable.getInstance(project).coroutineScope) { connection ->
-      val synchronizer = Synchronizer(project, this@flowWithMessageBus)
-      getAllRepositories(project).forEach(synchronizer::sendDeletedEventOnDispose)
 
-      connection.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
+    return callbackFlow {
+      val messageBusConnection = readAction {
+        if (project.isDisposed) {
+          close()
+          return@readAction null
+        }
 
-      val allRepositories = getAllRepositories(project).map { GitRepositoryToDtoConverter.convertToDto(it) }
-      send(GitRepositoryEvent.ReloadState(allRepositories))
-      while (isActive) {
-        delay(SYNC_INTERVAL)
-        send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
+        val synchronizer = Synchronizer(project, this@callbackFlow)
+        val coroutineScope = GitDisposable.getInstance(project).coroutineScope
+        coroutineScope.launch {
+          val allRepositories = getAllRepositories(project)
+          allRepositories.forEach { repository -> synchronizer.sendDeletedEventOnDispose(repository) }
+          send(GitRepositoryEvent.ReloadState(allRepositories.map { GitRepositoryToDtoConverter.convertToDto(it) }))
+          while (isActive) {
+            delay(SYNC_INTERVAL)
+            send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
+          }
+        }
+
+        project.messageBus.connect(coroutineScope).also {
+          it.subscribe(GitRepositoryFrontendSynchronizer.TOPIC, synchronizer)
+        }
+      }
+
+      awaitClose {
+        LOG.debug("Connection closed")
+        messageBusConnection?.disconnect()
       }
     }
   }
