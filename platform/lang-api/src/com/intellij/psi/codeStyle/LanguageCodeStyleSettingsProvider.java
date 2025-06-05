@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 
 /**
  * Base class and extension point for common code style settings for a specific language.
@@ -32,6 +33,12 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   public enum SettingsType {
     BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, COMMENTER_SETTINGS, LANGUAGE_SPECIFIC
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  public static void mockLanguageCodeStyleSettingsProviderService(BiConsumer<Class<?>, Object> registrar) {
+    registrar.accept(LanguageCodeStyleSettingsProviderService.class, new LanguageCodeStyleSettingsProviderService());
   }
 
   public static @NotNull List<LanguageCodeStyleSettingsProvider> getAllProviders() {

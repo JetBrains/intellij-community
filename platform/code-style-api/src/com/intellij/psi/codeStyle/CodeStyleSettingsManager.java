@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -44,7 +44,12 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   private static final WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
 
   public @NotNull CodeStyleSettings createSettings() {
-    CodeStyleSettings newSettings = new CodeStyleSettings(true, false);
+    return createSettings(true);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CodeStyleSettings createSettings(boolean loadExtensions) {
+    CodeStyleSettings newSettings = new CodeStyleSettings(loadExtensions, false);
     registerSettings(newSettings);
     return newSettings;
   }
