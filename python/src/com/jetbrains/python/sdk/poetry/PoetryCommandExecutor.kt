@@ -167,7 +167,13 @@ suspend fun poetryInstallPackage(sdk: Sdk, packages: List<String>, extraArgs: Li
  * @param [packages] The name of the package to be uninstalled.
  */
 @Internal
-suspend fun poetryUninstallPackage(sdk: Sdk, vararg packages: String): PyResult<String> = runPoetryWithSdk(sdk, "remove", *packages)
+suspend fun poetryRemovePackage(sdk: Sdk, vararg packages: String): PyResult<String> = runPoetryWithSdk(sdk, "remove", *packages)
+
+@Internal
+suspend fun poetryUninstallPackage(sdk: Sdk, vararg packages: String): PyResult<String> {
+  val args = listOf("run", "pip", "uninstall", "-y", *packages)
+  return runPoetryWithSdk(sdk, *args.toTypedArray())
+}
 
 @Internal
 fun parsePoetryShow(input: String): List<PythonPackage> {
@@ -280,6 +286,6 @@ suspend fun configurePoetryEnvironment(modulePath: Path?, vararg args: String) {
 }
 
 private suspend fun getPoetryEnvs(projectPath: Path): List<String> {
-  val executionPyResult = runPoetry(projectPath, "env", "list", "--full-path")
-  return executionPyResult.getOrNull()?.lineSequence()?.map { it.split(" ")[0] }?.filterNot { it.isEmpty() }?.toList() ?: emptyList()
+  val executionResult = runPoetry(projectPath, "env", "list", "--full-path")
+  return executionResult.getOrNull()?.lineSequence()?.map { it.split(" ")[0] }?.filterNot { it.isEmpty() }?.toList() ?: emptyList()
 }

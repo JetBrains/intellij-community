@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -39,13 +40,46 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   }
 
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
-    val result = if (sdk.uvUsePackageManagement) {
-      uv.uninstallPackages(pythonPackages)
+    if (pythonPackages.isEmpty()) return PyResult.success(Unit)
+
+    val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages)
+
+    uninstallStandalonePackages(standalonePackages).getOr { return it }
+    uninstallDeclaredPackages(declaredPackages).getOr { return it }
+
+    return PyResult.success(Unit)
+  }
+
+  /**
+   * Categorizes packages into standalone packages and pyproject.toml declared packages.
+   */
+  private fun categorizePackages(packages: Array<out String>): Pair<List<NormalizedPythonPackageName>, List<NormalizedPythonPackageName>> {
+    val dependencyNames = dependencies.map { it.name }.toSet()
+    return packages
+      .map { NormalizedPythonPackageName.from(it) }
+      .partition { it.name !in dependencyNames || sdk.uvUsePackageManagement }
+  }
+
+  /**
+   * Uninstalls standalone packages using UV package manager.
+   */
+  private suspend fun uninstallStandalonePackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
+    return if (packages.isNotEmpty()) {
+      uv.uninstallPackages(packages.map { it.name }.toTypedArray())
+    } else {
+      PyResult.success(Unit)
     }
-    else {
-      uv.removeDependencies(pythonPackages)
+  }
+
+  /**
+   * Removes declared dependencies using UV package manager.
+   */
+  private suspend fun uninstallDeclaredPackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
+    return if (packages.isNotEmpty()) {
+      uv.removeDependencies(packages.map { it.name }.toTypedArray())
+    } else {
+      PyResult.success(Unit)
     }
-    return result
   }
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {

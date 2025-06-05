@@ -14,7 +14,7 @@ interface PythonDependenciesExtractor {
 
   companion object {
     fun forSdk(sdk: Sdk): PythonDependenciesExtractor? =
-      PythonDependenciesExtractorProvider.EP_NAME.extensionList.firstNotNullOf { it.createExtractor(sdk) }
+      PythonDependenciesExtractorProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.createExtractor(sdk) }
   }
 }
 

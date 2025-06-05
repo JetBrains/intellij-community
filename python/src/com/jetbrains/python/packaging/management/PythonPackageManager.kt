@@ -91,6 +91,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     }
 
     waitForInit()
+    reloadDependencies()
+
     val normalizedPackagesNames = packages.map { normalizePackageName(it) }
     uninstallPackageCommand(*normalizedPackagesNames.toTypedArray()).getOr { return it }
     return reloadPackages()
@@ -213,5 +215,3 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     val RUNNING_PACKAGING_TASKS: Key<Boolean> = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks")
   }
 }
-
-
