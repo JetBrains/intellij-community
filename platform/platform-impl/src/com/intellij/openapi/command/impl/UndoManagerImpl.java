@@ -270,6 +270,14 @@ public class UndoManagerImpl extends UndoManager {
     mySharedRedoStacksHolder.clearDocumentReferences(document);
   }
 
+  // TODO: remove public
+  @ApiStatus.Internal
+  public void clearStacks(@NotNull FileEditor editor) {
+    for (UndoClientState state : getAllClientStates()) {
+      state.clearStacks(editor);
+    }
+  }
+
   @ApiStatus.Internal
   protected void notifyUndoRedoStarted(@Nullable FileEditor editor, @NotNull Disposable disposable, boolean isUndo) {
     ApplicationManager.getApplication()
@@ -301,6 +309,16 @@ public class UndoManagerImpl extends UndoManager {
   @ApiStatus.Internal
   protected boolean isGlobalSplitSupported() {
     return true;
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull Collection<@NotNull UndoRedoStackSize> getUndoRedoStackSizes(@NotNull FileEditor editor) {
+    UndoClientState state = getClientState(editor);
+    if (state != null) {
+      return state.getUndoRedoStackSizes(editor);
+    } else {
+      return Collections.emptyList();
+    }
   }
 
   void trimSharedStacks(@NotNull DocumentReference docRef) {

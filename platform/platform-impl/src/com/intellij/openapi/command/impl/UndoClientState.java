@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -374,6 +375,30 @@ final class UndoClientState implements Disposable {
 
   @NotNull ClientId getClientId() {
     return clientId;
+  }
+
+  @NotNull Collection<@NotNull UndoRedoStackSize> getUndoRedoStackSizes(@NotNull FileEditor editor) {
+    Collection<DocumentReference> refs = UndoDocumentUtil.getDocRefs(editor);
+    if (refs != null) {
+      return ContainerUtil.map(refs, ref -> new UndoRedoStackSize(
+        ref,
+        undoStacksHolder.getStack(ref).size(),
+        redoStacksHolder.getStack(ref).size()
+      ));
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  void clearStacks(@NotNull FileEditor editor) {
+    var refs = UndoDocumentUtil.getDocRefs(editor);
+    if (refs != null) {
+      flushCurrentCommand(UndoCommandFlushReason.CLEAR_STACKS);
+      redoStacksHolder.clearStacks(true, new HashSet<>(refs));
+      undoStacksHolder.clearStacks(true, new HashSet<>(refs));
+      sharedRedoStacksHolder.trimStacks(refs);
+      sharedUndoStacksHolder.trimStacks(refs);
+    }
   }
 
   @NotNull String dump(@NotNull Collection<DocumentReference> docRefs) {
