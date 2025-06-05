@@ -13,13 +13,13 @@ public class NamePatternRoot {
 
     /**
      * Type: {@code NamePatternBase | String}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code NamePatternBase | String}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -27,7 +27,7 @@ public class NamePatternRoot {
 
     /**
      * Type: {@code NamePatternBase | String}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

@@ -21,14 +21,14 @@ public class Return {
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description.")
     private String description;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
@@ -40,7 +40,7 @@ public class Return {
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -49,7 +49,7 @@ public class Return {
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -58,7 +58,7 @@ public class Return {
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -67,7 +67,7 @@ public class Return {
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {

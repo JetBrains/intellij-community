@@ -28,14 +28,14 @@ public class CssCustomProperty implements CustomElementsContribution
     /**
      * Whether the CSS custom property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the CSS custom property is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description.")
@@ -43,31 +43,31 @@ public class CssCustomProperty implements CustomElementsContribution
     /**
      * The name of the property, including leading `--`.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     @JsonPropertyDescription("The name of the property, including leading `--`.")
     private String name;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
     private String summary;
     /**
      * The expected syntax of the defined property. Defaults to "*".
-     *
+     * 
      * The syntax must be a valid CSS [syntax string](https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax)
      * as defined in the CSS Properties and Values API.
-     *
+     * 
      * Examples:
-     *
+     * 
      * "<color>": accepts a color
      * "<length> | <percentage>": accepts lengths or percentages but not calc expressions with a combination of the two
      * "small | medium | large": accepts one of these values set as custom idents.
      * "*": any valid token
-     *
+     * 
      */
     @JsonProperty("syntax")
     @JsonPropertyDescription("The expected syntax of the defined property. Defaults to \"*\".\n\nThe syntax must be a valid CSS [syntax string](https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax)\nas defined in the CSS Properties and Values API.\n\nExamples:\n\n\"<color>\": accepts a color\n\"<length> | <percentage>\": accepts lengths or percentages but not calc expressions with a combination of the two\n\"small | medium | large\": accepts one of these values set as custom idents.\n\"*\": any valid token")
@@ -88,7 +88,7 @@ public class CssCustomProperty implements CustomElementsContribution
     /**
      * Whether the CSS custom property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -98,7 +98,7 @@ public class CssCustomProperty implements CustomElementsContribution
     /**
      * Whether the CSS custom property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -107,7 +107,7 @@ public class CssCustomProperty implements CustomElementsContribution
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -116,7 +116,7 @@ public class CssCustomProperty implements CustomElementsContribution
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -126,7 +126,7 @@ public class CssCustomProperty implements CustomElementsContribution
     /**
      * The name of the property, including leading `--`.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -136,7 +136,7 @@ public class CssCustomProperty implements CustomElementsContribution
     /**
      * The name of the property, including leading `--`.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -145,7 +145,7 @@ public class CssCustomProperty implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -154,7 +154,7 @@ public class CssCustomProperty implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {
@@ -163,17 +163,17 @@ public class CssCustomProperty implements CustomElementsContribution
 
     /**
      * The expected syntax of the defined property. Defaults to "*".
-     *
+     * 
      * The syntax must be a valid CSS [syntax string](https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax)
      * as defined in the CSS Properties and Values API.
-     *
+     * 
      * Examples:
-     *
+     * 
      * "<color>": accepts a color
      * "<length> | <percentage>": accepts lengths or percentages but not calc expressions with a combination of the two
      * "small | medium | large": accepts one of these values set as custom idents.
      * "*": any valid token
-     *
+     * 
      */
     @JsonProperty("syntax")
     public String getSyntax() {
@@ -182,17 +182,17 @@ public class CssCustomProperty implements CustomElementsContribution
 
     /**
      * The expected syntax of the defined property. Defaults to "*".
-     *
+     * 
      * The syntax must be a valid CSS [syntax string](https://developer.mozilla.org/en-US/docs/Web/CSS/@property/syntax)
      * as defined in the CSS Properties and Values API.
-     *
+     * 
      * Examples:
-     *
+     * 
      * "<color>": accepts a color
      * "<length> | <percentage>": accepts lengths or percentages but not calc expressions with a combination of the two
      * "small | medium | large": accepts one of these values set as custom idents.
      * "*": any valid token
-     *
+     * 
      */
     @JsonProperty("syntax")
     public void setSyntax(String syntax) {

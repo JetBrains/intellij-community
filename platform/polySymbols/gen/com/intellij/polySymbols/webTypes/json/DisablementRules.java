@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Specify rules for disabling web framework support. These rules take precedence over enable-when rules. They allow to turn off framework support in case of some conflicts between frameworks priority.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -22,14 +22,14 @@ public class DisablementRules {
 
     /**
      * Extensions of files, which should have the framework support disabled
-     *
+     * 
      */
     @JsonProperty("file-extensions")
     @JsonPropertyDescription("Extensions of files, which should have the framework support disabled")
     private List<String> fileExtensions = new ArrayList<String>();
     /**
      * RegExp patterns to match file names, which should have the framework support disabled
-     *
+     * 
      */
     @JsonProperty("file-name-patterns")
     @JsonPropertyDescription("RegExp patterns to match file names, which should have the framework support disabled")
@@ -37,7 +37,7 @@ public class DisablementRules {
 
     /**
      * Extensions of files, which should have the framework support disabled
-     *
+     * 
      */
     @JsonProperty("file-extensions")
     public List<String> getFileExtensions() {
@@ -46,7 +46,7 @@ public class DisablementRules {
 
     /**
      * Extensions of files, which should have the framework support disabled
-     *
+     * 
      */
     @JsonProperty("file-extensions")
     public void setFileExtensions(List<String> fileExtensions) {
@@ -55,7 +55,7 @@ public class DisablementRules {
 
     /**
      * RegExp patterns to match file names, which should have the framework support disabled
-     *
+     * 
      */
     @JsonProperty("file-name-patterns")
     public List<Pattern> getFileNamePatterns() {
@@ -64,7 +64,7 @@ public class DisablementRules {
 
     /**
      * RegExp patterns to match file names, which should have the framework support disabled
-     *
+     * 
      */
     @JsonProperty("file-name-patterns")
     public void setFileNamePatterns(List<Pattern> fileNamePatterns) {

@@ -173,14 +173,6 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
     get() = null
 
   /**
-   * Provides additional way to sort symbols in code completion list within a particular priority.
-   * The value must be a non-negative integer and the higher proximity,
-   * the higher the symbol would be on the list.
-   */
-  val proximity: Int?
-    get() = null
-
-  /**
    * A [PsiElement], which is a file or an element, which can be used to roughly
    * locate the source of the symbol within a project to provide a context for loading additional information,
    * like types. If the symbol is [com.intellij.polySymbols.search.PsiSourcedPolySymbol], then `psiContext` is equal to source.

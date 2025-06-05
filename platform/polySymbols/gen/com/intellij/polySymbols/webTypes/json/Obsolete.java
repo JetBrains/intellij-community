@@ -13,13 +13,13 @@ public class Obsolete {
 
     /**
      * Type: {@code Boolean | String}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code Boolean | String}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -27,7 +27,7 @@ public class Obsolete {
 
     /**
      * Type: {@code Boolean | String}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

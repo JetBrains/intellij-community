@@ -16,17 +16,17 @@ public class RequiredContextAllOf
 {
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("allOf")
     private List<RequiredContextBase> allOf = new ArrayList<RequiredContextBase>();
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("allOf")
     public List<RequiredContextBase> getAllOf() {
@@ -34,9 +34,9 @@ public class RequiredContextAllOf
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("allOf")
     public void setAllOf(List<RequiredContextBase> allOf) {

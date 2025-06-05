@@ -37,35 +37,35 @@ public class HtmlAttribute
     private Boolean required;
     /**
      * Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives
-     *
+     * 
      */
     @JsonProperty("vue-argument")
     @JsonPropertyDescription("Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives")
     private DeprecatedHtmlAttributeVueArgument vueArgument;
     /**
      * Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives
-     *
+     * 
      */
     @JsonProperty("vue-modifiers")
     @JsonPropertyDescription("Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives")
     private List<DeprecatedHtmlAttributeVueModifier> vueModifiers = new ArrayList<DeprecatedHtmlAttributeVueModifier>();
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     @JsonPropertyDescription("HTML elements.")
     private List<HtmlElement> elements = new ArrayList<HtmlElement>();
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     @JsonPropertyDescription("HTML attributes.")
     private List<HtmlAttribute> attributes = new ArrayList<HtmlAttribute>();
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     @JsonPropertyDescription("DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events")
@@ -105,7 +105,7 @@ public class HtmlAttribute
 
     /**
      * Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives
-     *
+     * 
      */
     @JsonProperty("vue-argument")
     public DeprecatedHtmlAttributeVueArgument getVueArgument() {
@@ -114,7 +114,7 @@ public class HtmlAttribute
 
     /**
      * Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives
-     *
+     * 
      */
     @JsonProperty("vue-argument")
     public void setVueArgument(DeprecatedHtmlAttributeVueArgument vueArgument) {
@@ -123,7 +123,7 @@ public class HtmlAttribute
 
     /**
      * Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives
-     *
+     * 
      */
     @JsonProperty("vue-modifiers")
     public List<DeprecatedHtmlAttributeVueModifier> getVueModifiers() {
@@ -132,7 +132,7 @@ public class HtmlAttribute
 
     /**
      * Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives
-     *
+     * 
      */
     @JsonProperty("vue-modifiers")
     public void setVueModifiers(List<DeprecatedHtmlAttributeVueModifier> vueModifiers) {
@@ -141,7 +141,7 @@ public class HtmlAttribute
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     public List<HtmlElement> getElements() {
@@ -150,7 +150,7 @@ public class HtmlAttribute
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     public void setElements(List<HtmlElement> elements) {
@@ -159,7 +159,7 @@ public class HtmlAttribute
 
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public List<HtmlAttribute> getAttributes() {
@@ -168,7 +168,7 @@ public class HtmlAttribute
 
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public void setAttributes(List<HtmlAttribute> attributes) {
@@ -177,7 +177,7 @@ public class HtmlAttribute
 
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     public List<GenericHtmlContribution> getEvents() {
@@ -186,7 +186,7 @@ public class HtmlAttribute
 
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     public void setEvents(List<GenericHtmlContribution> events) {

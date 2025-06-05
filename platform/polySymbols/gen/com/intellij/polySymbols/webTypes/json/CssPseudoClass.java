@@ -30,49 +30,49 @@ public class CssPseudoClass
 
     /**
      * Specify whether the pseudo-class requires arguments.
-     *
+     * 
      */
     @JsonProperty("arguments")
     @JsonPropertyDescription("Specify whether the pseudo-class requires arguments.")
     private Boolean arguments;
     /**
      * CSS properties
-     *
+     * 
      */
     @JsonProperty("properties")
     @JsonPropertyDescription("CSS properties")
     private List<CssProperty> properties = new ArrayList<CssProperty>();
     /**
      * CSS pseudo-elements
-     *
+     * 
      */
     @JsonProperty("pseudo-elements")
     @JsonPropertyDescription("CSS pseudo-elements")
     private List<CssPseudoElement> pseudoElements = new ArrayList<CssPseudoElement>();
     /**
      * CSS pseudo-classes
-     *
+     * 
      */
     @JsonProperty("pseudo-classes")
     @JsonPropertyDescription("CSS pseudo-classes")
     private List<CssPseudoClass> pseudoClasses = new ArrayList<CssPseudoClass>();
     /**
      * CSS functions
-     *
+     * 
      */
     @JsonProperty("functions")
     @JsonPropertyDescription("CSS functions")
     private List<CssGenericItem> functions = new ArrayList<CssGenericItem>();
     /**
      * CSS classes
-     *
+     * 
      */
     @JsonProperty("classes")
     @JsonPropertyDescription("CSS classes")
     private List<CssGenericItem> classes = new ArrayList<CssGenericItem>();
     /**
      * CSS parts
-     *
+     * 
      */
     @JsonProperty("parts")
     @JsonPropertyDescription("CSS parts")
@@ -82,7 +82,7 @@ public class CssPseudoClass
 
     /**
      * Specify whether the pseudo-class requires arguments.
-     *
+     * 
      */
     @JsonProperty("arguments")
     public Boolean getArguments() {
@@ -91,7 +91,7 @@ public class CssPseudoClass
 
     /**
      * Specify whether the pseudo-class requires arguments.
-     *
+     * 
      */
     @JsonProperty("arguments")
     public void setArguments(Boolean arguments) {
@@ -100,7 +100,7 @@ public class CssPseudoClass
 
     /**
      * CSS properties
-     *
+     * 
      */
     @JsonProperty("properties")
     public List<CssProperty> getProperties() {
@@ -109,7 +109,7 @@ public class CssPseudoClass
 
     /**
      * CSS properties
-     *
+     * 
      */
     @JsonProperty("properties")
     public void setProperties(List<CssProperty> properties) {
@@ -118,7 +118,7 @@ public class CssPseudoClass
 
     /**
      * CSS pseudo-elements
-     *
+     * 
      */
     @JsonProperty("pseudo-elements")
     public List<CssPseudoElement> getPseudoElements() {
@@ -127,7 +127,7 @@ public class CssPseudoClass
 
     /**
      * CSS pseudo-elements
-     *
+     * 
      */
     @JsonProperty("pseudo-elements")
     public void setPseudoElements(List<CssPseudoElement> pseudoElements) {
@@ -136,7 +136,7 @@ public class CssPseudoClass
 
     /**
      * CSS pseudo-classes
-     *
+     * 
      */
     @JsonProperty("pseudo-classes")
     public List<CssPseudoClass> getPseudoClasses() {
@@ -145,7 +145,7 @@ public class CssPseudoClass
 
     /**
      * CSS pseudo-classes
-     *
+     * 
      */
     @JsonProperty("pseudo-classes")
     public void setPseudoClasses(List<CssPseudoClass> pseudoClasses) {
@@ -154,7 +154,7 @@ public class CssPseudoClass
 
     /**
      * CSS functions
-     *
+     * 
      */
     @JsonProperty("functions")
     public List<CssGenericItem> getFunctions() {
@@ -163,7 +163,7 @@ public class CssPseudoClass
 
     /**
      * CSS functions
-     *
+     * 
      */
     @JsonProperty("functions")
     public void setFunctions(List<CssGenericItem> functions) {
@@ -172,7 +172,7 @@ public class CssPseudoClass
 
     /**
      * CSS classes
-     *
+     * 
      */
     @JsonProperty("classes")
     public List<CssGenericItem> getClasses() {
@@ -181,7 +181,7 @@ public class CssPseudoClass
 
     /**
      * CSS classes
-     *
+     * 
      */
     @JsonProperty("classes")
     public void setClasses(List<CssGenericItem> classes) {
@@ -190,7 +190,7 @@ public class CssPseudoClass
 
     /**
      * CSS parts
-     *
+     * 
      */
     @JsonProperty("parts")
     public List<CssGenericItem> getParts() {
@@ -199,7 +199,7 @@ public class CssPseudoClass
 
     /**
      * CSS parts
-     *
+     * 
      */
     @JsonProperty("parts")
     public void setParts(List<CssGenericItem> parts) {

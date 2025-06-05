@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -32,42 +32,42 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS properties
-     *
+     * 
      */
     @JsonProperty("properties")
     @JsonPropertyDescription("CSS properties")
     private List<CssProperty> properties = new ArrayList<CssProperty>();
     /**
      * CSS pseudo-elements
-     *
+     * 
      */
     @JsonProperty("pseudo-elements")
     @JsonPropertyDescription("CSS pseudo-elements")
     private List<CssPseudoElement> pseudoElements = new ArrayList<CssPseudoElement>();
     /**
      * CSS pseudo-classes
-     *
+     * 
      */
     @JsonProperty("pseudo-classes")
     @JsonPropertyDescription("CSS pseudo-classes")
     private List<CssPseudoClass> pseudoClasses = new ArrayList<CssPseudoClass>();
     /**
      * CSS functions
-     *
+     * 
      */
     @JsonProperty("functions")
     @JsonPropertyDescription("CSS functions")
     private List<CssGenericItem> functions = new ArrayList<CssGenericItem>();
     /**
      * CSS classes
-     *
+     * 
      */
     @JsonProperty("classes")
     @JsonPropertyDescription("CSS classes")
     private List<CssGenericItem> classes = new ArrayList<CssGenericItem>();
     /**
      * CSS parts
-     *
+     * 
      */
     @JsonProperty("parts")
     @JsonPropertyDescription("CSS parts")
@@ -77,7 +77,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS properties
-     *
+     * 
      */
     @JsonProperty("properties")
     public List<CssProperty> getProperties() {
@@ -86,7 +86,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS properties
-     *
+     * 
      */
     @JsonProperty("properties")
     public void setProperties(List<CssProperty> properties) {
@@ -95,7 +95,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS pseudo-elements
-     *
+     * 
      */
     @JsonProperty("pseudo-elements")
     public List<CssPseudoElement> getPseudoElements() {
@@ -104,7 +104,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS pseudo-elements
-     *
+     * 
      */
     @JsonProperty("pseudo-elements")
     public void setPseudoElements(List<CssPseudoElement> pseudoElements) {
@@ -113,7 +113,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS pseudo-classes
-     *
+     * 
      */
     @JsonProperty("pseudo-classes")
     public List<CssPseudoClass> getPseudoClasses() {
@@ -122,7 +122,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS pseudo-classes
-     *
+     * 
      */
     @JsonProperty("pseudo-classes")
     public void setPseudoClasses(List<CssPseudoClass> pseudoClasses) {
@@ -131,7 +131,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS functions
-     *
+     * 
      */
     @JsonProperty("functions")
     public List<CssGenericItem> getFunctions() {
@@ -140,7 +140,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS functions
-     *
+     * 
      */
     @JsonProperty("functions")
     public void setFunctions(List<CssGenericItem> functions) {
@@ -149,7 +149,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS classes
-     *
+     * 
      */
     @JsonProperty("classes")
     public List<CssGenericItem> getClasses() {
@@ -158,7 +158,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS classes
-     *
+     * 
      */
     @JsonProperty("classes")
     public void setClasses(List<CssGenericItem> classes) {
@@ -167,7 +167,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS parts
-     *
+     * 
      */
     @JsonProperty("parts")
     public List<CssGenericItem> getParts() {
@@ -176,7 +176,7 @@ public class Css implements CssContributionsHost
 
     /**
      * CSS parts
-     *
+     * 
      */
     @JsonProperty("parts")
     public void setParts(List<CssGenericItem> parts) {

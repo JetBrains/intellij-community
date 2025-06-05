@@ -18,24 +18,24 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * kind = class
  * <p>
  * A description of a custom element class.
- *
+ * 
  * Custom elements are JavaScript classes, so this extends from
  * `ClassDeclaration` and adds custom-element-specific features like
  * attributes, events, and slots.
- *
+ * 
  * Note that `tagName` in this interface is optional. Tag names are not
  * neccessarily part of a custom element class, but belong to the definition
  * (often called the "registration") or the `customElements.define()` call.
- *
+ * 
  * Because classes and tag names can only be registered once, there's a
  * one-to-one relationship between classes and tag names. For ease of use,
  * we allow the tag name here.
- *
+ * 
  * Some packages define and register custom elements in separate modules. In
  * these cases one `Module` should contain the `CustomElement` without a
  * tagName, and another `Module` should contain the
  * `CustomElementExport`.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -63,7 +63,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * The attributes that this element is known to understand.
-     *
+     * 
      */
     @JsonProperty("attributes")
     @JsonPropertyDescription("The attributes that this element is known to understand.")
@@ -75,7 +75,7 @@ public class CustomElementOrClassDeclaration
     /**
      * Distinguishes a regular JavaScript class from a
      * custom element class
-     *
+     * 
      */
     @JsonProperty("customElement")
     @JsonPropertyDescription("Distinguishes a regular JavaScript class from a\ncustom element class")
@@ -85,21 +85,21 @@ public class CustomElementOrClassDeclaration
     /**
      * Whether the class or mixin is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the class or mixin is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description of the class.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description of the class.")
     private String description;
     /**
      * The events that this element fires.
-     *
+     * 
      */
     @JsonProperty("events")
     @JsonPropertyDescription("The events that this element fires.")
@@ -108,61 +108,61 @@ public class CustomElementOrClassDeclaration
     private List<MemberBase> members = new ArrayList<MemberBase>();
     /**
      * Any class mixins applied in the extends clause of this class.
-     *
+     * 
      * If mixins are applied in the class definition, then the true superclass
      * of this class is the result of applying mixins in order to the superclass.
-     *
+     * 
      * Mixins must be listed in order of their application to the superclass or
      * previous mixin application. This means that the innermost mixin is listed
      * first. This may read backwards from the common order in JavaScript, but
      * matches the order of language used to describe mixin application, like
      * "S with A, B".
-     *
+     * 
      */
     @JsonProperty("mixins")
     @JsonPropertyDescription("Any class mixins applied in the extends clause of this class.\n\nIf mixins are applied in the class definition, then the true superclass\nof this class is the result of applying mixins in order to the superclass.\n\nMixins must be listed in order of their application to the superclass or\nprevious mixin application. This means that the innermost mixin is listed\nfirst. This may read backwards from the common order in JavaScript, but\nmatches the order of language used to describe mixin application, like\n\"S with A, B\".")
     private List<Reference> mixins = new ArrayList<Reference>();
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
     /**
      * The shadow dom content slots that this element accepts.
-     *
+     * 
      */
     @JsonProperty("slots")
     @JsonPropertyDescription("The shadow dom content slots that this element accepts.")
     private List<Slot> slots = new ArrayList<Slot>();
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     @JsonPropertyDescription("A reference to the source of a declaration or member.")
     private SourceReference source;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
     private String summary;
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
-     *
+     * 
      */
     @JsonProperty("superclass")
     @JsonPropertyDescription("A reference to an export of a module.\n\nAll references are required to be publically accessible, so the canonical\nrepresentation of a reference is the export it's available from.\n\n`package` should generally refer to an npm package name. If `package` is\nundefined then the reference is local to this package. If `module` is\nundefined the reference is local to the containing module.\n\nReferences to global symbols like `Array`, `HTMLElement`, or `Event` should\nuse a `package` name of `\"global:\"`.")
@@ -170,10 +170,10 @@ public class CustomElementOrClassDeclaration
     /**
      * An optional tag name that should be specified if this is a
      * self-registering element.
-     *
+     * 
      * Self-registering elements must also include a CustomElementExport
      * in the module's exports.
-     *
+     * 
      */
     @JsonProperty("tagName")
     @JsonPropertyDescription("An optional tag name that should be specified if this is a\nself-registering element.\n\nSelf-registering elements must also include a CustomElementExport\nin the module's exports.")
@@ -183,7 +183,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * The attributes that this element is known to understand.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public List<Attribute> getAttributes() {
@@ -192,7 +192,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * The attributes that this element is known to understand.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public void setAttributes(List<Attribute> attributes) {
@@ -222,7 +222,7 @@ public class CustomElementOrClassDeclaration
     /**
      * Distinguishes a regular JavaScript class from a
      * custom element class
-     *
+     * 
      */
     @JsonProperty("customElement")
     public Boolean getCustomElement() {
@@ -232,7 +232,7 @@ public class CustomElementOrClassDeclaration
     /**
      * Distinguishes a regular JavaScript class from a
      * custom element class
-     *
+     * 
      */
     @JsonProperty("customElement")
     public void setCustomElement(Boolean customElement) {
@@ -252,7 +252,7 @@ public class CustomElementOrClassDeclaration
     /**
      * Whether the class or mixin is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -262,7 +262,7 @@ public class CustomElementOrClassDeclaration
     /**
      * Whether the class or mixin is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -271,7 +271,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * A markdown description of the class.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -280,7 +280,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * A markdown description of the class.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -289,7 +289,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * The events that this element fires.
-     *
+     * 
      */
     @JsonProperty("events")
     public List<Event> getEvents() {
@@ -298,7 +298,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * The events that this element fires.
-     *
+     * 
      */
     @JsonProperty("events")
     public void setEvents(List<Event> events) {
@@ -317,16 +317,16 @@ public class CustomElementOrClassDeclaration
 
     /**
      * Any class mixins applied in the extends clause of this class.
-     *
+     * 
      * If mixins are applied in the class definition, then the true superclass
      * of this class is the result of applying mixins in order to the superclass.
-     *
+     * 
      * Mixins must be listed in order of their application to the superclass or
      * previous mixin application. This means that the innermost mixin is listed
      * first. This may read backwards from the common order in JavaScript, but
      * matches the order of language used to describe mixin application, like
      * "S with A, B".
-     *
+     * 
      */
     @JsonProperty("mixins")
     public List<Reference> getMixins() {
@@ -335,16 +335,16 @@ public class CustomElementOrClassDeclaration
 
     /**
      * Any class mixins applied in the extends clause of this class.
-     *
+     * 
      * If mixins are applied in the class definition, then the true superclass
      * of this class is the result of applying mixins in order to the superclass.
-     *
+     * 
      * Mixins must be listed in order of their application to the superclass or
      * previous mixin application. This means that the innermost mixin is listed
      * first. This may read backwards from the common order in JavaScript, but
      * matches the order of language used to describe mixin application, like
      * "S with A, B".
-     *
+     * 
      */
     @JsonProperty("mixins")
     public void setMixins(List<Reference> mixins) {
@@ -352,9 +352,9 @@ public class CustomElementOrClassDeclaration
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -362,9 +362,9 @@ public class CustomElementOrClassDeclaration
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -373,7 +373,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * The shadow dom content slots that this element accepts.
-     *
+     * 
      */
     @JsonProperty("slots")
     public List<Slot> getSlots() {
@@ -382,7 +382,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * The shadow dom content slots that this element accepts.
-     *
+     * 
      */
     @JsonProperty("slots")
     public void setSlots(List<Slot> slots) {
@@ -391,7 +391,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public SourceReference getSource() {
@@ -400,7 +400,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public void setSource(SourceReference source) {
@@ -409,7 +409,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -418,7 +418,7 @@ public class CustomElementOrClassDeclaration
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {
@@ -427,17 +427,17 @@ public class CustomElementOrClassDeclaration
 
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
-     *
+     * 
      */
     @JsonProperty("superclass")
     public Reference getSuperclass() {
@@ -446,17 +446,17 @@ public class CustomElementOrClassDeclaration
 
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
-     *
+     * 
      */
     @JsonProperty("superclass")
     public void setSuperclass(Reference superclass) {
@@ -466,10 +466,10 @@ public class CustomElementOrClassDeclaration
     /**
      * An optional tag name that should be specified if this is a
      * self-registering element.
-     *
+     * 
      * Self-registering elements must also include a CustomElementExport
      * in the module's exports.
-     *
+     * 
      */
     @JsonProperty("tagName")
     public String getTagName() {
@@ -479,10 +479,10 @@ public class CustomElementOrClassDeclaration
     /**
      * An optional tag name that should be specified if this is a
      * self-registering element.
-     *
+     * 
      * Self-registering elements must also include a CustomElementExport
      * in the module's exports.
-     *
+     * 
      */
     @JsonProperty("tagName")
     public void setTagName(String tagName) {

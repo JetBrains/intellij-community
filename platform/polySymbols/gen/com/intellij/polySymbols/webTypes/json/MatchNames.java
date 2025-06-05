@@ -14,13 +14,13 @@ public class MatchNames {
 
     /**
      * Type: {@code List<NameConverter> | NameConversionRulesMultiple}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code List<NameConverter> | NameConversionRulesMultiple}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -28,7 +28,7 @@ public class MatchNames {
 
     /**
      * Type: {@code List<NameConverter> | NameConversionRulesMultiple}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

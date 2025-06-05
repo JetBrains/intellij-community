@@ -30,11 +30,11 @@ public class JavaScriptModule implements CustomElementsContribution
 
     /**
      * The declarations of a module.
-     *
+     * 
      * For documentation purposes, all declarations that are reachable from
      * exports should be described here. Ie, functions and objects that may be
      * properties of exported objects, or passed as arguments to functions.
-     *
+     * 
      */
     @JsonProperty("declarations")
     @JsonPropertyDescription("The declarations of a module.\n\nFor documentation purposes, all declarations that are reachable from\nexports should be described here. Ie, functions and objects that may be\nproperties of exported objects, or passed as arguments to functions.")
@@ -42,14 +42,14 @@ public class JavaScriptModule implements CustomElementsContribution
     /**
      * Whether the module is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the module is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description of the module.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description of the module.")
@@ -57,30 +57,30 @@ public class JavaScriptModule implements CustomElementsContribution
     /**
      * The exports of a module. This includes JavaScript exports and
      * custom element definitions.
-     *
+     * 
      */
     @JsonProperty("exports")
     @JsonPropertyDescription("The exports of a module. This includes JavaScript exports and\ncustom element definitions.")
     private List<ExportBase> exports = new ArrayList<ExportBase>();
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("kind")
     private JavaScriptModule.Kind kind;
     /**
-     * Path to the javascript file needed to be imported.
+     * Path to the javascript file needed to be imported. 
      * (not the path for example to a typescript file.)
      * (Required)
-     *
+     * 
      */
     @JsonProperty("path")
     @JsonPropertyDescription("Path to the javascript file needed to be imported. \n(not the path for example to a typescript file.)")
     private String path;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
@@ -90,11 +90,11 @@ public class JavaScriptModule implements CustomElementsContribution
 
     /**
      * The declarations of a module.
-     *
+     * 
      * For documentation purposes, all declarations that are reachable from
      * exports should be described here. Ie, functions and objects that may be
      * properties of exported objects, or passed as arguments to functions.
-     *
+     * 
      */
     @JsonProperty("declarations")
     public List<DeclarationBase> getDeclarations() {
@@ -103,11 +103,11 @@ public class JavaScriptModule implements CustomElementsContribution
 
     /**
      * The declarations of a module.
-     *
+     * 
      * For documentation purposes, all declarations that are reachable from
      * exports should be described here. Ie, functions and objects that may be
      * properties of exported objects, or passed as arguments to functions.
-     *
+     * 
      */
     @JsonProperty("declarations")
     public void setDeclarations(List<DeclarationBase> declarations) {
@@ -117,7 +117,7 @@ public class JavaScriptModule implements CustomElementsContribution
     /**
      * Whether the module is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -127,7 +127,7 @@ public class JavaScriptModule implements CustomElementsContribution
     /**
      * Whether the module is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -136,7 +136,7 @@ public class JavaScriptModule implements CustomElementsContribution
 
     /**
      * A markdown description of the module.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -145,7 +145,7 @@ public class JavaScriptModule implements CustomElementsContribution
 
     /**
      * A markdown description of the module.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -155,7 +155,7 @@ public class JavaScriptModule implements CustomElementsContribution
     /**
      * The exports of a module. This includes JavaScript exports and
      * custom element definitions.
-     *
+     * 
      */
     @JsonProperty("exports")
     public List<ExportBase> getExports() {
@@ -165,7 +165,7 @@ public class JavaScriptModule implements CustomElementsContribution
     /**
      * The exports of a module. This includes JavaScript exports and
      * custom element definitions.
-     *
+     * 
      */
     @JsonProperty("exports")
     public void setExports(List<ExportBase> exports) {
@@ -173,9 +173,9 @@ public class JavaScriptModule implements CustomElementsContribution
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("kind")
     public JavaScriptModule.Kind getKind() {
@@ -183,9 +183,9 @@ public class JavaScriptModule implements CustomElementsContribution
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("kind")
     public void setKind(JavaScriptModule.Kind kind) {
@@ -193,10 +193,10 @@ public class JavaScriptModule implements CustomElementsContribution
     }
 
     /**
-     * Path to the javascript file needed to be imported.
+     * Path to the javascript file needed to be imported. 
      * (not the path for example to a typescript file.)
      * (Required)
-     *
+     * 
      */
     @JsonProperty("path")
     public String getPath() {
@@ -204,10 +204,10 @@ public class JavaScriptModule implements CustomElementsContribution
     }
 
     /**
-     * Path to the javascript file needed to be imported.
+     * Path to the javascript file needed to be imported. 
      * (not the path for example to a typescript file.)
      * (Required)
-     *
+     * 
      */
     @JsonProperty("path")
     public void setPath(String path) {
@@ -216,7 +216,7 @@ public class JavaScriptModule implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -225,7 +225,7 @@ public class JavaScriptModule implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {

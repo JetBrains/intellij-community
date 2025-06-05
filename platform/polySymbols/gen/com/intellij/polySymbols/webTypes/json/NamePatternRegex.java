@@ -15,9 +15,9 @@ public class NamePatternRegex
 {
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("regex")
     private String regex;
@@ -25,9 +25,9 @@ public class NamePatternRegex
     private Boolean caseSensitive = true;
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("regex")
     public String getRegex() {
@@ -35,9 +35,9 @@ public class NamePatternRegex
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("regex")
     public void setRegex(String regex) {

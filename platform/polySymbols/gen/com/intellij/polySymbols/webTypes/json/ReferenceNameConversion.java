@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Override global name conversion rules for matching symbols under the path.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -26,21 +26,21 @@ public class ReferenceNameConversion {
 
     /**
      * Override global canonical name conversion rule against which comparisons are made for the referenced symbols. When only rule name is specified, it applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("canonical-names")
     @JsonPropertyDescription("Override global canonical name conversion rule against which comparisons are made for the referenced symbols. When only rule name is specified, it applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.")
     private CanonicalNames canonicalNames;
     /**
      * Override global rules, by which referenced symbols should be matched against their canonical names. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("match-names")
     @JsonPropertyDescription("Override global rules, by which referenced symbols should be matched against their canonical names. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.")
     private MatchNames matchNames;
     /**
      * Override global rules, by which referenced symbol names should be proposed in auto completion. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("name-variants")
     @JsonPropertyDescription("Override global rules, by which referenced symbol names should be proposed in auto completion. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.")
@@ -50,7 +50,7 @@ public class ReferenceNameConversion {
 
     /**
      * Override global canonical name conversion rule against which comparisons are made for the referenced symbols. When only rule name is specified, it applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("canonical-names")
     public CanonicalNames getCanonicalNames() {
@@ -59,7 +59,7 @@ public class ReferenceNameConversion {
 
     /**
      * Override global canonical name conversion rule against which comparisons are made for the referenced symbols. When only rule name is specified, it applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("canonical-names")
     public void setCanonicalNames(CanonicalNames canonicalNames) {
@@ -68,7 +68,7 @@ public class ReferenceNameConversion {
 
     /**
      * Override global rules, by which referenced symbols should be matched against their canonical names. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("match-names")
     public MatchNames getMatchNames() {
@@ -77,7 +77,7 @@ public class ReferenceNameConversion {
 
     /**
      * Override global rules, by which referenced symbols should be matched against their canonical names. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("match-names")
     public void setMatchNames(MatchNames matchNames) {
@@ -86,7 +86,7 @@ public class ReferenceNameConversion {
 
     /**
      * Override global rules, by which referenced symbol names should be proposed in auto completion. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("name-variants")
     public NameVariants getNameVariants() {
@@ -95,7 +95,7 @@ public class ReferenceNameConversion {
 
     /**
      * Override global rules, by which referenced symbol names should be proposed in auto completion. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.
-     *
+     * 
      */
     @JsonProperty("name-variants")
     public void setNameVariants(NameVariants nameVariants) {

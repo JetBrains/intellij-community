@@ -38,6 +38,9 @@ internal open class PolySymbolMatchBase internal constructor(
     require(nameSegments.isNotEmpty()) { "nameSegments must not be empty" }
   }
 
+  val proximity: Int?
+    get() = explicitProximity ?: reversedSegments().mapNotNull { it.proximity }.firstOrNull()
+
   internal fun withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
     create(matchedName, segments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties)
 
@@ -206,9 +209,6 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
 
   override val priority: Priority?
     get() = explicitPriority ?: reversedSegments().mapNotNull { it.priority }.firstOrNull()
-
-  override val proximity: Int?
-    get() = explicitProximity ?: reversedSegments().mapNotNull { it.proximity }.firstOrNull()
 
   override val queryScope: List<PolySymbolsScope>
     get() = nameSegments.asSequence()

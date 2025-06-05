@@ -13,17 +13,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * A reference to an export of a module.
- *
+ * 
  * All references are required to be publically accessible, so the canonical
  * representation of a reference is the export it's available from.
- *
+ * 
  * `package` should generally refer to an npm package name. If `package` is
  * undefined then the reference is local to this package. If `module` is
  * undefined the reference is local to the containing module.
- *
+ * 
  * References to global symbols like `Array`, `HTMLElement`, or `Event` should
  * use a `package` name of `"global:"`.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -36,9 +36,9 @@ public class Reference {
     @JsonProperty("module")
     private String module;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
@@ -58,9 +58,9 @@ public class Reference {
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -68,9 +68,9 @@ public class Reference {
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {

@@ -37,14 +37,14 @@ public class NamePatternDefault
     private List<NamePatternTemplate> or = new ArrayList<NamePatternTemplate>();
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("delegate")
     @JsonPropertyDescription("A reference to an element in Web-Types model.")
     private Reference delegate;
     /**
      * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.")
@@ -55,7 +55,7 @@ public class NamePatternDefault
     private Integer proximity;
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("items")
     @JsonPropertyDescription("A reference to an element in Web-Types model.")
@@ -113,7 +113,7 @@ public class NamePatternDefault
 
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("delegate")
     public Reference getDelegate() {
@@ -122,7 +122,7 @@ public class NamePatternDefault
 
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("delegate")
     public void setDelegate(Reference delegate) {
@@ -131,7 +131,7 @@ public class NamePatternDefault
 
     /**
      * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -140,7 +140,7 @@ public class NamePatternDefault
 
     /**
      * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -169,7 +169,7 @@ public class NamePatternDefault
 
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("items")
     public ListReference getItems() {
@@ -178,7 +178,7 @@ public class NamePatternDefault
 
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("items")
     public void setItems(ListReference items) {

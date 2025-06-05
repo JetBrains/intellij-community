@@ -22,42 +22,42 @@ public interface JsContributionsHost
 
     /**
      * DOM events
-     *
+     * 
      */
     @JsonProperty("events")
     public List<GenericJsContribution> getEvents();
 
     /**
      * DOM events
-     *
+     * 
      */
     @JsonProperty("events")
     public void setEvents(List<GenericJsContribution> events);
 
     /**
      * JavaScript properties of an object, HTML tag, framework component, etc.
-     *
+     * 
      */
     @JsonProperty("properties")
     public List<JsProperty> getProperties();
 
     /**
      * JavaScript properties of an object, HTML tag, framework component, etc.
-     *
+     * 
      */
     @JsonProperty("properties")
     public void setProperties(List<JsProperty> properties);
 
     /**
      * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
-     *
+     * 
      */
     @JsonProperty("symbols")
     public List<JsSymbol> getSymbols();
 
     /**
      * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
-     *
+     * 
      */
     @JsonProperty("symbols")
     public void setSymbols(List<JsSymbol> symbols);

@@ -30,35 +30,35 @@ public class Parameter {
     /**
      * Whether the property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the property is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description of the field.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description of the field.")
     private String description;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
     /**
      * Whether the parameter is optional. Undefined implies non-optional.
-     *
+     * 
      */
     @JsonProperty("optional")
     @JsonPropertyDescription("Whether the parameter is optional. Undefined implies non-optional.")
     private Boolean optional;
     /**
      * Whether the property is read-only.
-     *
+     * 
      */
     @JsonProperty("readonly")
     @JsonPropertyDescription("Whether the property is read-only.")
@@ -66,14 +66,14 @@ public class Parameter {
     /**
      * Whether the parameter is a rest parameter. Only the last parameter may be a rest parameter.
      * Undefined implies single parameter.
-     *
+     * 
      */
     @JsonProperty("rest")
     @JsonPropertyDescription("Whether the parameter is a rest parameter. Only the last parameter may be a rest parameter.\nUndefined implies single parameter.")
     private Boolean rest;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
@@ -96,7 +96,7 @@ public class Parameter {
     /**
      * Whether the property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -106,7 +106,7 @@ public class Parameter {
     /**
      * Whether the property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -115,7 +115,7 @@ public class Parameter {
 
     /**
      * A markdown description of the field.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -124,7 +124,7 @@ public class Parameter {
 
     /**
      * A markdown description of the field.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -132,9 +132,9 @@ public class Parameter {
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -142,9 +142,9 @@ public class Parameter {
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -153,7 +153,7 @@ public class Parameter {
 
     /**
      * Whether the parameter is optional. Undefined implies non-optional.
-     *
+     * 
      */
     @JsonProperty("optional")
     public Boolean getOptional() {
@@ -162,7 +162,7 @@ public class Parameter {
 
     /**
      * Whether the parameter is optional. Undefined implies non-optional.
-     *
+     * 
      */
     @JsonProperty("optional")
     public void setOptional(Boolean optional) {
@@ -171,7 +171,7 @@ public class Parameter {
 
     /**
      * Whether the property is read-only.
-     *
+     * 
      */
     @JsonProperty("readonly")
     public Boolean getReadonly() {
@@ -180,7 +180,7 @@ public class Parameter {
 
     /**
      * Whether the property is read-only.
-     *
+     * 
      */
     @JsonProperty("readonly")
     public void setReadonly(Boolean readonly) {
@@ -190,7 +190,7 @@ public class Parameter {
     /**
      * Whether the parameter is a rest parameter. Only the last parameter may be a rest parameter.
      * Undefined implies single parameter.
-     *
+     * 
      */
     @JsonProperty("rest")
     public Boolean getRest() {
@@ -200,7 +200,7 @@ public class Parameter {
     /**
      * Whether the parameter is a rest parameter. Only the last parameter may be a rest parameter.
      * Undefined implies single parameter.
-     *
+     * 
      */
     @JsonProperty("rest")
     public void setRest(Boolean rest) {
@@ -209,7 +209,7 @@ public class Parameter {
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -218,7 +218,7 @@ public class Parameter {
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {

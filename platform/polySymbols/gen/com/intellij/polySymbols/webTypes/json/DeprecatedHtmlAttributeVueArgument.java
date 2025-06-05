@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Deprecated vue-specific property - contribute Vue directives to /contributions/html/vue-directives
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -24,21 +24,21 @@ public class DeprecatedHtmlAttributeVueArgument {
     private NamePatternRoot pattern;
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.")
     private String description;
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     @JsonPropertyDescription("Link to online documentation.")
     private String docUrl;
     /**
      * Whether directive requires an argument
-     *
+     * 
      */
     @JsonProperty("required")
     @JsonPropertyDescription("Whether directive requires an argument")
@@ -56,7 +56,7 @@ public class DeprecatedHtmlAttributeVueArgument {
 
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -65,7 +65,7 @@ public class DeprecatedHtmlAttributeVueArgument {
 
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -74,7 +74,7 @@ public class DeprecatedHtmlAttributeVueArgument {
 
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     public String getDocUrl() {
@@ -83,7 +83,7 @@ public class DeprecatedHtmlAttributeVueArgument {
 
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     public void setDocUrl(String docUrl) {
@@ -92,7 +92,7 @@ public class DeprecatedHtmlAttributeVueArgument {
 
     /**
      * Whether directive requires an argument
-     *
+     * 
      */
     @JsonProperty("required")
     public Boolean getRequired() {
@@ -101,7 +101,7 @@ public class DeprecatedHtmlAttributeVueArgument {
 
     /**
      * Whether directive requires an argument
-     *
+     * 
      */
     @JsonProperty("required")
     public void setRequired(Boolean required) {

@@ -17,8 +17,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /**
  * kind = function
  * <p>
- *
- *
+ * 
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -37,22 +37,22 @@ public class FunctionDeclaration
     /**
      * Whether the function is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the function is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description.")
     private String description;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
@@ -62,14 +62,14 @@ public class FunctionDeclaration
     private Return _return;
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     @JsonPropertyDescription("A reference to the source of a declaration or member.")
     private SourceReference source;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
@@ -80,7 +80,7 @@ public class FunctionDeclaration
     /**
      * Whether the function is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -90,7 +90,7 @@ public class FunctionDeclaration
     /**
      * Whether the function is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -99,7 +99,7 @@ public class FunctionDeclaration
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -108,7 +108,7 @@ public class FunctionDeclaration
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -116,9 +116,9 @@ public class FunctionDeclaration
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -126,9 +126,9 @@ public class FunctionDeclaration
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -157,7 +157,7 @@ public class FunctionDeclaration
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public SourceReference getSource() {
@@ -166,7 +166,7 @@ public class FunctionDeclaration
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public void setSource(SourceReference source) {
@@ -175,7 +175,7 @@ public class FunctionDeclaration
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -184,7 +184,7 @@ public class FunctionDeclaration
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {

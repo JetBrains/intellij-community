@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * The base for any contribution, which can possibly have a JS type.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -21,7 +21,7 @@ public abstract class TypedContribution
 
     /**
      * Specify type according to selected language for type syntax. The type can be specified by a string expression, an object with list of imports and an expression, or an array of possible types.
-     *
+     * 
      */
     @JsonProperty("type")
     @JsonPropertyDescription("Specify type according to selected language for type syntax. The type can be specified by a string expression, an object with list of imports and an expression, or an array of possible types.")
@@ -29,7 +29,7 @@ public abstract class TypedContribution
 
     /**
      * Specify type according to selected language for type syntax. The type can be specified by a string expression, an object with list of imports and an expression, or an array of possible types.
-     *
+     * 
      */
     @JsonProperty("type")
     public TypeList getType() {
@@ -38,7 +38,7 @@ public abstract class TypedContribution
 
     /**
      * Specify type according to selected language for type syntax. The type can be specified by a string expression, an object with list of imports and an expression, or an array of possible types.
-     *
+     * 
      */
     @JsonProperty("type")
     public void setType(TypeList type) {

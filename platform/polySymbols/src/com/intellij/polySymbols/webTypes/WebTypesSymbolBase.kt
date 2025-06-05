@@ -8,6 +8,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.impl.proximity
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
@@ -171,7 +172,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     get() = base.contribution.priority?.wrap()
             ?: superContributions.firstOrNull()?.priority
 
-  final override val proximity: Int?
+  val proximity: Int?
     get() = base.contribution.proximity
             ?: superContributions.firstOrNull()?.proximity
 

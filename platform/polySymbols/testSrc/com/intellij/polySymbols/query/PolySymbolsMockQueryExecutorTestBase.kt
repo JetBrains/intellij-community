@@ -35,7 +35,7 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       ExtensionPoint.Kind.BEAN_CLASS, true)
     application.extensionArea.registerExtensionPoint(
       "com.intellij.polySymbols.webTypes.symbolFactory",
-      "com.intellij.polySymbols.webTypes.impl.PolyTypesSymbolFactoryEP",
+      "com.intellij.polySymbols.webTypes.impl.WebTypesSymbolFactoryEP",
       ExtensionPoint.Kind.BEAN_CLASS, true)
     application.extensionArea.registerExtensionPoint(
       "com.intellij.polySymbols.defaultIconProvider",

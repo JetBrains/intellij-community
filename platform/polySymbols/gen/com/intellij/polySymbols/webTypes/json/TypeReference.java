@@ -15,7 +15,7 @@ public class TypeReference {
 
     /**
      * Name of module, which exports the type. May be omitted, in which case it's assumed to be the name of the library.
-     *
+     * 
      */
     @JsonProperty("module")
     @JsonPropertyDescription("Name of module, which exports the type. May be omitted, in which case it's assumed to be the name of the library.")
@@ -23,7 +23,7 @@ public class TypeReference {
     /**
      * Name of the symbol to import
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     @JsonPropertyDescription("Name of the symbol to import")
@@ -31,7 +31,7 @@ public class TypeReference {
 
     /**
      * Name of module, which exports the type. May be omitted, in which case it's assumed to be the name of the library.
-     *
+     * 
      */
     @JsonProperty("module")
     public String getModule() {
@@ -40,7 +40,7 @@ public class TypeReference {
 
     /**
      * Name of module, which exports the type. May be omitted, in which case it's assumed to be the name of the library.
-     *
+     * 
      */
     @JsonProperty("module")
     public void setModule(String module) {
@@ -50,7 +50,7 @@ public class TypeReference {
     /**
      * Name of the symbol to import
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -60,7 +60,7 @@ public class TypeReference {
     /**
      * Name of the symbol to import
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {

@@ -18,7 +18,7 @@ public class SourceFileOffset
     /**
      * Path to the file, relative to the web-types JSON.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("file")
     @JsonPropertyDescription("Path to the file, relative to the web-types JSON.")
@@ -26,7 +26,7 @@ public class SourceFileOffset
     /**
      * Offset in the file under which the source symbol, like class name, is located.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("offset")
     @JsonPropertyDescription("Offset in the file under which the source symbol, like class name, is located.")
@@ -35,7 +35,7 @@ public class SourceFileOffset
     /**
      * Path to the file, relative to the web-types JSON.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("file")
     public String getFile() {
@@ -45,7 +45,7 @@ public class SourceFileOffset
     /**
      * Path to the file, relative to the web-types JSON.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("file")
     public void setFile(String file) {
@@ -55,7 +55,7 @@ public class SourceFileOffset
     /**
      * Offset in the file under which the source symbol, like class name, is located.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("offset")
     public Integer getOffset() {
@@ -65,7 +65,7 @@ public class SourceFileOffset
     /**
      * Offset in the file under which the source symbol, like class name, is located.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("offset")
     public void setOffset(Integer offset) {

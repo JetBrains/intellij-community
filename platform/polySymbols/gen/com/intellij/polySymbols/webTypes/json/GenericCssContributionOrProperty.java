@@ -15,13 +15,13 @@ public class GenericCssContributionOrProperty
 
     /**
      * Type: {@code String | Double | Boolean | GenericCssContribution}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code String | Double | Boolean | GenericCssContribution}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -29,7 +29,7 @@ public class GenericCssContributionOrProperty
 
     /**
      * Type: {@code String | Double | Boolean | GenericCssContribution}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

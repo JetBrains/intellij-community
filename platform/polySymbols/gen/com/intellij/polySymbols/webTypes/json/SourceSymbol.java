@@ -17,7 +17,7 @@ public class SourceSymbol
 
     /**
      * Name of module, which exports the symbol. May be omitted, in which case it's assumed to be the name of the library.
-     *
+     * 
      */
     @JsonProperty("module")
     @JsonPropertyDescription("Name of module, which exports the symbol. May be omitted, in which case it's assumed to be the name of the library.")
@@ -25,7 +25,7 @@ public class SourceSymbol
     /**
      * Name of the exported symbol.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("symbol")
     @JsonPropertyDescription("Name of the exported symbol.")
@@ -33,7 +33,7 @@ public class SourceSymbol
 
     /**
      * Name of module, which exports the symbol. May be omitted, in which case it's assumed to be the name of the library.
-     *
+     * 
      */
     @JsonProperty("module")
     public String getModule() {
@@ -42,7 +42,7 @@ public class SourceSymbol
 
     /**
      * Name of module, which exports the symbol. May be omitted, in which case it's assumed to be the name of the library.
-     *
+     * 
      */
     @JsonProperty("module")
     public void setModule(String module) {
@@ -52,7 +52,7 @@ public class SourceSymbol
     /**
      * Name of the exported symbol.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("symbol")
     public String getSymbol() {
@@ -62,7 +62,7 @@ public class SourceSymbol
     /**
      * Name of the exported symbol.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("symbol")
     public void setSymbol(String symbol) {

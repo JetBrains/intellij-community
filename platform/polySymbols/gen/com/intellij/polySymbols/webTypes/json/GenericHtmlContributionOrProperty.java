@@ -15,13 +15,13 @@ public class GenericHtmlContributionOrProperty
 
     /**
      * Type: {@code GenericHtmlContribution | String | Double | Boolean}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code GenericHtmlContribution | String | Double | Boolean}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -29,7 +29,7 @@ public class GenericHtmlContributionOrProperty
 
     /**
      * Type: {@code GenericHtmlContribution | String | Double | Boolean}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

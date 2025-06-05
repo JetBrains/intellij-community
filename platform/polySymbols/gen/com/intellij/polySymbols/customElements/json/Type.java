@@ -23,20 +23,20 @@ public class Type {
 
     /**
      * An array of references to the types in the type string.
-     *
+     * 
      * These references have optional indices into the type string so that tools
      * can understand the references in the type string independently of the type
      * system and syntax. For example, a documentation viewer could display the
      * type `Array<FooElement | BarElement>` with cross-references to `FooElement`
      * and `BarElement` without understanding arrays, generics, or union types.
-     *
+     * 
      */
     @JsonProperty("references")
     @JsonPropertyDescription("An array of references to the types in the type string.\n\nThese references have optional indices into the type string so that tools\ncan understand the references in the type string independently of the type\nsystem and syntax. For example, a documentation viewer could display the\ntype `Array<FooElement | BarElement>` with cross-references to `FooElement`\nand `BarElement` without understanding arrays, generics, or union types.")
     private List<TypeReference> references = new ArrayList<TypeReference>();
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     @JsonPropertyDescription("A reference to the source of a declaration or member.")
@@ -45,7 +45,7 @@ public class Type {
      * The full string representation of the type, in whatever type syntax is
      * used, such as JSDoc, Closure, or TypeScript.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("text")
     @JsonPropertyDescription("The full string representation of the type, in whatever type syntax is\nused, such as JSDoc, Closure, or TypeScript.")
@@ -55,13 +55,13 @@ public class Type {
 
     /**
      * An array of references to the types in the type string.
-     *
+     * 
      * These references have optional indices into the type string so that tools
      * can understand the references in the type string independently of the type
      * system and syntax. For example, a documentation viewer could display the
      * type `Array<FooElement | BarElement>` with cross-references to `FooElement`
      * and `BarElement` without understanding arrays, generics, or union types.
-     *
+     * 
      */
     @JsonProperty("references")
     public List<TypeReference> getReferences() {
@@ -70,13 +70,13 @@ public class Type {
 
     /**
      * An array of references to the types in the type string.
-     *
+     * 
      * These references have optional indices into the type string so that tools
      * can understand the references in the type string independently of the type
      * system and syntax. For example, a documentation viewer could display the
      * type `Array<FooElement | BarElement>` with cross-references to `FooElement`
      * and `BarElement` without understanding arrays, generics, or union types.
-     *
+     * 
      */
     @JsonProperty("references")
     public void setReferences(List<TypeReference> references) {
@@ -85,7 +85,7 @@ public class Type {
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public SourceReference getSource() {
@@ -94,7 +94,7 @@ public class Type {
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public void setSource(SourceReference source) {
@@ -105,7 +105,7 @@ public class Type {
      * The full string representation of the type, in whatever type syntax is
      * used, such as JSDoc, Closure, or TypeScript.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("text")
     public String getText() {
@@ -116,7 +116,7 @@ public class Type {
      * The full string representation of the type, in whatever type syntax is
      * used, such as JSDoc, Closure, or TypeScript.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("text")
     public void setText(String text) {

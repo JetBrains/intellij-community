@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * Contains contributions to HTML namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - HTML elements and HTML attributes. There are also 2 deprecated kinds: tags (which is equivalent to 'elements') and 'events' (which was moved to JS namespace)
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -32,42 +32,42 @@ public class Html implements HtmlContributionsHost
 
     /**
      * Deprecated, use top-level js-types-syntax property.
-     *
+     * 
      */
     @JsonProperty("types-syntax")
     @JsonPropertyDescription("Deprecated, use top-level js-types-syntax property.")
     private Object typesSyntax;
     /**
      * Deprecated, use top-level property.
-     *
+     * 
      */
     @JsonProperty("description-markup")
     @JsonPropertyDescription("Deprecated, use top-level property.")
     private Object descriptionMarkup;
     /**
      * Deprecated, use `elements` property.
-     *
+     * 
      */
     @JsonProperty("tags")
     @JsonPropertyDescription("Deprecated, use `elements` property.")
     private List<HtmlElement> tags = new ArrayList<HtmlElement>();
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     @JsonPropertyDescription("HTML elements.")
     private List<HtmlElement> elements = new ArrayList<HtmlElement>();
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     @JsonPropertyDescription("HTML attributes.")
     private List<HtmlAttribute> attributes = new ArrayList<HtmlAttribute>();
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     @JsonPropertyDescription("DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events")
@@ -77,7 +77,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * Deprecated, use top-level js-types-syntax property.
-     *
+     * 
      */
     @JsonProperty("types-syntax")
     public Object getTypesSyntax() {
@@ -86,7 +86,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * Deprecated, use top-level js-types-syntax property.
-     *
+     * 
      */
     @JsonProperty("types-syntax")
     public void setTypesSyntax(Object typesSyntax) {
@@ -95,7 +95,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * Deprecated, use top-level property.
-     *
+     * 
      */
     @JsonProperty("description-markup")
     public Object getDescriptionMarkup() {
@@ -104,7 +104,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * Deprecated, use top-level property.
-     *
+     * 
      */
     @JsonProperty("description-markup")
     public void setDescriptionMarkup(Object descriptionMarkup) {
@@ -113,7 +113,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * Deprecated, use `elements` property.
-     *
+     * 
      */
     @JsonProperty("tags")
     public List<HtmlElement> getTags() {
@@ -122,7 +122,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * Deprecated, use `elements` property.
-     *
+     * 
      */
     @JsonProperty("tags")
     public void setTags(List<HtmlElement> tags) {
@@ -131,7 +131,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     public List<HtmlElement> getElements() {
@@ -140,7 +140,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     public void setElements(List<HtmlElement> elements) {
@@ -149,7 +149,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public List<HtmlAttribute> getAttributes() {
@@ -158,7 +158,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public void setAttributes(List<HtmlAttribute> attributes) {
@@ -167,7 +167,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     public List<GenericHtmlContribution> getEvents() {
@@ -176,7 +176,7 @@ public class Html implements HtmlContributionsHost
 
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     public void setEvents(List<GenericHtmlContribution> events) {

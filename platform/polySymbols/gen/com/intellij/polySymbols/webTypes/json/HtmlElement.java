@@ -26,21 +26,21 @@ public class HtmlElement
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     @JsonPropertyDescription("HTML elements.")
     private List<HtmlElement> elements = new ArrayList<HtmlElement>();
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     @JsonPropertyDescription("HTML attributes.")
     private List<HtmlAttribute> attributes = new ArrayList<HtmlAttribute>();
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     @JsonPropertyDescription("DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events")
@@ -50,7 +50,7 @@ public class HtmlElement
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     public List<HtmlElement> getElements() {
@@ -59,7 +59,7 @@ public class HtmlElement
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     public void setElements(List<HtmlElement> elements) {
@@ -68,7 +68,7 @@ public class HtmlElement
 
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public List<HtmlAttribute> getAttributes() {
@@ -77,7 +77,7 @@ public class HtmlElement
 
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public void setAttributes(List<HtmlAttribute> attributes) {
@@ -86,7 +86,7 @@ public class HtmlElement
 
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     public List<GenericHtmlContribution> getEvents() {
@@ -95,7 +95,7 @@ public class HtmlElement
 
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     public void setEvents(List<GenericHtmlContribution> events) {

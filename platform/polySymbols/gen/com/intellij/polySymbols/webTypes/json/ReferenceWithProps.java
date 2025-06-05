@@ -22,9 +22,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class ReferenceWithProps {
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("path")
     private String path;
@@ -36,7 +36,7 @@ public class ReferenceWithProps {
     private String filter;
     /**
      * Override global name conversion rules for matching symbols under the path.
-     *
+     * 
      */
     @JsonProperty("name-conversion")
     @JsonPropertyDescription("Override global name conversion rules for matching symbols under the path.")
@@ -45,9 +45,9 @@ public class ReferenceWithProps {
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("path")
     public String getPath() {
@@ -55,9 +55,9 @@ public class ReferenceWithProps {
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("path")
     public void setPath(String path) {
@@ -96,7 +96,7 @@ public class ReferenceWithProps {
 
     /**
      * Override global name conversion rules for matching symbols under the path.
-     *
+     * 
      */
     @JsonProperty("name-conversion")
     public ReferenceNameConversion getNameConversion() {
@@ -105,7 +105,7 @@ public class ReferenceWithProps {
 
     /**
      * Override global name conversion rules for matching symbols under the path.
-     *
+     * 
      */
     @JsonProperty("name-conversion")
     public void setNameConversion(ReferenceNameConversion nameConversion) {

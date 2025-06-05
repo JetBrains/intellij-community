@@ -15,24 +15,24 @@ public class RequiredContextKindName
 {
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("kind")
     private String kind;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("kind")
     public String getKind() {
@@ -40,9 +40,9 @@ public class RequiredContextKindName
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("kind")
     public void setKind(String kind) {
@@ -50,9 +50,9 @@ public class RequiredContextKindName
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -60,9 +60,9 @@ public class RequiredContextKindName
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {

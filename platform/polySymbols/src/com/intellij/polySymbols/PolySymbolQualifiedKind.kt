@@ -9,5 +9,5 @@ data class PolySymbolQualifiedKind(
 ) {
   fun withName(name: String): PolySymbolQualifiedName = PolySymbolQualifiedName(this, name)
 
-  override fun toString(): String = "/$namespace/$kind"
+  override fun toString(): String = "$namespace/$kind"
 }

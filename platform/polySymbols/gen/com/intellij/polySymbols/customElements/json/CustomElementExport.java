@@ -17,10 +17,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * <p>
  * A global custom element defintion, ie the result of a
  * `customElements.define()` call.
- *
+ * 
  * This is represented as an export because a definition makes the element
  * available outside of the module it's defined it.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -34,18 +34,18 @@ public class CustomElementExport
 
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("declaration")
     @JsonPropertyDescription("A reference to an export of a module.\n\nAll references are required to be publically accessible, so the canonical\nrepresentation of a reference is the export it's available from.\n\n`package` should generally refer to an npm package name. If `package` is\nundefined then the reference is local to this package. If `module` is\nundefined the reference is local to the containing module.\n\nReferences to global symbols like `Array`, `HTMLElement`, or `Event` should\nuse a `package` name of `\"global:\"`.")
@@ -54,7 +54,7 @@ public class CustomElementExport
      * Whether the custom-element export is deprecated.
      * For example, a future version will not register the custom element in this file.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the custom-element export is deprecated.\nFor example, a future version will not register the custom element in this file.\nIf the value is a string, it's the reason for the deprecation.")
@@ -62,7 +62,7 @@ public class CustomElementExport
     /**
      * The tag name of the custom element.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     @JsonPropertyDescription("The tag name of the custom element.")
@@ -72,18 +72,18 @@ public class CustomElementExport
 
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("declaration")
     public Reference getDeclaration() {
@@ -92,18 +92,18 @@ public class CustomElementExport
 
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("declaration")
     public void setDeclaration(Reference declaration) {
@@ -114,7 +114,7 @@ public class CustomElementExport
      * Whether the custom-element export is deprecated.
      * For example, a future version will not register the custom element in this file.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -125,7 +125,7 @@ public class CustomElementExport
      * Whether the custom-element export is deprecated.
      * For example, a future version will not register the custom element in this file.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -135,7 +135,7 @@ public class CustomElementExport
     /**
      * The tag name of the custom element.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -145,7 +145,7 @@ public class CustomElementExport
     /**
      * The tag name of the custom element.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {

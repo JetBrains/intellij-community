@@ -26,53 +26,53 @@ public class Event implements CustomElementsContribution
     /**
      * Whether the event is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the event is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description.")
     private String description;
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
-     *
+     * 
      */
     @JsonProperty("inheritedFrom")
     @JsonPropertyDescription("A reference to an export of a module.\n\nAll references are required to be publically accessible, so the canonical\nrepresentation of a reference is the export it's available from.\n\n`package` should generally refer to an npm package name. If `package` is\nundefined then the reference is local to this package. If `module` is\nundefined the reference is local to the containing module.\n\nReferences to global symbols like `Array`, `HTMLElement`, or `Event` should\nuse a `package` name of `\"global:\"`.")
     private Reference inheritedFrom;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
     private String summary;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("type")
     private Type type;
@@ -82,7 +82,7 @@ public class Event implements CustomElementsContribution
     /**
      * Whether the event is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -92,7 +92,7 @@ public class Event implements CustomElementsContribution
     /**
      * Whether the event is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -101,7 +101,7 @@ public class Event implements CustomElementsContribution
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -110,7 +110,7 @@ public class Event implements CustomElementsContribution
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -119,17 +119,17 @@ public class Event implements CustomElementsContribution
 
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
-     *
+     * 
      */
     @JsonProperty("inheritedFrom")
     public Reference getInheritedFrom() {
@@ -138,17 +138,17 @@ public class Event implements CustomElementsContribution
 
     /**
      * A reference to an export of a module.
-     *
+     * 
      * All references are required to be publically accessible, so the canonical
      * representation of a reference is the export it's available from.
-     *
+     * 
      * `package` should generally refer to an npm package name. If `package` is
      * undefined then the reference is local to this package. If `module` is
      * undefined the reference is local to the containing module.
-     *
+     * 
      * References to global symbols like `Array`, `HTMLElement`, or `Event` should
      * use a `package` name of `"global:"`.
-     *
+     * 
      */
     @JsonProperty("inheritedFrom")
     public void setInheritedFrom(Reference inheritedFrom) {
@@ -156,9 +156,9 @@ public class Event implements CustomElementsContribution
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -166,9 +166,9 @@ public class Event implements CustomElementsContribution
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -177,7 +177,7 @@ public class Event implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -186,7 +186,7 @@ public class Event implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {
@@ -194,9 +194,9 @@ public class Event implements CustomElementsContribution
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("type")
     public Type getType() {
@@ -204,9 +204,9 @@ public class Event implements CustomElementsContribution
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("type")
     public void setType(Type type) {

@@ -27,28 +27,28 @@ public class JsProperty
 
     /**
      * Specifies whether the property is read only.
-     *
+     * 
      */
     @JsonProperty("read-only")
     @JsonPropertyDescription("Specifies whether the property is read only.")
     private Boolean readOnly;
     /**
      * DOM events
-     *
+     * 
      */
     @JsonProperty("events")
     @JsonPropertyDescription("DOM events")
     private List<GenericJsContribution> events = new ArrayList<GenericJsContribution>();
     /**
      * JavaScript properties of an object, HTML tag, framework component, etc.
-     *
+     * 
      */
     @JsonProperty("properties")
     @JsonPropertyDescription("JavaScript properties of an object, HTML tag, framework component, etc.")
     private List<JsProperty> properties = new ArrayList<JsProperty>();
     /**
      * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
-     *
+     * 
      */
     @JsonProperty("symbols")
     @JsonPropertyDescription("Symbols available for JavaScript resolve. TypeScript resolve is not supported.")
@@ -58,7 +58,7 @@ public class JsProperty
 
     /**
      * Specifies whether the property is read only.
-     *
+     * 
      */
     @JsonProperty("read-only")
     public Boolean getReadOnly() {
@@ -67,7 +67,7 @@ public class JsProperty
 
     /**
      * Specifies whether the property is read only.
-     *
+     * 
      */
     @JsonProperty("read-only")
     public void setReadOnly(Boolean readOnly) {
@@ -76,7 +76,7 @@ public class JsProperty
 
     /**
      * DOM events
-     *
+     * 
      */
     @JsonProperty("events")
     public List<GenericJsContribution> getEvents() {
@@ -85,7 +85,7 @@ public class JsProperty
 
     /**
      * DOM events
-     *
+     * 
      */
     @JsonProperty("events")
     public void setEvents(List<GenericJsContribution> events) {
@@ -94,7 +94,7 @@ public class JsProperty
 
     /**
      * JavaScript properties of an object, HTML tag, framework component, etc.
-     *
+     * 
      */
     @JsonProperty("properties")
     public List<JsProperty> getProperties() {
@@ -103,7 +103,7 @@ public class JsProperty
 
     /**
      * JavaScript properties of an object, HTML tag, framework component, etc.
-     *
+     * 
      */
     @JsonProperty("properties")
     public void setProperties(List<JsProperty> properties) {
@@ -112,7 +112,7 @@ public class JsProperty
 
     /**
      * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
-     *
+     * 
      */
     @JsonProperty("symbols")
     public List<JsSymbol> getSymbols() {
@@ -121,7 +121,7 @@ public class JsProperty
 
     /**
      * Symbols available for JavaScript resolve. TypeScript resolve is not supported.
-     *
+     * 
      */
     @JsonProperty("symbols")
     public void setSymbols(List<JsSymbol> symbols) {

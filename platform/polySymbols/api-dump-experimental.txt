@@ -33,7 +33,6 @@
 - getPresentation():com.intellij.platform.backend.presentation.TargetPresentation
 - getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getProperties():java.util.Map
-- getProximity():java.lang.Integer
 - getPsiContext():com.intellij.psi.PsiElement
 - a:getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
 - getQueryScope():java.util.List
@@ -903,7 +902,6 @@
 - getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 - getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getProperties():java.util.Map
-- getProximity():java.lang.Integer
 - getPsiContext():com.intellij.psi.PsiElement
 - getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
 - getQueryScope():java.util.List

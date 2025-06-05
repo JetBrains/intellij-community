@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * The base for any contributions.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -51,14 +51,14 @@ public abstract class BaseContribution implements GenericContributionsHost
     private String name;
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.")
     private String description;
     /**
      * Custom sections to be shown below description in the documentation popup.
-     *
+     * 
      */
     @JsonProperty("description-sections")
     @JsonPropertyDescription("Custom sections to be shown below description in the documentation popup.")
@@ -67,63 +67,63 @@ public abstract class BaseContribution implements GenericContributionsHost
     private RequiredContextBase requiredContext;
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     @JsonPropertyDescription("Link to online documentation.")
     private String docUrl;
     /**
      * Relative path to the icon representing the symbol or actual SVG of the icon.
-     *
+     * 
      */
     @JsonProperty("icon")
     @JsonPropertyDescription("Relative path to the icon representing the symbol or actual SVG of the icon.")
     private String icon;
     /**
      * Allows to specify the source of the entity. For Vue.js component this may be for instance a class.
-     *
+     * 
      */
     @JsonProperty("source")
     @JsonPropertyDescription("Allows to specify the source of the entity. For Vue.js component this may be for instance a class.")
     private SourceBase source;
     /**
      * Version since this symbol is available.
-     *
+     * 
      */
     @JsonProperty("since")
     @JsonPropertyDescription("Version since this symbol is available.")
     private String since;
     /**
      * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.")
     private Deprecated deprecated = null;
     /**
      * Version in which this symbol was first deprecated.
-     *
+     * 
      */
     @JsonProperty("deprecated-since")
     @JsonPropertyDescription("Version in which this symbol was first deprecated.")
     private String deprecatedSince;
     /**
      * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("obsolete")
     @JsonPropertyDescription("Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.")
     private Obsolete obsolete = null;
     /**
      * Version in which this symbol was first made obsolete.
-     *
+     * 
      */
     @JsonProperty("obsolete-since")
     @JsonPropertyDescription("Version in which this symbol was first made obsolete.")
     private String obsoleteSince;
     /**
      * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
-     *
+     * 
      */
     @JsonProperty("experimental")
     @JsonPropertyDescription("Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.")
@@ -133,29 +133,29 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("proximity")
     private Integer proximity;
     /**
-     * Mark contribution as virtual. Virtual contributions can be filtered out if needed in references. A virtual contribution meaning may differ by framework or kind contexts, but usually means something synthetic or something, which gets erased in the runtime by the framework. E.g. Vue or Angular attribute bindings are virtual.
-     *
+     * Mark contribution as virtual. Virtual contributions can be filtered out if needed in references. A virtual contribution meaning may differ by framework or kind contexts, but usually means something synthetic or something, which gets erased in the runtime by the framework. E.g. Vue or Angular attribute bindings are virtual. 
+     * 
      */
     @JsonProperty("virtual")
     @JsonPropertyDescription("Mark contribution as virtual. Virtual contributions can be filtered out if needed in references. A virtual contribution meaning may differ by framework or kind contexts, but usually means something synthetic or something, which gets erased in the runtime by the framework. E.g. Vue or Angular attribute bindings are virtual. ")
     private Boolean virtual;
     /**
      * Mark contribution as abstract. Such contributions serve only as super contributions for other contributions.
-     *
+     * 
      */
     @JsonProperty("abstract")
     @JsonPropertyDescription("Mark contribution as abstract. Such contributions serve only as super contributions for other contributions.")
     private Boolean _abstract;
     /**
      * Mark contribution as an extension. Such contributions do not define a new contribution on their own, but can provide additional properties or contributions to existing contributions.
-     *
+     * 
      */
     @JsonProperty("extension")
     @JsonPropertyDescription("Mark contribution as an extension. Such contributions do not define a new contribution on their own, but can provide additional properties or contributions to existing contributions.")
     private Boolean extension;
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("extends")
     @JsonPropertyDescription("A reference to an element in Web-Types model.")
@@ -164,21 +164,21 @@ public abstract class BaseContribution implements GenericContributionsHost
     private NamePatternRoot pattern;
     /**
      * Contains contributions to HTML namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - HTML elements and HTML attributes. There are also 2 deprecated kinds: tags (which is equivalent to 'elements') and 'events' (which was moved to JS namespace)
-     *
+     * 
      */
     @JsonProperty("html")
     @JsonPropertyDescription("Contains contributions to HTML namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - HTML elements and HTML attributes. There are also 2 deprecated kinds: tags (which is equivalent to 'elements') and 'events' (which was moved to JS namespace)")
     private Html html;
     /**
      * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
-     *
+     * 
      */
     @JsonProperty("css")
     @JsonPropertyDescription("Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.")
     private Css css;
     /**
      * Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events.
-     *
+     * 
      */
     @JsonProperty("js")
     @JsonPropertyDescription("Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events.")
@@ -186,7 +186,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     /**
      * Specify list of contribution kinds qualified with a namespace, for which during reference resolution this will be the final contribution host. E.g. if a special HTML element does not accept standard attributes, add:
      * "exclusive-contributions": ["/html/attributes"].
-     *
+     * 
      */
     @JsonProperty("exclusive-contributions")
     @JsonPropertyDescription("Specify list of contribution kinds qualified with a namespace, for which during reference resolution this will be the final contribution host. E.g. if a special HTML element does not accept standard attributes, add:\n\"exclusive-contributions\": [\"/html/attributes\"].")
@@ -204,7 +204,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -213,7 +213,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -222,7 +222,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Custom sections to be shown below description in the documentation popup.
-     *
+     * 
      */
     @JsonProperty("description-sections")
     public DescriptionSections getDescriptionSections() {
@@ -231,7 +231,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Custom sections to be shown below description in the documentation popup.
-     *
+     * 
      */
     @JsonProperty("description-sections")
     public void setDescriptionSections(DescriptionSections descriptionSections) {
@@ -250,7 +250,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     public String getDocUrl() {
@@ -259,7 +259,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     public void setDocUrl(String docUrl) {
@@ -268,7 +268,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Relative path to the icon representing the symbol or actual SVG of the icon.
-     *
+     * 
      */
     @JsonProperty("icon")
     public String getIcon() {
@@ -277,7 +277,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Relative path to the icon representing the symbol or actual SVG of the icon.
-     *
+     * 
      */
     @JsonProperty("icon")
     public void setIcon(String icon) {
@@ -286,7 +286,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Allows to specify the source of the entity. For Vue.js component this may be for instance a class.
-     *
+     * 
      */
     @JsonProperty("source")
     public SourceBase getSource() {
@@ -295,7 +295,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Allows to specify the source of the entity. For Vue.js component this may be for instance a class.
-     *
+     * 
      */
     @JsonProperty("source")
     public void setSource(SourceBase source) {
@@ -304,7 +304,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Version since this symbol is available.
-     *
+     * 
      */
     @JsonProperty("since")
     public String getSince() {
@@ -313,7 +313,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Version since this symbol is available.
-     *
+     * 
      */
     @JsonProperty("since")
     public void setSince(String since) {
@@ -322,7 +322,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -331,7 +331,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -340,7 +340,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Version in which this symbol was first deprecated.
-     *
+     * 
      */
     @JsonProperty("deprecated-since")
     public String getDeprecatedSince() {
@@ -349,7 +349,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Version in which this symbol was first deprecated.
-     *
+     * 
      */
     @JsonProperty("deprecated-since")
     public void setDeprecatedSince(String deprecatedSince) {
@@ -358,7 +358,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("obsolete")
     public Obsolete getObsolete() {
@@ -367,7 +367,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
-     *
+     * 
      */
     @JsonProperty("obsolete")
     public void setObsolete(Obsolete obsolete) {
@@ -376,7 +376,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Version in which this symbol was first made obsolete.
-     *
+     * 
      */
     @JsonProperty("obsolete-since")
     public String getObsoleteSince() {
@@ -385,7 +385,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Version in which this symbol was first made obsolete.
-     *
+     * 
      */
     @JsonProperty("obsolete-since")
     public void setObsoleteSince(String obsoleteSince) {
@@ -394,7 +394,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
-     *
+     * 
      */
     @JsonProperty("experimental")
     public Experimental getExperimental() {
@@ -403,7 +403,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
-     *
+     * 
      */
     @JsonProperty("experimental")
     public void setExperimental(Experimental experimental) {
@@ -431,8 +431,8 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Mark contribution as virtual. Virtual contributions can be filtered out if needed in references. A virtual contribution meaning may differ by framework or kind contexts, but usually means something synthetic or something, which gets erased in the runtime by the framework. E.g. Vue or Angular attribute bindings are virtual.
-     *
+     * Mark contribution as virtual. Virtual contributions can be filtered out if needed in references. A virtual contribution meaning may differ by framework or kind contexts, but usually means something synthetic or something, which gets erased in the runtime by the framework. E.g. Vue or Angular attribute bindings are virtual. 
+     * 
      */
     @JsonProperty("virtual")
     public Boolean getVirtual() {
@@ -440,8 +440,8 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Mark contribution as virtual. Virtual contributions can be filtered out if needed in references. A virtual contribution meaning may differ by framework or kind contexts, but usually means something synthetic or something, which gets erased in the runtime by the framework. E.g. Vue or Angular attribute bindings are virtual.
-     *
+     * Mark contribution as virtual. Virtual contributions can be filtered out if needed in references. A virtual contribution meaning may differ by framework or kind contexts, but usually means something synthetic or something, which gets erased in the runtime by the framework. E.g. Vue or Angular attribute bindings are virtual. 
+     * 
      */
     @JsonProperty("virtual")
     public void setVirtual(Boolean virtual) {
@@ -450,7 +450,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Mark contribution as abstract. Such contributions serve only as super contributions for other contributions.
-     *
+     * 
      */
     @JsonProperty("abstract")
     public Boolean getAbstract() {
@@ -459,7 +459,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Mark contribution as abstract. Such contributions serve only as super contributions for other contributions.
-     *
+     * 
      */
     @JsonProperty("abstract")
     public void setAbstract(Boolean _abstract) {
@@ -468,7 +468,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Mark contribution as an extension. Such contributions do not define a new contribution on their own, but can provide additional properties or contributions to existing contributions.
-     *
+     * 
      */
     @JsonProperty("extension")
     public Boolean getExtension() {
@@ -477,7 +477,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Mark contribution as an extension. Such contributions do not define a new contribution on their own, but can provide additional properties or contributions to existing contributions.
-     *
+     * 
      */
     @JsonProperty("extension")
     public void setExtension(Boolean extension) {
@@ -486,7 +486,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("extends")
     public Reference getExtends() {
@@ -495,7 +495,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * A reference to an element in Web-Types model.
-     *
+     * 
      */
     @JsonProperty("extends")
     public void setExtends(Reference _extends) {
@@ -514,7 +514,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Contains contributions to HTML namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - HTML elements and HTML attributes. There are also 2 deprecated kinds: tags (which is equivalent to 'elements') and 'events' (which was moved to JS namespace)
-     *
+     * 
      */
     @JsonProperty("html")
     public Html getHtml() {
@@ -523,7 +523,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Contains contributions to HTML namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - HTML elements and HTML attributes. There are also 2 deprecated kinds: tags (which is equivalent to 'elements') and 'events' (which was moved to JS namespace)
-     *
+     * 
      */
     @JsonProperty("html")
     public void setHtml(Html html) {
@@ -532,7 +532,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
-     *
+     * 
      */
     @JsonProperty("css")
     public Css getCss() {
@@ -541,7 +541,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.
-     *
+     * 
      */
     @JsonProperty("css")
     public void setCss(Css css) {
@@ -550,7 +550,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events.
-     *
+     * 
      */
     @JsonProperty("js")
     public Js getJs() {
@@ -559,7 +559,7 @@ public abstract class BaseContribution implements GenericContributionsHost
 
     /**
      * Contains contributions to JS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are 2 predefined kinds, which integrate directly with IDE - properties and events.
-     *
+     * 
      */
     @JsonProperty("js")
     public void setJs(Js js) {
@@ -569,7 +569,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     /**
      * Specify list of contribution kinds qualified with a namespace, for which during reference resolution this will be the final contribution host. E.g. if a special HTML element does not accept standard attributes, add:
      * "exclusive-contributions": ["/html/attributes"].
-     *
+     * 
      */
     @JsonProperty("exclusive-contributions")
     public List<String> getExclusiveContributions() {
@@ -579,7 +579,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     /**
      * Specify list of contribution kinds qualified with a namespace, for which during reference resolution this will be the final contribution host. E.g. if a special HTML element does not accept standard attributes, add:
      * "exclusive-contributions": ["/html/attributes"].
-     *
+     * 
      */
     @JsonProperty("exclusive-contributions")
     public void setExclusiveContributions(List<String> exclusiveContributions) {

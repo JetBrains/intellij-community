@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * The description of a CSS Part
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -29,28 +29,28 @@ public class CssPart implements CustomElementsContribution
     /**
      * Whether the CSS shadow part is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the CSS shadow part is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description.")
     private String description;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
@@ -61,7 +61,7 @@ public class CssPart implements CustomElementsContribution
     /**
      * Whether the CSS shadow part is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -71,7 +71,7 @@ public class CssPart implements CustomElementsContribution
     /**
      * Whether the CSS shadow part is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -80,7 +80,7 @@ public class CssPart implements CustomElementsContribution
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -89,7 +89,7 @@ public class CssPart implements CustomElementsContribution
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -97,9 +97,9 @@ public class CssPart implements CustomElementsContribution
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -107,9 +107,9 @@ public class CssPart implements CustomElementsContribution
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -118,7 +118,7 @@ public class CssPart implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -127,7 +127,7 @@ public class CssPart implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {

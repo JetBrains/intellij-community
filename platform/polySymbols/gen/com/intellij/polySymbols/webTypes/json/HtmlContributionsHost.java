@@ -22,42 +22,42 @@ public interface HtmlContributionsHost
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     public List<HtmlElement> getElements();
 
     /**
      * HTML elements.
-     *
+     * 
      */
     @JsonProperty("elements")
     public void setElements(List<HtmlElement> elements);
 
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public List<HtmlAttribute> getAttributes();
 
     /**
      * HTML attributes.
-     *
+     * 
      */
     @JsonProperty("attributes")
     public void setAttributes(List<HtmlAttribute> attributes);
 
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     public List<GenericHtmlContribution> getEvents();
 
     /**
      * DOM events are deprecated in HTML namespace. Contribute events to JS namespace: /js/events
-     *
+     * 
      */
     @JsonProperty("events")
     public void setEvents(List<GenericHtmlContribution> events);

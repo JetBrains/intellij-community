@@ -24,14 +24,14 @@ public class Slot implements CustomElementsContribution
     /**
      * Whether the slot is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the slot is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description.")
@@ -39,14 +39,14 @@ public class Slot implements CustomElementsContribution
     /**
      * The slot name, or the empty string for an unnamed slot.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     @JsonPropertyDescription("The slot name, or the empty string for an unnamed slot.")
     private String name;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
@@ -57,7 +57,7 @@ public class Slot implements CustomElementsContribution
     /**
      * Whether the slot is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -67,7 +67,7 @@ public class Slot implements CustomElementsContribution
     /**
      * Whether the slot is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -76,7 +76,7 @@ public class Slot implements CustomElementsContribution
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -85,7 +85,7 @@ public class Slot implements CustomElementsContribution
 
     /**
      * A markdown description.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -95,7 +95,7 @@ public class Slot implements CustomElementsContribution
     /**
      * The slot name, or the empty string for an unnamed slot.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -105,7 +105,7 @@ public class Slot implements CustomElementsContribution
     /**
      * The slot name, or the empty string for an unnamed slot.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -114,7 +114,7 @@ public class Slot implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -123,7 +123,7 @@ public class Slot implements CustomElementsContribution
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {

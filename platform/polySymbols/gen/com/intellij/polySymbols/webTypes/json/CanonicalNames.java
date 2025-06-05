@@ -13,13 +13,13 @@ public class CanonicalNames {
 
     /**
      * Type: {@code NameConverter | NameConversionRulesSingle}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code NameConverter | NameConversionRulesSingle}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -27,7 +27,7 @@ public class CanonicalNames {
 
     /**
      * Type: {@code NameConverter | NameConversionRulesSingle}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

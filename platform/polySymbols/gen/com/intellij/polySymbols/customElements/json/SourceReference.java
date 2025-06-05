@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * A reference to the source of a declaration or member.
- *
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -25,7 +25,7 @@ public class SourceReference {
     /**
      * An absolute URL to the source (ie. a GitHub URL).
      * (Required)
-     *
+     * 
      */
     @JsonProperty("href")
     @JsonPropertyDescription("An absolute URL to the source (ie. a GitHub URL).")
@@ -36,7 +36,7 @@ public class SourceReference {
     /**
      * An absolute URL to the source (ie. a GitHub URL).
      * (Required)
-     *
+     * 
      */
     @JsonProperty("href")
     public String getHref() {
@@ -46,7 +46,7 @@ public class SourceReference {
     /**
      * An absolute URL to the source (ie. a GitHub URL).
      * (Required)
-     *
+     * 
      */
     @JsonProperty("href")
     public void setHref(String href) {

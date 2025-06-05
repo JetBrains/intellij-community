@@ -7,9 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.deser.std.StringDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.type.TypeFactory
-import com.intellij.util.IconUtil
-import com.intellij.util.containers.Interner
-import com.intellij.util.ui.JBUI
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
@@ -17,7 +14,13 @@ import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryParams
+import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
+import com.intellij.polySymbols.webTypes.WebTypesSymbol
+import com.intellij.polySymbols.webTypes.WebTypesSymbolBase
 import com.intellij.polySymbols.webTypes.json.WebTypes
+import com.intellij.util.IconUtil
+import com.intellij.util.containers.Interner
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -80,6 +83,12 @@ internal fun <T> List<T>.selectBest(
       .plus(extensions)
   }
   else this
+
+@get:ApiStatus.Internal
+val PolySymbol.proximity: Int?
+  get() =
+    (this as? PolySymbolMatchBase)?.proximity
+    ?: (this as? WebTypesSymbolBase)?.proximity
 
 internal fun List<PolySymbol>.sortSymbolsByPriority(extensionsLast: Boolean = true): List<PolySymbol> =
   sortedWith(Comparator.comparingInt<PolySymbol> { if (it.extension && extensionsLast) 1 else 0 }

@@ -10,6 +10,7 @@ import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler
+import com.intellij.polySymbols.impl.proximity
 import com.intellij.polySymbols.impl.scaleToHeight
 import com.intellij.polySymbols.query.PolySymbolDefaultIconProvider
 import com.intellij.psi.PsiElement

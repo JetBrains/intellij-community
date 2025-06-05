@@ -14,17 +14,17 @@ public class RequiredContextNot
 {
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("not")
     private RequiredContextBase not;
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("not")
     public RequiredContextBase getNot() {
@@ -32,9 +32,9 @@ public class RequiredContextNot
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("not")
     public void setNot(RequiredContextBase not) {

@@ -13,13 +13,13 @@ public class Type {
 
     /**
      * Type: {@code TypeReference | String}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code TypeReference | String}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -27,7 +27,7 @@ public class Type {
 
     /**
      * Type: {@code TypeReference | String}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

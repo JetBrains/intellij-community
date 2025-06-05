@@ -24,12 +24,10 @@ interface PolySymbolMatch : CompositePolySymbol {
       qualifiedKind: PolySymbolQualifiedKind,
       origin: PolySymbolOrigin,
       explicitPriority: PolySymbol.Priority? = null,
-      explicitProximity: Int? = null,
     ): PolySymbolMatch =
       PolySymbolMatchBase.BuilderImpl(matchedName, qualifiedKind, origin)
         .also { builder ->
           builder.addNameSegments(nameSegments)
-          explicitProximity?.let { builder.explicitProximity(it) }
           explicitPriority?.let { builder.explicitPriority(it) }
         }
         .build()

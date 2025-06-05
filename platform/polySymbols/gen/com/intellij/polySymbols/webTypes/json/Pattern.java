@@ -13,13 +13,13 @@ public class Pattern {
 
     /**
      * Type: {@code String | PatternObject}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code String | PatternObject}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -27,7 +27,7 @@ public class Pattern {
 
     /**
      * Type: {@code String | PatternObject}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

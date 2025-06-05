@@ -16,9 +16,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class DeprecatedHtmlAttributeVueModifier {
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
@@ -26,23 +26,23 @@ public class DeprecatedHtmlAttributeVueModifier {
     private NamePatternRoot pattern;
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.")
     private String description;
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     @JsonPropertyDescription("Link to online documentation.")
     private String docUrl;
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -50,9 +50,9 @@ public class DeprecatedHtmlAttributeVueModifier {
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -71,7 +71,7 @@ public class DeprecatedHtmlAttributeVueModifier {
 
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -80,7 +80,7 @@ public class DeprecatedHtmlAttributeVueModifier {
 
     /**
      * Short description to be rendered in documentation popup. It will be rendered according to description-markup setting.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -89,7 +89,7 @@ public class DeprecatedHtmlAttributeVueModifier {
 
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     public String getDocUrl() {
@@ -98,7 +98,7 @@ public class DeprecatedHtmlAttributeVueModifier {
 
     /**
      * Link to online documentation.
-     *
+     * 
      */
     @JsonProperty("doc-url")
     public void setDocUrl(String docUrl) {

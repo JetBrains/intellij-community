@@ -14,13 +14,13 @@ public class NamePatternTemplate {
 
     /**
      * Type: {@code String | List<NamePatternTemplate> | NamePatternBase}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code String | List<NamePatternTemplate> | NamePatternBase}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -28,7 +28,7 @@ public class NamePatternTemplate {
 
     /**
      * Type: {@code String | List<NamePatternTemplate> | NamePatternBase}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

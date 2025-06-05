@@ -21,14 +21,14 @@ public class Demo {
 
     /**
      * A markdown description of the demo.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description of the demo.")
     private String description;
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     @JsonPropertyDescription("A reference to the source of a declaration or member.")
@@ -37,7 +37,7 @@ public class Demo {
      * Relative URL of the demo if it's published with the package. Absolute URL
      * if it's hosted.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("url")
     @JsonPropertyDescription("Relative URL of the demo if it's published with the package. Absolute URL\nif it's hosted.")
@@ -47,7 +47,7 @@ public class Demo {
 
     /**
      * A markdown description of the demo.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -56,7 +56,7 @@ public class Demo {
 
     /**
      * A markdown description of the demo.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -65,7 +65,7 @@ public class Demo {
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public SourceReference getSource() {
@@ -74,7 +74,7 @@ public class Demo {
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public void setSource(SourceReference source) {
@@ -85,7 +85,7 @@ public class Demo {
      * Relative URL of the demo if it's published with the package. Absolute URL
      * if it's hosted.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("url")
     public String getUrl() {
@@ -96,7 +96,7 @@ public class Demo {
      * Relative URL of the demo if it's published with the package. Absolute URL
      * if it's hosted.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("url")
     public void setUrl(String url) {

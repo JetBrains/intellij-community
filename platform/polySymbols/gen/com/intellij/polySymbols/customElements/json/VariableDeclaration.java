@@ -15,8 +15,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /**
  * kind = variable
  * <p>
- *
- *
+ * 
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -38,42 +38,42 @@ public class VariableDeclaration
     /**
      * Whether the property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Whether the property is deprecated.\nIf the value is a string, it's the reason for the deprecation.")
     private Deprecated deprecated;
     /**
      * A markdown description of the field.
-     *
+     * 
      */
     @JsonProperty("description")
     @JsonPropertyDescription("A markdown description of the field.")
     private String description;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     private String name;
     /**
      * Whether the property is read-only.
-     *
+     * 
      */
     @JsonProperty("readonly")
     @JsonPropertyDescription("Whether the property is read-only.")
     private Boolean readonly;
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     @JsonPropertyDescription("A reference to the source of a declaration or member.")
     private SourceReference source;
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     @JsonPropertyDescription("A markdown summary suitable for display in a listing.")
@@ -96,7 +96,7 @@ public class VariableDeclaration
     /**
      * Whether the property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public Deprecated getDeprecated() {
@@ -106,7 +106,7 @@ public class VariableDeclaration
     /**
      * Whether the property is deprecated.
      * If the value is a string, it's the reason for the deprecation.
-     *
+     * 
      */
     @JsonProperty("deprecated")
     public void setDeprecated(Deprecated deprecated) {
@@ -115,7 +115,7 @@ public class VariableDeclaration
 
     /**
      * A markdown description of the field.
-     *
+     * 
      */
     @JsonProperty("description")
     public String getDescription() {
@@ -124,7 +124,7 @@ public class VariableDeclaration
 
     /**
      * A markdown description of the field.
-     *
+     * 
      */
     @JsonProperty("description")
     public void setDescription(String description) {
@@ -132,9 +132,9 @@ public class VariableDeclaration
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -142,9 +142,9 @@ public class VariableDeclaration
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -153,7 +153,7 @@ public class VariableDeclaration
 
     /**
      * Whether the property is read-only.
-     *
+     * 
      */
     @JsonProperty("readonly")
     public Boolean getReadonly() {
@@ -162,7 +162,7 @@ public class VariableDeclaration
 
     /**
      * Whether the property is read-only.
-     *
+     * 
      */
     @JsonProperty("readonly")
     public void setReadonly(Boolean readonly) {
@@ -171,7 +171,7 @@ public class VariableDeclaration
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public SourceReference getSource() {
@@ -180,7 +180,7 @@ public class VariableDeclaration
 
     /**
      * A reference to the source of a declaration or member.
-     *
+     * 
      */
     @JsonProperty("source")
     public void setSource(SourceReference source) {
@@ -189,7 +189,7 @@ public class VariableDeclaration
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public String getSummary() {
@@ -198,7 +198,7 @@ public class VariableDeclaration
 
     /**
      * A markdown summary suitable for display in a listing.
-     *
+     * 
      */
     @JsonProperty("summary")
     public void setSummary(String summary) {

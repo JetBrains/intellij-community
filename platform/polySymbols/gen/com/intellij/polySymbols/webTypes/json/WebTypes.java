@@ -14,8 +14,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * JSON schema for Web-Types
  * <p>
- *
- *
+ * 
+ * 
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -38,7 +38,7 @@ public class WebTypes {
     private String $schema;
     /**
      * Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.
-     *
+     * 
      */
     @JsonProperty("framework")
     @JsonPropertyDescription("Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.")
@@ -50,7 +50,7 @@ public class WebTypes {
     /**
      * Name of the library.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     @JsonPropertyDescription("Name of the library.")
@@ -58,49 +58,49 @@ public class WebTypes {
     /**
      * Version of the library, for which Web-Types are provided.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("version")
     @JsonPropertyDescription("Version of the library, for which Web-Types are provided.")
     private String version;
     /**
      * Language in which JavaScript objects types are specified.
-     *
+     * 
      */
     @JsonProperty("js-types-syntax")
     @JsonPropertyDescription("Language in which JavaScript objects types are specified.")
     private WebTypes.JsTypesSyntax jsTypesSyntax;
     /**
      * Markup language in which descriptions are formatted.
-     *
+     * 
      */
     @JsonProperty("description-markup")
     @JsonPropertyDescription("Markup language in which descriptions are formatted.")
     private WebTypes.DescriptionMarkup descriptionMarkup = WebTypes.DescriptionMarkup.fromValue("none");
     /**
      * Provide configuration for the specified web framework. This is an advanced feature, which is used to provide support for templating frameworks like Angular, Vue, Svelte, etc.
-     *
+     * 
      */
     @JsonProperty("framework-config")
     @JsonPropertyDescription("Provide configuration for the specified web framework. This is an advanced feature, which is used to provide support for templating frameworks like Angular, Vue, Svelte, etc.")
     private FrameworkConfig frameworkConfig;
     /**
      * Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.
-     *
+     * 
      */
     @JsonProperty("contexts-config")
     @JsonPropertyDescription("Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.")
     private ContextsConfig contextsConfig;
     /**
      * Relative path to the icon representing the symbol or actual SVG of the icon.
-     *
+     * 
      */
     @JsonProperty("default-icon")
     @JsonPropertyDescription("Relative path to the icon representing the symbol or actual SVG of the icon.")
     private String defaultIcon;
     /**
      * Symbol can be contributed to one of the 3 namespaces - HTML, CSS and JS. Within a particular namespace there can be different kinds of symbols. In each of the namespaces, there are several predefined kinds, which integrate directly with IDE, but providers are free to define their own.
-     *
+     * 
      */
     @JsonProperty("contributions")
     @JsonPropertyDescription("Symbol can be contributed to one of the 3 namespaces - HTML, CSS and JS. Within a particular namespace there can be different kinds of symbols. In each of the namespaces, there are several predefined kinds, which integrate directly with IDE, but providers are free to define their own.")
@@ -118,7 +118,7 @@ public class WebTypes {
 
     /**
      * Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.
-     *
+     * 
      */
     @JsonProperty("framework")
     public String getFramework() {
@@ -127,7 +127,7 @@ public class WebTypes {
 
     /**
      * Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.
-     *
+     * 
      */
     @JsonProperty("framework")
     public void setFramework(String framework) {
@@ -157,7 +157,7 @@ public class WebTypes {
     /**
      * Name of the library.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public String getName() {
@@ -167,7 +167,7 @@ public class WebTypes {
     /**
      * Name of the library.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -177,7 +177,7 @@ public class WebTypes {
     /**
      * Version of the library, for which Web-Types are provided.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("version")
     public String getVersion() {
@@ -187,7 +187,7 @@ public class WebTypes {
     /**
      * Version of the library, for which Web-Types are provided.
      * (Required)
-     *
+     * 
      */
     @JsonProperty("version")
     public void setVersion(String version) {
@@ -196,7 +196,7 @@ public class WebTypes {
 
     /**
      * Language in which JavaScript objects types are specified.
-     *
+     * 
      */
     @JsonProperty("js-types-syntax")
     public WebTypes.JsTypesSyntax getJsTypesSyntax() {
@@ -205,7 +205,7 @@ public class WebTypes {
 
     /**
      * Language in which JavaScript objects types are specified.
-     *
+     * 
      */
     @JsonProperty("js-types-syntax")
     public void setJsTypesSyntax(WebTypes.JsTypesSyntax jsTypesSyntax) {
@@ -214,7 +214,7 @@ public class WebTypes {
 
     /**
      * Markup language in which descriptions are formatted.
-     *
+     * 
      */
     @JsonProperty("description-markup")
     public WebTypes.DescriptionMarkup getDescriptionMarkup() {
@@ -223,7 +223,7 @@ public class WebTypes {
 
     /**
      * Markup language in which descriptions are formatted.
-     *
+     * 
      */
     @JsonProperty("description-markup")
     public void setDescriptionMarkup(WebTypes.DescriptionMarkup descriptionMarkup) {
@@ -232,7 +232,7 @@ public class WebTypes {
 
     /**
      * Provide configuration for the specified web framework. This is an advanced feature, which is used to provide support for templating frameworks like Angular, Vue, Svelte, etc.
-     *
+     * 
      */
     @JsonProperty("framework-config")
     public FrameworkConfig getFrameworkConfig() {
@@ -241,7 +241,7 @@ public class WebTypes {
 
     /**
      * Provide configuration for the specified web framework. This is an advanced feature, which is used to provide support for templating frameworks like Angular, Vue, Svelte, etc.
-     *
+     * 
      */
     @JsonProperty("framework-config")
     public void setFrameworkConfig(FrameworkConfig frameworkConfig) {
@@ -250,7 +250,7 @@ public class WebTypes {
 
     /**
      * Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.
-     *
+     * 
      */
     @JsonProperty("contexts-config")
     public ContextsConfig getContextsConfig() {
@@ -259,7 +259,7 @@ public class WebTypes {
 
     /**
      * Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.
-     *
+     * 
      */
     @JsonProperty("contexts-config")
     public void setContextsConfig(ContextsConfig contextsConfig) {
@@ -268,7 +268,7 @@ public class WebTypes {
 
     /**
      * Relative path to the icon representing the symbol or actual SVG of the icon.
-     *
+     * 
      */
     @JsonProperty("default-icon")
     public String getDefaultIcon() {
@@ -277,7 +277,7 @@ public class WebTypes {
 
     /**
      * Relative path to the icon representing the symbol or actual SVG of the icon.
-     *
+     * 
      */
     @JsonProperty("default-icon")
     public void setDefaultIcon(String defaultIcon) {
@@ -286,7 +286,7 @@ public class WebTypes {
 
     /**
      * Symbol can be contributed to one of the 3 namespaces - HTML, CSS and JS. Within a particular namespace there can be different kinds of symbols. In each of the namespaces, there are several predefined kinds, which integrate directly with IDE, but providers are free to define their own.
-     *
+     * 
      */
     @JsonProperty("contributions")
     public Contributions getContributions() {
@@ -295,7 +295,7 @@ public class WebTypes {
 
     /**
      * Symbol can be contributed to one of the 3 namespaces - HTML, CSS and JS. Within a particular namespace there can be different kinds of symbols. In each of the namespaces, there are several predefined kinds, which integrate directly with IDE, but providers are free to define their own.
-     *
+     * 
      */
     @JsonProperty("contributions")
     public void setContributions(Contributions contributions) {
@@ -305,7 +305,7 @@ public class WebTypes {
 
     /**
      * Markup language in which descriptions are formatted.
-     *
+     * 
      */
     public enum DescriptionMarkup {
 
@@ -350,7 +350,7 @@ public class WebTypes {
 
     /**
      * Language in which JavaScript objects types are specified.
-     *
+     * 
      */
     public enum JsTypesSyntax {
 

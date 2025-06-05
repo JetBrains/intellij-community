@@ -14,13 +14,13 @@ public class HtmlValueType {
 
     /**
      * Type: {@code String | TypeReference | List<Type>}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code String | TypeReference | List<Type>}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -28,7 +28,7 @@ public class HtmlValueType {
 
     /**
      * Type: {@code String | TypeReference | List<Type>}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;

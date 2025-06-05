@@ -13,13 +13,13 @@ public class Reference {
 
     /**
      * Type: {@code ReferenceWithProps | String}
-     *
+     * 
      */
     private Object value;
 
     /**
      * Type: {@code ReferenceWithProps | String}
-     *
+     * 
      */
     public Object getValue() {
         return value;
@@ -27,7 +27,7 @@ public class Reference {
 
     /**
      * Type: {@code ReferenceWithProps | String}
-     *
+     * 
      */
     public void setValue(Object value) {
         this.value = value;
