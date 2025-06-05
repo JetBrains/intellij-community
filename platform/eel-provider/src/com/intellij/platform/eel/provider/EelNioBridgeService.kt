@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -138,8 +139,10 @@ private fun asNioPathOrNullImpl(basePath: Path?, eelRoots: Collection<Path>, sou
  *
  * @throws IllegalArgumentException if the passed path cannot be mapped to a path corresponding to Eel.
  * It can happen if [this] belongs to a [java.nio.file.FileSystem] that was not registered as a backend of `MultiRoutingFileSystemProvider`
+ *
+ * @throws EelPathException if the passed path is not an absolute path.
  */
-@Throws(IllegalArgumentException::class)
+@Throws(IllegalArgumentException::class, EelPathException::class)
 @ApiStatus.Internal
 fun Path.asEelPath(): EelPath {
   if (fileSystem != FileSystems.getDefault()) {
