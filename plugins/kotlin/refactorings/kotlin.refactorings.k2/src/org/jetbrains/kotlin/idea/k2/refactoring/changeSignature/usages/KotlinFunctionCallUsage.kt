@@ -119,11 +119,11 @@ internal class KotlinFunctionCallUsage(
                     val replacement = when (symbol) {
                         is KaReceiverParameterSymbol -> symbol.containingSymbol?.name?.asString()?.let { "this@$it" } ?: "this"
 
-                        is KaContextParameterSymbol -> symbol.name.asString()
+                        is KaContextParameterSymbol -> symbol.name.takeUnless { it.isSpecial }?.toString()
 
-                        else -> return@forEachIndexed
-                    }
-                    map.put(idx, psiFactory.createExpression(replacement).createSmartPointer())
+                        else -> null
+                    } ?: return@forEachIndexed
+                    map[idx] = psiFactory.createExpression(replacement).createSmartPointer()
                 }
                 map
             }
