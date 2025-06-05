@@ -104,7 +104,8 @@ abstract class NonModalCommitPanel(
       .addToBottom(bottomPanel)
 
     mainPanel.addToCenter(centerPanel)
-    mainPanel.withPreferredHeight(85)
+    mainPanel.withPreferredHeight(120)
+      .withMinimumHeight(120)
     commitMessage.editorField.setDisposedWith(this)
 
     subscribeOnLafChange()
