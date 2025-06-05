@@ -6,6 +6,7 @@ import com.intellij.cce.actions.ActionStat
 import com.intellij.cce.util.Progress
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.concurrency.errorIfNotMessage
 import java.io.File
 import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
@@ -40,8 +41,8 @@ class InterpretationHandlerImpl(
 
   override fun onErrorOccurred(error: Throwable, sessionsSkipped: Int) {
     completed += sessionsSkipped
-    val logSafeError = if(error is CancellationException) error.cause else error
-    if (!ApplicationManager.getApplication().isUnitTestMode) LOG.error("Actions interpretation error $logSafeError")
+    if (!ApplicationManager.getApplication().isUnitTestMode && !LOG.errorIfNotMessage(error))
+      LOG.error("Actions interpretation error ${error.cause}")
   }
 
   override fun isCancelled(): Boolean {
