@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/external-system-api:externalSystem",
     "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
   ],
   runtime_deps = [":copyright_resources"]
@@ -59,6 +60,7 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/core-ui",
     "@lib//:junit5",
+    "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
   ],
   runtime_deps = [":copyright_resources"]

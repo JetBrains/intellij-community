@@ -66,6 +66,7 @@ jvm_library(
     "@lib//:kotlinx-collections-immutable",
     "@lib//:netty-codec-protobuf",
     "//platform/eel-provider",
+    "//xml/xml-psi-api:psi",
   ],
   exports = ["//java/compiler/openapi:java-compiler"]
 )

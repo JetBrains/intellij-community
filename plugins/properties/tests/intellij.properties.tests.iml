@@ -31,6 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
   </component>
 </module>

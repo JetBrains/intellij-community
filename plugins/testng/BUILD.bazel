@@ -49,6 +49,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
     "@lib//:jgoodies-forms",
   ],
   runtime_deps = [
@@ -96,6 +97,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
     "@lib//:jgoodies-forms",
   ],
   runtime_deps = [

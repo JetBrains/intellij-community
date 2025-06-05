@@ -47,6 +47,7 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
+    "//xml/xml-psi-api:psi",
     "@lib//:kotlin-stdlib",
     ":java-guiForms-rt_provided",
   ],

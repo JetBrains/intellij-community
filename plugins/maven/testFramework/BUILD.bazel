@@ -25,6 +25,7 @@ jvm_library(
     "//java/testFramework",
     "//platform/projectModel-api:projectModel",
     "//platform/core-api:core",
+    "//xml/xml-psi-api:psi",
     "//platform/backend/observation",
   ]
 )

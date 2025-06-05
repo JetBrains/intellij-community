@@ -101,6 +101,7 @@ jvm_library(
     "//platform/eel-impl",
     "@lib//:opentelemetry",
     "//java/debugger/shared",
+    "//xml/xml-psi-api:psi",
     "//platform/xdebugger-impl:debugger-impl",
     ":java-guiForms-rt_provided",
     ":artifactResolver-m31_provided",

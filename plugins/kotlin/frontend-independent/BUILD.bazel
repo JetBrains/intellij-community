@@ -25,6 +25,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
+    "//xml/xml-psi-api:psi",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/util",

@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
+    <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
     <orderEntry type="module" module-name="kotlin.base.project-model" />
     <orderEntry type="module" module-name="kotlin.base.facet" />

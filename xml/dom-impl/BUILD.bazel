@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
+    "//xml/xml-psi-api:psi",
     "//xml/xml-structure-view-api:structureView",
     "//platform/lang-impl",
     "//platform/indexing-impl",

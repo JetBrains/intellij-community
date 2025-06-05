@@ -78,6 +78,7 @@ jvm_library(
     "@lib//:mockito",
     "@lib//:assert_j",
     "//xml/xml-analysis-impl:analysis-impl",
+    "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "@lib//:kotlin-test",
     "//platform/built-in-server-api:builtInServer",

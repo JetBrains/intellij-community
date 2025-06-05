@@ -30,6 +30,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/core-ui",
     "//xml/xml-parser:parser",
+    "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
   ],
   runtime_deps = [
@@ -64,6 +65,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/core-ui",
     "//xml/xml-parser:parser",
+    "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
   ],
   runtime_deps = [":relaxng_resources"]

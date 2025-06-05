@@ -40,6 +40,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/diff-impl",
+    "//xml/xml-psi-api:psi",
     "@lib//:fastutil-min",
   ]
 )

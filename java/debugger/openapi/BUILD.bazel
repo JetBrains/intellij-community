@@ -25,6 +25,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
+    "//xml/xml-psi-api:psi",
     "@lib//:kotlin-stdlib",
   ],
   exports = ["//platform/xdebugger-api:debugger"],

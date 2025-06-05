@@ -23,6 +23,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//java/java-analysis-api:analysis",
     "//resources-en:java-resources-en",
+    "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/platform-api:ide",
     "@lib//:asm",

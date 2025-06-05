@@ -39,6 +39,7 @@ jvm_library(
     "//java/compiler/openapi:java-compiler",
     "//platform/core-ui",
     "//plugins/javaFX:javaFX-properties",
+    "//xml/xml-psi-api:psi",
     "//java/java-impl-refactorings:impl-refactorings",
   ],
   runtime_deps = [":community_resources"]

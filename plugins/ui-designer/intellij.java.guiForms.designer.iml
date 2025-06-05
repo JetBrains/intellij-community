@@ -57,6 +57,7 @@
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="library" scope="TEST" name="caffeine" level="project" />
   </component>
   <component name="copyright">

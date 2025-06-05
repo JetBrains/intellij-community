@@ -27,6 +27,7 @@ jvm_library(
     "//java/openapi:java",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//xml/xml-psi-api:psi",
     "//platform/libraries/cglib",
   ]
 )

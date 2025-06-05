@@ -11,7 +11,6 @@ jvm_library(
     "//platform/util",
     "//xml/xml-psi-api:psi",
     "//platform/editor-ui-api:editor-ui",
-  ],
-  exports = ["//xml/xml-psi-api:psi"]
+  ]
 )
 ### auto-generated section `build intellij.xml.structureView` end

@@ -24,6 +24,7 @@ jvm_library(
     "//platform/lang-impl",
     "//xml/impl",
     "//RegExpSupport:regexp",
+    "//xml/xml-psi-api:psi",
     "//platform/platform-api:ide",
     "@lib//:jaxen",
     "//plugins/IntelliLang:langInjection",

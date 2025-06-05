@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.regexp" />
+    <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.xpath.rt" />
     <orderEntry type="library" name="Jaxen" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />

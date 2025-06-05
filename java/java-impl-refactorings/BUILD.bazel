@@ -34,6 +34,7 @@ jvm_library(
     "//platform/usageView-impl",
     "//platform/util/jdom",
     "//platform/core-ui",
+    "//xml/xml-psi-api:psi",
     "//java/codeserver/core",
   ]
 )

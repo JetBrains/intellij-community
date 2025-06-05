@@ -43,10 +43,7 @@ jvm_library(
     "//platform/polySymbols",
     "//platform/markdown-utils",
   ],
-  exports = [
-    "//xml/xml-frontback-impl:frontback-impl",
-    "//xml/xml-psi-api:psi",
-  ],
+  exports = ["//xml/xml-frontback-impl:frontback-impl"],
   runtime_deps = [
     ":psi-impl_resources",
     ":psi-impl_resources_1",

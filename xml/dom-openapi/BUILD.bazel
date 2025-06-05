@@ -22,6 +22,7 @@ jvm_library(
     "//platform/extensions",
     "//platform/util",
     "//platform/util:util-ui",
+    "//xml/xml-psi-api:psi",
     "//platform/core-ui",
   ],
   runtime_deps = [":dom_resources"]

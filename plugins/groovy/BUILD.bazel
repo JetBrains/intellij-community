@@ -74,6 +74,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
+    "//xml/xml-psi-api:psi",
     "//java/unscramble",
     ":ant_provided",
     ":java-byteCodeViewer_provided",
@@ -160,6 +161,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//xml/xml-psi-api:psi",
     "//java/unscramble",
   ],
   runtime_deps = [":groovy_resources"]

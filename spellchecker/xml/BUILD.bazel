@@ -19,6 +19,7 @@ jvm_library(
     "//xml/impl",
     "//platform/util",
     "//platform/analysis-api:analysis",
+    "//xml/xml-psi-api:psi",
     "//platform/core-impl",
   ],
   runtime_deps = [":xml_resources"]

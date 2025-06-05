@@ -48,6 +48,7 @@ jvm_library(
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
   ],
   runtime_deps = [":ant_resources"]
 )
@@ -101,6 +102,7 @@ jvm_library(
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//xml/xml-psi-api:psi",
     "//xml/testFramework",
   ],
   runtime_deps = [":ant_resources"]

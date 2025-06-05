@@ -83,6 +83,7 @@ jvm_library(
     "//platform/todo",
     "//java/codeserver/highlighting",
     "//java/codeserver/core",
+    "//xml/xml-psi-api:psi",
     "//java/java-syntax:syntax",
   ],
   exports = [

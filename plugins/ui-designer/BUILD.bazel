@@ -63,6 +63,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
   ],
   exports = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",
@@ -128,6 +129,7 @@ jvm_library(
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//jps/jps-builders:build-tests_test_lib",
+    "//xml/xml-psi-api:psi",
     "@lib//:caffeine",
   ],
   runtime_deps = [

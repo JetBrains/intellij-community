@@ -24,6 +24,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:gson",
+    "//xml/xml-psi-api:psi",
     "//plugins/kotlin/plugin/k1",
     "//java/testFramework",
     "//plugins/kotlin/base/util",

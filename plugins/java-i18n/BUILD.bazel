@@ -39,6 +39,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
   ],
   exports = [
     "//plugins/properties:properties-backend",
@@ -86,6 +87,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],

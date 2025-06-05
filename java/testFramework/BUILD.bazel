@@ -51,6 +51,7 @@ jvm_library(
     "//platform/backend/observation",
     "//java/debugger/shared",
     "//platform/xdebugger-testFramework:debugger-testFramework",
+    "//xml/xml-psi-api:psi",
     "//java/java-syntax:syntax",
   ],
   exports = [

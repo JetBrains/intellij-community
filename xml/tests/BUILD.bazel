@@ -31,6 +31,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//xml/xml-psi-api:psi",
     "//xml/testFramework",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

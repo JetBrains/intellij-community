@@ -27,6 +27,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/structure-view-impl:structureView-impl",
+    "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//java/java-analysis-impl:analysis-impl",

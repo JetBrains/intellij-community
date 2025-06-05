@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//xml/xml-parser:parser",
     "//platform/indexing-impl",
+    "//xml/xml-psi-api:psi",
     "//platform/core-ui",
   ],
   runtime_deps = [":html-tools_resources"]
@@ -53,6 +54,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//xml/xml-psi-api:psi",
     "//xml/tests:tests_test_lib",
     "//platform/core-ui",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",

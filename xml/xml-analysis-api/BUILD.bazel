@@ -19,10 +19,7 @@ jvm_library(
     "//platform/extensions",
     "//platform/util",
   ],
-  exports = [
-    "//xml/xml-psi-api:psi",
-    "//platform/extensions",
-  ],
+  exports = ["//platform/extensions"],
   runtime_deps = [":analysis_resources"]
 )
 ### auto-generated section `build intellij.xml.analysis` end

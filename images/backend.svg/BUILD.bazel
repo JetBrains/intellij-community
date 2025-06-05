@@ -16,6 +16,7 @@ jvm_library(
     "//images",
     "@lib//:kotlin-stdlib",
     "//xml/xml-parser:parser",
+    "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/lang-api:lang",
     "//platform/core-impl",

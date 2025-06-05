@@ -11,6 +11,7 @@ jvm_library(
     "//java/openapi:java",
     "//platform/analysis-api:analysis",
     "//jps/model-api:model",
+    "//xml/xml-psi-api:psi",
     "//java/jsp-base-openapi:jsp-base",
   ],
   exports = [

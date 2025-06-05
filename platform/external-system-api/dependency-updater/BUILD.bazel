@@ -51,6 +51,7 @@ jvm_library(
     "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
     "//plugins/maven",
     "//plugins/maven/testFramework",
+    "//xml/xml-psi-api:psi",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
   ],

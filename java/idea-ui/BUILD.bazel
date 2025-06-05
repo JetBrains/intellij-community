@@ -54,6 +54,7 @@ jvm_library(
     "@lib//:maven-resolver-provider",
     "//java/java-syntax:syntax",
     "@lib//:slf4j-api",
+    "//xml/xml-psi-api:psi",
     "@lib//:asm",
   ],
   runtime_deps = [":ui_resources"]
@@ -104,6 +105,7 @@ jvm_library(
     "//platform/testFramework/junit5/eel:eel_test_lib",
     "//platform/eel-provider",
     "//platform/workspace/storage",
+    "//xml/xml-psi-api:psi",
     "//libraries/io",
   ]
 )
