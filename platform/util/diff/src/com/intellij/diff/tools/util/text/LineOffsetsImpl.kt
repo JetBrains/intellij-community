@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.text
 
+import com.intellij.util.diff.binarySearch
 import com.intellij.util.fastutil.ints.IntArrayList
 import com.intellij.util.fastutil.ints.toArray
 import kotlin.jvm.JvmStatic
@@ -63,23 +64,4 @@ class LineOffsetsImpl private constructor(private val myLineEnds: IntArray, over
       return LineOffsetsImpl(ends.toArray(), text.length)
     }
   }
-}
-
-internal fun IntArray.binarySearch(element: Int): Int {
-  var l = 0
-  var r = size - 1
-
-  while (l <= r) {
-    val m = (l + r) / 2
-    val midElement = get(m)
-
-    if (midElement < element) {
-      l = m + 1
-    } else if (midElement > element) {
-      r = m - 1
-    } else {
-      return m
-    }
-  }
-  return -(l + 1)
 }

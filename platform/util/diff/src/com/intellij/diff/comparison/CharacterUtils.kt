@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison
 
+import com.intellij.util.diff.binarySearch
+
 /** Returns the character (Unicode code point) at the specified index. */
 internal fun CharSequence.codePointAt(index: Int): Int {
   val high = this[index]

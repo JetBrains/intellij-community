@@ -8,6 +8,7 @@ import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.fragments.MergeWordFragment
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.util.DiffRangeUtil.getLinesContent
+import kotlin.jvm.JvmStatic
 
 object MergeRangeUtil {
   @JvmStatic

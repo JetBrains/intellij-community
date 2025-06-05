@@ -118,7 +118,7 @@ class Reindexer {
 
   companion object {
     private fun createSorted(ints1: IntArray): IntArray {
-      val sorted1 = ints1.clone()
+      val sorted1 = ints1.copyOf()
       sorted1.sort()
       return sorted1
     }
@@ -139,9 +139,11 @@ class Reindexer {
   }
 }
 
-internal fun IntArray.binarySearch(element: Int): Int {
-  var l = 0
-  var r = size - 1
+internal fun IntArray.binarySearch(element: Int, fromIndex: Int = 0, toIndex: Int = size): Int {
+  rangeCheck(size, fromIndex, toIndex)
+
+  var l = fromIndex
+  var r = toIndex - 1
 
   while (l <= r) {
     val m = (l + r) / 2
@@ -156,4 +158,12 @@ internal fun IntArray.binarySearch(element: Int): Int {
     }
   }
   return -(l + 1)
+}
+
+private fun rangeCheck(size: Int, fromIndex: Int, toIndex: Int) {
+  when {
+    fromIndex > toIndex -> throw IllegalArgumentException("fromIndex ($fromIndex) is greater than toIndex ($toIndex).")
+    fromIndex < 0 -> throw IndexOutOfBoundsException("fromIndex ($fromIndex) is less than zero.")
+    toIndex > size -> throw IndexOutOfBoundsException("toIndex ($toIndex) is greater than size ($size).")
+  }
 }
