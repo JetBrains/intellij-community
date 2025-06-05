@@ -15,6 +15,9 @@ import com.intellij.ide.plugins.testPluginSrc.bar.BarService
 import com.intellij.ide.plugins.testPluginSrc.foo.FooAction
 import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarAction
 import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
+import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtension
+import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtensionService
+import com.intellij.ide.plugins.testPluginSrc.foo.epImpl.FooExtensionImpl
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -469,9 +472,9 @@ class DynamicPluginsTest {
       try {
         // FIXME perhaps it should return false to indicate that restart is needed to load more stuff
         assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
-        val barService = application.getService(barDescriptor.loadClassInsideSelf(BarService::class.qualifiedName!!)) as PluginTestHandle
+        val barService = application.getService(barDescriptor.loadClassInsideSelf<BarService>()) as PluginTestHandle
         barService.test()
-        val fooBarClass = fooDescriptor.loadClassInsideSelf(FooBarService::class.qualifiedName!!) // loaded because packed into the same jar with the main descriptor
+        val fooBarClass = fooDescriptor.loadClassInsideSelf<FooBarService>() // loaded because packed into the same jar with the main descriptor
         assertThat(application.getService(fooBarClass)).isNull()
         assertThat(fooDescriptor.dependencies.first().subDescriptor!!.isMarkedForLoading).isFalse
         assertThat(fooDescriptor.dependencies.first().subDescriptor!!.pluginClassLoader).isNull()
@@ -516,6 +519,33 @@ class DynamicPluginsTest {
       assertThat(fooBar.pluginClassLoader).isNotNull()
       assertThat(DynamicPlugins.unloadPlugins(listOf(bar), null)).isTrue
       assertThat(fooBar.pluginClassLoader).isNull()
+    }
+    finally {
+      assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
+    }
+  }
+
+  @Test
+  fun `extension point from an embedded content module used in main descriptor`() {
+    val fooPath = pluginsDir.resolve("foo")
+    plugin("foo") {
+      content {
+        module("foo.emb", loadingRule = ModuleLoadingRule.EMBEDDED) {
+          isSeparateJar = true
+          extensionPoint<FooExtension>(FooExtension.EP_FQN, dynamic = true)
+          includePackageClassFiles<FooExtension>()
+        }
+      }
+      extension<FooExtensionImpl>(FooExtension.EP_FQN)
+      includePackageClassFiles<FooExtensionImpl>()
+    }.buildDir(fooPath)
+    val foo = loadDescriptorInTest(fooPath)
+    val fooEmb = foo.contentModules.first()
+    try {
+      assertThat(DynamicPlugins.loadPlugins(listOf(foo), null)).isTrue
+      assertThat(application.extensionArea.getExtensionPoint<Any>(FooExtension.EP_FQN).extensions.size).isEqualTo(1)
+      val epService = application.getService(fooEmb.loadClassInsideSelf<FooExtensionService>()) as PluginTestHandle
+      epService.test()
     }
     finally {
       assertThat(DynamicPlugins.unloadPlugins(listOf(foo), null)).isTrue
