@@ -748,6 +748,75 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier")
+    public static class RemoveExplicitSuperQualifier extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AmbiguousSuperMethod.kt")
+        public void testAmbiguousSuperMethod() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/AmbiguousSuperMethod.kt");
+        }
+
+        @TestMetadata("AmbiguousSuperProperty.kt")
+        public void testAmbiguousSuperProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/AmbiguousSuperProperty.kt");
+        }
+
+        @TestMetadata("DataFlowInfoUsed.kt")
+        public void testDataFlowInfoUsed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/DataFlowInfoUsed.kt");
+        }
+
+        @TestMetadata("IncompleteCall.kt")
+        public void testIncompleteCall() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/IncompleteCall.kt");
+        }
+
+        @TestMetadata("IncompleteCallAmbiguous.kt")
+        public void testIncompleteCallAmbiguous() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/IncompleteCallAmbiguous.kt");
+        }
+
+        @TestMetadata("SingleSuper.kt")
+        public void testSingleSuper() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/SingleSuper.kt");
+        }
+
+        @TestMetadata("SuperWithLabel.kt")
+        public void testSuperWithLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/SuperWithLabel.kt");
+        }
+
+        @TestMetadata("UnambiguousSuperMethod.kt")
+        public void testUnambiguousSuperMethod() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/UnambiguousSuperMethod.kt");
+        }
+
+        @TestMetadata("UnambiguousSuperProperty.kt")
+        public void testUnambiguousSuperProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/UnambiguousSuperProperty.kt");
+        }
+
+        @TestMetadata("WrongOffset1.kt")
+        public void testWrongOffset1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/WrongOffset1.kt");
+        }
+
+        @TestMetadata("WrongOffset2.kt")
+        public void testWrongOffset2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitSuperQualifier/WrongOffset2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/enumValuesSoftDeprecate")
     public static class EnumValuesSoftDeprecate extends AbstractK2LocalInspectionTest {
         @java.lang.Override

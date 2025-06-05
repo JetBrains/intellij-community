@@ -27,6 +27,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantInnerClassModifier")
             model("${idea}/inspectionsLocal/doubleNegation")
             model("${idea}/inspectionsLocal/safeCastWithReturn")
+            model("${idea}/intentions/removeExplicitSuperQualifier")
             model("${idea}/inspectionsLocal/enumValuesSoftDeprecate")
             model("${idea}/inspectionsLocal/branched/ifThenToElvis", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/branched/ifThenToSafeAccess", pattern = Patterns.KT_WITHOUT_DOTS)

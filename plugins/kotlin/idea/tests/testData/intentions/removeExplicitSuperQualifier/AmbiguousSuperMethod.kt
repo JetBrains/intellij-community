@@ -1,4 +1,5 @@
 // IS_APPLICABLE: false
+// PROBLEM: none
 
 open class B {
     open fun foo(p: String){}
