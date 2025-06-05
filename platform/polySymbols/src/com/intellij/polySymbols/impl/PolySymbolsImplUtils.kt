@@ -88,7 +88,6 @@ internal fun <T> List<T>.selectBest(
 val PolySymbol.proximity: Int?
   get() =
     (this as? PolySymbolMatchBase)?.proximity
-    ?: (this as? WebTypesSymbolBase)?.proximity
 
 internal fun List<PolySymbol>.sortSymbolsByPriority(extensionsLast: Boolean = true): List<PolySymbol> =
   sortedWith(Comparator.comparingInt<PolySymbol> { if (it.extension && extensionsLast) 1 else 0 }

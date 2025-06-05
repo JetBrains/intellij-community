@@ -389,9 +389,6 @@
         "priority": {
           "$ref": "#/definitions/priority"
         },
-        "proximity": {
-          "$ref": "#/definitions/proximity"
-        },
         "virtual": {
           "$ref": "#/definitions/virtual"
         },

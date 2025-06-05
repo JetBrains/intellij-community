@@ -1120,7 +1120,6 @@
 - f:getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 - f:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getProperties():java.util.Map
-- f:getProximity():java.lang.Integer
 - f:getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
 - pf:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 - f:getQueryScope():java.util.List

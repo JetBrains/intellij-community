@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "obsolete-since",
     "experimental",
     "priority",
-    "proximity",
     "virtual",
     "abstract",
     "extension",
@@ -131,8 +130,6 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("priority")
     @JsonPropertyDescription("The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.")
     private Priority priority;
-    @JsonProperty("proximity")
-    private Integer proximity;
     /**
      * Mark contribution as virtual. Virtual contributions can be filtered out if needed in references. A virtual contribution meaning may differ by framework or kind contexts, but usually means something synthetic or something, which gets erased in the runtime by the framework. E.g. Vue or Angular attribute bindings are virtual. 
      * 
@@ -427,16 +424,6 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("priority")
     public void setPriority(Priority priority) {
         this.priority = priority;
-    }
-
-    @JsonProperty("proximity")
-    public Integer getProximity() {
-        return proximity;
-    }
-
-    @JsonProperty("proximity")
-    public void setProximity(Integer proximity) {
-        this.proximity = proximity;
     }
 
     /**
