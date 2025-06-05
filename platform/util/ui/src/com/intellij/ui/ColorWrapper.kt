@@ -9,11 +9,11 @@ import java.awt.Color
 @ApiStatus.Internal
 @Suppress("UseJBColor")
 abstract class ColorWrapper(color: Color) : Color(color.rgb, true), PresentableColor, ComparableColor {
-  override fun darker(): Color? {
+  override fun darker(): Color {
     return SwingTuneDarker(this).createColor(true)
   }
 
-  override fun brighter(): Color? {
+  override fun brighter(): Color {
     return SwingTuneBrighter(this).createColor(true)
   }
 }
