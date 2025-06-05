@@ -14,9 +14,6 @@ import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryParams
-import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
-import com.intellij.polySymbols.webTypes.WebTypesSymbol
-import com.intellij.polySymbols.webTypes.WebTypesSymbolBase
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.Interner
@@ -84,15 +81,11 @@ internal fun <T> List<T>.selectBest(
   }
   else this
 
-@get:ApiStatus.Internal
-val PolySymbol.proximity: Int?
-  get() =
-    (this as? PolySymbolMatchBase)?.proximity
-
 internal fun List<PolySymbol>.sortSymbolsByPriority(extensionsLast: Boolean = true): List<PolySymbol> =
-  sortedWith(Comparator.comparingInt<PolySymbol> { if (it.extension && extensionsLast) 1 else 0 }
-               .thenComparingDouble { -(it.priority ?: PolySymbol.Priority.NORMAL).value }
-               .thenComparingInt { -(it.proximity ?: 0) })
+  sortedWith(
+    Comparator.comparingInt<PolySymbol> { if (it.extension && extensionsLast) 1 else 0 }
+      .thenComparingDouble { -(it.priority ?: PolySymbol.Priority.NORMAL).value }
+  )
 
 internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: PolySymbolsQueryParams): Sequence<T> =
   this.filter { symbol ->

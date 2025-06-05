@@ -18,7 +18,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "delegate",
     "deprecated",
     "priority",
-    "proximity",
     "items"
 })
 public class NamePatternDefault
@@ -56,8 +55,6 @@ public class NamePatternDefault
     @JsonProperty("priority")
     @JsonPropertyDescription("The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.")
     private Priority priority;
-    @JsonProperty("proximity")
-    private Integer proximity;
     /**
      * A reference to an element in Web-Types model.
      * 
@@ -168,16 +165,6 @@ public class NamePatternDefault
     @JsonProperty("priority")
     public void setPriority(Priority priority) {
         this.priority = priority;
-    }
-
-    @JsonProperty("proximity")
-    public Integer getProximity() {
-        return proximity;
-    }
-
-    @JsonProperty("proximity")
-    public void setProximity(Integer proximity) {
-        this.proximity = proximity;
     }
 
     /**

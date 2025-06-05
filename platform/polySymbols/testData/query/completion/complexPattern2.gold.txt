@@ -2,7 +2,6 @@
  {
   name: "#",
   priority: NORMAL,
-  proximity: 10,
   displayName: "#…",
   completeAfterInsert: true,
   source: {
@@ -517,7 +516,6 @@
  {
   name: "2foo",
   priority: NORMAL,
-  proximity: 5,
   offset: 5,
   completeAfterChars: [.],
   source: {
@@ -538,7 +536,6 @@
  {
   name: ":",
   priority: NORMAL,
-  proximity: 10,
   displayName: ":…",
   completeAfterInsert: true,
   source: {
@@ -559,7 +556,6 @@
  {
   name: ":",
   priority: NORMAL,
-  proximity: 5,
   displayName: ":…",
   offset: 4,
   completeAfterInsert: true,
@@ -582,7 +578,6 @@
  {
   name: "@",
   priority: NORMAL,
-  proximity: 10,
   displayName: "@…",
   completeAfterInsert: true,
   source: {
@@ -608,7 +603,6 @@
  {
   name: "click",
   priority: NORMAL,
-  proximity: 5,
   offset: 5,
   completeAfterChars: [.],
   source: {

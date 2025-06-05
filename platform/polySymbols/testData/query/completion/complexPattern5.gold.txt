@@ -200,7 +200,6 @@
  {
   name: ":",
   priority: NORMAL,
-  proximity: 1,
   displayName: ":…",
   offset: 4,
   completeAfterInsert: true,

@@ -2,7 +2,6 @@
  {
   name: "#",
   priority: NORMAL,
-  proximity: 10,
   displayName: "#…",
   completeAfterInsert: true,
   source: {
@@ -27,7 +26,6 @@
  {
   name: ":",
   priority: NORMAL,
-  proximity: 10,
   displayName: ":…",
   completeAfterInsert: true,
   source: {
@@ -48,7 +46,6 @@
  {
   name: "@",
   priority: NORMAL,
-  proximity: 10,
   displayName: "@…",
   completeAfterInsert: true,
   source: {
@@ -193,7 +190,6 @@
  {
   name: "v-bind:",
   priority: NORMAL,
-  proximity: 5,
   displayName: "v-bind:…",
   completeAfterInsert: true,
   source: {
@@ -559,7 +555,6 @@
  {
   name: "v-model:",
   priority: NORMAL,
-  proximity: 5,
   displayName: "v-model:…",
   completeAfterInsert: true,
   source: {
@@ -650,7 +645,6 @@
  {
   name: "v-on:",
   priority: NORMAL,
-  proximity: 5,
   displayName: "v-on:…",
   completeAfterInsert: true,
   source: {
@@ -856,7 +850,6 @@
  {
   name: "v-slot:",
   priority: NORMAL,
-  proximity: 5,
   displayName: "v-slot:…",
   completeAfterInsert: true,
   source: {
@@ -945,7 +938,7 @@
  {
   name: "appear",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/appear",
    origin: "vue@3.0.0 (vue)",
@@ -964,7 +957,7 @@
  {
   name: "appearActiveClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/appearActiveClass",
    origin: "vue@3.0.0 (vue)",
@@ -982,7 +975,7 @@
  {
   name: "appearClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/appearClass",
    origin: "vue@3.0.0 (vue)",
@@ -1000,7 +993,7 @@
  {
   name: "appearToClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/appearToClass",
    origin: "vue@3.0.0 (vue)",
@@ -1018,7 +1011,7 @@
  {
   name: "css",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/css",
    origin: "vue@3.0.0 (vue)",
@@ -1037,7 +1030,7 @@
  {
   name: "duration",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/duration",
    origin: "vue@3.0.0 (vue)",
@@ -1059,7 +1052,7 @@
  {
   name: "enterActiveClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/enterActiveClass",
    origin: "vue@3.0.0 (vue)",
@@ -1077,7 +1070,7 @@
  {
   name: "enterFromClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/enterFromClass",
    origin: "vue@3.0.0 (vue)",
@@ -1095,7 +1088,7 @@
  {
   name: "enterToClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/enterToClass",
    origin: "vue@3.0.0 (vue)",
@@ -1113,7 +1106,7 @@
  {
   name: "leaveActiveClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/leaveActiveClass",
    origin: "vue@3.0.0 (vue)",
@@ -1131,7 +1124,7 @@
  {
   name: "leaveFromClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/leaveFromClass",
    origin: "vue@3.0.0 (vue)",
@@ -1149,7 +1142,7 @@
  {
   name: "leaveToClass",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/leaveToClass",
    origin: "vue@3.0.0 (vue)",
@@ -1167,7 +1160,7 @@
  {
   name: "moveClass",
   priority: HIGH,
-  proximity: 7,
+  proximity: 2,
   source: {
    matchedName: "html/props/moveClass",
    origin: "vue@3.0.0 (vue)",
@@ -1185,7 +1178,7 @@
  {
   name: "name",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/name",
    origin: "vue@3.0.0 (vue)",
@@ -1204,7 +1197,7 @@
  {
   name: "tag",
   priority: HIGH,
-  proximity: 7,
+  proximity: 2,
   source: {
    matchedName: "html/props/tag",
    origin: "vue@3.0.0 (vue)",
@@ -1222,7 +1215,7 @@
  {
   name: "type",
   priority: HIGH,
-  proximity: 6,
+  proximity: 1,
   source: {
    matchedName: "html/props/type",
    origin: "vue@3.0.0 (vue)",

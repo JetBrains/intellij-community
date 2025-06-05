@@ -114,12 +114,11 @@ internal fun <T : MatchResult> T.applyToSegments(
   vararg contributions: PolySymbol,
   apiStatus: PolySymbolApiStatus? = null,
   priority: PolySymbol.Priority? = null,
-  proximity: Int? = null,
 ): T =
-  if (apiStatus != null || priority != null || proximity != null || contributions.isNotEmpty())
+  if (apiStatus != null || priority != null || contributions.isNotEmpty())
     copy(
       segments.map {
-        it.copy(apiStatus = apiStatus, priority = priority, proximity = proximity, symbols = contributions.toList())
+        it.copy(apiStatus = apiStatus, priority = priority, symbols = contributions.toList())
       })
   else
     this

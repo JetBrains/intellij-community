@@ -133,16 +133,15 @@
 - getName(com.intellij.polySymbols.PolySymbol):java.lang.String
 - a:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - a:getProblem():com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem
-- a:getProximity():java.lang.Integer
 - a:getStart():I
 - a:getSymbolKinds():java.util.Set
 - a:getSymbols():java.util.List
 *f:com.intellij.polySymbols.PolySymbolNameSegment$Companion
 - f:create(I,I,com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.PolySymbolNameSegment
-- f:create(I,I,java.util.List,com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem,java.lang.String,I,java.util.Set,com.intellij.polySymbols.PolySymbolApiStatus,com.intellij.polySymbols.PolySymbol$Priority,java.lang.Integer):com.intellij.polySymbols.PolySymbolNameSegment
+- f:create(I,I,java.util.List,com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem,java.lang.String,I,java.util.Set,com.intellij.polySymbols.PolySymbolApiStatus,com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.PolySymbolNameSegment
 - f:create(I,I,com.intellij.polySymbols.PolySymbol[]):com.intellij.polySymbols.PolySymbolNameSegment
 - f:create(com.intellij.polySymbols.PolySymbol):com.intellij.polySymbols.PolySymbolNameSegment
-- bs:create$default(com.intellij.polySymbols.PolySymbolNameSegment$Companion,I,I,java.util.List,com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem,java.lang.String,I,java.util.Set,com.intellij.polySymbols.PolySymbolApiStatus,com.intellij.polySymbols.PolySymbol$Priority,java.lang.Integer,I,java.lang.Object):com.intellij.polySymbols.PolySymbolNameSegment
+- bs:create$default(com.intellij.polySymbols.PolySymbolNameSegment$Companion,I,I,java.util.List,com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem,java.lang.String,I,java.util.Set,com.intellij.polySymbols.PolySymbolApiStatus,com.intellij.polySymbols.PolySymbol$Priority,I,java.lang.Object):com.intellij.polySymbols.PolySymbolNameSegment
 *e:com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem
 - java.lang.Enum
 - sf:DUPLICATE:com.intellij.polySymbols.PolySymbolNameSegment$MatchProblem

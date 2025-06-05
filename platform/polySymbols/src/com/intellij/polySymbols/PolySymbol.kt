@@ -284,31 +284,36 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
 
     companion object {
       @JvmField
-      val LOWEST: Priority = PriorityImpl(0.0, "LOWEST")
+      val LOWEST: Priority = PolySymbolPriority(0.0, "LOWEST")
 
       @JvmField
-      val LOW: Priority = PriorityImpl(1.0, "LOW")
+      val LOW: Priority = PolySymbolPriority(1.0, "LOW")
 
       @JvmField
-      val NORMAL: Priority = PriorityImpl(10.0, "NORMAL")
+      val NORMAL: Priority = PolySymbolPriority(10.0, "NORMAL")
 
       @JvmField
-      val HIGH: Priority = PriorityImpl(50.0, "HIGH")
+      val HIGH: Priority = PolySymbolPriority(50.0, "HIGH")
 
       @JvmField
-      val HIGHEST: Priority = PriorityImpl(100.0, "HIGHEST")
+      val HIGHEST: Priority = PolySymbolPriority(100.0, "HIGHEST")
 
       @JvmStatic
-      fun custom(value: Double): Priority = PriorityImpl(value, "CUSTOM($value)")
+      fun custom(value: Double): Priority = PolySymbolPriority(value, "CUSTOM($value)")
 
-      private class PriorityImpl(override val value: Double, private val displayString: String) : Priority {
+      private class PolySymbolPriority(override val value: Double, private val displayString: String) : Priority {
         override fun compareTo(other: Priority): Int =
           value.compareTo(other.value)
+
+        override fun equals(other: Any?): Boolean =
+          other === this || other is PolySymbolPriority && other.value == value
+
+        override fun hashCode(): Int =
+          value.hashCode()
 
         override fun toString(): String = displayString
       }
     }
-
   }
 
   companion object {

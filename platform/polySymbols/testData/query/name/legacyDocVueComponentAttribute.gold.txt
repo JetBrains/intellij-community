@@ -12,7 +12,6 @@
   complete: true,
   virtual: true,
   priority: HIGH,
-  proximity: 5,
   segments: [
    {
     name-part: "v-",

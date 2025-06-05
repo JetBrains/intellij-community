@@ -19,7 +19,6 @@ class PolySymbolNameSegmentImpl internal constructor(
   symbolKinds: Set<PolySymbolQualifiedKind>?,
   private val explicitApiStatus: PolySymbolApiStatus?,
   private val explicitPriority: PolySymbol.Priority?,
-  private val explicitProximity: Int?,
   internal val highlightingEnd: Int?,
 ) : PolySymbolNameSegment {
 
@@ -35,9 +34,6 @@ class PolySymbolNameSegmentImpl internal constructor(
   override val priority: PolySymbol.Priority?
     get() = explicitPriority ?: symbols.asSequence().mapNotNull { it.priority }.maxOrNull()
 
-  override val proximity: Int?
-    get() = explicitProximity ?: symbols.asSequence().mapNotNull { it.proximity }.maxOrNull()
-
   override val symbolKinds: Set<PolySymbolQualifiedKind>
     get() =
       forcedSymbolKinds
@@ -48,23 +44,19 @@ class PolySymbolNameSegmentImpl internal constructor(
 
   internal fun withOffset(offset: Int): PolySymbolNameSegmentImpl =
     PolySymbolNameSegmentImpl(start + offset, end + offset, symbols, problem, displayName,
-                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                              highlightingEnd?.let { it + offset })
+                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, highlightingEnd?.let { it + offset })
 
   internal fun withDisplayName(displayName: String?) =
     PolySymbolNameSegmentImpl(start, end, symbols, problem, this.displayName ?: displayName,
-                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                              highlightingEnd)
+                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, highlightingEnd)
 
   internal fun withRange(start: Int, end: Int) =
     PolySymbolNameSegmentImpl(start, end, symbols, problem, displayName,
-                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                              null)
+                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, null)
 
   internal fun withSymbols(symbols: List<PolySymbol>) =
     PolySymbolNameSegmentImpl(start, end, symbols, problem, displayName,
-                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, explicitProximity,
-                              highlightingEnd)
+                              matchScore, forcedSymbolKinds, explicitApiStatus, explicitPriority, highlightingEnd)
 
   internal fun copy(
     apiStatus: PolySymbolApiStatus?,
@@ -77,7 +69,7 @@ class PolySymbolNameSegmentImpl internal constructor(
     PolySymbolNameSegmentImpl(start, end, this.symbols + symbols, problem ?: this.problem,
                               displayName, matchScore, forcedSymbolKinds,
                               apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
-                              proximity ?: this.explicitProximity, highlightEnd ?: this.highlightingEnd)
+                              highlightEnd ?: this.highlightingEnd)
 
   internal fun canUnwrapSymbols(): Boolean =
     explicitApiStatus == null
@@ -85,7 +77,6 @@ class PolySymbolNameSegmentImpl internal constructor(
     && displayName == null
     && matchScore == end - start
     && explicitPriority == null
-    && explicitProximity == null
     && symbols.isNotEmpty()
 
   override fun createPointer(): Pointer<PolySymbolNameSegment> =
@@ -108,7 +99,6 @@ class PolySymbolNameSegmentImpl internal constructor(
     private val types = nameSegment.symbolKinds
     private val explicitApiStatus = nameSegment.explicitApiStatus
     private val explicitPriority = nameSegment.explicitPriority
-    private val explicitProximity = nameSegment.explicitProximity
     private val highlightingEnd = nameSegment.highlightingEnd
 
     override fun dereference(): PolySymbolNameSegmentImpl? =
@@ -117,7 +107,7 @@ class PolySymbolNameSegmentImpl internal constructor(
         ?.let {
           @Suppress("UNCHECKED_CAST")
           (PolySymbolNameSegmentImpl(start, end, it as List<PolySymbol>, problem, displayName, matchScore,
-                                     types, explicitApiStatus, explicitPriority, explicitProximity, highlightingEnd))
+                                     types, explicitApiStatus, explicitPriority, highlightingEnd))
         }
 
   }

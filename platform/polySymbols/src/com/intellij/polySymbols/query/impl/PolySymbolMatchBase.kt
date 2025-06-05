@@ -38,9 +38,6 @@ internal open class PolySymbolMatchBase internal constructor(
     require(nameSegments.isNotEmpty()) { "nameSegments must not be empty" }
   }
 
-  val proximity: Int?
-    get() = explicitProximity ?: reversedSegments().mapNotNull { it.proximity }.firstOrNull()
-
   internal fun withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
     create(matchedName, segments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties)
 
@@ -349,7 +346,7 @@ private fun List<PolySymbolNameSegment>.equalsIgnoreOffset(other: List<PolySymbo
         || segment1.problem != segment2.problem
         || segment1.displayName != segment2.displayName
         || segment1.priority != segment2.priority
-        || segment1.proximity != segment2.proximity) {
+    ) {
       return false
     }
   }

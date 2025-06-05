@@ -11,7 +11,6 @@
   complete: false,
   virtual: true,
   priority: LOWEST,
-  proximity: 10,
   properties: {
    doc-hide-pattern: true,
   },

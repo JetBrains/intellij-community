@@ -7,7 +7,6 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.canUnwrapSymbols
-import com.intellij.polySymbols.impl.proximity
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.impl.*
@@ -93,12 +92,11 @@ private class WebTypesComplexPatternConfigProvider(
                     ?: pattern.toApiStatus(origin)?.takeIf { it.isDeprecatedOrObsolete() }
     val isRequired = (delegate?.required ?: pattern.required) != false
     val priority = delegate?.priority ?: pattern.priority?.wrap()
-    val proximity = delegate?.proximity ?: pattern.proximity
     val repeats = pattern.repeat == true
     val unique = pattern.unique != false
 
     val symbolsResolver = createSymbolsResolver(delegate)
-    return ComplexPatternOptions(delegate, apiStatus, isRequired, priority, proximity, repeats, unique, symbolsResolver)
+    return ComplexPatternOptions(delegate, apiStatus, isRequired, priority, repeats, unique, symbolsResolver)
   }
 
   private fun createSymbolsResolver(delegate: PolySymbol?) =

@@ -25,8 +25,6 @@ interface PolySymbolNameSegment {
 
   val priority: PolySymbol.Priority?
 
-  val proximity: Int?
-
   val symbolKinds: Set<PolySymbolQualifiedKind>
 
   fun getName(symbol: PolySymbol): @NlsSafe String =
@@ -55,10 +53,9 @@ interface PolySymbolNameSegment {
       symbolKinds: Set<PolySymbolQualifiedKind>? = null,
       explicitApiStatus: PolySymbolApiStatus? = null,
       explicitPriority: PolySymbol.Priority? = null,
-      explicitProximity: Int? = null,
     ): PolySymbolNameSegment =
       PolySymbolNameSegmentImpl(start, end, symbols, problem, displayName, matchScore,
-                                symbolKinds, explicitApiStatus, explicitPriority, explicitProximity, null)
+                                symbolKinds, explicitApiStatus, explicitPriority, null)
   }
 
   enum class MatchProblem {

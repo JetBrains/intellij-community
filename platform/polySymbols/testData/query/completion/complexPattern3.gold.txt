@@ -2,7 +2,6 @@
  {
   name: "#",
   priority: NORMAL,
-  proximity: 10,
   displayName: "#…",
   completeAfterInsert: true,
   source: {
@@ -517,7 +516,6 @@
  {
   name: ":",
   priority: NORMAL,
-  proximity: 10,
   displayName: ":…",
   completeAfterInsert: true,
   source: {
@@ -538,7 +536,6 @@
  {
   name: "@",
   priority: NORMAL,
-  proximity: 10,
   displayName: "@…",
   completeAfterInsert: true,
   source: {

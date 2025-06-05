@@ -10,7 +10,6 @@ import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemBuilder
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemInsertHandler
-import com.intellij.polySymbols.impl.proximity
 import com.intellij.polySymbols.impl.scaleToHeight
 import com.intellij.polySymbols.query.PolySymbolDefaultIconProvider
 import com.intellij.psi.PsiElement
@@ -67,7 +66,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
         else it
       }
       .withTailText(tailText, true)
-      .withBoldness(!deprecatedOrObsolete && priority == PolySymbol.Priority.HIGHEST)
+      .withBoldness(!deprecatedOrObsolete && priority != null && priority >= PolySymbol.Priority.HIGHEST)
       .withStrikeoutness(deprecatedOrObsolete)
       .let {
         if (displayName != null)
@@ -210,7 +209,7 @@ internal data class PolySymbolCodeCompletionItemImpl(
     private var completeAfterChars: Set<Char> = emptySet()
     private var displayName: String? = null
     private var priority: PolySymbol.Priority? = symbol?.priority
-    private var proximity: Int? = symbol?.proximity
+    private var proximity: Int? = null
     private var apiStatus: PolySymbolApiStatus = symbol?.apiStatus ?: PolySymbolApiStatus.Stable
     private var aliases: Set<String> = emptySet()
     private var icon: Icon? = symbol?.let {

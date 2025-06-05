@@ -47,7 +47,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   ): List<MatchResult> =
     process(scopeStack, params.queryExecutor) {
       patterns, newSymbolsResolver, apiStatus,
-      isRequired, priority, proximity, repeats, unique,
+      isRequired, priority, repeats, unique,
       ->
       performPatternMatch(params, start, end, patterns, repeats, unique, scopeStack, newSymbolsResolver)
         .let { matchResults ->
@@ -59,7 +59,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           else
             matchResults
         }
-        .postProcess(owner, apiStatus, priority, proximity)
+        .postProcess(owner, apiStatus, priority)
         .let { matchResults ->
           if (!isRequired)
             matchResults + MatchResult(PolySymbolNameSegment.create(start, start))
@@ -78,7 +78,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   ): List<ListResult> =
     process(scopeStack, params.queryExecutor) {
       patterns, newSymbolsResolver, apiStatus,
-      isRequired, priority, proximity, repeats, _,
+      isRequired, priority, repeats, _,
       ->
       if (repeats)
         if (isRequired)
@@ -90,7 +90,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           .flatMap { it.list(null, scopeStack, newSymbolsResolver, params) }
           .groupBy { it.name }
           .values
-          .flatMap { it.postProcess(owner, apiStatus, priority, proximity) }
+          .flatMap { it.postProcess(owner, apiStatus, priority) }
           .let {
             if (!isRequired)
               it + ListResult("", PolySymbolNameSegment.create(0, 0))
@@ -110,7 +110,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
   ): CompletionResults =
     process(scopeStack, params.queryExecutor) {
       patterns, newSymbolsResolver, apiStatus,
-      isRequired, priority, proximity, repeats, unique,
+      isRequired, priority, repeats, unique,
       ->
       var staticPrefixes: Set<String> = emptySet()
 
@@ -146,7 +146,6 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
                 items.map { item ->
                   item.with(
                     priority = priority ?: item.priority,
-                    proximity = proximity?.let { (item.proximity ?: 0) + proximity } ?: item.proximity,
                     apiStatus = apiStatus.coalesceWith(item.apiStatus),
                     symbol = item.symbol ?: defaultSource,
                     completeAfterChars = (if (repeats) getStaticPrefixes().mapNotNull { it.getOrNull(0) }.toSet() else emptySet())
@@ -169,7 +168,6 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
       patternApiStatus: PolySymbolApiStatus?,
       patternRequired: Boolean,
       patternPriority: PolySymbol.Priority?,
-      patternProximity: Int?,
       patternRepeat: Boolean,
       patternUnique: Boolean,
     ) -> T,
@@ -182,7 +180,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
     try {
       return action(patterns, options.symbolsResolver, options.apiStatus, options.isRequired, options.priority,
-                    options.proximity, options.repeats, options.unique)
+                    options.repeats, options.unique)
     }
     finally {
       if (additionalScope != null) {
@@ -195,7 +193,6 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     owner: PolySymbol?,
     apiStatus: PolySymbolApiStatus?,
     priority: PolySymbol.Priority?,
-    proximity: Int?,
   ): List<T> =
     // We need to filter and select match results separately for each length of the match
     let { matchResults ->
@@ -218,8 +215,8 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
           }, { false })
       }
       .let { matchResults ->
-        if (matchResults.isNotEmpty() && (apiStatus.isDeprecatedOrObsolete() || priority != null || proximity != null))
-          matchResults.map { it.applyToSegments(apiStatus = apiStatus, priority = priority, proximity = proximity) }
+        if (matchResults.isNotEmpty() && (apiStatus.isDeprecatedOrObsolete() || priority != null))
+          matchResults.map { it.applyToSegments(apiStatus = apiStatus, priority = priority) }
         else matchResults
       }
 

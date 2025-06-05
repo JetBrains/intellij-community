@@ -2,7 +2,6 @@
  {
   name: "#",
   priority: NORMAL,
-  proximity: 10,
   displayName: "#…",
   completeAfterInsert: true,
   source: {
@@ -27,7 +26,6 @@
  {
   name: ":",
   priority: NORMAL,
-  proximity: 10,
   displayName: ":…",
   completeAfterInsert: true,
   source: {
@@ -48,7 +46,6 @@
  {
   name: "@",
   priority: NORMAL,
-  proximity: 10,
   displayName: "@…",
   completeAfterInsert: true,
   source: {
@@ -193,7 +190,6 @@
  {
   name: "v-bind:",
   priority: NORMAL,
-  proximity: 5,
   displayName: "v-bind:…",
   completeAfterInsert: true,
   source: {
@@ -559,7 +555,6 @@
  {
   name: "v-model:",
   priority: NORMAL,
-  proximity: 5,
   displayName: "v-model:…",
   completeAfterInsert: true,
   source: {
@@ -650,7 +645,6 @@
  {
   name: "v-on:",
   priority: NORMAL,
-  proximity: 5,
   displayName: "v-on:…",
   completeAfterInsert: true,
   source: {
@@ -856,7 +850,6 @@
  {
   name: "v-slot:",
   priority: NORMAL,
-  proximity: 5,
   displayName: "v-slot:…",
   completeAfterInsert: true,
   source: {

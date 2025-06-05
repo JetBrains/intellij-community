@@ -15,7 +15,6 @@
   complete: true,
   virtual: true,
   priority: NORMAL,
-  proximity: 5,
   properties: {
    doc-hide-pattern: true,
   },

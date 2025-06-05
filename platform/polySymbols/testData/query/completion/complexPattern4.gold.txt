@@ -67,7 +67,6 @@
  {
   name: "v-on:",
   priority: NORMAL,
-  proximity: 1,
   displayName: "v-on:…",
   completeAfterInsert: true,
   source: {

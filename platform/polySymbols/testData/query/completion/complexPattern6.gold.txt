@@ -2,7 +2,6 @@
  {
   name: "2foo",
   priority: NORMAL,
-  proximity: 1,
   offset: 5,
   completeAfterChars: [.],
   source: {
@@ -23,7 +22,6 @@
  {
   name: ":",
   priority: NORMAL,
-  proximity: 1,
   displayName: ":…",
   offset: 4,
   completeAfterInsert: true,
@@ -70,7 +68,6 @@
  {
   name: "click",
   priority: NORMAL,
-  proximity: 1,
   offset: 5,
   completeAfterChars: [.],
   source: {

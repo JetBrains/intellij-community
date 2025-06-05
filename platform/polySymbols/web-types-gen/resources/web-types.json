@@ -604,9 +604,6 @@
         "highest"
       ]
     },
-    "proximity": {
-      "type": "integer"
-    },
     "name-pattern-root": {
       "oneOf": [
         {
@@ -654,9 +651,6 @@
             },
             "priority": {
               "$ref": "#/definitions/priority"
-            },
-            "proximity": {
-              "$ref": "#/definitions/proximity"
             },
             "items": {
               "$ref": "#/definitions/list-reference"
