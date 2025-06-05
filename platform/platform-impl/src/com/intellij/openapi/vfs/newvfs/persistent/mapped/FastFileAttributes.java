@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.FileIdIndexedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
-import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.ApiStatus;

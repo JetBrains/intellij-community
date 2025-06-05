@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.VFSContentStorageOverMMappedFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +54,7 @@ public final class VFSInitException extends IOException {
     ATTRIBUTES_STORAGE_CORRUPTED,
     /**
      * Content and ContentHashes storages are not match with each other
-     * FIXME RC: this becomes obsolete as in {@link com.intellij.openapi.vfs.newvfs.persistent.dev.content.VFSContentStorageOverMMappedFile}
+     * FIXME RC: this becomes obsolete as in {@link VFSContentStorageOverMMappedFile}
      * there is no separate content and contentHashes storages, but a single storage-with-hash-based-deduplication instead
      */
     CONTENT_STORAGES_NOT_MATCH,
