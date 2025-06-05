@@ -61,13 +61,17 @@ private class AddLocalInterpreterAction(
   private val onSdkCreated: Consumer<Sdk>,
 ) : AnAction(PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"), AllIcons.Nodes.HomeFolder), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject, errorSink = ShowingMessageErrorSync).apply {
-      // Model provides flow, but we need to call Consumer
-      sdkCreatedFlow.oneShotConsumer(onSdkCreated)
-    }
-    PythonAddLocalInterpreterDialog(dialogPresenter).show()
-    return
+    addLocalInterpreter(moduleOrProject, onSdkCreated)
   }
+}
+
+@ApiStatus.Internal
+fun addLocalInterpreter(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>) {
+  val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject, errorSink = ShowingMessageErrorSync).apply {
+    // Model provides flow, but we need to call Consumer
+    sdkCreatedFlow.oneShotConsumer(onSdkCreated)
+  }
+  PythonAddLocalInterpreterDialog(dialogPresenter).show()
 }
 
 private class AddInterpreterOnTargetAction(
