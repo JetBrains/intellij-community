@@ -2,6 +2,7 @@
 package fleet.rpc.server
 
 import fleet.reporting.shared.tracing.spannedScope
+import fleet.rpc.EndpointKind
 import fleet.rpc.core.TransportMessage
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended

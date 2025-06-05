@@ -1,4 +1,4 @@
-package fleet.rpc.server
+package fleet.rpc
 
 enum class EndpointKind {
   Client,

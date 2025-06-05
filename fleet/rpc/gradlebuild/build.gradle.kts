@@ -62,9 +62,6 @@ kotlin {
     sourceSets.wasmJsTest.configure { resources.srcDir(layout.projectDirectory.dir("../testResourcesWasmJsTest")) }
   }
   sourceSets.commonMain.dependencies {
-    implementation(jps.org.jetbrains.kotlin.kotlin.reflect350781149.get().let { "${it.group}:${it.name}:${it.version}" }) {
-      exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-    }
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.core.jvm1739247612.get().let { "${it.group}:kotlinx-serialization-core:${it.version}" }) {
       isTransitive = false
     }

@@ -22,7 +22,6 @@ jvm_library(
     "//fleet/reporting/api",
     "//fleet/reporting/shared",
     "//fleet/multiplatform.shims",
-    "@lib//:kotlin-reflect",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlin-stdlib",
