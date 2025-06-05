@@ -6,7 +6,6 @@ import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import org.jetbrains.annotations.NotNull;
@@ -306,7 +305,7 @@ public class ExpressionParsing extends Parsing {
       result = parseORTestExpression(false, false);
     }
     else {
-      result = parseTupleExpression(false, false, true);
+      result = parseTupleExpression(false, false, true, false);
     }
     if (!result) {
       myBuilder.error(message("PARSE.expected.expression"));
@@ -515,7 +514,8 @@ public class ExpressionParsing extends Parsing {
         }
         else if (tokenType == PyTokenTypes.LBRACKET) {
           myBuilder.advanceLexer();
-          parseSliceOrSubscriptionExpression(expr, false);
+          parseSubscriptionIndexArgumentList();
+          expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
           if (isTargetExpression && !recastQualifier) {
             recastFirstIdentifier = true; // subscription is always a reference
             recastQualifier = true; // recast non-first qualifiers too
@@ -537,47 +537,11 @@ public class ExpressionParsing extends Parsing {
     return true;
   }
 
-  private void parseSliceOrSubscriptionExpression(@NotNull SyntaxTreeBuilder.Marker expr, boolean isSlice) {
-    SyntaxTreeBuilder.Marker sliceOrTupleStart = myBuilder.mark();
-    SyntaxTreeBuilder.Marker sliceItemStart = myBuilder.mark();
-    if (atToken(PyTokenTypes.COLON)) {
-      sliceOrTupleStart.drop();
-      SyntaxTreeBuilder.Marker sliceMarker = myBuilder.mark();
-      sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
-      parseSliceEnd(expr, sliceItemStart);
+  public void parseSubscriptionIndexArgumentList() {
+    if (!parseTupleExpression(false, false, false, true)) {
+      myBuilder.error(message("PARSE.expected.expression"));
     }
-    else {
-      var hadExpression = isSlice ? parseSingleExpression(false) : parseNamedTestExpression(false, false);
-      if (atToken(PyTokenTypes.COLON)) {
-        if (!isSlice) {
-          sliceOrTupleStart.rollbackTo();
-          parseSliceOrSubscriptionExpression(expr, true);
-          return;
-        }
-        sliceOrTupleStart.drop();
-        parseSliceEnd(expr, sliceItemStart);
-      }
-      else if (atToken(PyTokenTypes.COMMA)) {
-        sliceItemStart.done(PyElementTypes.SLICE_ITEM);
-        if (!parseSliceListTail(expr, sliceOrTupleStart)) {
-          sliceOrTupleStart.rollbackTo();
-          if (!parseTupleExpression(false, false, false)) {
-            myBuilder.error(message("tuple.expression.expected"));
-          }
-          checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
-          expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
-        }
-      }
-      else {
-        if (!hadExpression) {
-          myBuilder.error(message("PARSE.expected.expression"));
-        }
-        sliceOrTupleStart.drop();
-        sliceItemStart.drop();
-        checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
-        expr.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
-      }
-    }
+    checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
   }
 
   private boolean parseEllipsis() {
@@ -591,73 +555,6 @@ public class ExpressionParsing extends Parsing {
       maybeEllipsis.rollbackTo();
     }
     return false;
-  }
-
-  private static final TokenSet BRACKET_OR_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA);
-  private static final TokenSet BRACKET_COLON_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COLON, PyTokenTypes.COMMA);
-
-  public void parseSliceEnd(SyntaxTreeBuilder.Marker exprStart, SyntaxTreeBuilder.Marker sliceItemStart) {
-    myBuilder.advanceLexer();
-    if (atToken(PyTokenTypes.RBRACKET)) {
-      SyntaxTreeBuilder.Marker sliceMarker = myBuilder.mark();
-      sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
-      sliceItemStart.done(PyElementTypes.SLICE_ITEM);
-      nextToken();
-      exprStart.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
-      return;
-    }
-    else {
-      if (atToken(PyTokenTypes.COLON)) {
-        SyntaxTreeBuilder.Marker sliceMarker = myBuilder.mark();
-        sliceMarker.done(PyElementTypes.EMPTY_EXPRESSION);
-      }
-      else {
-        parseSingleExpression(false);
-      }
-      if (!BRACKET_COLON_COMMA.contains(myBuilder.getTokenType())) {
-        myBuilder.error(message("PARSE.expected.colon.or.rbracket"));
-      }
-      if (matchToken(PyTokenTypes.COLON)) {
-        parseSingleExpression(false);
-      }
-
-      sliceItemStart.done(PyElementTypes.SLICE_ITEM);
-      if (!BRACKET_OR_COMMA.contains(myBuilder.getTokenType())) {
-        myBuilder.error(message("rbracket.or.comma.expected"));
-      }
-    }
-
-    parseSliceListTail(exprStart, null);
-  }
-
-  private boolean parseSliceListTail(SyntaxTreeBuilder.Marker exprStart, @Nullable SyntaxTreeBuilder.Marker sliceOrTupleStart) {
-    boolean inSlice = sliceOrTupleStart == null;
-    while (atToken(PyTokenTypes.COMMA)) {
-      nextToken();
-      SyntaxTreeBuilder.Marker sliceItemStart = myBuilder.mark();
-      parseTestExpression(false, false);
-      if (matchToken(PyTokenTypes.COLON)) {
-        inSlice = true;
-        parseTestExpression(false, false);
-        if (matchToken(PyTokenTypes.COLON)) {
-          parseTestExpression(false, false);
-        }
-      }
-      sliceItemStart.done(PyElementTypes.SLICE_ITEM);
-      if (!BRACKET_OR_COMMA.contains(myBuilder.getTokenType())) {
-        myBuilder.error(message("rbracket.or.comma.expected"));
-        break;
-      }
-    }
-    checkMatches(PyTokenTypes.RBRACKET, message("PARSE.expected.rbracket"));
-
-    if (inSlice) {
-      if (sliceOrTupleStart != null) {
-        sliceOrTupleStart.drop();
-      }
-      exprStart.done(PyElementTypes.SUBSCRIPTION_EXPRESSION);
-    }
-    return inSlice;
   }
 
   public void parseArgumentList() {
@@ -721,11 +618,11 @@ public class ExpressionParsing extends Parsing {
   }
 
   public boolean parseExpressionOptional() {
-    return parseTupleExpression(false, false, false);
+    return parseTupleExpression(false, false, false, false);
   }
 
   public boolean parseExpressionOptional(boolean isTargetExpression) {
-    return parseTupleExpression(false, isTargetExpression, false);
+    return parseTupleExpression(false, isTargetExpression, false, false);
   }
 
   public void parseExpression() {
@@ -735,7 +632,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   public void parseExpression(boolean stopOnIn, boolean isTargetExpression) {
-    if (!parseTupleExpression(stopOnIn, isTargetExpression, false)) {
+    if (!parseTupleExpression(stopOnIn, isTargetExpression, false, false)) {
       myBuilder.error(message("PARSE.expected.expression"));
     }
   }
@@ -746,7 +643,7 @@ public class ExpressionParsing extends Parsing {
       myBuilder.advanceLexer();
       if (myBuilder.getTokenType() == PyTokenTypes.FROM_KEYWORD) {
         myBuilder.advanceLexer();
-        final boolean parsed = parseTupleExpression(false, isTargetExpression, false);
+        final boolean parsed = parseTupleExpression(false, isTargetExpression, false, false);
         if (!parsed) {
           myBuilder.error(message("PARSE.expected.expression"));
         }
@@ -754,19 +651,21 @@ public class ExpressionParsing extends Parsing {
         return parsed;
       }
       else {
-        parseTupleExpression(false, isTargetExpression, false);
+        parseTupleExpression(false, isTargetExpression, false, false);
         yieldExpr.done(PyElementTypes.YIELD_EXPRESSION);
         return true;
       }
     }
     else {
-      return parseTupleExpression(false, isTargetExpression, false);
+      return parseTupleExpression(false, isTargetExpression, false, false);
     }
   }
 
-  protected boolean parseTupleExpression(boolean stopOnIn, boolean isTargetExpression, final boolean oldTest) {
+  protected boolean parseTupleExpression(boolean stopOnIn, boolean isTargetExpression, final boolean oldTest, boolean isSubscription) {
     SyntaxTreeBuilder.Marker expr = myBuilder.mark();
-    boolean exprParseResult = oldTest ? parseOldTestExpression() : parseNamedTestExpression(stopOnIn, isTargetExpression);
+    boolean exprParseResult = isSubscription ? parseSubscriptionIndexArgument() :
+                              oldTest ? parseOldTestExpression() :
+                              parseNamedTestExpression(stopOnIn, isTargetExpression);
     if (!exprParseResult) {
       expr.drop();
       return false;
@@ -775,7 +674,9 @@ public class ExpressionParsing extends Parsing {
       while (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
         myBuilder.advanceLexer();
         SyntaxTreeBuilder.Marker expr2 = myBuilder.mark();
-        exprParseResult = oldTest ? parseOldTestExpression() : parseNamedTestExpression(stopOnIn, isTargetExpression);
+        exprParseResult = isSubscription ? parseSubscriptionIndexArgument() :
+                          oldTest ? parseOldTestExpression() :
+                          parseNamedTestExpression(stopOnIn, isTargetExpression);
         if (!exprParseResult) {
           expr2.rollbackTo();
           break;
@@ -787,6 +688,27 @@ public class ExpressionParsing extends Parsing {
     else {
       expr.drop();
     }
+    return true;
+  }
+
+  private boolean parseSubscriptionIndexArgument() {
+    SyntaxTreeBuilder.Marker sliceItem = myBuilder.mark();
+    if (!parseSingleExpression(false)) {
+      myBuilder.mark().done(PyElementTypes.EMPTY_EXPRESSION);
+    }
+    if (!matchToken(PyTokenTypes.COLON)) {
+      sliceItem.rollbackTo();
+      return parseNamedTestExpression(false, false);
+    }
+    boolean exprParseResult = parseSingleExpression(false);
+    if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
+      if (!exprParseResult) {
+        myBuilder.mark().done(PyElementTypes.EMPTY_EXPRESSION);
+      }
+      myBuilder.advanceLexer();
+      parseSingleExpression(false);
+    }
+    sliceItem.done(PyElementTypes.SLICE_ITEM);
     return true;
   }
 
