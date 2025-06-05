@@ -16,19 +16,30 @@ class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
 
   fun addNewToolchain(toolchain: Toolchain) {
     if (toolchain.name == ToolchainNames.DEFAULT) {
-      jBlist(xQuery { byClass("JBList") }).clickItem(toolchain.name.toString())
+      getToolchainList().clickItem(toolchain.name.toString())
     }
     else {
-      actionButtonByXpath(xQuery { byAttribute("myicon", "add.svg") }).click()
+      addToolchain()
       popupMenu().select(toolchain.toString())
-      while (!jBlist(xQuery { byClass("JBList") }).items.first().contains("$toolchain (default)")) {
+      while (!getToolchainList().items.first().contains("$toolchain (default)")) {
         moveToolchainUp()
       }
     }
   }
 
+  fun getToolchainList(): JListUiComponent =
+    jBlist(xQuery { byClass("JBList") })
+
+  fun addToolchain()  {
+    actionButtonByXpath(xQuery { byTooltip("Add") }).click()
+  }
+
   fun moveToolchainUp() {
     actionButtonByXpath(xQuery { byTooltip("Up") }).click()
+  }
+
+  fun removeToolchain() {
+    actionButtonByXpath(xQuery { byTooltip("Remove") }).click()
   }
 
   fun moveToolchainDown() {
@@ -41,7 +52,6 @@ class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
     }
     getToolchainField("C Compiler").text = toolchain.compiler.getCCompilerPath()
     getToolchainField("C++ Compiler").text = toolchain.compiler.getCppCompilerPath()
-
     if (toolchain !is Toolchain.Default) {
       setDebugger(toolchain.debugger)
     }
