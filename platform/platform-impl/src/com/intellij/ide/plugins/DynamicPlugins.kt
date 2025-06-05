@@ -1367,13 +1367,20 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
 }
 
 private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): ExtensionPointDescriptor? {
-  fun findContainerExtensionPoint(containerDescriptor: ContainerDescriptor): ExtensionPointDescriptor? {
+  fun findInContainer(containerDescriptor: ContainerDescriptor): ExtensionPointDescriptor? {
     return containerDescriptor.extensionPoints.find { it.nameEquals(epName, pluginDescriptor) }
   }
-
-  return findContainerExtensionPoint(pluginDescriptor.appContainerDescriptor)
-         ?: findContainerExtensionPoint(pluginDescriptor.projectContainerDescriptor)
-         ?: findContainerExtensionPoint(pluginDescriptor.moduleContainerDescriptor)
+  fun IdeaPluginDescriptorImpl.findInAnyScope() = findInContainer(appContainerDescriptor)
+                                                  ?: findInContainer(projectContainerDescriptor)
+                                                  ?: findInContainer(moduleContainerDescriptor)
+  pluginDescriptor.findInAnyScope()?.let { return it }
+  pluginDescriptor.contentModules.forEach { contentModule ->
+    // FIXME incomplete fix for IJPL-190703
+    if (contentModule.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
+      contentModule.findInAnyScope()?.let { return it }
+    }
+  }
+  return null
 }
 
 private fun findLoadedPluginExtensionPointRecursive(pluginDescriptor: IdeaPluginDescriptorImpl,
