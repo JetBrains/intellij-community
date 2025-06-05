@@ -31,6 +31,10 @@ class SpellerSuggestionsGenerator(
    */
   fun combinedCorrections(sentence: String): List<SearchEverywhereSpellCheckResult.Correction> {
     val tokens = splitText(sentence)
+    // skip full processing if too many word tokens
+    if (tokens.count { it is SearchEverywhereStringToken.Word } > 10) {
+      return listOf(SearchEverywhereSpellCheckResult.Correction(sentence, 1.0))
+    }
 
     // For each word, either collect the top corrections or assume it's correct
     val suggestionsPerWord = tokens
