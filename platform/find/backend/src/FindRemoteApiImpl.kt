@@ -2,6 +2,7 @@
 package com.intellij.platform.find.backend
 
 import com.intellij.find.FindModel
+import com.intellij.find.FindSettings
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findInProject.FindInProjectManager
 import com.intellij.find.impl.FindInProjectUtil
@@ -103,8 +104,11 @@ internal class FindRemoteApiImpl : FindRemoteApi {
     }
   }
 
-  override suspend fun performFindAllOrReplaceAll(findModel: FindModel, projectId: ProjectId) {
+  override suspend fun performFindAllOrReplaceAll(findModel: FindModel, openInNewTab: Boolean, projectId: ProjectId) {
     val project = projectId.findProjectOrNull()
+    val findSettings = FindSettings.getInstance()
+    val separateViewSaved = findSettings.isShowResultsInSeparateView
+    findSettings.isShowResultsInSeparateView = openInNewTab
     if (project == null) {
       LOG.warn("Project not found for id ${projectId}. FindAll/ReplaceAll operation skipped")
       return
@@ -115,6 +119,7 @@ internal class FindRemoteApiImpl : FindRemoteApi {
     else {
       FindInProjectManager.getInstance(project).findInPath(findModel)
     }
+    findSettings.isShowResultsInSeparateView = separateViewSaved
   }
 
   override suspend fun checkDirectoryExists(findModel: FindModel): Boolean {

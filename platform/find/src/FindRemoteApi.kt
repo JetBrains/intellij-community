@@ -40,8 +40,10 @@ interface FindRemoteApi : RemoteApi<Unit> {
    *
    * @param findModel the model containing search parameters and criteria
    * @param project the project where the search is performed
+   * @param openInNewTab whether to show results in a separate view. This setting is persisted on the backend
+   *                     and restored after performing the findAll / replaceAll operation
    */
-  suspend fun performFindAllOrReplaceAll(findModel: FindModel, projectId: ProjectId)
+  suspend fun performFindAllOrReplaceAll(findModel: FindModel, openInNewTab: Boolean, projectId: ProjectId)
 
   suspend fun checkDirectoryExists(findModel: FindModel): Boolean
 
