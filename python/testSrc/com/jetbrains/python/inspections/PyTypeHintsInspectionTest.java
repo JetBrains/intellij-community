@@ -2863,6 +2863,44 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-76862
+  public void testCheckCircularReferences() {
+    doTestByText("""
+                   from typing import TypeAlias
+                   class ClassA:
+                       ...
+                   
+                   type ClassB = str
+                   
+                   ClassC = int
+                   
+                   ClassD: TypeAlias = bool
+                   
+                   circular: <error descr="Circular reference">"circular"</error> = None
+                   
+                   class Test:
+                       ClassA: "ClassA"  # OK
+                       ClassB: "ClassB"  # OK
+                       ClassC: "ClassC"  # OK
+                       ClassD: "ClassD"  # OK
+                   
+                       ClassE: <error descr="Circular reference">"ClassE"</error>  # E: circular reference
+                   
+                       ClassG: <error descr="Circular reference">"ClassG"</error> = None  # E: circular reference
+                   
+                       def foo(self):
+                          Test: "Test"
+                          ClassA: "ClassA"  # OK
+                          ClassB: "ClassB"  # OK
+                          ClassC: "ClassC"  # OK
+                          str: "str"  # OK
+                          def int(self) -> None:
+                                  ...
+                          x: "int" = 0 # OK
+                          var: <error descr="Circular reference">"var"</error> = None  # E: circular reference
+                   """);
+  }
+
 
   @NotNull
   @Override

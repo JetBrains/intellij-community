@@ -17,6 +17,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.psi.util.isAncestor
@@ -366,6 +367,11 @@ class PyTypeHintsInspection : PyInspection() {
 
       checkAnnotatedNonSelfAttribute(node)
       checkTypeAliasTarget(node)
+
+      val annotation = node.annotation
+      if (annotation != null) {
+        checkCircularReference(annotation, node)
+      }
     }
 
     private fun checkTypeAliasTarget(target: PyTargetExpression) {
@@ -1254,6 +1260,22 @@ class PyTypeHintsInspection : PyInspection() {
             super.visitPyStringLiteralExpression(node)
           }
         })
+      }
+    }
+
+    private fun checkCircularReference(annotation: PyAnnotation, targetExpr: PyTargetExpression) {
+      val annotationValue = annotation.value as? PyStringLiteralExpression ?: return
+      val stringValue = annotationValue.stringValue
+      if (stringValue != targetExpr.name) return
+
+      val contextFile = FileContextUtil.getContextFile(annotation) ?: return
+      val referenceFromStringLiteral = PyUtil
+        .createExpressionFromFragment(stringValue, contextFile) as? PyReferenceExpression ?: return
+      val resolveResults = PyUtil.multiResolveTopPriority(referenceFromStringLiteral,
+                                                          PyResolveContext.defaultContext(myTypeEvalContext))
+      if (resolveResults.isEmpty() || (resolveResults.size == 1 && resolveResults.first() === targetExpr)) {
+        registerProblem(annotationValue, PyPsiBundle.message("INSP.type.hints.circular.reference"),
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
