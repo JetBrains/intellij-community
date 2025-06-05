@@ -51,8 +51,6 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IntPair
 import com.intellij.util.Processor
-import com.intellij.util.containers.map2Array
-import com.intellij.util.containers.toArray
 import com.intellij.util.indexing.FindSymbolParameters
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import kotlinx.coroutines.CoroutineScope
@@ -294,23 +292,6 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     pattern: String,
     progressIndicator: ProgressIndicator,
     consumer: Processor<in FoundItemDescriptor<Any>>,
-  ) {
-    fetchWeightedElementsMixing(
-      pattern, progressIndicator, consumer,
-      // Ordering is important here
-      *(
-        contributorModules?.map2Array<SearchEverywhereContributorModule, (String, ProgressIndicator, Processor<in FoundItemDescriptor<Any>>) -> Unit> {
-          { localPattern, localProgressIndicator, localConsumer -> it.perProductFetchWeightedElements(localPattern, localProgressIndicator, localConsumer) }
-        } ?: emptyArray()
-       ),
-      { localPattern, localProgressIndicator, localConsumer -> performByGotoContributorSearch(localPattern, localProgressIndicator, localConsumer) },
-    )
-  }
-
-  private fun performByGotoContributorSearch(
-    pattern: String,
-    progressIndicator: ProgressIndicator,
-    consumer: Processor<in FoundItemDescriptor<Any>>
   ) {
     if (!isEmptyPatternSupported && pattern.isEmpty()) {
       return
