@@ -106,6 +106,9 @@ public class PlainTextSplitter extends BaseSplitter {
         else if (word.startsWith(JWT_COMMON_PREFIX) && JWT_PATTERN.matcher(word).matches()) {
           toCheck = emptyList();
         }
+        else if (word.startsWith("f'")) {
+          toCheck = List.of(new TextRange(wRange.getStartOffset() + 2, wRange.getEndOffset()));
+        }
         else if (wordLength == MD5_HEX_LENGTH && MD5_HEX_PATTERN.matcher(word).matches() ||
                  wordLength == SHA1_HEX_LENGTH && SHA1_HEX_PATTERN.matcher(word).matches() ||
                  wordLength == SHA256_HEX_LENGTH && SHA256_HEX_PATTERN.matcher(word).matches() ||
