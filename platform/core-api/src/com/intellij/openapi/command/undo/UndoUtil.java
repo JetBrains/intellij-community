@@ -4,11 +4,9 @@ package com.intellij.openapi.command.undo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class UndoUtil {
@@ -66,18 +64,5 @@ public final class UndoUtil {
   }
   public static boolean isForceUndoFlagSet(@NotNull VirtualFile file) {
     return file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE;
-  }
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  public static boolean isExperimentalFrontendUndoEnabled() {
-    return Registry.is("ide.undo.frontend.if.possible", false);
-  }
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  public static boolean debugExperimentalFrontendUndo() {
-    return isExperimentalFrontendUndoEnabled() &&
-      Registry.is("ide.undo.frontend.if.possible.debug", true);
   }
 }

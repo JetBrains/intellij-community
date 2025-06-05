@@ -1958,6 +1958,8 @@
                         serviceInterface="com.intellij.platform.ide.core.permissions.impl.IdePermissionManager"
                         client="owner"/>
 
+    <applicationService serviceImplementation="com.intellij.ide.impl.UndoRemoteBehaviorService"/>
+
     <diagnostic.specialPathsProvider implementation="com.intellij.diagnostic.specialPaths.ProjectSpecialPathsProvider"/>
     <diagnostic.specialPathsProvider implementation="com.intellij.diagnostic.specialPaths.ApplicationSpecialPathsProvider"/>
 
