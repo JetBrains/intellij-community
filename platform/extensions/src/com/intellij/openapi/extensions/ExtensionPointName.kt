@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceGetOrSet")
 
 package com.intellij.openapi.extensions
@@ -48,10 +48,10 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    */
   @get:Obsolete
   val extensions: Array<T>
-    get() = getPointImpl(null).extensions
+    get() = getRootPoint().extensions
 
   val extensionList: List<T>
-    get() = getPointImpl(null).extensionList
+    get() = getRootPoint().extensionList
 
   /**
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
@@ -70,7 +70,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * @return first extension matching [predicate], or `null` if there is no such extension.
    */
   fun findFirstSafe(predicate: Predicate<in T>): T? {
-    return findFirstSafe(predicate = predicate, sequence = getPointImpl(null).asSequence())
+    return findFirstSafe(predicate = predicate, sequence = getRootPoint().asSequence())
   }
 
   /**
@@ -83,7 +83,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * @return first not-null value returned by [processor], or `null` if processor didn't return any non-null value.
    */
   fun <R : Any> computeSafeIfAny(processor: Function<T, out R?>): R? {
-    return computeSafeIfAny(processor = processor::apply, sequence = getPointImpl(null).asSequence())
+    return computeSafeIfAny(processor = processor::apply, sequence = getRootPoint().asSequence())
   }
 
   val extensionsIfPointIsRegistered: List<T>
@@ -95,8 +95,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return area?.getExtensionPointIfRegistered<T>(name)?.extensionList ?: emptyList()
   }
 
-  @Deprecated("Use {@code getExtensionList().stream()}", ReplaceWith("getExtensionList().stream()"), DeprecationLevel.ERROR)
-  fun extensions(): Stream<T> = getPointImpl(null).asSequence().asStream()
+  @Deprecated("Use {@code getExtensionList().stream()}", level = DeprecationLevel.ERROR)
+  fun extensions(): Stream<T> = getRootPoint().asSequence().asStream()
 
   fun hasAnyExtensions(): Boolean {
     @Suppress("DEPRECATION")
@@ -119,18 +119,18 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   fun getPoint(areaInstance: AreaInstance?): ExtensionPoint<T> = getPointImpl(areaInstance)
 
   val point: ExtensionPoint<T>
-    get() = getPointImpl(null)
+    get() = getRootPoint()
 
   fun <V : T> findExtension(instanceOf: Class<V>): V? {
-    return getPointImpl(null).findExtension(aClass = instanceOf, isRequired = false, strictMatch = ThreeState.UNSURE)
+    return getRootPoint().findExtension(aClass = instanceOf, isRequired = false, strictMatch = ThreeState.UNSURE)
   }
 
   fun <V : T> findExtensionOrFail(exactClass: Class<V>): V {
-    return getPointImpl(null).findExtension(aClass = exactClass, isRequired = true, strictMatch = ThreeState.UNSURE)!!
+    return getRootPoint().findExtension(aClass = exactClass, isRequired = true, strictMatch = ThreeState.UNSURE)!!
   }
 
   fun <V : T> findFirstAssignableExtension(instanceOf: Class<V>): V? {
-    return getPointImpl(null).findExtension(aClass = instanceOf, isRequired = true, strictMatch = ThreeState.NO)
+    return getRootPoint().findExtension(aClass = instanceOf, isRequired = true, strictMatch = ThreeState.NO)
   }
 
   /**
@@ -147,33 +147,33 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * 2. Iterated only once per application (no need to cache an extension list internally).
    */
   @Internal
-  fun getIterable(): Iterable<T?> = getPointImpl(null).asSequence().asIterable()
+  fun getIterable(): Iterable<T?> = getRootPoint().asSequence().asIterable()
 
   @Internal
   fun lazySequence(): Sequence<T> {
-    return getPointImpl(null).asSequence()
+    return getRootPoint().asSequence()
   }
 
   @Internal
   fun processWithPluginDescriptor(consumer: (T, PluginDescriptor) -> Unit) {
-    getPointImpl(null).processWithPluginDescriptor(consumer = consumer)
+    getRootPoint().processWithPluginDescriptor(consumer = consumer)
   }
 
   fun addExtensionPointListener(listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {
-    getPointImpl(null).addExtensionPointListener(listener = listener,
+    getRootPoint().addExtensionPointListener(listener = listener,
                                                  invokeForLoadedExtensions = false,
                                                  parentDisposable = parentDisposable)
   }
 
   @Internal
   fun addExtensionPointListener(coroutineScope: CoroutineScope, listener: ExtensionPointListener<T>) {
-    getPointImpl(null).addExtensionPointListener(listener = listener,
+    getRootPoint().addExtensionPointListener(listener = listener,
                                                  invokeForLoadedExtensions = false,
                                                  coroutineScope = coroutineScope)
   }
 
   fun addExtensionPointListener(listener: ExtensionPointListener<T>) {
-    getPointImpl(null).addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
+    getRootPoint().addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
 
   fun addExtensionPointListener(areaInstance: AreaInstance, listener: ExtensionPointListener<T>) {
@@ -183,19 +183,19 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Pass CoroutineScope to addChangeListener")
   fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
-    getPointImpl(null).removeExtensionPointListener(listener)
+    getRootPoint().removeExtensionPointListener(listener)
   }
 
   fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
-    getPointImpl(null).addChangeListener(listener = listener, parentDisposable = parentDisposable)
+    getRootPoint().addChangeListener(listener = listener, parentDisposable = parentDisposable)
   }
 
   fun addChangeListener(coroutineScope: CoroutineScope, listener: Runnable) {
-    getPointImpl(null).addChangeListener(listener = listener, coroutineScope = coroutineScope)
+    getRootPoint().addChangeListener(listener = listener, coroutineScope = coroutineScope)
   }
 
   /**
-   * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into a list. Return values by key.
+   * Build cache by arbitrary key using the provided key to value mapper. Values with the same key merge into a list. Return values by key.
    *
    * To exclude an extension from cache, return a null key.
    *
@@ -205,38 +205,40 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   @Internal
   @ApiStatus.Experimental
   fun <K : Any> getByGroupingKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): List<T> {
-    return getByGroupingKey(point = getPointImpl(null), cacheId = cacheId, key = key, keyMapper = keyMapper)
+    return getByGroupingKey(point = getRootPoint(), cacheId = cacheId, key = key, keyMapper = keyMapper)
   }
 
   /**
-   * Build cache by arbitrary key using provided key to value mapper. Return value by key.
+   * Build cache by arbitrary key using the provided key to value mapper. Return value by key.
    *
    * To exclude an extension from cache, return a null key.
    */
   @Internal
   @ApiStatus.Experimental
   fun <K : Any> getByKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): T? {
-    return getByKey(point = getPointImpl(null), key = key, cacheId = cacheId, keyMapper = keyMapper)
+    return getByKey(point = getRootPoint(), key = key, cacheId = cacheId, keyMapper = keyMapper)
   }
 
   /**
-   * Build cache by arbitrary key using provided key to value mapper. Return value by key.
+   * Build cache by arbitrary key using the provided key to value mapper. Return value by key.
    *
    * To exclude an extension from cache, return a null key.
    */
   @Internal
   @ApiStatus.Experimental
-  fun <K : Any, V : Any> getByKey(key: K,
-                                  cacheId: Class<*>,
-                                  keyMapper: Function<T, K?>,
-                                  valueMapper: Function<T, V?>): V? {
-    return getByKey(point = getPointImpl(null), key = key, cacheId = cacheId, keyMapper = keyMapper, valueMapper = valueMapper)
+  fun <K : Any, V : Any> getByKey(
+    key: K,
+    cacheId: Class<*>,
+    keyMapper: Function<T, K?>,
+    valueMapper: Function<T, V?>,
+  ): V? {
+    return getByKey(point = getRootPoint(), key = key, cacheId = cacheId, keyMapper = keyMapper, valueMapper = valueMapper)
   }
 
   @Internal
   @ApiStatus.Experimental
   fun <K : Any, V : Any> computeIfAbsent(key: K, cacheId: Class<*>, valueMapper: Function<K, V>): V {
-    return computeIfAbsent(point = getPointImpl(null), key = key, cacheId = cacheId, valueProducer = valueMapper)
+    return computeIfAbsent(point = getRootPoint(), key = key, cacheId = cacheId, valueProducer = valueMapper)
   }
 
   /**
@@ -244,12 +246,12 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    */
   @ApiStatus.Experimental
   fun <V : Any> computeIfAbsent(cacheId: Class<*>, valueMapper: Supplier<V>): V {
-    return computeIfAbsent(getPointImpl(null), cacheId, valueMapper)
+    return computeIfAbsent(point = getRootPoint(), cacheId = cacheId, valueProducer = valueMapper)
   }
 
   @Internal
   fun filterableLazySequence(): Sequence<LazyExtension<T>> {
-    val point = getPointImpl(null)
+    val point = getRootPoint()
     val adapters = point.sortedAdapters
     return LazyExtensionSequence(point = point, adapters = adapters)
   }
@@ -291,7 +293,7 @@ sealed interface LazyExtension<T> {
 }
 
 @Internal
-suspend fun <T: Any, R : Any> LazyExtension<T>.useOrLogError(task: suspend (instance: T) -> R): R? {
+suspend fun <T : Any, R : Any> LazyExtension<T>.useOrLogError(task: suspend (instance: T) -> R): R? {
   this as LazyExtensionImpl<T>
   try {
     return task(adapter.createInstance(point.componentManager) ?: return null)
