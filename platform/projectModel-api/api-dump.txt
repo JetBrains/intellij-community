@@ -906,7 +906,6 @@ com.intellij.openapi.roots.impl.libraries.LibraryEx$ModifiableModelEx
 - a:setKind(com.intellij.openapi.roots.libraries.PersistentLibraryKind):V
 - a:setProperties(com.intellij.openapi.roots.libraries.LibraryProperties):V
 com.intellij.openapi.roots.libraries.Library
-- com.intellij.openapi.Disposable
 - com.intellij.openapi.roots.ProjectModelElement
 - com.intellij.openapi.util.JDOMExternalizable
 - sf:EMPTY_ARRAY:com.intellij.openapi.roots.libraries.Library[]

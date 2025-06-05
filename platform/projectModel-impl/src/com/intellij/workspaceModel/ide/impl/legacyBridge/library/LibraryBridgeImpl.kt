@@ -58,7 +58,7 @@ class LibraryBridgeImpl(
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
   private var targetBuilder: MutableEntityStorage?,
-) : LibraryBridge, RootProvider, TraceableDisposable(true) {
+) : LibraryBridge, RootProvider, TraceableDisposable(true), Disposable {
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
 

@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.google.common.collect.HashBiMap
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -158,9 +159,9 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     }
 
     modifiableModel.diff.removeEntity(libraryEntity)
-    Disposer.dispose(library)
+    Disposer.dispose(library as Disposable)
     if (copyBridgeForDispose != null) {
-      Disposer.dispose(copyBridgeForDispose!!)
+      Disposer.dispose(copyBridgeForDispose!! as Disposable)
     }
   }
 
@@ -173,7 +174,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
         mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(it as LibraryBridge).single(), originalLibrary)
       }
 
-      Disposer.dispose(it)
+      Disposer.dispose(it as Disposable)
     }
   }
 
@@ -186,7 +187,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       if (!changedLibs.contains(originBridge.libraryId) && originBridge.hasSameContent(copyBridge)) {
         val mutableLibraryMap = modifiableModel.diff.mutableLibraryMap
         mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(copyBridge as LibraryBridge).single(), originBridge)
-        Disposer.dispose(copyBridge)
+        Disposer.dispose(copyBridge as Disposable)
       }
     }
   }
@@ -216,7 +217,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       actualBridge.entityStorage = storage
       actualBridge.libraryTable = ModuleRootComponentBridge.getInstance(module).moduleLibraryTable
       actualBridge.clearTargetBuilder()
-      Disposer.dispose(outdatedBridge)
+      Disposer.dispose(outdatedBridge as Disposable)
     }
   }
 

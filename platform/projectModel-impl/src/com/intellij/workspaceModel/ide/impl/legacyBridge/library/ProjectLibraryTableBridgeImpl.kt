@@ -116,7 +116,7 @@ open class ProjectLibraryTableBridgeImpl(
               if (library != null) {
                 // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
                 dispatcher.multicaster.afterLibraryRemoved(library)
-                Disposer.dispose(library)
+                Disposer.dispose(library as Disposable)
               }
             }
             is EntityChange.Replaced -> {
@@ -250,7 +250,7 @@ open class ProjectLibraryTableBridgeImpl(
 
   override fun dispose() {
     for (library in libraries) {
-      Disposer.dispose(library)
+      Disposer.dispose(library as Disposable)
     }
   }
 

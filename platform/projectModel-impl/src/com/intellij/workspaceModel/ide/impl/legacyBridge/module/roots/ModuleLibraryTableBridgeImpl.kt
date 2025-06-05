@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.ModuleLibraryTableBase
@@ -68,7 +69,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
 
   override fun dispose() {
     for (library in libraryIterator) {
-      if (!(library as LibraryEx).isDisposed) Disposer.dispose(library)
+      if (!(library as LibraryEx).isDisposed) Disposer.dispose(library as Disposable)
     }
   }
 
