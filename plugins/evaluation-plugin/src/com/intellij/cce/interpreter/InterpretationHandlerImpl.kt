@@ -41,8 +41,7 @@ class InterpretationHandlerImpl(
 
   override fun onErrorOccurred(error: Throwable, sessionsSkipped: Int) {
     completed += sessionsSkipped
-    if (!ApplicationManager.getApplication().isUnitTestMode && !LOG.errorIfNotMessage(error))
-      LOG.error("Actions interpretation error ${error.cause}")
+    if (!ApplicationManager.getApplication().isUnitTestMode) LOG.errorIfNotMessage(error)
   }
 
   override fun isCancelled(): Boolean {
