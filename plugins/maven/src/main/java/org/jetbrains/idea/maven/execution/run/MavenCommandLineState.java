@@ -159,7 +159,7 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
                                                 Function<String, String> targetFileMapper) throws ExecutionException {
     ConsoleView consoleView = createConsole(executor, processHandler, myConfiguration.getProject());
     BuildViewManager viewManager = getEnvironment().getProject().getService(BuildViewManager.class);
-    descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler, useMaven4()), null);
+    descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler, useMaven4(), false), null);
     descriptor.withExecutionEnvironment(getEnvironment());
     StartBuildEventImpl startBuildEvent = new StartBuildEventImpl(descriptor, "");
     boolean withResumeAction = MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration);
@@ -195,7 +195,7 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
       buildView.attachToProcess(processHandler);
     }
     else {
-      buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler, useMaven4()));
+      buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler, useMaven4(), false));
     }
 
     AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
@@ -383,9 +383,9 @@ public class MavenCommandLineState extends JavaCommandLineState implements Remot
                                                            Process process) throws ExecutionException {
     if (emulateTerminal()) {
       return new MavenKillableProcessHandler(process,
-                                                                   targetedCommandLine.getCommandPresentation(remoteEnvironment),
-                                                                   targetedCommandLine.getCharset(),
-                                                                   targetedCommandLineBuilder.getFilesToDeleteOnTermination(),
+                                             targetedCommandLine.getCommandPresentation(remoteEnvironment),
+                                             targetedCommandLine.getCharset(),
+                                             targetedCommandLineBuilder.getFilesToDeleteOnTermination(),
                                              useMaven4());
     }
     else {

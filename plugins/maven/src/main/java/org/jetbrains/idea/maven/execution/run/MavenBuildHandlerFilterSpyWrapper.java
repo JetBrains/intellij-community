@@ -14,10 +14,12 @@ import java.io.OutputStream;
 public class MavenBuildHandlerFilterSpyWrapper extends BuildProcessHandler {
   private final ProcessHandler myOriginalHandler;
   private final boolean myWithLoggingOutputStream;
+  private final boolean myIsWindowsCmd;
 
-  public MavenBuildHandlerFilterSpyWrapper(ProcessHandler original, boolean withLoggingOutputStream) {
+  public MavenBuildHandlerFilterSpyWrapper(ProcessHandler original, boolean withLoggingOutputStream, boolean isWindowsCmd) {
     myOriginalHandler = original;
     myWithLoggingOutputStream = withLoggingOutputStream;
+    myIsWindowsCmd = isWindowsCmd;
   }
 
 
@@ -82,6 +84,6 @@ public class MavenBuildHandlerFilterSpyWrapper extends BuildProcessHandler {
   }
 
   private ProcessListener filtered(ProcessListener listener) {
-    return new ProcessListenerWithFilteredSpyOutput(listener, this, myWithLoggingOutputStream);
+    return new ProcessListenerWithFilteredSpyOutput(listener, this, myWithLoggingOutputStream, myIsWindowsCmd);
   }
 }

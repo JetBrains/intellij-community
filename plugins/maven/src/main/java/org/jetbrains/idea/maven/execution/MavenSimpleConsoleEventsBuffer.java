@@ -18,10 +18,45 @@ public class MavenSimpleConsoleEventsBuffer {
   private final TypedBuffer myBuffer;
   private final BiConsumer<String, Key<Object>> myConsumer;
   private final boolean myShowSpyOutput;
+  private final boolean myHideWindowsExitMessage;
 
-  public MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key<Object>> consumer, boolean showSpyOutput, boolean withLoggingOutputStream) {
+  public static class Builder {
+    private final BiConsumer<String, Key<Object>> consumer;
+    private boolean showSpyOutput;
+    private boolean loggingOutputStream;
+    private boolean hideWindowsCmdMessage;
+
+    public Builder(BiConsumer<String, Key<Object>> consumer) {
+      this.consumer = consumer;
+    }
+
+    public Builder withSpyOutput(boolean v) {
+      showSpyOutput = v;
+      return this;
+    }
+
+    public Builder withLoggingOutputStream(boolean v) {
+      loggingOutputStream = v;
+      return this;
+    }
+
+    public Builder withHidingCmdExitQuestion(boolean v) {
+      hideWindowsCmdMessage = v;
+      return this;
+    }
+
+    public MavenSimpleConsoleEventsBuffer build() {
+      return new MavenSimpleConsoleEventsBuffer(consumer, showSpyOutput, loggingOutputStream, hideWindowsCmdMessage);
+    }
+  }
+
+  private MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key<Object>> consumer,
+                                         boolean showSpyOutput,
+                                         boolean withLoggingOutputStream,
+                                         boolean hideWindowsMessage) {
     myConsumer = consumer;
     myShowSpyOutput = showSpyOutput;
+    myHideWindowsExitMessage = hideWindowsMessage;
     myBuffer = new TypedBuffer(consumer, withLoggingOutputStream ? new Maven4SpyOutputExtractor() : new Maven3SpyOutputExtractor());
   }
 
@@ -76,7 +111,7 @@ public class MavenSimpleConsoleEventsBuffer {
         myIsProcessingSpyNow = !lastChunk;
         return;
       }
-      if (!canAppend(outputType)){
+      if (!canAppend(outputType)) {
         sendAndReset();
       }
       chunks.add(new OutputChunk(text, outputType));
@@ -85,7 +120,8 @@ public class MavenSimpleConsoleEventsBuffer {
       if (myExtractor.isLengthEnough(clearedBuffer) || lastChunk) {
         if (!myExtractor.isSpyLog(clearedBuffer)) {
           sendAndReset();
-        } else {
+        }
+        else {
           myIsProcessingSpyNow = !lastChunk;
           reset();
         }
@@ -99,7 +135,5 @@ public class MavenSimpleConsoleEventsBuffer {
       }
       return plainText.toString();
     }
-
-
   }
 }

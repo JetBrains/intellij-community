@@ -153,7 +153,6 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              end
              """
     );
-
   }
 
   public void testFilterMaven4OutputNoColor() {
@@ -206,7 +205,7 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
     );
     List<Pair<String, Key<Object>>> actual = new ArrayList<>();
     MavenSimpleConsoleEventsBuffer buffer =
-      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.add(new Pair<>(l, k)), false, false);
+      new MavenSimpleConsoleEventsBuffer.Builder((l, k) -> actual.add(new Pair<>(l, k))).build();
     for (var item : expected) {
       buffer.addText(item.first, item.second);
     }
@@ -220,11 +219,13 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
   private static void doTest(boolean showSpyOutput, String[] text, String expected, boolean maven4) {
     StringBuilder actual = new StringBuilder();
     MavenSimpleConsoleEventsBuffer buffer =
-      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.append(l), showSpyOutput, maven4);
+      new MavenSimpleConsoleEventsBuffer.Builder((l, k) -> actual.append(l))
+        .withLoggingOutputStream(maven4)
+        .withSpyOutput(showSpyOutput)
+        .build();
     for (String s : text) {
       buffer.addText(s, (Key<Object>)ProcessOutputTypes.STDOUT);
     }
     assertEquals(expected, actual.toString());
   }
-
 }

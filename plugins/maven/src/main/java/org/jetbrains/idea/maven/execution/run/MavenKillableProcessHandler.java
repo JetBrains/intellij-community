@@ -31,11 +31,11 @@ class MavenKillableProcessHandler extends KillableProcessHandler implements Mave
 
   @Override
   public void addProcessListener(@NotNull ProcessListener listener) {
-    super.addProcessListener(filtered(listener, this, myWithLoggingOutputStream));
+    super.addProcessListener(filtered(listener, this, myWithLoggingOutputStream, false));
   }
 
   @Override
   public void addProcessListener(final @NotNull ProcessListener listener, @NotNull Disposable parentDisposable) {
-    super.addProcessListener(filtered(listener, this, myWithLoggingOutputStream), parentDisposable);
+    super.addProcessListener(filtered(listener, this, myWithLoggingOutputStream, false), parentDisposable);
   }
 }

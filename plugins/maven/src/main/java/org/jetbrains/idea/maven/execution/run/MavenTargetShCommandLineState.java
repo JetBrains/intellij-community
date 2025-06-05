@@ -102,7 +102,7 @@ public class MavenTargetShCommandLineState extends CommandLineState implements T
         new StartBuildEventImpl(descriptor, ""), useMaven4());
 
     processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
-    buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler, useMaven4()));
+    buildView.attachToProcess(new MavenHandlerFilterSpyWrapper(processHandler, useMaven4(), false));
 
 
     AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};

@@ -12,14 +12,17 @@ import java.io.OutputStream;
 class MavenHandlerFilterSpyWrapper extends ProcessHandler implements MavenSpyFilter {
   private final ProcessHandler myOriginalHandler;
   private final boolean myWithLoggingOutputStream;
+  private final boolean myStopWinCmd;
 
   /**
    * @param original                original process handler to wrap
    * @param withLoggingOutputStream is maven output stream is wrapped with  Maven LoggingOutputStream which adds prefix [INFO] [stdout] to process
+   * @param stopWinCmd              if true, stop win cmd process without waiting input from user
    */
-  MavenHandlerFilterSpyWrapper(ProcessHandler original, boolean withLoggingOutputStream) {
+  MavenHandlerFilterSpyWrapper(ProcessHandler original, boolean withLoggingOutputStream, boolean stopWinCmd) {
     myOriginalHandler = original;
     myWithLoggingOutputStream = withLoggingOutputStream;
+    myStopWinCmd = stopWinCmd;
   }
 
   @Override
@@ -64,11 +67,11 @@ class MavenHandlerFilterSpyWrapper extends ProcessHandler implements MavenSpyFil
 
   @Override
   public void addProcessListener(@NotNull ProcessListener listener) {
-    myOriginalHandler.addProcessListener(filtered(listener, this, myWithLoggingOutputStream));
+    myOriginalHandler.addProcessListener(filtered(listener, this, myWithLoggingOutputStream, myStopWinCmd));
   }
 
   @Override
   public void addProcessListener(final @NotNull ProcessListener listener, @NotNull Disposable parentDisposable) {
-    myOriginalHandler.addProcessListener(filtered(listener, this, myWithLoggingOutputStream), parentDisposable);
+    myOriginalHandler.addProcessListener(filtered(listener, this, myWithLoggingOutputStream, myStopWinCmd), parentDisposable);
   }
 }
