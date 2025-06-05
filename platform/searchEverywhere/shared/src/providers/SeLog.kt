@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 enum class SeLog {
@@ -55,3 +56,16 @@ enum class SeLog {
     private fun String.withSePrefix(category: SeLog): String = "SearchEverywhere2 ($category): $this"
   }
 }
+
+@ApiStatus.Internal
+suspend fun <T> computeCatchingOrNull(catchMessage: (Throwable) -> String, block: suspend () -> T?): T? =
+  try {
+    block()
+  }
+  catch (c: CancellationException) {
+    throw c
+  }
+  catch (e: Throwable) {
+    SeLog.warn(catchMessage(e))
+    null
+  }

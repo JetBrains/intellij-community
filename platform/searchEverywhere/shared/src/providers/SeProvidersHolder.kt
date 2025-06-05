@@ -18,8 +18,6 @@ import fleet.kernel.DurableRef
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.let
 
 /**
  * We could have just one Map<SeProviderId, SeItemDataProvider>, but we can't, because in the previous Search Everywhere implementation
@@ -161,13 +159,4 @@ suspend fun SeWrappedLegacyContributorItemsProviderFactory.getItemsProviderCatch
 
 @ApiStatus.Internal
 suspend fun SeItemsProviderFactory.computeCatchingOrNull(block: suspend () -> SeItemsProvider?): SeItemsProvider? =
-  try {
-    block()
-  }
-  catch (c: CancellationException) {
-    throw c
-  }
-  catch (e: Exception) {
-    SeLog.warn("SearchEverywhere items provider wasn't created: ${id}. Exception:\n${e.message}")
-    null
-  }
+  computeCatchingOrNull({ e -> "SearchEverywhere items provider wasn't created: ${id}. Exception:\n${e.message}" }, block)
