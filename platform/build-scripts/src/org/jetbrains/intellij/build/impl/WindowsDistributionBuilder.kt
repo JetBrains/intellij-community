@@ -170,7 +170,7 @@ internal class WindowsDistributionBuilder(
         val installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDir)
         validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
         launch(Dispatchers.IO + CoroutineName("build Windows ${arch.dirName} installer")) {
-          exePath = buildNsisInstaller(osAndArchSpecificDistPath, additionalDirectoryToInclude = productJsonDir, suffix(arch), customizer, runtimeDir, context)
+          exePath = buildNsisInstaller(osAndArchSpecificDistPath, additionalDirectoryToInclude = productJsonDir, suffix(arch), customizer, runtimeDir, context, arch)
         }
       }
 

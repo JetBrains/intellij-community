@@ -34,5 +34,5 @@ LangString uninstall_previous_installations_silent ${LANG_ENGLISH} "Uninstall si
 LangString uninstaller_relocated ${LANG_ENGLISH} "Uninstall hasn't detected folder of ${MUI_PRODUCT} installation. Probably uninstall.exe was moved from the installation folder."
 LangString choose_empty_folder ${LANG_ENGLISH} "$INSTDIR is not empty.$\nPlease select an empty folder."
 LangString application_running ${LANG_ENGLISH} "${MUI_PRODUCT} is running. Close the application and press OK to retry the uninstallation, or press Cancel to abort."
-LangString not_supported_32bit_win_version ${LANG_ENGLISH} "${MUI_PRODUCT} does not support Microsoft Windows 32-bit version."
+LangString unsupported_win_version ${LANG_ENGLISH} "${MUI_PRODUCT} requires a 64-bit version of Windows 10 1607 or newer."
 LangString out_of_disk_space ${LANG_ENGLISH} "Error: Not enough disk space!"

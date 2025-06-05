@@ -1256,13 +1256,17 @@ SectionEnd
 Function .onInit
   SetRegView 32
   Call createLog
-  ${If} ${RunningX64}
-    Goto init
-  ${Else}
-    MessageBox MB_OK "$(not_supported_32bit_win_version)"
+
+  ${GetNativeMachineArchitecture} $R0
+  ${IfNot} $R0 == ${INSTALLER_ARCH}
+  ${OrIfNot} ${AtLeastBuild} 14393  ; Windows 10 1607 / Windows Server 2016
+    ${LogText} "Architecture: expected=${INSTALLER_ARCH} actual=$R0"
+    ${IfNot} ${Silent}
+      MessageBox MB_OK "$(unsupported_win_version)"
+    ${EndIf}
     Abort
   ${EndIf}
-init:
+
   !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
   Call getInstallationOptionsPositions

@@ -34,5 +34,5 @@ LangString uninstall_previous_installations_silent ${LANG_JAPANESE} "サイレ�
 LangString uninstaller_relocated ${LANG_JAPANESE} "アンインストールする際に ${MUI_PRODUCT} のインストールフォルダーが検出されませんでした。uninstall.exe がインストールフォルダーから移動された可能性があります。"
 LangString choose_empty_folder ${LANG_JAPANESE} "$INSTDIR が空ではありません。$\n空のフォルダーを選択してください。"
 LangString application_running ${LANG_JAPANESE} "${MUI_PRODUCT} が動作中です。アプリケーションを閉じた後に OK をクリックしてアンインストールを再試行するか、キャンセルを押して中断してください。"
-LangString not_supported_32bit_win_version ${LANG_JAPANESE} "${MUI_PRODUCT} は Microsoft Windows 32 ビットバージョンをサポートしていません。"
+LangString unsupported_win_version ${LANG_JAPANESE} "${MUI_PRODUCT} には、Windows 10 1607 以降の 64 ビット版が必要です。"
 LangString out_of_disk_space ${LANG_JAPANESE} "エラー: ディスク空き容量が不足しています！"

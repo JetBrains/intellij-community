@@ -34,7 +34,8 @@ internal suspend fun buildNsisInstaller(
   suffix: String,
   customizer: WindowsDistributionCustomizer,
   runtimeDir: Path,
-  context: BuildContext
+  context: BuildContext,
+  arch: JvmArchitecture,
 ): Path? {
   val communityHome = context.paths.communityHomeDir
   val outFileName = context.productProperties.getBaseArtifactName(context) + suffix
@@ -66,7 +67,7 @@ internal suspend fun buildNsisInstaller(
     generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
     generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh"))
 
-    prepareConfigurationFiles(nsiConfDir, winDistPath, customizer, context)
+    prepareConfigurationFiles(nsiConfDir, winDistPath, customizer, context, arch)
     for (it in customizer.customNsiConfigurationFiles) {
       val file = Path.of(it)
       val copy = nsiConfDir.resolve(file.fileName)
@@ -139,7 +140,13 @@ private suspend fun prepareNsis(context: BuildContext, tempDir: Path): Pair<Path
   return nsisDir to nsisBin
 }
 
-private fun prepareConfigurationFiles(nsiConfDir: Path, winDistPath: Path, customizer: WindowsDistributionCustomizer, context: BuildContext) {
+private fun prepareConfigurationFiles(
+  nsiConfDir: Path,
+  winDistPath: Path,
+  customizer: WindowsDistributionCustomizer,
+  context: BuildContext,
+  arch: JvmArchitecture,
+) {
   val productProperties = context.productProperties
   Files.writeString(nsiConfDir.resolve("paths.nsi"), $$"""
     !define IMAGES_LOCATION "$${FileUtilRt.toSystemDependentName(customizer.installerImagesPath!!)}"
@@ -152,9 +159,14 @@ private fun prepareConfigurationFiles(nsiConfDir: Path, winDistPath: Path, custo
     if (customizer.fileAssociations.isEmpty()) "NoAssociation"
     else customizer.fileAssociations.joinToString(separator = ",") { if (it.startsWith(".")) it else ".${it}" }
   val appInfo = context.applicationInfo
+  val expectedArch = when (arch) {  // https://learn.microsoft.com/en-us/windows/win32/sysinfo/image-file-machine-constants
+    JvmArchitecture.x64 -> 34404  // IMAGE_FILE_MACHINE_AMD64
+    JvmArchitecture.aarch64 -> 43620  // IMAGE_FILE_MACHINE_ARM64
+  }
   Files.writeString(nsiConfDir.resolve("strings.nsi"), """
+    !define INSTALLER_ARCH ${expectedArch}
     !define MANUFACTURER "${appInfo.shortCompanyName}"
-    !define MUI_PRODUCT  "${customizer.getFullNameIncludingEdition(appInfo)}"
+    !define MUI_PRODUCT "${customizer.getFullNameIncludingEdition(appInfo)}"
     !define PRODUCT_FULL_NAME "${customizer.getFullNameIncludingEditionAndVendor(appInfo)}"
     !define PRODUCT_EXE_FILE "${productProperties.baseFileName}64.exe"
     !define PRODUCT_ICON_FILE "install.ico"

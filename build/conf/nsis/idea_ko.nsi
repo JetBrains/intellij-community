@@ -34,5 +34,5 @@ LangString uninstall_previous_installations_silent ${LANG_KOREAN} "확인 없이
 LangString uninstaller_relocated ${LANG_KOREAN} "제거 프로그램이 ${MUI_PRODUCT}이(가) 설치된 폴더를 찾지 못했습니다. uninstall.exe가 설치 폴더에서 옮겨졌을 수 있습니다."
 LangString choose_empty_folder ${LANG_KOREAN} "$INSTDIR이(가) 비어 있지 않습니다.$\n빈 폴더를 선택하세요."
 LangString application_running ${LANG_KOREAN} "${MUI_PRODUCT}이(가) 실행 중입니다. 애플리케이션을 닫고 확인을 눌러 제거를 재시도하거나 취소를 눌러 중단하세요."
-LangString not_supported_32bit_win_version ${LANG_KOREAN} "${MUI_PRODUCT}이(가) 32비트 버전의 Microsoft Windows를 지원하지 않습니다."
+LangString unsupported_win_version ${LANG_KOREAN} "${MUI_PRODUCT}에는 64비트 Windows 10 1607 이상 버전이 필요합니다."
 LangString out_of_disk_space ${LANG_KOREAN} "오류: 디스크 공간이 충분하지 않습니다!"
