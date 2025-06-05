@@ -26,9 +26,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
-import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
@@ -38,7 +35,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
 internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
     KotlinApplicableInspectionBase<KtExpression, SuspiciousImplicitCoroutineScopeReceiverAccessInspection.Context>() {
-    
+
     class Context(val receiverLabelName: Name)
 
     @JvmField
@@ -96,7 +93,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
             is KaReceiverParameterSymbol -> receiverSymbol.owningCallableSymbol
             else -> null
         } ?: return null 
-        
+
         // Check if there are any suspend lambdas between the call PSI and the implicit ContextReceiver symbol PSI
         if (!hasSuspendFunctionsInPath(element, receiverOwnerSymbol)) return null
 
@@ -108,7 +105,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
 
     context(KaSession) 
     private fun KaType.isCoroutineScopeType(acceptSubtypes: Boolean = true): Boolean {
-        val coroutineScopeType = findClass(COROUTINE_SCOPE_CLASS_ID)?.defaultType ?: return false
+        val coroutineScopeType = findClass(CoroutinesIds.COROUTINE_SCOPE_CLASS_ID)?.defaultType ?: return false
 
         return if (acceptSubtypes) {
             this.isSubtypeOf(coroutineScopeType)
@@ -143,7 +140,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
                     return true
                 }
             }
-            
+
             if (current is KtNamedFunction) {
                 if (current.modifierList?.hasSuspendModifier() == true) {
                     return true
@@ -161,8 +158,8 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
      */
     private fun isAllowedSuspendingFunction(functionSymbol: KaFunctionSymbol): Boolean =
         when (functionSymbol.callableId) {
-            SELECT_BUILDER_INVOKE_ID,
-            SELECT_BUILDER_ON_TIMEOUT_ID -> true
+            CoroutinesIds.SELECT_BUILDER_INVOKE_ID,
+            CoroutinesIds.SELECT_BUILDER_ON_TIMEOUT_ID -> true
 
             else -> false
         }
@@ -209,13 +206,3 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
         )
     }
 }
-
-private val COROUTINE_SCOPE_CLASS_ID: ClassId = ClassId.fromString("kotlinx/coroutines/CoroutineScope")
-
-private val SELECTS_PACKAGE: FqName = FqName("kotlinx.coroutines.selects")
-
-private val SELECT_BUILDER_CLASS_ID: ClassId = ClassId(SELECTS_PACKAGE, Name.identifier("SelectBuilder"))
-
-private val SELECT_BUILDER_INVOKE_ID: CallableId = CallableId(SELECT_BUILDER_CLASS_ID, Name.identifier("invoke"))
-
-private val SELECT_BUILDER_ON_TIMEOUT_ID: CallableId = CallableId(SELECTS_PACKAGE, Name.identifier("onTimeout"))
