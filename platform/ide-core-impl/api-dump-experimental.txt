@@ -18,5 +18,3 @@ f:com.intellij.openapi.project.ex.ProjectManagerEx$Companion
 - *f:isChildProcessPath(java.nio.file.Path):Z
 com.intellij.openapi.project.ex.ProjectNameProvider
 - *:getNameFile(com.intellij.openapi.project.Project):java.nio.file.Path
-f:com.intellij.openapi.vfs.newvfs.VfsImplUtil
-- *s:refreshAndFindFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String,java.util.function.Consumer):V
