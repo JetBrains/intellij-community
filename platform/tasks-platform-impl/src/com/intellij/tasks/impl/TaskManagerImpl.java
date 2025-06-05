@@ -134,7 +134,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     };
 
     // remove repositories pertaining to non-existent types
-    TaskRepositoryType.addEPListChangeListener(this, () -> {
+    TaskRepositoryType.addEPListChangeListener(coroutineScope, () -> {
       List<Class<?>> possibleRepositoryClasses = TaskRepositoryType.getRepositoryClasses();
       List<TaskRepository> repositories = myRepositories;
       boolean removed = repositories.removeIf(repository -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.injected.editor.VirtualFileWindow
@@ -23,6 +23,7 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.PathUtil
 import com.intellij.util.Query
 import com.intellij.util.ThreeState
@@ -30,10 +31,11 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.TimeUnit.MINUTES
 import java.util.concurrent.atomic.AtomicReference
 
-class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
+class WorkspaceFileIndexImpl(private val project: Project, coroutineScope: CoroutineScope) : WorkspaceFileIndexEx, Disposable.Default {
   companion object {
     val EP_NAME: ExtensionPointName<WorkspaceFileIndexContributor<*>> = ExtensionPointName("com.intellij.workspaceModel.fileIndexContributor")
   }
@@ -41,7 +43,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   private val indexDataReference = AtomicReference<WorkspaceFileIndexData>(EmptyWorkspaceFileIndexData.NOT_INITIALIZED)
   private val throttledLogger = ThrottledLogger(thisLogger(), MINUTES.toMillis(1))
 
-  constructor(project: Project, indexData: WorkspaceFileIndexData) : this(project) {
+  @NonInjectable
+  constructor(project: Project, indexData: WorkspaceFileIndexData, coroutineScope: CoroutineScope) : this(project, coroutineScope) {
     indexDataReference.set(indexData)
   }
 
@@ -73,8 +76,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
       }
     })
     LowMemoryWatcher.register({ indexData.onLowMemory() }, project)
-    val clearData = Runnable { indexData = EmptyWorkspaceFileIndexData.RESET }
-    EP_NAME.addChangeListener(clearData, this)
+    EP_NAME.addChangeListener(coroutineScope) { indexData = EmptyWorkspaceFileIndexData.RESET }
   }
 
   override fun isInWorkspace(file: VirtualFile): Boolean {

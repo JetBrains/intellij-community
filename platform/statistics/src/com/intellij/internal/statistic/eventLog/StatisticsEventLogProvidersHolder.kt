@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.EP_NAME
@@ -9,16 +9,17 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.util.PlatformUtils
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.APP)
-internal class StatisticsEventLogProvidersHolder {
+internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope) {
   private val eventLoggerProviders: AtomicReference<Map<String, StatisticsEventLoggerProvider>> =
     AtomicReference(calculateEventLogProvider())
 
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME)) {
-      EP_NAME.addChangeListener(Runnable { eventLoggerProviders.set(calculateEventLogProvider()) }, null)
+      EP_NAME.addChangeListener(coroutineScope) { eventLoggerProviders.set(calculateEventLogProvider()) }
     }
   }
 

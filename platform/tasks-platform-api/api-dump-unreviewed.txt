@@ -195,7 +195,6 @@ a:com.intellij.tasks.TaskRepositoryType
 - java.lang.Comparable
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
-- s:addEPListChangeListener(com.intellij.openapi.Disposable,java.lang.Runnable):V
 - compareTo(com.intellij.tasks.TaskRepositoryType):I
 - a:createEditor(com.intellij.tasks.TaskRepository,com.intellij.openapi.project.Project,com.intellij.util.Consumer):com.intellij.tasks.config.TaskRepositoryEditor
 - a:createRepository():com.intellij.tasks.TaskRepository

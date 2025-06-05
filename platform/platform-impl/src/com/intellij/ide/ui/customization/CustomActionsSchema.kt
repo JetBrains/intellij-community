@@ -96,7 +96,9 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     idToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu())
     idToName.put(IdeActions.GROUP_NAVBAR_TOOLBAR, ActionsTreeUtil.getNavigationBarToolbar())
     fillExtGroups(idToName, extGroupIds)
-    EP_NAME.addChangeListener({ fillExtGroups(idToName, extGroupIds) }, null)
+    if (coroutineScope != null) {
+      EP_NAME.addChangeListener(coroutineScope) { fillExtGroups(idToName, extGroupIds) }
+    }
     idToName.putAll(additionalIdToName)
     this.idToName = idToName
   }

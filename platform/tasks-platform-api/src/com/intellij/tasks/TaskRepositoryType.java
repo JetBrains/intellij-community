@@ -1,16 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -33,8 +30,9 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
     return ContainerUtil.map(getRepositoryTypes(), TaskRepositoryType::getRepositoryClass);
   }
 
-  public static <T> void addEPListChangeListener(@NotNull Disposable disposable, @NotNull Runnable listener) {
-    EP_NAME.addChangeListener(listener, disposable);
+  @ApiStatus.Internal
+  public static void addEPListChangeListener(@NotNull CoroutineScope coroutineScope, @NotNull Runnable listener) {
+    EP_NAME.addChangeListener(coroutineScope, listener);
   }
 
   @Override
