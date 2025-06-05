@@ -3,7 +3,6 @@ aliases_recursive.py
 aliases_type_statement.py
 aliases_typealiastype.py
 aliases_variance.py
-annotations_forward_refs.py
 annotations_generators.py
 annotations_typeexpr.py
 callables_annotation.py
