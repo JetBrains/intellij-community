@@ -57,8 +57,10 @@ class SeResultsAccumulator(providerIdsAndLimits: Map<SeProviderId, Int>) {
         items.values.firstOrNull {
           it.providerId.isTopHit() && it.presentation.text == newItem.presentation.text
         }?.let { oldItem ->
+          // If we found a duplicated topHit value, we check the priority. If the priority is higher, we replace the existing one,
+          // otherwise, we ignore this element by returning null from the function
           if (newItem.weight > oldItem.weight) oldItem.uuid
-          else null
+          else return null
         }
       }
       else null
