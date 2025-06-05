@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.core.script.k2.settings
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.K2ScriptDefinitionProvider
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 
 @Service(Service.Level.PROJECT)
 @State(
@@ -19,7 +19,7 @@ class ScriptDefinitionPersistentSettings(val project: Project) :
 
     fun setSettings(settings: List<ScriptDefinitionSetting>) {
         loadState(DefinitionSettingsState(settings.toMutableList()))
-        K2ScriptDefinitionProvider.getInstance(project).reloadDefinitionsFromSources()
+        ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
     }
 
     companion object {

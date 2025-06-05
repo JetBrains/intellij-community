@@ -16,7 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.K2ScriptDefinitionProvider
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource
 import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import javax.swing.JComponent
@@ -35,7 +35,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project, val cor
         val settingsByDefinitionId = ScriptDefinitionPersistentSettings.getInstance(project)
             .getIndexedSettingsPerDefinition()
 
-        val definitions = K2ScriptDefinitionProvider.getInstance(project).getDefinitions()
+        val definitions = ScriptDefinitionProviderImpl.getInstance(project).getDefinitions()
             .sortedBy { settingsByDefinitionId[it.definitionId]?.index ?: it.order }
             .map {
                 DefinitionModelDescriptor(

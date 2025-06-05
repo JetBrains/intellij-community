@@ -92,11 +92,11 @@ class ScriptTemplatesFromDependenciesDefinitionSource(
             it.apply { order = Int.MIN_VALUE }
         }
 
-        scriptingDebugLog { "Script definitions found: ${_definitions?.joinToString()}" }
+        scriptingDebugLog { "Script definitions found: ${newDefinitions.joinToString()}" }
 
         _definitions = newDefinitions
 
-        K2ScriptDefinitionProvider.getInstance(project).reloadDefinitionsFromSources()
+        ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
 
         return newDefinitions
     }

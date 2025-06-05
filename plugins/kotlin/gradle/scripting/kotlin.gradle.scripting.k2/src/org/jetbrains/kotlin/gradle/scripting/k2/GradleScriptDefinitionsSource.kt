@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.core.script.NewScriptFileInfo
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationResolverDelegate
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptWorkspaceModelManagerDelegate
-import org.jetbrains.kotlin.idea.core.script.k2.definitions.K2ScriptDefinitionProvider
+import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
 import org.jetbrains.kotlin.idea.core.script.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
@@ -56,7 +56,7 @@ class GradleScriptDefinitionsStorage(val project: Project) :
         updateState {
             it.copy(workingDir = workingDir, gradleHome = gradleHome, javaHome = javaHome, gradleVersion = gradleVersion)
         }
-        K2ScriptDefinitionProvider.getInstance(project).reloadDefinitionsFromSources()
+        ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
     }
 
     private fun loadAndWrapDefinitions(
