@@ -1201,9 +1201,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
             return false;
           }
 
-          int resCount = resultsCount.incrementAndGet();
-
-          if (resCount >= ShowUsagesAction.getUsagesPageSize()) {
+          if (resultsCount.getAndIncrement() >= ShowUsagesAction.getUsagesPageSize()) {
             onStop(hash);
             return false;
           }
