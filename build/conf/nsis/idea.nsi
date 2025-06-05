@@ -12,7 +12,6 @@ SetCompressor lzma
 !include "version.nsi"
 !include WinVer.nsh
 !include x64.nsh
-!define Environment 'Environment'
 
 ; Product with version (IntelliJ IDEA #xxxx).
 ; Used in registry to put each build info into the separate subkey
@@ -34,7 +33,6 @@ Var productLauncher
 Var baseRegKey
 Var productDir
 Var silentMode
-Var pathEnvVar
 Var requiredDiskSpace
 
 ; position of controls for Uninstall Old Installations dialog
@@ -1055,41 +1053,36 @@ command_exists:
 FunctionEnd
 
 
-Function getPathEnvVar
-  ${LogText} "  get value of user's PATH env var"
-  ClearErrors
-  ReadRegStr $pathEnvVar HKCU ${Environment} "Path"
-  IfErrors do_not_change_path ;size of PATH is more than NSIS_MAX_STRLEN
-  ${LogText} "  PATH: $pathEnvVar"
-  Goto done
-do_not_change_path:
-  ${LogText} "  an error occured on readyng value of PATH env var"
-  StrCpy $pathEnvVar ""
-done:
-FunctionEnd
-
-
-Function createProductEnvVar
-  WriteRegStr HKCU ${Environment} "${MUI_PRODUCT}" "$INSTDIR\bin;"
-  ${LogText} "  create product env var: ${MUI_PRODUCT} $INSTDIR\bin;"
-FunctionEnd
-
-
 Function updatePathEnvVar
-  StrCmp $pathEnvVar "" do_not_change_path 0
+  Var /GLOBAL pathEnvVar
+
+  ClearErrors
+  ReadRegStr $pathEnvVar HKCU "Environment" "Path"
+  ${If} ${Errors}
+    ${LogText} "  ERROR: cannot read the 'Path' env var"
+    Return
+  ${EndIf}
+
+  ${LogText} "  writing product env var '${MUI_PRODUCT}' = '$INSTDIR\bin'"
+  WriteRegStr HKCU "Environment" "${MUI_PRODUCT}" "$INSTDIR\bin"
+  ${If} ${Errors}
+    ${LogText} "  ERROR: cannot write a product env var"
+    Return
+  ${EndIf}
+
   ${StrStr} $R0 $pathEnvVar "%${MUI_PRODUCT}%"
-  StrCmp $R0 "" absent done
-absent:
-  WriteRegExpandStr HKCU ${Environment} "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
-  ${LogText} "  update PATH: HKCU ${Environment} Path $pathEnvVar;%${MUI_PRODUCT}%"
-  Goto done
-do_not_change_path:
-  ${LogText} ""
-  ${LogText} "  NOTE: Length of PATH is bigger than 8192 bytes."
-  ${LogText} "  Installer cannot update it."
-  ${LogText} ""
-  MessageBox MB_OK|MB_ICONEXCLAMATION " $(path_var_too_long)"
-done:
+  ${If} $R0 != ""
+    ${LogText} "  '${MUI_PRODUCT}' is already on the path"
+    Return
+  ${EndIf}
+
+  WriteRegExpandStr HKCU "Environment" "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
+  ${If} ${Errors}
+    ${LogText} "  ERROR: cannot write the 'Path' env var"
+    Return
+  ${EndIf}
+
+  SetRebootFlag true
 FunctionEnd
 
 
@@ -1114,11 +1107,8 @@ Section "IDEA Files" CopyIdeaFiles
 
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
   ${If} $R0 == 1
-    ${LogText} "Update PATH env var"
-    Call getPathEnvVar
-    Call createProductEnvVar
+    ${LogText} "Updating the 'Path' env var"
     CALL updatePathEnvVar
-    SetRebootFlag true
   ${EndIf}
 
   ${If} $updateContextMenu > 0

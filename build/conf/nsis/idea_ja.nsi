@@ -35,5 +35,4 @@ LangString uninstaller_relocated ${LANG_JAPANESE} "アンインストールす�
 LangString choose_empty_folder ${LANG_JAPANESE} "$INSTDIR が空ではありません。$\n空のフォルダーを選択してください。"
 LangString application_running ${LANG_JAPANESE} "${MUI_PRODUCT} が動作中です。アプリケーションを閉じた後に OK をクリックしてアンインストールを再試行するか、キャンセルを押して中断してください。"
 LangString not_supported_32bit_win_version ${LANG_JAPANESE} "${MUI_PRODUCT} は Microsoft Windows 32 ビットバージョンをサポートしていません。"
-LangString path_var_too_long ${LANG_JAPANESE} "PATH の長さが 8192 バイトを超えています。$\nインストーラーは PATH を更新できません。"
 LangString out_of_disk_space ${LANG_JAPANESE} "エラー: ディスク空き容量が不足しています！"

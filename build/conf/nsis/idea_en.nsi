@@ -35,5 +35,4 @@ LangString uninstaller_relocated ${LANG_ENGLISH} "Uninstall hasn't detected fold
 LangString choose_empty_folder ${LANG_ENGLISH} "$INSTDIR is not empty.$\nPlease select an empty folder."
 LangString application_running ${LANG_ENGLISH} "${MUI_PRODUCT} is running. Close the application and press OK to retry the uninstallation, or press Cancel to abort."
 LangString not_supported_32bit_win_version ${LANG_ENGLISH} "${MUI_PRODUCT} does not support Microsoft Windows 32-bit version."
-LangString path_var_too_long ${LANG_ENGLISH} "Length of PATH is bigger than 8192 bytes.$\nInstaller can not update it."
 LangString out_of_disk_space ${LANG_ENGLISH} "Error: Not enough disk space!"
