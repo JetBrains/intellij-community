@@ -306,6 +306,8 @@ com.intellij.openapi.externalSystem.importing.ImportSpec
 - a:getExternalSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - a:getProgressExecutionMode():com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 - a:getProject():com.intellij.openapi.project.Project
+- a:getProjectResolverPolicy():com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
+- a:getRerunAction():java.lang.Runnable
 - a:getUserData():com.intellij.openapi.util.UserDataHolderBase
 - a:getVmOptions():java.lang.String
 - a:isActivateBuildToolWindowOnFailure():Z
@@ -326,7 +328,11 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - navigateToError():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - use(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - usePreviewMode():com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withActivateToolWindowOnFailure(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withActivateToolWindowOnStart(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withArguments(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withPreviewMode(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withRerunAction(java.lang.Runnable):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withVmOptions(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 c:com.intellij.openapi.externalSystem.model.DataNode

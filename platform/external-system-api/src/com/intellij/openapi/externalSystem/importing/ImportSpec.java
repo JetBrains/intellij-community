@@ -60,5 +60,11 @@ public interface ImportSpec {
   String getArguments();
 
   @Nullable
+  ProjectResolverPolicy getProjectResolverPolicy();
+
+  @Nullable
+  Runnable getRerunAction();
+
+  @Nullable
   UserDataHolderBase getUserData();
 }

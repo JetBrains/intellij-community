@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,27 +22,39 @@ public class ImportSpecBuilder {
 
   private final @NotNull Project myProject;
   private final @NotNull ProjectSystemId myExternalSystemId;
-  private @NotNull ProgressExecutionMode myProgressExecutionMode;
-  private @Nullable ExternalProjectRefreshCallback myCallback;
-  private boolean isPreviewMode;
+  private @NotNull ProgressExecutionMode myProgressExecutionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC;
+  private @Nullable ExternalProjectRefreshCallback myCallback = null;
+  private boolean isPreviewMode = false;
   private boolean isActivateBuildToolWindowOnStart = false;
   private boolean isActivateBuildToolWindowOnFailure = true;
   private @NotNull ThreeState isNavigateToError = ThreeState.UNSURE;
-  private @Nullable String myVmOptions;
-  private @Nullable String myArguments;
-  private boolean myCreateDirectoriesForEmptyContentRoots;
-  private @Nullable ProjectResolverPolicy myProjectResolverPolicy;
-  private @Nullable UserDataHolderBase myUserData;
+  private @Nullable String myVmOptions = null;
+  private @Nullable String myArguments = null;
+  private boolean myCreateDirectoriesForEmptyContentRoots = false;
+  private @Nullable ProjectResolverPolicy myProjectResolverPolicy = null;
+  private @Nullable Runnable myRerunAction = null;
+  private @Nullable UserDataHolderBase myUserData = null;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
     myExternalSystemId = id;
-    myProgressExecutionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC;
   }
 
-  public ImportSpecBuilder(ImportSpec importSpec) {
-    this(importSpec.getProject(), importSpec.getExternalSystemId());
-    apply(importSpec);
+  public ImportSpecBuilder(@NotNull ImportSpec importSpec) {
+    myProject = importSpec.getProject();
+    myExternalSystemId = importSpec.getExternalSystemId();
+    myProgressExecutionMode = importSpec.getProgressExecutionMode();
+    myCallback = importSpec.getCallback();
+    isPreviewMode = importSpec.isPreviewMode();
+    isActivateBuildToolWindowOnStart = importSpec.isActivateBuildToolWindowOnStart();
+    isActivateBuildToolWindowOnFailure = importSpec.isActivateBuildToolWindowOnFailure();
+    isNavigateToError = importSpec.isNavigateToError();
+    myVmOptions = importSpec.getVmOptions();
+    myArguments = importSpec.getArguments();
+    myCreateDirectoriesForEmptyContentRoots = importSpec.shouldCreateDirectoriesForEmptyContentRoots();
+    myProjectResolverPolicy = importSpec.getProjectResolverPolicy();
+    myRerunAction = importSpec.getRerunAction();
+    myUserData = importSpec.getUserData();
   }
 
   public ImportSpecBuilder use(@NotNull ProgressExecutionMode executionMode) {
@@ -64,7 +77,12 @@ public class ImportSpecBuilder {
   }
 
   public ImportSpecBuilder usePreviewMode() {
-    isPreviewMode = true;
+    return withPreviewMode(true);
+  }
+
+  @CheckReturnValue
+  public ImportSpecBuilder withPreviewMode(boolean isPreviewMode) {
+    this.isPreviewMode = isPreviewMode;
     return this;
   }
 
@@ -73,14 +91,24 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  @CheckReturnValue
+  public ImportSpecBuilder withActivateToolWindowOnStart(boolean activateToolWindowBeforeRun) {
+    isActivateBuildToolWindowOnStart = activateToolWindowBeforeRun;
+    return this;
+  }
+
   public ImportSpecBuilder activateBuildToolWindowOnStart() {
-    isActivateBuildToolWindowOnStart = true;
+    return withActivateToolWindowOnStart(true);
+  }
+
+  @CheckReturnValue
+  public ImportSpecBuilder withActivateToolWindowOnFailure(boolean activateToolWindowOnFailure) {
+    isActivateBuildToolWindowOnFailure = activateToolWindowOnFailure;
     return this;
   }
 
   public ImportSpecBuilder dontReportRefreshErrors() {
-    isActivateBuildToolWindowOnFailure = false;
-    return this;
+    return withActivateToolWindowOnFailure(false);
   }
 
   public ImportSpecBuilder dontNavigateToError() {
@@ -109,47 +137,33 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  public ImportSpecBuilder withRerunAction(@Nullable Runnable rerunAction) {
+    myRerunAction = rerunAction;
+    return this;
+  }
+
   public ImportSpecBuilder withUserData(@Nullable UserDataHolderBase userData) {
     myUserData = userData;
     return this;
   }
 
   public ImportSpec build() {
-    ImportSpecImpl mySpec = new ImportSpecImpl(myProject, myExternalSystemId);
-    mySpec.setProgressExecutionMode(myProgressExecutionMode);
-    mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
-    mySpec.setPreviewMode(isPreviewMode);
-    mySpec.setActivateBuildToolWindowOnStart(isActivateBuildToolWindowOnStart);
-    mySpec.setActivateBuildToolWindowOnFailure(isActivateBuildToolWindowOnFailure);
-    mySpec.setNavigateToError(isNavigateToError);
-    mySpec.setArguments(myArguments);
-    mySpec.setVmOptions(myVmOptions);
-    mySpec.setProjectResolverPolicy(myProjectResolverPolicy);
-    mySpec.setUserData(myUserData);
-    ExternalProjectRefreshCallback callback;
-    if (myCallback != null) {
-      callback = myCallback;
-    }
-    else if (myProjectResolverPolicy == null || !myProjectResolverPolicy.isPartialDataResolveAllowed()) {
-      callback = new DefaultProjectRefreshCallback(mySpec);
-    }
-    else {
-      callback = null;
-    }
-    mySpec.setCallback(callback);
-    return mySpec;
-  }
-
-  private void apply(ImportSpec spec) {
-    myProgressExecutionMode = spec.getProgressExecutionMode();
-    myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
-    myCallback = spec.getCallback();
-    isPreviewMode = spec.isPreviewMode();
-    isActivateBuildToolWindowOnStart = spec.isActivateBuildToolWindowOnStart();
-    isActivateBuildToolWindowOnFailure = spec.isActivateBuildToolWindowOnFailure();
-    myArguments = spec.getArguments();
-    myVmOptions = spec.getVmOptions();
-    myUserData = spec.getUserData();
+    return new ImportSpecImpl(
+      myProject,
+      myExternalSystemId,
+      myProgressExecutionMode,
+      myCallback,
+      isPreviewMode,
+      myCreateDirectoriesForEmptyContentRoots,
+      isActivateBuildToolWindowOnStart,
+      isActivateBuildToolWindowOnFailure,
+      isNavigateToError,
+      myVmOptions,
+      myArguments,
+      myProjectResolverPolicy,
+      myRerunAction,
+      myUserData
+    );
   }
 
   @ApiStatus.Internal

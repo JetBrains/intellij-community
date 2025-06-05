@@ -228,8 +228,8 @@ public final class ExternalSystemUtil {
                                     final boolean isPreviewMode,
                                     final @NotNull ProgressExecutionMode progressExecutionMode) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
-      .use(progressExecutionMode);
-    if (isPreviewMode) builder.usePreviewMode();
+      .use(progressExecutionMode)
+      .withPreviewMode(isPreviewMode);
     refreshProject(externalProjectPath, builder);
   }
 
@@ -250,8 +250,8 @@ public final class ExternalSystemUtil {
                                     final @NotNull ProgressExecutionMode progressExecutionMode) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
       .callback(callback)
-      .use(progressExecutionMode);
-    if (isPreviewMode) builder.usePreviewMode();
+      .use(progressExecutionMode)
+      .withPreviewMode(isPreviewMode);
     refreshProject(externalProjectPath, builder);
   }
 
@@ -274,9 +274,9 @@ public final class ExternalSystemUtil {
                                     final boolean reportRefreshError) {
     var builder = new ImportSpecBuilder(project, externalSystemId)
       .callback(callback)
-      .use(progressExecutionMode);
-    if (isPreviewMode) builder.usePreviewMode();
-    if (!reportRefreshError) builder.dontReportRefreshErrors();
+      .use(progressExecutionMode)
+      .withPreviewMode(isPreviewMode)
+      .withActivateToolWindowOnFailure(reportRefreshError);
     refreshProject(externalProjectPath, builder);
   }
 
@@ -527,7 +527,7 @@ public final class ExternalSystemUtil {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(false);
-        Runnable rerunRunnable = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getRerunAction() : null;
+        Runnable rerunRunnable = importSpec.getRerunAction();
         if (rerunRunnable == null) {
           refreshProject(externalProjectPath, importSpec);
         }
