@@ -18,10 +18,11 @@ struct DebugValue {
   4: string value,
   5: bool isContainer,
   6: string shape,
-  7: bool isReturnedValue,
-  8: bool isIPythonHidden,
-  9: bool isErrorOnEval,
-  10: string typeRendererId
+  7: string arrayElementType,
+  8: bool isReturnedValue,
+  9: bool isIPythonHidden,
+  10: bool isErrorOnEval,
+  11: string typeRendererId
 }
 
 typedef list<DebugValue> GetFrameResponse

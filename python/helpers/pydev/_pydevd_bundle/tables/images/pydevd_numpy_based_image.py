@@ -34,7 +34,7 @@ def create_image(arr):
 
         arr_to_convert = arr_to_convert.numpy()
         arr_to_convert = np.where(arr_to_convert == None, 0, arr_to_convert)
-        arr_to_convert = np.nan_to_num(arr_to_convert, nan=0)
+        arr_to_convert = np.nan_to_num(arr_to_convert, nan=0, posinf=255, neginf=0)
 
         if np.iscomplexobj(arr_to_convert) or np.issubdtype(arr_to_convert.dtype, np.timedelta64):
             raise ValueError("Only non-complex numeric array types are supported.")

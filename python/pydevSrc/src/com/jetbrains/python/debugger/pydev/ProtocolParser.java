@@ -273,8 +273,8 @@ public final class ProtocolParser {
     final String name = readString(reader, "name", null);
     final String isErrorOnEval = readString(reader, "isErrorOnEval", "");
     if (HIDDEN_TYPES.contains(name)) {
-      return new PyDebugValue(name, null, "", "", false, null, false,
-                              false, "True".equals(isErrorOnEval), null, frameAccessor);
+      return new PyDebugValue(name, null, "", "", false, null, null, false,
+                              false, "True".equals(isErrorOnEval), null, null, frameAccessor);
     }
 
     final String type = readString(reader, "type", null);
@@ -286,17 +286,19 @@ public final class ProtocolParser {
     final String isIPythonHidden = readString(reader, "isIPythonHidden", "");
     String typeRendererId = readString(reader, "typeRendererId", "");
     String shape = readString(reader, "shape", "");
+    String arrayElementType = readString(reader, "arrayElementType", "");
 
     if (value.startsWith(type + ": ")) {  // drop unneeded prefix
       value = value.substring(type.length() + 2);
     }
     if (shape.isEmpty()) shape = null;
+    if (arrayElementType.isEmpty()) arrayElementType = null;
     if (typeRendererId.isEmpty()) typeRendererId = null;
     if (type.equals(DataFrameDebugValue.pyDataFrameType)) {
       return new DataFrameDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
                                      "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
     }
-    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, "True".equals(isReturnedValue),
+    return new PyDebugValue(name, type, qualifier, value, "True".equals(isContainer), shape, arrayElementType, "True".equals(isReturnedValue),
                             "True".equals(isIPythonHidden), "True".equals(isErrorOnEval), typeRendererId, frameAccessor);
   }
 
@@ -316,7 +318,7 @@ public final class ProtocolParser {
       result.setType(readString(reader, "type", null));
       result.setMax(readString(reader, "max", null));
       result.setMin(readString(reader, "min", null));
-      result.setValue(new PyDebugValue(slice, null, null, null, false, null, false, false, false, null, frameAccessor));
+      result.setValue(new PyDebugValue(slice, null, null, null, false, null, null,false, false, false, null, null, frameAccessor));
       reader.moveUp();
     }
     if ("headerdata".equals(reader.peekNextChild())) {

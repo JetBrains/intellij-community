@@ -65,6 +65,7 @@ public class PyDebugValue extends XNamedValue {
   protected @Nullable String myValue;
   private final boolean myContainer;
   private final @Nullable String myShape;
+  private final @Nullable String myArrayElementType;
   private final boolean myIsReturnedVal;
   private final boolean myIsIPythonHidden;
   private @Nullable PyDebugValue myParent;
@@ -129,12 +130,47 @@ public class PyDebugValue extends XNamedValue {
                       @Nullable String typeRendererId,
                       final @Nullable PyDebugValue parent,
                       final @NotNull PyFrameAccessor frameAccessor) {
+    this(name, type, typeQualifier, value, container, shape, null, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId, parent, frameAccessor);
+  }
+
+
+  public PyDebugValue(final @NotNull String name,
+                      final @Nullable String type,
+                      @Nullable String typeQualifier,
+                      final @Nullable String value,
+                      final boolean container,
+                      @Nullable String shape,
+                      @Nullable String arrayElementType,
+                      boolean isReturnedVal,
+                      boolean isIPythonHidden,
+                      boolean errorOnEval,
+                      @Nullable String typeRendererId,
+                      final @NotNull PyFrameAccessor frameAccessor) {
+    this(name, type, typeQualifier, value, container, shape, arrayElementType, isReturnedVal, isIPythonHidden, errorOnEval, typeRendererId,
+         null, frameAccessor);
+  }
+
+
+  public PyDebugValue(final @NotNull String name,
+                      final @Nullable String type,
+                      @Nullable String typeQualifier,
+                      final @Nullable String value,
+                      final boolean container,
+                      @Nullable String shape,
+                      @Nullable String arrayElementType,
+                      boolean isReturnedVal,
+                      boolean isIPythonHidden,
+                      boolean errorOnEval,
+                      @Nullable String typeRendererId,
+                      final @Nullable PyDebugValue parent,
+                      final @NotNull PyFrameAccessor frameAccessor) {
     super(name);
     myType = type;
     myTypeQualifier = Strings.isNullOrEmpty(typeQualifier) ? null : typeQualifier;
     myValue = value;
     myContainer = container;
     myShape = shape;
+    myArrayElementType = arrayElementType;
     myIsReturnedVal = isReturnedVal;
     myIsIPythonHidden = isIPythonHidden;
     myErrorOnEval = errorOnEval;
@@ -149,7 +185,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   public PyDebugValue(@NotNull PyDebugValue value, @NotNull String newName) {
-    this(newName, value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.getShape(), value.isReturnedVal(),
+    this(newName, value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(), value.getShape(), value.getArrayElementType(), value.isReturnedVal(),
          value.isIPythonHidden(), value.isErrorOnEval(), value.getTypeRendererId(), value.getParent(), value.getFrameAccessor());
     myOffset = value.getOffset();
     setLoadValuePolicy(value.getLoadValuePolicy());
@@ -202,6 +238,10 @@ public class PyDebugValue extends XNamedValue {
 
   public @Nullable String getTypeRendererId() {
     return myTypeRendererId;
+  }
+
+  public @Nullable String getArrayElementType() {
+    return myArrayElementType;
   }
 
   public @Nullable PyDebugValue getParent() {
@@ -538,7 +578,10 @@ public class PyDebugValue extends XNamedValue {
       case NodeTypes.NDARRAY_NODE_TYPE, NodeTypes.EAGER_TENSOR_NODE_TYPE, NodeTypes.RESOURCE_VARIABLE_NODE_TYPE,
            NodeTypes.SPARSE_TENSOR_NODE_TYPE, NodeTypes.TENSOR_NODE_TYPE -> {
         int[] shape = extractShape(debugValue);
-        yield isValidArrayShape(shape);
+        String arrayElementType = debugValue.getArrayElementType();
+        boolean isConvertibleDataType = arrayElementType != null && !arrayElementType.isEmpty() &&
+                                  (arrayElementType.contains("float") || arrayElementType.contains("bool") || arrayElementType.contains("int"));
+        yield isConvertibleDataType && isConvertibleArrayShape(shape);
       }
       case NodeTypes.IMAGE_NODE_TYPE, NodeTypes.PNG_IMAGE_NODE_TYPE, NodeTypes.JPEG_IMAGE_NODE_TYPE, NodeTypes.FIGURE_NODE_TYPE -> true;
       default -> false;
@@ -561,7 +604,7 @@ public class PyDebugValue extends XNamedValue {
       .toArray();
   }
 
-  private static boolean isValidArrayShape(int[] shape) {
+  private static boolean isConvertibleArrayShape(int[] shape) {
     if (shape == null || shape.length == 0) {
       return false;
     }

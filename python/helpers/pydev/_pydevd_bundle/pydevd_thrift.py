@@ -341,6 +341,14 @@ def var_to_struct(val, name, format='%s', do_trim=True, evaluate_full_value=True
     except:
         pass
 
+    # data type info to xml (for arrays and tensors)
+    debug_value.arrayElementType = ''
+    try:
+        if hasattr(v, 'dtype') and hasattr(v.dtype, 'name'):
+            debug_value.arrayElementType = v.dtype.name
+    except:
+        pass
+
     # additional info to struct
     if is_exception_on_eval:
         debug_value.isErrorOnEval = True
