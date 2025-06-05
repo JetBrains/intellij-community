@@ -25,7 +25,6 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -94,9 +93,8 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     LOGGER.debug("Creating pipenv environment")
     return withBackgroundProgress(module.project, PyBundle.message("python.sdk.setting.up.pipenv.sentence")) {
       val basePath = module.basePath ?: return@withBackgroundProgress PyResult.localizedError("Can't find module base path")
-      val pipEnv = setupPipEnv(Path.of(basePath), null, true).onFailure {
+      val pipEnv = setupPipEnv(Path.of(basePath), null, true).getOr {
         PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
-      }.getOr {
         return@withBackgroundProgress it
       }
 
