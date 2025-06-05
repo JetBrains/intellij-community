@@ -7,7 +7,7 @@ import com.intellij.notebooks.visualization.SwingClientProperty
 import com.intellij.notebooks.visualization.context.EditorCellDataContext
 import com.intellij.notebooks.visualization.context.NotebookDataContext.NOTEBOOK_CELL_OUTPUT_DATA_KEY
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory
-import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
+import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.executionCountHolder
 import com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactoryGetter
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
 import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
@@ -227,7 +227,7 @@ class EditorCellOutputsView(
     result?.also {
       val component = it.component
       component.outputComponentFactory = factory
-      component.gutterPainter = it.gutterPainter
+      component.executionCountHolder = it.executionCountHolder
 
       val disposable = it.disposable
       if (disposable != null) {
