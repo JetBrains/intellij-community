@@ -2,9 +2,9 @@
 package com.intellij.platform.syntax.psi
 
 import com.intellij.platform.syntax.SyntaxElementType
-import com.intellij.platform.syntax.impl.fastutil.ints.Int2ObjectOpenHashMap
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.util.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 
 /**

@@ -2,9 +2,9 @@
 package com.intellij.platform.syntax.impl.builder
 
 import com.intellij.platform.syntax.Logger
-import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
-import com.intellij.platform.syntax.impl.fastutil.ints.IntList
-import com.intellij.platform.syntax.impl.fastutil.ints.lastIndexOf
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.IntList
+import com.intellij.util.fastutil.ints.lastIndexOf
 import fleet.util.multiplatform.linkToActual
 import kotlin.math.abs
 import kotlin.math.max

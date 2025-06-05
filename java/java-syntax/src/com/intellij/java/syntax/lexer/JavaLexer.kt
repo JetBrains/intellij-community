@@ -5,10 +5,10 @@ import com.intellij.java.syntax.element.JavaDocSyntaxElementType
 import com.intellij.java.syntax.element.JavaSyntaxTokenType
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.element.SyntaxTokenTypes.WHITE_SPACE
-import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
 import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.lexer.LexerPosition
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.util.fastutil.ints.IntArrayList
 import com.intellij.util.text.CharArrayUtilKmp.fromSequenceWithoutCopying
 
 class JavaLexer(level: LanguageLevel) : Lexer {
