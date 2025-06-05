@@ -13616,6 +13616,75 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull")
+    public static class SimplifyAssertNotNull extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/comments.kt");
+        }
+
+        @TestMetadata("commentsNoMessage.kt")
+        public void testCommentsNoMessage() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/commentsNoMessage.kt");
+        }
+
+        @TestMetadata("complicatedMessageLambda.kt")
+        public void testComplicatedMessageLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/complicatedMessageLambda.kt");
+        }
+
+        @TestMetadata("eqNull.kt")
+        public void testEqNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/eqNull.kt");
+        }
+
+        @TestMetadata("errorFunctionInContext.kt")
+        public void testErrorFunctionInContext() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/errorFunctionInContext.kt");
+        }
+
+        @TestMetadata("falseAssert.kt")
+        public void testFalseAssert() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/falseAssert.kt");
+        }
+
+        @TestMetadata("noMessage.kt")
+        public void testNoMessage() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/noMessage.kt");
+        }
+
+        @TestMetadata("otherVariable.kt")
+        public void testOtherVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/otherVariable.kt");
+        }
+
+        @TestMetadata("qualifiedAccess.kt")
+        public void testQualifiedAccess() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/qualifiedAccess.kt");
+        }
+
+        @TestMetadata("withMessage.kt")
+        public void testWithMessage() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/withMessage.kt");
+        }
+
+        @TestMetadata("withMessageLambdaOutside.kt")
+        public void testWithMessageLambdaOutside() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/simplifyAssertNotNull/withMessageLambdaOutside.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/canBeVal")
     public static class CanBeVal extends AbstractK2LocalInspectionTest {
         @java.lang.Override
