@@ -3,6 +3,7 @@ package com.intellij.devkit.runtimeModuleRepository.jps.build
 
 object RuntimeModuleRepositoryBuildConstants {
   const val JAR_REPOSITORY_FILE_NAME: String = "module-descriptors.jar"
+  const val COMPACT_REPOSITORY_FILE_NAME: String = "module-descriptors.dat"
   const val GENERATOR_VERSION: Int = 2
 
   /**

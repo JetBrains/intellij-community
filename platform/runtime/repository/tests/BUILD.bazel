@@ -16,6 +16,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "@lib//:junit5Pioneer",
   ]
 )
 
