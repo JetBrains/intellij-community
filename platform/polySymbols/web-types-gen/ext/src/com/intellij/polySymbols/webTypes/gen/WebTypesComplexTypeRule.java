@@ -957,6 +957,10 @@ public class WebTypesComplexTypeRule implements Rule<JPackage, JType> {
       if (schema.isGenerated()) {
         return schema.getJavaType();
       }
+      else if (node.has("enum")) {
+        return ruleFactory.getEnumRule().apply(name != null ? name : defaultName,
+                                               node, parent, container, schema);
+      }
       else {
         return ruleFactory.getTypeRule().apply(name != null ? name : defaultName,
                                                node, parent, container, schema);

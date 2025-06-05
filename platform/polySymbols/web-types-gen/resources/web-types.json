@@ -587,6 +587,17 @@
       "type": "boolean"
     },
     "priority": {
+      "description": "The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.",
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "$ref": "#/definitions/priority-level"
+        }
+      ]
+    },
+    "priority-level": {
       "type": "string",
       "enum": [
         "lowest",

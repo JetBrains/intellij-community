@@ -49,8 +49,13 @@ public class NamePatternDefault
     @JsonProperty("deprecated")
     @JsonPropertyDescription("Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.")
     private Deprecated deprecated = null;
+    /**
+     * The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.
+     * 
+     */
     @JsonProperty("priority")
-    private com.intellij.polySymbols.webTypes.json.BaseContribution.Priority priority;
+    @JsonPropertyDescription("The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.")
+    private Priority priority;
     @JsonProperty("proximity")
     private Integer proximity;
     /**
@@ -147,13 +152,21 @@ public class NamePatternDefault
         this.deprecated = deprecated;
     }
 
+    /**
+     * The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.
+     * 
+     */
     @JsonProperty("priority")
-    public com.intellij.polySymbols.webTypes.json.BaseContribution.Priority getPriority() {
+    public Priority getPriority() {
         return priority;
     }
 
+    /**
+     * The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.
+     * 
+     */
     @JsonProperty("priority")
-    public void setPriority(com.intellij.polySymbols.webTypes.json.BaseContribution.Priority priority) {
+    public void setPriority(Priority priority) {
         this.priority = priority;
     }
 

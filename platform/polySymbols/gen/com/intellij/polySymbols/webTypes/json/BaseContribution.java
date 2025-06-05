@@ -2,15 +2,11 @@
 package com.intellij.polySymbols.webTypes.json;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 
 /**
@@ -128,8 +124,13 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("experimental")
     @JsonPropertyDescription("Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.")
     private Experimental experimental = null;
+    /**
+     * The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.
+     * 
+     */
     @JsonProperty("priority")
-    private BaseContribution.Priority priority;
+    @JsonPropertyDescription("The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.")
+    private Priority priority;
     @JsonProperty("proximity")
     private Integer proximity;
     /**
@@ -410,13 +411,21 @@ public abstract class BaseContribution implements GenericContributionsHost
         this.experimental = experimental;
     }
 
+    /**
+     * The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.
+     * 
+     */
     @JsonProperty("priority")
-    public BaseContribution.Priority getPriority() {
+    public Priority getPriority() {
         return priority;
     }
 
+    /**
+     * The priority of the contribution or the pattern. You can use predefined constants `lowest`(`0.0`), `low`(`1.0`), `normal`(`10.0`), `high`(`50.0`), `highest`(`100.0`), or a custom number. By default the `normal` priority is used.
+     * 
+     */
     @JsonProperty("priority")
-    public void setPriority(BaseContribution.Priority priority) {
+    public void setPriority(Priority priority) {
         this.priority = priority;
     }
 
@@ -584,48 +593,6 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("exclusive-contributions")
     public void setExclusiveContributions(List<String> exclusiveContributions) {
         this.exclusiveContributions = exclusiveContributions;
-    }
-
-    public enum Priority {
-
-        LOWEST("lowest"),
-        LOW("low"),
-        NORMAL("normal"),
-        HIGH("high"),
-        HIGHEST("highest");
-        private final String value;
-        private final static Map<String, BaseContribution.Priority> CONSTANTS = new HashMap<String, BaseContribution.Priority>();
-
-        static {
-            for (BaseContribution.Priority c: values()) {
-                CONSTANTS.put(c.value, c);
-            }
-        }
-
-        private Priority(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return this.value;
-        }
-
-        @JsonValue
-        public String value() {
-            return this.value;
-        }
-
-        @JsonCreator
-        public static BaseContribution.Priority fromValue(String value) {
-            BaseContribution.Priority constant = CONSTANTS.get(value);
-            if (constant == null) {
-                throw new IllegalArgumentException(value);
-            } else {
-                return constant;
-            }
-        }
-
     }
 
 }
