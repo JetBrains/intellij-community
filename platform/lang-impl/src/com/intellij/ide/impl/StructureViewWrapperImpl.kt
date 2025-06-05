@@ -239,7 +239,10 @@ class StructureViewWrapperImpl(
           myFirstRun = false
 
           coroutineScope.launch {
-            if (file != null) {
+            if (!myToolWindow.isVisible) {
+              return@launch
+            }
+            else if (file != null) {
               setFile(file)
             }
             else if (firstRun) {
