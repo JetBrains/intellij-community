@@ -1,24 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.name
 import com.intellij.collaboration.ui.util.popup.*
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -101,7 +101,7 @@ object ChooserPopupUtil {
   ): T? = coroutineScope {
     val listModel = CollectionListModel<T>()
     val list = createList(listModel, renderer)
-    val loadingListener = ListLoadingListener(this, itemsLoader, list, listModel, popupConfig.errorPresenter)
+    val loadingListener = ListLoadingListener(itemsLoader, list, listModel, popupConfig.errorPresenter)
 
     @Suppress("UNCHECKED_CAST")
     val popup = PopupChooserBuilder(list)
@@ -111,9 +111,11 @@ object ChooserPopupUtil {
       .createPopup()
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
-
     PopupUtil.setPopupToggleComponent(popup, point.component)
-    popup.showAndAwaitSubmission(list, point, popupConfig.showDirection)
+
+    popup.showAndAwaitSubmission(list, point, popupConfig.showDirection) {
+      loadingListener.afterShow(popup)
+    }
   }
 
   @JvmOverloads
@@ -169,11 +171,11 @@ object ChooserPopupUtil {
       }
     }
     val loadingListener = ListLoadingListener(
-      this, selectableBatchesFlow, list, listModel, popupConfig.errorPresenter
+      selectableBatchesFlow, list, listModel, popupConfig.errorPresenter
     )
 
     @Suppress("UNCHECKED_CAST")
-    val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+    val popup = PopupChooserBuilder(list)
       .setFilteringEnabled { selectableItem ->
         selectableItem as SelectableWrapper<T>
         presenter(selectableItem.value).shortText
@@ -185,7 +187,10 @@ object ChooserPopupUtil {
 
     CollaborationToolsPopupUtil.configureSearchField(popup, popupConfig)
     PopupUtil.setPopupToggleComponent(popup, point.component)
-    popup.showAndAwaitSubmissions(listModel, point, popupConfig.showDirection)
+
+    popup.showAndAwaitSubmissions(listModel, point, popupConfig.showDirection) {
+      loadingListener.afterShow(popup)
+    }
   }
 
   private fun <T> createList(listModel: CollectionListModel<T>, renderer: ListCellRenderer<T>): JBList<T> =
@@ -236,16 +241,24 @@ object ChooserPopupUtil {
     builder.setMovable(popupConfig.isMovable)
     builder.setResizable(popupConfig.isResizable)
 
+    builder.setAutoPackHeightOnFiltering(popupConfig.isAutoPackHeightOnFiltering)
+
     return builder
   }
 }
 
+/**
+ * @param isAutoPackHeightOnFiltering If turned on, the popup height will automatically be minimized when a filter is installed
+ * and when the number of items in the list changes. This should be turned off for popups that are shown above some point to
+ * prevent the popup getting detached from the anchorpoint.
+ */
 data class PopupConfig(
   val title: @NlsContexts.PopupTitle String? = null,
   val searchTextPlaceHolder: @NlsContexts.StatusText String? = null,
   val alwaysShowSearchField: Boolean = true,
   val isMovable: Boolean = true,
   val isResizable: Boolean = true,
+  val isAutoPackHeightOnFiltering: Boolean = false,
   val showDirection: ShowDirection = ShowDirection.BELOW,
   val errorPresenter: ErrorStatusPresenter.Text<Throwable>? = null,
 ) {
@@ -260,19 +273,13 @@ enum class ShowDirection {
 }
 
 private class ListLoadingListener<T>(
-  private val parentScope: CoroutineScope,
   private val itemsFlow: Flow<Result<List<T>>>,
   private val list: JBList<T>,
   private val listModel: CollectionListModel<T>,
   private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?,
 ) : JBPopupListener {
-  private var cs: CoroutineScope? = null
-
-  override fun beforeShown(event: LightweightWindowEvent) {
-    val cs = parentScope.childScope()
-    this.cs = cs
-
-    cs.launchNow {
+  fun afterShow(popup: JBPopup) {
+    popup.content.launchOnShow(javaClass.name) {
       list.setPaintBusy(true)
       list.emptyText.clear()
       try {
@@ -300,11 +307,6 @@ private class ListLoadingListener<T>(
     if (selected != -1) {
       list.selectedIndex = selected
     }
-  }
-
-  override fun onClosed(event: LightweightWindowEvent) {
-    cs?.cancel()
-    cs = null
   }
 }
 

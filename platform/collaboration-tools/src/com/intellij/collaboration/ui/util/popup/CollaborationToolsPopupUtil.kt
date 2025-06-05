@@ -66,13 +66,25 @@ suspend fun <T> JBPopup.showAndAwaitListSubmission(point: RelativePoint, showDir
   return showAndAwaitSubmission(list, point, showDirection)
 }
 
-suspend fun <T> JBPopup.showAndAwaitSubmission(list: JList<T>, point: RelativePoint, showDirection: ShowDirection): T? {
+suspend fun <T> JBPopup.showAndAwaitSubmission(
+  list: JList<T>,
+  point: RelativePoint,
+  showDirection: ShowDirection,
+  afterShow: () -> Unit = { },
+): T? {
   showPopup(point, showDirection)
+  afterShow()
   return waitForChoiceAsync(list)
 }
 
-suspend fun <T> JBPopup.showAndAwaitSubmissions(originalListModel: ListModel<SelectableWrapper<T>>, point: RelativePoint, showDirection: ShowDirection): List<T> {
+suspend fun <T> JBPopup.showAndAwaitSubmissions(
+  originalListModel: ListModel<SelectableWrapper<T>>,
+  point: RelativePoint,
+  showDirection: ShowDirection,
+  afterShow: () -> Unit = {}
+): List<T> {
   showPopup(point, showDirection)
+  afterShow()
   return waitForMultipleChoiceAsync(originalListModel)
 }
 
