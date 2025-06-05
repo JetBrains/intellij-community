@@ -1,24 +1,20 @@
 package com.intellij.cce.interpreter
 
-import com.intellij.cce.core.Lookup
-import com.intellij.cce.core.Session
-import com.intellij.cce.core.Suggestion
-import com.intellij.cce.core.SuggestionSource
-import com.intellij.cce.core.TokenProperties
+import com.intellij.cce.core.*
 import com.intellij.cce.evaluable.AIA_PROBLEMS
-import com.intellij.cce.evaluation.data.Binding
 import com.intellij.cce.evaluation.data.Bindable
-import com.intellij.cce.evaluation.data.EvalDataDescription
+import com.intellij.cce.evaluation.data.Binding
 import com.intellij.cce.evaluation.data.DataProps
+import com.intellij.cce.evaluation.data.EvalDataDescription
 
 /**
  * Feature invoker that add an abstraction layer over evaluation data storage format.
  */
 interface BindingFeatureInvoker : FeatureInvoker {
-  fun invoke(properties: TokenProperties): BoundEvalData
+  fun invoke(properties: TokenProperties, expectedText: String?): BoundEvalData
 
   override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session =
-    invoke(properties).session(expectedText, offset, properties, sessionId)
+    invoke(properties, expectedText).session(expectedText, offset, properties, sessionId)
 
   override fun comparator(generated: String, expected: String): Boolean = true
 
