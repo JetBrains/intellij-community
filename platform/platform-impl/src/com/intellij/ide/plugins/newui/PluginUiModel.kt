@@ -147,7 +147,10 @@ private fun PluginUiModel.getPluginDescriptor(): IdeaPluginDescriptor {
 
 @ApiStatus.Internal
 enum class PluginSource {
-  LOCAL, REMOTE, BOTH
+  LOCAL, REMOTE, BOTH;
+
+  fun isLocal(): Boolean = this == LOCAL || this == BOTH
+  fun isRemote(): Boolean = this == REMOTE || this == BOTH
 }
 
 /**
