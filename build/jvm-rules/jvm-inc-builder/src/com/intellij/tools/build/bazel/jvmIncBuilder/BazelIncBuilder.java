@@ -181,9 +181,7 @@ public class BazelIncBuilder {
           if (!diagnostic.hasErrors()) {
             if (!srcSnapshotDelta.isRecompileAll()) {
               // delete outputs corresponding to deleted or recompiled sources
-              for (CompilerRunner compiler : roundCompilers) {
-                cleanOutputsForCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), compiler, storageManager.getCompositeOutputBuilder());
-              }
+              cleanOutputsForCompiledFiles(context, srcSnapshotDelta, storageManager.getGraph(), roundCompilers, storageManager.getCompositeOutputBuilder());
             }
 
             for (CompilerRunner runner : roundCompilers) {
@@ -342,19 +340,23 @@ public class BazelIncBuilder {
     return srcSnapshotDelta.isRecompileAll() || srcSnapshotDelta.getChangedPercent() > RECOMPILE_CHANGED_RATIO_PERCENT;
   }
 
-  private static void cleanOutputsForCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, CompilerRunner compiler, ZipOutputBuilder outBuilder) {
+  private static void cleanOutputsForCompiledFiles(BuildContext context, NodeSourceSnapshotDelta snapshotDelta, DependencyGraph depGraph, Iterable<CompilerRunner> compilers, ZipOutputBuilder outBuilder) {
     // separately logging deleted outputs for 'deleted' and 'modified' sources to adjust for existing test data
+    
+    BooleanFunction<@NotNull NodeSource> isCompilableFilter =
+      src -> find(compilers, compiler -> compiler.canCompile(src)) != null;
+    
     Collection<String> cleanedOutputsOfDeletedSources = deleteCompilerOutputs(
-      depGraph, filter(snapshotDelta.getDeleted(), compiler::canCompile), outBuilder, new ArrayList<>()
+      depGraph, filter(snapshotDelta.getDeleted(), isCompilableFilter), outBuilder, new ArrayList<>()
     );
     logDeletedPaths(context, cleanedOutputsOfDeletedSources);
 
     Collection<String> cleanedOutputsOfModifiedSources = deleteCompilerOutputs(
-      depGraph, filter(snapshotDelta.getModified(), compiler::canCompile), outBuilder, new ArrayList<>()
+      depGraph, filter(snapshotDelta.getModified(), isCompilableFilter), outBuilder, new ArrayList<>()
     );
     if (!cleanedOutputsOfDeletedSources.isEmpty() || !cleanedOutputsOfModifiedSources.isEmpty()) {
       // delete additional paths only if there are any changes in the output caused by changes in sources
-      for (String toDelete : compiler.getOutputPathsToDelete()) {
+      for (String toDelete : flat(map(compilers, CompilerRunner::getOutputPathsToDelete))) {
         if (outBuilder.deleteEntry(toDelete)) {
           cleanedOutputsOfModifiedSources.add(toDelete);
         }

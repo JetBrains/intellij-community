@@ -8,6 +8,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.bazel.jvm.*
 import org.jetbrains.bazel.jvm.util.*
+import org.jetbrains.kotlin.config.IncrementalCompilation
 import java.io.InputStream
 import java.io.Writer
 import java.nio.file.Files
@@ -27,11 +28,18 @@ internal class BazelIncExecutor : WorkRequestExecutor<WorkRequestWithDigests> {
 //      Logger.setFactory { BazelLogger(category = IdeaLogRecordFormatter.smartAbbreviate(it), span = globalSpanForIJLogger) }
     }
 
+    private fun configureGlobals() {
+      System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
+      System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JS_PROPERTY, "true")
+      System.setProperty("kotlin.jps.dumb.mode", "true")
+    }
+
     @JvmStatic
     fun main(args: Array<String>) {
       processRequests(
         startupArgs = args,
         executorFactory = { tracer, scope ->
+          configureGlobals()
           configureLogging(tracer, scope)
           return@processRequests BazelIncExecutor()
         },
