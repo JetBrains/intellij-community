@@ -42,24 +42,11 @@
 
     <syntax.elementTypeConverter language="XML" implementationClass="com.intellij.psi.xml.XmlElementTypeConverterExtension"/>
 
-
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
     <syntaxHighlighter key="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
 
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.XMLColorsPage"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.HTMLColorsPage"/>
-
-    <polySymbols.enableInLanguage language="HtmlCompatible"/>
-
-    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="UnknownSymbol"
-                                      toolShortName="HtmlUnknownAttribute"/>
-    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="UnknownSymbol"
-                                      toolShortName="HtmlUnknownTag"/>
-
-    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="DeprecatedSymbol"
-                                      toolShortName="HtmlDeprecatedAttribute"/>
-    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
-                                      toolShortName="HtmlDeprecatedTag"/>
   </extensions>
 </idea-plugin>

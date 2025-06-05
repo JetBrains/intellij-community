@@ -433,5 +433,10 @@
     <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
 
     <lang.floatingToolbar language="XML" minimal="true"/>
+
+    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="UnknownSymbol"
+                                       toolShortName="HtmlUnknownAttribute"/>
+    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="UnknownSymbol"
+                                       toolShortName="HtmlUnknownTag"/>
   </extensions>
 </idea-plugin>

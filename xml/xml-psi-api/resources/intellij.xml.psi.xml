@@ -28,5 +28,7 @@
     <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
     <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
+
+    <polySymbols.enableInLanguage language="HtmlCompatible"/>
   </extensions>
 </idea-plugin>
