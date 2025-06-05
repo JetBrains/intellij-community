@@ -19,6 +19,9 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.callExpressionVisitor
 
+/**
+ * @see MapAwaitOnCollectionOfDeferredInspection for a similar inspection for `map { it.await() }` calls.
+ */
 internal class ForEachJoinOnCollectionOfJobInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
     override fun getProblemDescription(
         element: KtCallExpression,
