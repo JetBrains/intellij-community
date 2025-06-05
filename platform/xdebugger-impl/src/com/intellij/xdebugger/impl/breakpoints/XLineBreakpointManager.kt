@@ -54,6 +54,7 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.MouseEvent
 
 @Internal
@@ -155,6 +156,11 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     return getDocumentBreakpointProxies(document).filterIsInstance<XLineBreakpointProxy.Monolith>().map { it.breakpoint }
   }
 
+  @TestOnly
+  fun getAllBreakpoints(): Collection<XLineBreakpointProxy> {
+    return myBreakpoints.values()
+  }
+
   @RequiresEdt
   private fun updateBreakpoints(document: Document) {
     if (!isEnabled) {
@@ -184,7 +190,8 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
           SlowOperations.knownIssue("IJPL-162343").use {
             Triple(b.type, b.getLine(), b.getHighlightRange()?.startOffset)
           }
-        } else {
+        }
+        else {
           // We cannot show multiple breakpoints of any type at the same line.
           b.getLine()
         }
