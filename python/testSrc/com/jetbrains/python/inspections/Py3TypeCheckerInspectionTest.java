@@ -2870,6 +2870,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  // PY-76845
   public void testNamedTupleCompatibleWithTuple() {
     doTestByText("""
                    from typing import NamedTuple
@@ -2880,6 +2881,17 @@ def foo(param: str | int) -> TypeGuard[str]:
 
                    x: tuple[str, int] = NT("a", 1)
                    y: tuple[str, int, str] = <warning descr="Expected type 'tuple[str, int, str]', got 'NT' instead">NT("a", 1)</warning>
+                   """);
+  }
+
+  // PY-75556
+  public void testLiteralTypeOnKwargs() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def f(**kwargs: Literal[1]): ...
+                   f(a=1)
+                   f(<warning descr="Expected type 'Literal[1]', got 'Literal[2]' instead">a=2</warning>)
                    """);
   }
 }
