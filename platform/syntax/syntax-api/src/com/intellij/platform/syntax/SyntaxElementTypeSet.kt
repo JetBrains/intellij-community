@@ -3,8 +3,8 @@
 
 package com.intellij.platform.syntax
 
-import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
 import com.intellij.platform.syntax.impl.util.BitSet
+import com.intellij.util.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.JvmName
 
