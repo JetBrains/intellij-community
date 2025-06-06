@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project
 
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -7,6 +7,7 @@ import com.intellij.ide.lightEdit.LightEditUtil.PROJECT_NAME
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
@@ -37,7 +38,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
     runUnderModalProgressIfIsEdt {
       val project = this@LightEditProjectImpl
       ProjectServiceInitializer.initEssential(project)
-      ProjectEntitiesStorage.getInstance().createEntity(project)
+      serviceAsync<ProjectEntitiesStorage>().createEntity(project)
       schedulePreloadServices(project)
       launch {
         project.createComponentsNonBlocking()

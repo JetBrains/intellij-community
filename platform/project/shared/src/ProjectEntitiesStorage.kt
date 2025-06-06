@@ -2,7 +2,7 @@
 package com.intellij.platform.project
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.withKernel
@@ -11,12 +11,13 @@ import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
+private val LOG = logger<ProjectEntitiesStorage>()
+
 /**
  * Provides the ability to control how projects are stored in Rhizome DB
  */
 @ApiStatus.Internal
 abstract class ProjectEntitiesStorage {
-
   /**
    * Creates an entity associated with the given project.
    * This involves registering and managing project entities in the shared Rhizome DB,
@@ -36,14 +37,14 @@ abstract class ProjectEntitiesStorage {
 
     LOG.info("Entity for project $projectId created successfully")
 
-    project.service<ProjectEntityScopeService>().coroutineScope.awaitCancellationAndInvoke {
+    project.serviceAsync<ProjectEntityScopeService>().coroutineScope.awaitCancellationAndInvoke {
       LOG.info("Project $projectId is disposed, removing entity")
       removeProjectEntity(project)
     }
   }
 
   @Service(Service.Level.PROJECT)
-  private class ProjectEntityScopeService(val coroutineScope: CoroutineScope)
+  private class ProjectEntityScopeService(@JvmField val coroutineScope: CoroutineScope)
 
   /**
    * Creates [ProjectEntity] for the given [Project] and stores it in the Rhizome DB.
@@ -58,10 +59,4 @@ abstract class ProjectEntitiesStorage {
    * @param project The project whose entity is to be removed.
    */
   protected abstract suspend fun removeProjectEntity(project: Project)
-
-  companion object {
-    private val LOG = logger<ProjectEntitiesStorage>()
-
-    fun getInstance(): ProjectEntitiesStorage = service()
-  }
 }
