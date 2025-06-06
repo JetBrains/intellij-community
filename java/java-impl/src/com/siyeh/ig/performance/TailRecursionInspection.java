@@ -17,8 +17,9 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -70,27 +71,26 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     return true;
   }
 
-  private static final class RemoveTailRecursionFix extends PsiUpdateModCommandQuickFix {
+  private static final class RemoveTailRecursionFix extends ModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("tail.recursion.replace.quickfix");
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiFile originalFile = updater.getOriginalFile(element.getContainingFile());
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (method == null) {
-        return;
-      }
-      PsiMethod originalMethod = PsiTreeUtil.findSameElementInCopy(method, originalFile);
-      final PsiCodeBlock originalBody = originalMethod.getBody();
-      if (originalBody == null) {
-        return;
+        return ModCommand.nop();
       }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
-        return;
+        return ModCommand.nop();
+      }
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return ModCommand.nop();
       }
       final @NonNls StringBuilder builder = new StringBuilder("{");
       final String thisVariableName;
@@ -100,7 +100,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         thisVariableName = styleManager.suggestUniqueVariableName("result", method, false);
         builder.append(' ').append(thisVariableName).append(" = this;");
       }
-      else if (methodContainsCallOnOtherInstance(originalMethod)) {
+      else if (methodContainsCallOnOtherInstance(method)) {
         builder.append(containingClass.getName());
         thisVariableName = styleManager.suggestUniqueVariableName("other", method, false);
         builder.append(' ').append(thisVariableName).append(" = this;");
@@ -118,16 +118,14 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       }
       builder.append("while(true)");
       final boolean methodMayCompleteNormally = ControlFlowUtils.methodMayCompleteNormally(method);
-      replaceTailCalls(originalBody, originalMethod, thisVariableName, tailCallIsContainedInLoop, methodMayCompleteNormally, builder);
+      replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, methodMayCompleteNormally, builder);
       if (methodMayCompleteNormally) {
         builder.insert(builder.length() - 1, "return;");
       }
       builder.append('}');
       final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(builder.toString(), method);
       removeEmptyElse(block);
-      PsiCodeBlock body = method.getBody();
-      assert body != null;
-      CodeStyleManager.getInstance(project).reformat(body.replace(block));
+      return ModCommand.psiUpdate(body, e -> CodeStyleManager.getInstance(project).reformat(e.replace(block)));
     }
 
     private static void removeEmptyElse(PsiElement element) {
