@@ -74,7 +74,7 @@ public class StorageManager implements CloseableExt {
   }
 
   public void cleanTrashDir() throws IOException {
-    Utils.deleteIfExists(cleanDir(DataPaths.getTrashDir(myContext)));
+    deleteRecursively(DataPaths.getTrashDir(myContext));
   }
 
   public static Path cleanDir(Path dir) throws IOException {
@@ -360,5 +360,30 @@ public class StorageManager implements CloseableExt {
         return FileVisitResult.CONTINUE;
       }
     });
+  }
+
+  private static void deleteRecursively(Path dataDir) throws IOException {
+    if (Files.exists(dataDir)) {
+      Files.walkFileTree(dataDir, new SimpleFileVisitor<>() {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          Utils.deleteIfExists(file);
+          return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+          if (exc != null) {
+            throw exc;
+          }
+          try {
+            Utils.deleteIfExists(dir);
+          }
+          catch (DirectoryNotEmptyException ignore) {
+          }
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    }
   }
 }
