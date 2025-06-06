@@ -21,12 +21,6 @@ f:com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
 - getLogFiles():java.util.List
 - getLogFilesExceptActive():java.util.List
-f:com.intellij.internal.statistic.eventLog.EventLogAppConnectionSettings
-- <init>():V
-- getExtraHeaders():java.util.Map
-- getSSLContext():javax.net.ssl.SSLContext
-- getUserAgent():java.lang.String
-- selectProxy(java.lang.String):com.intellij.internal.statistic.eventLog.connection.request.StatsProxyInfo
 com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 - a:optionsChanged(java.lang.String,java.util.Map):V
 f:com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService

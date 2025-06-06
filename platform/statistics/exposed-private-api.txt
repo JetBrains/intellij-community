@@ -3,7 +3,6 @@ com/intellij/internal/statistic/beans/MetricEvent
 com/intellij/internal/statistic/config/EventLogOptions
 com/intellij/internal/statistic/eventLog/ExternalEventLogSettings
 com/intellij/internal/statistic/eventLog/FeatureUsageData
-com/intellij/internal/statistic/eventLog/connection/request/StatsProxyInfo
 com/intellij/internal/statistic/eventLog/events/EventField
 com/intellij/internal/statistic/eventLog/events/EventId
 com/intellij/internal/statistic/eventLog/events/EventId1
