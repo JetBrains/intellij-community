@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="com.jetbrains.fus.reporting.connection.client" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:connection-client:134">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/connection-client/134/connection-client-134.jar">
+          <sha256sum>37d162fa8c57f22a0e3985f3802b46132d4ac774d515be46bacc7d465ce8fcfb</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/connection-client/134/connection-client-134.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/connection-client/134/connection-client-134-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
