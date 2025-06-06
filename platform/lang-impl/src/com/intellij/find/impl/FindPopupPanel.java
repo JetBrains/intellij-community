@@ -1147,12 +1147,9 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       @Override
       public void stop() {
         super.stop();
-        onStop(System.identityHashCode(this));
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
-            reset();
-          }
-        });
+        if (FindKey.isEnabled()) return;
+        int hashCode = System.identityHashCode(this);
+        searchStoppedProcessing(hashCode);
       }
     };
     myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
@@ -1266,7 +1263,8 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
           return true;
         }, () -> {
-            onFinish();
+          searchStoppedProcessing(myLoadingHash);
+          onFinish();
           return null;
         });
       }
@@ -1285,6 +1283,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       @Override
       public void onFinished() {
+        if (FindKey.isEnabled()) return;
         onFinish();
       }
 
@@ -1300,6 +1299,15 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         }, state);
       }
     }, myResultsPreviewSearchProgress);
+  }
+
+  private void searchStoppedProcessing(int hashCode) {
+    onStop(hashCode);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
+        reset();
+      }
+    });
   }
 
   public boolean isBackendValidationFinished() {
