@@ -396,6 +396,16 @@ public final class PluginInstaller {
 
     var targetPluginId = targetDescriptor.getPluginId();
 
+    // FIXME this is a bad place to do this IJPL-190806; bundled plugin may be not unloaded at this point
+    var loadedPlugin = PluginManagerCore.findPlugin(targetPluginId);
+    if (loadedPlugin != null && PluginManagerCore.isLoaded(loadedPlugin)) {
+      loadedPlugin.setMarkedForLoading(false);
+      var unloaded = DynamicPlugins.INSTANCE.unloadPlugin(loadedPlugin);
+      if (!unloaded) {
+        return false;
+      }
+    }
+
     if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
       var pluginSet = PluginManagerCore.getPluginSet();
       var wasInstalledBefore = pluginSet.isPluginInstalled(targetPluginId);
