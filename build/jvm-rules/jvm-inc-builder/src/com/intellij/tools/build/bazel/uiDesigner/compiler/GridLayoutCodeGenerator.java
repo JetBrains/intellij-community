@@ -14,8 +14,8 @@ public final class GridLayoutCodeGenerator extends LayoutCodeGenerator {
   private static final Method myInitConstraintsIndentMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int)");
   private static final Method myInitConstraintsIndentParentMethod = Method.getMethod("void <init> (int,int,int,int,int,int,int,int,java.awt.Dimension,java.awt.Dimension,java.awt.Dimension,int,boolean)");
   private static final Method ourGridLayoutManagerConstructor = Method.getMethod("void <init> (int,int,java.awt.Insets,int,int,boolean,boolean)");
-  private static final Type myGridLayoutManagerType = Type.getType(GridLayoutManager.class);
-  private static final Type myGridConstraintsType = Type.getType(GridConstraints.class);
+  private static final Type myGridLayoutManagerType = Type.getType("Lcom/intellij/uiDesigner/core/GridLayoutManager;"/*GridLayoutManager.class*/);
+  private static final Type myGridConstraintsType = Type.getType("Lcom/intellij/uiDesigner/core/GridConstraints;"/*GridConstraints.class*/);
 
   public static final GridLayoutCodeGenerator INSTANCE = new GridLayoutCodeGenerator();
 
