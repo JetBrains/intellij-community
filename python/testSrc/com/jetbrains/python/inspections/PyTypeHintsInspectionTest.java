@@ -2986,6 +2986,63 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                """);
   }
 
+  // PY-76851
+  public void testTypeAliasBoundMatch() {
+    doTestByText("""
+               type TypeAlias[S: str] = list[S]
+               r: TypeAlias[str] = [""]
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasBoundMismatch() {
+    doTestByText("""
+               type TypeAlias[S: int] = list[S]
+               r: TypeAlias[<warning descr="Expected type 'S ≤: int', got 'str' instead">str</warning>] = [""]
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasOldStyleBoundMismatch() {
+    doTestByText("""
+               from typing import TypeAlias, TypeVar
+               T = TypeVar("T", bound=str)
+               Alias: TypeAlias = list[T]
+               x: Alias[<warning descr="Expected type 'T ≤: str', got 'int' instead">int</warning>]
+               """);
+  }
+
+  // PY-76851
+  public void testClassVariadicTypeParameters() {
+    doTestByText("""
+               from typing import Callable
+
+               class A[S1, **S2]:
+                   t: Callable[S2, S1]
+               
+               a: A[int, ...]
+               """);
+  }
+
+  // PY-76851
+  public void testClassBoundMismatch() {
+    doTestByText("""
+               class C[T: str]: ...
+               c = C[<warning descr="Expected type 'T ≤: str', got 'int' instead">int</warning>]()
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasVariadicTypeParameters() {
+    doTestByText("""
+               from typing import Callable
+
+               type TypeAlias[S1, **S2] = Callable[S2, S1]
+               type TypeAlias2 = TypeAlias[int, ...]
+               """);
+  }
+
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
