@@ -54,7 +54,7 @@ internal suspend fun patchPluginXml(
   val includeInBuiltinCustomRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                          context.proprietaryBuildTools.artifactsServer != null
   val isBundled = !pluginsToPublish.contains(plugin)
-  val compatibleBuildRange = when {
+  val compatibleBuildRange = context.productProperties.customCompatibleBuildRange ?: when {
     isBundled || plugin.pluginCompatibilityExactVersion || includeInBuiltinCustomRepository -> CompatibleBuildRange.EXACT
     context.applicationInfo.isEAP || plugin.pluginCompatibilitySameRelease -> CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE

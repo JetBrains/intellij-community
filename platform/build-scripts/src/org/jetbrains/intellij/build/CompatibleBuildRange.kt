@@ -5,7 +5,7 @@ enum class CompatibleBuildRange {
   EXACT,
 
   /**
-   * A plugin will be compatible with IDE builds which number differs from plugin build number only in the last component,
+   * A plugin will be compatible with IDE builds which number differs from the plugin build number only in the last component,
    * i.e., plugins produced in 163.1111.22 build will be compatible with 163.1111.* builds.
    */
   RESTRICTED_TO_SAME_RELEASE,
