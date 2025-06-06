@@ -18,6 +18,8 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.*

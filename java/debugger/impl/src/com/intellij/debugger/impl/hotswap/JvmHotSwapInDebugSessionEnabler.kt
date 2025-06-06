@@ -5,10 +5,10 @@ import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.ui.HotSwapStatusListener
 import com.intellij.xdebugger.XDebugProcess
+import com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler
+import com.intellij.xdebugger.hotswap.HotSwapProvider
+import com.intellij.xdebugger.hotswap.HotSwapResultListener
 import com.intellij.xdebugger.impl.hotswap.HotSwapDebugSessionManager
-import com.intellij.xdebugger.impl.hotswap.HotSwapInDebugSessionEnabler
-import com.intellij.xdebugger.impl.hotswap.HotSwapProvider
-import com.intellij.xdebugger.impl.hotswap.HotSwapResultListener
 
 private class JvmHotSwapInDebugSessionEnabler : HotSwapInDebugSessionEnabler {
   override fun createProvider(process: XDebugProcess): HotSwapProvider<*>? {

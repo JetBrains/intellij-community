@@ -14,6 +14,9 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
+import com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler
+import com.intellij.xdebugger.hotswap.HotSwapSession
+import com.intellij.xdebugger.hotswap.HotSwapSessionManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus

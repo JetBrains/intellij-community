@@ -8,8 +8,8 @@ import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
-import com.intellij.xdebugger.impl.hotswap.HotSwapSession
-import com.intellij.xdebugger.impl.hotswap.HotSwapSessionManager
+import com.intellij.xdebugger.impl.hotswap.HotSwapSessionImpl
+import com.intellij.xdebugger.impl.hotswap.HotSwapSessionManagerImpl
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import com.intellij.xdebugger.impl.rpc.XDebugHotSwapSessionId
@@ -25,7 +25,7 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
   override suspend fun currentSessionStatus(projectId: ProjectId): Flow<XDebugHotSwapCurrentSessionStatus?> {
     val project = projectId.findProject()
     return channelFlow {
-      HotSwapSessionManager.getInstance(project).currentStatusFlow.collectLatest {
+      HotSwapSessionManagerImpl.getInstance(project).currentStatusFlow.collectLatest {
         if (it == null) {
           send(null)
           return@collectLatest
@@ -49,8 +49,8 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
 
   override suspend fun hide(projectId: ProjectId) {
     val project = projectId.findProject()
-    HotSwapSessionManager.getInstance(project).hide()
+    HotSwapSessionManagerImpl.getInstance(project).hide()
   }
 }
 
-private object HowSwapSessionValueIdType : BackendValueIdType<XDebugHotSwapSessionId, HotSwapSession<*>>(::XDebugHotSwapSessionId)
+private object HowSwapSessionValueIdType : BackendValueIdType<XDebugHotSwapSessionId, HotSwapSessionImpl<*>>(::XDebugHotSwapSessionId)

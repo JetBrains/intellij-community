@@ -22,6 +22,8 @@ a:com.intellij.xdebugger.frame.XExecutionStack
 - *sf:SELECTED_STACKS:com.intellij.openapi.actionSystem.DataKey
 *:com.intellij.xdebugger.frame.XStringValueModifier
 - a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
+*:com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler
+- a:createProvider(com.intellij.xdebugger.XDebugProcess):com.intellij.xdebugger.hotswap.HotSwapProvider
 *:com.intellij.xdebugger.ui.TextValueVisualizer
 - detectFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
 - a:visualize(java.lang.String):java.util.List

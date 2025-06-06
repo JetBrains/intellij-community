@@ -698,6 +698,29 @@ com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer
 - a:renderStringValue(java.lang.String,java.lang.String,I):V
 - a:renderValue(java.lang.String):V
 - a:renderValue(java.lang.String,com.intellij.openapi.editor.colors.TextAttributesKey):V
+com.intellij.xdebugger.hotswap.HotSwapProvider
+- a:createChangesCollector(com.intellij.xdebugger.hotswap.HotSwapSession,kotlinx.coroutines.CoroutineScope,com.intellij.xdebugger.hotswap.SourceFileChangesListener):com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+- a:performHotSwap(com.intellij.xdebugger.hotswap.HotSwapSession):V
+com.intellij.xdebugger.hotswap.HotSwapResultListener
+- a:onCanceled():V
+- a:onFailure():V
+- a:onFinish():V
+- a:onSuccessfulReload():V
+com.intellij.xdebugger.hotswap.HotSwapSession
+- a:getChanges():java.util.Set
+- a:getProject():com.intellij.openapi.project.Project
+- a:startHotSwapListening():com.intellij.xdebugger.hotswap.HotSwapResultListener
+com.intellij.xdebugger.hotswap.HotSwapSessionManager
+- a:createSession(com.intellij.xdebugger.hotswap.HotSwapProvider,com.intellij.openapi.Disposable):com.intellij.xdebugger.hotswap.HotSwapSession
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.hotswap.HotSwapSessionManager
+- a:onSessionSelected(com.intellij.xdebugger.hotswap.HotSwapSession):V
+com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+- com.intellij.openapi.Disposable
+- a:getChanges():java.util.Set
+- a:resetChanges():V
+com.intellij.xdebugger.hotswap.SourceFileChangesListener
+- a:onChangesCanceled():V
+- a:onNewChanges():V
 a:com.intellij.xdebugger.settings.DebuggerConfigurableProvider
 - sf:EXTENSION_POINT:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
