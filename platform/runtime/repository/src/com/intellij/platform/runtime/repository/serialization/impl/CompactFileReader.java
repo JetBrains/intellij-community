@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 public final class CompactFileReader {
-  public static final int FORMAT_VERSION = 1;
+  public static final int FORMAT_VERSION = 2;
 
   public static RawRuntimeModuleRepositoryData loadFromFile(@NotNull Path filePath) throws IOException {
     try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(filePath)))) {
@@ -40,17 +40,20 @@ public final class CompactFileReader {
       Map<String, RawRuntimeModuleDescriptor> descriptors = new HashMap<>();
       
       int descriptorsCount = in.readInt();
-      String[] descriptorIds = new String[descriptorsCount];
-      for (int i = 0; i < descriptorsCount; i++) {
+      int unresolvedDependenciesCount = in.readInt();
+      int totalIdCount = descriptorsCount + unresolvedDependenciesCount;
+      String[] descriptorIds = new String[totalIdCount];
+      for (int i = 0; i < totalIdCount; i++) {
         descriptorIds[i] = in.readUTF();
       }
+      
       for (int i = 0; i < descriptorsCount; i++) {
         String descriptorId = descriptorIds[i];
         int dependenciesCount = in.readInt();
         List<String> dependencies = new ArrayList<>(dependenciesCount);
         for (int j = 0; j < dependenciesCount; j++) {
           int dependencyIndex = in.readInt();
-          if (dependencyIndex < 0 || dependencyIndex >= descriptorsCount) {
+          if (dependencyIndex < 0 || dependencyIndex >= totalIdCount) {
             throw new MalformedRepositoryException("Invalid dependency index '" + dependencyIndex + "' in '" + descriptorId + "'");
           }
           dependencies.add(descriptorIds[dependencyIndex]);

@@ -5,7 +5,10 @@ import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerial
 import com.intellij.platform.runtime.repository.xml
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.rules.TempDirectoryExtension
-import com.intellij.util.io.*
+import com.intellij.util.io.DirectoryContentBuilder
+import com.intellij.util.io.DirectoryContentSpec
+import com.intellij.util.io.assertMatches
+import com.intellij.util.io.jarFile
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
@@ -84,6 +87,28 @@ class JarRepositorySerializationTest {
             </resources>
           </module>
         """.trimIndent())
+    }
+  }
+  
+  @Test
+  fun `unresolved dependency`() {
+    val descriptors = listOf(
+      RawRuntimeModuleDescriptor.create("ij.foo", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("ij.bar", emptyList(), listOf("ij.foo", "unresolved")),
+    )
+    check(descriptors) {
+      xml("ij.foo.xml", """
+          <module name="ij.foo">
+          </module>
+      """.trimIndent())
+      xml("ij.bar.xml", """
+        <module name="ij.bar">
+          <dependencies>
+            <module name="ij.foo"/>
+            <module name="unresolved"/>
+          </dependencies>
+        </module>
+      """.trimIndent())
     }
   }
 

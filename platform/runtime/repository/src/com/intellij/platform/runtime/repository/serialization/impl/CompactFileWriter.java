@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository.serialization.impl;
 
-import com.intellij.platform.runtime.repository.MalformedRepositoryException;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,17 +44,33 @@ public final class CompactFileWriter {
       for (int i = 0; i < descriptors.size(); i++) {
         indexes.put(descriptors.get(i).getId(), i);
       }
+      List<String> unresolvedDependencies = new ArrayList<>();
+      for (RawRuntimeModuleDescriptor descriptor : descriptors) {
+        for (String dependency : descriptor.getDependencies()) {
+          if (!indexes.containsKey(dependency)) {
+            unresolvedDependencies.add(dependency);
+            int nextId = indexes.size();
+            indexes.put(dependency, nextId);
+          }
+        }
+      }
       
       out.writeInt(descriptors.size());
+      out.writeInt(unresolvedDependencies.size());
       for (RawRuntimeModuleDescriptor descriptor : descriptors) {
         out.writeUTF(descriptor.getId());
       }
+      
+      for (String dependency : unresolvedDependencies) {
+        out.writeUTF(dependency);
+      }
+      
       for (RawRuntimeModuleDescriptor descriptor : descriptors) {
         out.writeInt(descriptor.getDependencies().size());
         for (String dependency : descriptor.getDependencies()) {
           Integer index = indexes.get(dependency);
           if (index == null) {
-            throw new MalformedRepositoryException("Unknown dependency '" + dependency + "' in '" + descriptor.getId() + "'");
+            throw new AssertionError("Unknown dependency '" + dependency + "' in '" + descriptor.getId() + "'");
           }
           out.writeInt(index);
         }
