@@ -1,11 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
 import java.io.BufferedWriter
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.regex.Pattern
 
 private const val MAX_PATH = 260
 
@@ -13,9 +11,8 @@ internal class NsisFileListGenerator {
   private val directoryToFiles = LinkedHashMap<String, MutableList<Path>>()
   private val filesRelativePaths = mutableListOf<String>()
 
-  fun addDirectory(directoryPath: String, relativeFileExcludePatterns: List<String> = emptyList()) {
-    val excludePatterns = relativeFileExcludePatterns.map { Pattern.compile(FileUtil.convertAntToRegexp(it)) }
-    processDirectory(Path.of(directoryPath), "", excludePatterns)
+  fun addDirectory(directory: Path) {
+    processDirectory(directory, "")
   }
 
   fun generateInstallerFile(outputFile: Path) {
@@ -42,7 +39,7 @@ internal class NsisFileListGenerator {
   fun generateUninstallerFile(outputFile: Path, installDir: String = $$"$INSTDIR") {
     Files.newBufferedWriter(outputFile).use { out ->
       filesRelativePaths.sorted().forEach {
-        scriptWithLongPathSupport(out, installDir, null, listOf(it)) {
+        scriptWithLongPathSupport(out, installDir, relativePath = null, listOf(it)) {
           out.write("Delete \"${installDir}\\${escapeWinPath(it)}\"\n")
           if (it.endsWith(".py")) {
             out.write("Delete \"${installDir}\\${escapeWinPath(it)}c\"\n") //.pyc
@@ -54,7 +51,7 @@ internal class NsisFileListGenerator {
 
       for (it in directoryToFiles.keys.sorted().asReversed()) {
         if (!it.isEmpty()) {
-          scriptWithLongPathSupport(out, installDir, null, listOf(it)) {
+          scriptWithLongPathSupport(out, installDir, relativePath = null, listOf(it)) {
             out.write("RmDir /r \"${installDir}\\${escapeWinPath(it)}\\__pycache__\"\n")
             out.write("RmDir \"${installDir}\\${escapeWinPath(it)}\"\n")
           }
@@ -64,20 +61,16 @@ internal class NsisFileListGenerator {
     }
   }
 
-  private fun processDirectory(directory: Path, relativePath: String, excludePatterns: List<Pattern>) {
+  private fun processDirectory(directory: Path, relativePath: String) {
     val files = Files.newDirectoryStream(directory).use { stream -> stream.sortedBy { it.fileName.toString() } }
     for (child in files) {
-      val childPath = (if (relativePath.isEmpty()) "" else "$relativePath/") + child.fileName.toString()
-      if (excludePatterns.any { it.matcher(childPath).matches() }) {
-        continue
-      }
-
+      val childPath = (if (relativePath.isEmpty()) "" else "${relativePath}/") + child.fileName.toString()
       if (Files.isRegularFile(child)) {
         filesRelativePaths.add(childPath)
         directoryToFiles.computeIfAbsent(relativePath) { mutableListOf() }.add(child)
       }
       else {
-        processDirectory(child, childPath, excludePatterns)
+        processDirectory(child, childPath)
         if (directoryToFiles.containsKey(childPath)) {
           //register all parent directories for directories with files to ensure that they will be deleted by uninstaller
           directoryToFiles.putIfAbsent(relativePath, mutableListOf())
@@ -101,13 +94,11 @@ internal class NsisFileListGenerator {
     if (areLongPathsPresent) {
       // For long paths in the installer, we perform a special maneuver.
       // Prepend the INSTDIR with "\\?\" so that WinAPI functions won't check its length and will allow working with the file.
-      writer.write(
-        """
-        Push $instDirVariable
-        GetFullPathName $instDirVariable $instDirVariable
-        StrCpy $instDirVariable "\\?\$instDirVariable"
-      """.trimIndent() + "\n"
-      )
+      writer.write("""
+          Push $instDirVariable
+          GetFullPathName $instDirVariable $instDirVariable
+          StrCpy $instDirVariable "\\?\$instDirVariable"
+        """.trimIndent() + "\n")
     }
 
     actionWithOutPath()

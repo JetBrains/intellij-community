@@ -60,14 +60,14 @@ internal suspend fun buildNsisInstaller(
     }
 
     val generator = NsisFileListGenerator()
-    generator.addDirectory(context.paths.distAllDir.toString())
-    generator.addDirectory(winDistPath.toString(), listOf("**/idea.properties", "**/${context.productProperties.baseFileName}*.vmoptions"))
-    generator.addDirectory(additionalDirectoryToInclude.toString())
-    generator.addDirectory(runtimeDir.toString())
+    generator.addDirectory(context.paths.distAllDir)
+    generator.addDirectory(winDistPath)
+    generator.addDirectory(additionalDirectoryToInclude)
+    generator.addDirectory(runtimeDir)
     generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
     generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh"))
 
-    prepareConfigurationFiles(nsiConfDir, winDistPath, customizer, context, arch)
+    prepareConfigurationFiles(nsiConfDir, customizer, context, arch)
     for (it in customizer.customNsiConfigurationFiles) {
       val file = Path.of(it)
       val copy = nsiConfDir.resolve(file.fileName)
@@ -140,56 +140,42 @@ private suspend fun prepareNsis(context: BuildContext, tempDir: Path): Pair<Path
   return nsisDir to nsisBin
 }
 
-private fun prepareConfigurationFiles(
-  nsiConfDir: Path,
-  winDistPath: Path,
-  customizer: WindowsDistributionCustomizer,
-  context: BuildContext,
-  arch: JvmArchitecture,
-) {
-  val productProperties = context.productProperties
-  Files.writeString(nsiConfDir.resolve("paths.nsi"), $$"""
-    !define IMAGES_LOCATION "$${FileUtilRt.toSystemDependentName(customizer.installerImagesPath!!)}"
-    !define PRODUCT_PROPERTIES_FILE "$${FileUtilRt.toSystemDependentName("$winDistPath/bin/idea.properties")}"
-    !define PRODUCT_VM_OPTIONS_NAME $${productProperties.baseFileName}*.exe.vmoptions
-    !define PRODUCT_VM_OPTIONS_FILE "$${FileUtilRt.toSystemDependentName("${winDistPath}/bin/")}${PRODUCT_VM_OPTIONS_NAME}"
-    """.trimIndent())
-
-  val fileAssociations =
-    if (customizer.fileAssociations.isEmpty()) "NoAssociation"
-    else customizer.fileAssociations.joinToString(separator = ",") { if (it.startsWith(".")) it else ".${it}" }
-  val appInfo = context.applicationInfo
+private fun prepareConfigurationFiles(nsiConfDir: Path, customizer: WindowsDistributionCustomizer, context: BuildContext, arch: JvmArchitecture) {
   val expectedArch = when (arch) {  // https://learn.microsoft.com/en-us/windows/win32/sysinfo/image-file-machine-constants
     JvmArchitecture.x64 -> 34404  // IMAGE_FILE_MACHINE_AMD64
     JvmArchitecture.aarch64 -> 43620  // IMAGE_FILE_MACHINE_ARM64
   }
-  Files.writeString(nsiConfDir.resolve("strings.nsi"), """
-    !define INSTALLER_ARCH ${expectedArch}
-    !define MANUFACTURER "${appInfo.shortCompanyName}"
-    !define MUI_PRODUCT "${customizer.getFullNameIncludingEdition(appInfo)}"
-    !define PRODUCT_FULL_NAME "${customizer.getFullNameIncludingEditionAndVendor(appInfo)}"
-    !define PRODUCT_EXE_FILE "${productProperties.baseFileName}64.exe"
+  val fileAssociations =
+    if (customizer.fileAssociations.isEmpty()) "NoAssociation"
+    else customizer.fileAssociations.joinToString(separator = ",") { if (it.startsWith(".")) it else ".${it}" }
+  val appInfo = context.applicationInfo
+  val installDirAndShortcutName = customizer.getNameForInstallDirAndDesktopShortcut(appInfo, context.buildNumber)
+  val versionString = if (appInfo.isEAP) context.buildNumber else "${appInfo.majorVersion}.${appInfo.minorVersion}"
+
+  Files.writeString(nsiConfDir.resolve("config.nsi"), $$"""
+    !define INSTALLER_ARCH $${expectedArch}
+    !define IMAGES_LOCATION "$${FileUtilRt.toSystemDependentName(customizer.installerImagesPath!!)}"
+
+    !define MANUFACTURER "$${appInfo.shortCompanyName}"
+    !define MUI_PRODUCT "$${customizer.getFullNameIncludingEdition(appInfo)}"
+    !define PRODUCT_FULL_NAME "$${customizer.getFullNameIncludingEditionAndVendor(appInfo)}"
+    !define PRODUCT_EXE_FILE "$${context.productProperties.baseFileName}64.exe"
     !define PRODUCT_ICON_FILE "install.ico"
-    !define PRODUCT_UNINST_ICON_FILE "uninstall.ico"
+    !define PRODUCT_UNINSTALL_ICON_FILE "uninstall.ico"
     !define PRODUCT_LOGO_FILE "logo.bmp"
     !define PRODUCT_HEADER_FILE "headerlogo.bmp"
-    !define ASSOCIATION "$fileAssociations"
-    !define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(appInfo) ?: "feedback_web_page"}"
-    
+    !define ASSOCIATION "$${fileAssociations}"
+    !define UNINSTALL_WEB_PAGE "$${customizer.getUninstallFeedbackPageUrl(appInfo) ?: "feedback_web_page"}"
+
     ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
     ; set to 1 for release build
     !define SHOULD_SET_DEFAULT_INSTDIR "0"
-    """.trimIndent())
 
-  val versionString = if (appInfo.isEAP) $$"${VER_BUILD}" else $$"${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
-  val installDirAndShortcutName = customizer.getNameForInstallDirAndDesktopShortcut(appInfo, context.buildNumber)
-  Files.writeString(nsiConfDir.resolve("version.nsi"), $$"""
     !define MUI_VERSION_MAJOR "$${appInfo.majorVersion}"
     !define MUI_VERSION_MINOR "$${appInfo.minorVersion}"
-    
     !define VER_BUILD $${context.buildNumber}
-    !define INSTALL_DIR_AND_SHORTCUT_NAME "$$installDirAndShortcutName"
-    !define PRODUCT_WITH_VER "${MUI_PRODUCT} $$versionString"
+    !define INSTALL_DIR_AND_SHORTCUT_NAME "$${installDirAndShortcutName}"
+    !define PRODUCT_WITH_VER "${MUI_PRODUCT} $${versionString}"
     !define PRODUCT_PATHS_SELECTOR "$${context.systemSelector}"
     """.trimIndent())
 }

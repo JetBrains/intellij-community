@@ -26,14 +26,11 @@ RequestExecutionLevel user
 ${StrStr}
 ${UnStrStr}
 ${StrLoc}
-${UnStrLoc}
 ${UnStrRep}
 
 !include "log.nsi"
-!include "paths.nsi"
 !include "registry.nsi"
-!include "strings.nsi"
-!include "version.nsi"
+!include "config.nsi"
 !include "customInstallActions.nsi"
 
 Name "${MUI_PRODUCT}"
@@ -45,8 +42,6 @@ Name "${MUI_PRODUCT}"
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
 Var STARTMENU_FOLDER
-Var config_path
-Var system_path
 Var productLauncher
 Var baseRegKey
 Var productDir
@@ -72,7 +67,7 @@ ReserveFile "UninstallOldVersions.ini"
 !insertmacro MUI_RESERVEFILE_LANGDLL
 
 !define MUI_ICON "${IMAGES_LOCATION}\${PRODUCT_ICON_FILE}"
-!define MUI_UNICON "${IMAGES_LOCATION}\${PRODUCT_UNINST_ICON_FILE}"
+!define MUI_UNICON "${IMAGES_LOCATION}\${PRODUCT_UNINSTALL_ICON_FILE}"
 
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_HEADER_FILE}"
@@ -983,10 +978,6 @@ skip_ipr:
   SectionIn RO
   !include "idea_win.nsh"
 
-  SetOutPath $INSTDIR\bin
-  File "${PRODUCT_PROPERTIES_FILE}"
-  File "${PRODUCT_VM_OPTIONS_FILE}"
-
   ; registration application to be presented in Open With list
   call ProductRegistration
 
@@ -1439,74 +1430,6 @@ done:
 FunctionEnd
 
 
-Function un.PrepareCustomPath
-  ;Input:
-  ;$0 - name of variable
-  ;$1 - value of the variable
-  ;$2 - line from the property file
-  push $3
-  push $5
-  ${UnStrLoc} $3 $2 $0 ">"
-  StrCmp $3 "" not_found
-  StrLen $5 $0
-  IntOp $3 $3 + $5
-  StrCpy $2 $2 "" $3
-  IfFileExists "$1$2\\*.*" not_found
-  StrCpy $2 $1$2
-  goto complete
-not_found:
-  StrCpy $0 ""
-complete:
-  pop $5
-  pop $3
-FunctionEnd
-
-
-Function un.getCustomPath
-  push $0
-  push $1
-  StrCpy $0 "${user.home}/"
-  StrCpy $1 "$PROFILE/"
-  Call un.PrepareCustomPath
-  StrCmp $0 "" check_idea_var
-  goto complete
-check_idea_var:
-  StrCpy $0 "${idea.home}/"
-  StrCpy $1 "$INSTDIR/"
-  Call un.PrepareCustomPath
-  StrCmp $2 "" +1 +2
-  StrCpy $2 ""
-complete:
-  pop $1
-  pop $0
-FunctionEnd
-
-
-Function un.getPath
-; The function read lines from idea.properties and search the substring and prepare the path to settings or caches.
-  ClearErrors
-  FileOpen $3 $INSTDIR\bin\idea.properties r
-  IfErrors complete ;file can not be open. not sure if a message should be displayed in this case.
-  StrLen $5 $1
-read_line:
-  FileRead $3 $4
-  StrCmp $4 "" complete
-  ${UnStrLoc} $6 $4 $1 ">"
-  StrCmp $6 "" read_line ; there is no substring in a string from the file. go for next one.
-  IntOp $6 $6 + $5
-  ${unStrStr} $7 $4 "#" ;check if the property has been customized
-  StrCmp $7 "" custom
-  StrCpy $2 $0 ;no. use the default value.
-  goto complete
-custom:
-  StrCpy $2 $4 "" $6
-  Call un.getCustomPath
-complete:
-  FileClose $3
-  ${UnStrRep} $2 $2 "/" "\"
-  DetailPrint "App directory: $2"
-FunctionEnd
-
 Function un.isIDEInUse
   IfFileExists $R0 0 done
   CopyFiles $R0 "$R0_copy"
@@ -1552,8 +1475,21 @@ done:
 FunctionEnd
 
 
+Function un.deleteDirectoryWithParent
+  RmDir /R "$0"
+  RmDir "$0\\.."  ; delete a parent directory if empty
+FunctionEnd
+
+Function un.deleteDirectoryIfNotEmpty
+  ${If} ${FileExists} "$0\*.*"
+    RmDir /R "$0"
+  ${EndIf}
+FunctionEnd
+
+
 Section "Uninstall"
   Call un.customUninstallActions
+
   DetailPrint "baseRegKey: $baseRegKey"
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
@@ -1570,64 +1506,40 @@ Section "Uninstall"
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
   StrCpy $2 "MenuFolder"
   call un.OMReadRegStr
-  StrCmp $3 "" delete_caches shortcuts
-
-shortcuts:
-  StrCpy $7 "$SMPROGRAMS\$3\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-  Call un.validateStartMenuLinkToLauncher
-  StrCmp $8 "" 0 remove_link
-  DetailPrint "StartMenu: $7 is not point to valid launcher."
-  goto delete_caches
-
-remove_link:
-  Delete $7
-  ; Delete only if empty (last IDEA version is uninstalled)
-  RMDir  "$SMPROGRAMS\$3"
-
-delete_caches:
-  ${If} $baseRegKey == "HKLM"
-    SetShellVarContext current
+  ${If} $3 != ""
+    StrCpy $7 "$SMPROGRAMS\$3\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
+    Call un.validateStartMenuLinkToLauncher
+    ${If} $8 == ""
+      DetailPrint "'$7' does not point to a valid launcher"
+    ${Else}
+      Delete "$7"
+      RMDir  "$SMPROGRAMS\$3"  ; delete the parent group if empty
+    ${EndIf}
   ${EndIf}
+
   !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
-  StrCmp $R2 1 0 delete_settings
-  ; find the path to caches (system) folder
-  StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
-  StrCpy $1 "idea.system.path="
-  Call un.getPath
-  StrCmp $2 "" delete_settings
-  StrCpy $system_path $2
-  RmDir /r "$system_path"
-  RmDir "$system_path\\.." ; remove parent of system dir if the dir is empty
-
-delete_settings:
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
-  StrCmp $R3 1 0 delete_rider_tools
-  ; find the path to settings (config) folder
-  StrCpy $0 "$APPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
-  StrCpy $1 "idea.config.path="
-  Call un.getPath
-  StrCmp $2 "" delete_rider_tools
-  StrCpy $config_path $2
-  RmDir /r "$config_path"
-  Delete "$INSTDIR\bin\${PRODUCT_VM_OPTIONS_NAME}"
-  Delete "$INSTDIR\bin\idea.properties"
-  StrCmp $R2 1 "" delete_rider_tools
-  RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
-
-delete_rider_tools:
-  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
-  StrCmp $R0 "${MUI_PRODUCT}" 0 continue_uninstall
-  !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 7" "State"
-  StrCmp $R3 1 "" continue_uninstall
-  IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\BuildTools\*.*" 0 +2
-  RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
-  IfFileExists "$LOCALAPPDATA\${MANUFACTURER}\jdk8\*.*" 0 +2
-  RmDir /r "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
-
-continue_uninstall:
-  ${If} $baseRegKey == "HKLM"
-    SetShellVarContext all
+  ${If} $R2 == 1
+    StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+    Call un.deleteDirectoryWithParent
   ${EndIf}
+
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 5" "State"
+  ${If} $R2 == 1
+    StrCpy $0 "$APPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+    Call un.deleteDirectoryWithParent
+  ${EndIf}
+
+  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
+  ${If} $R0 == "${MUI_PRODUCT}"
+    !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 7" "State"
+    ${If} $R2 == 1
+      StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
+      Call un.deleteDirectoryIfNotEmpty
+      StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
+      Call un.deleteDirectoryIfNotEmpty
+    ${EndIf}
+  ${EndIf}
+
   ; delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
