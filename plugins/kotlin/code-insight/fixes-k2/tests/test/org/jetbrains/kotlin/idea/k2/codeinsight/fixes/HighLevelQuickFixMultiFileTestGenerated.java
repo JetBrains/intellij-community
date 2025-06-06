@@ -1493,6 +1493,45 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava")
+    public static class FieldFromJava extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("brokenJavaType.before.Main.java")
+        public void testBrokenJavaType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/brokenJavaType.before.Main.java");
+        }
+
+        @TestMetadata("classMemberLateinitVar.before.Main.java")
+        public void testClassMemberLateinitVar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/classMemberLateinitVar.before.Main.java");
+        }
+
+        @TestMetadata("classMemberVar.before.Main.java")
+        public void testClassMemberVar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/classMemberVar.before.Main.java");
+        }
+
+        @TestMetadata("companionMemberVar.before.Main.java")
+        public void testCompanionMemberVar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/companionMemberVar.before.Main.java");
+        }
+
+        @TestMetadata("topLevelVar.before.Main.java")
+        public void testTopLevelVar() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/topLevelVar.before.Main.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor")
     public static class OverriddenJavaAccessor extends AbstractHighLevelQuickFixMultiFileTest {
         @java.lang.Override

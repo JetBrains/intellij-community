@@ -2291,6 +2291,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                         KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
                     }
 
+                    @TestMetadata("brokenJavaType.before.Main.java")
+                    public void testBrokenJavaType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/brokenJavaType.before.Main.java");
+                    }
+
                     @TestMetadata("classMemberLateinitVar.before.Main.java")
                     public void testClassMemberLateinitVar() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/fieldFromJava/classMemberLateinitVar.before.Main.java");
