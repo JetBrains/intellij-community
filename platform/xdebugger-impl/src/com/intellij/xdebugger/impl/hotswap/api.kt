@@ -2,6 +2,8 @@
 package com.intellij.xdebugger.impl.hotswap
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.xdebugger.XDebugProcess
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -9,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus
  * Provides platform-specific implementation for the hot swap process.
  *
  * The provider should be passed to [HotSwapSessionManager.createSession] on the start of a session where hot swapping is possible.
+ *
+ * @see [HotSwapInDebugSessionEnabler]
  */
 @ApiStatus.Internal
 interface HotSwapProvider<T> {
@@ -32,6 +36,22 @@ interface HotSwapProvider<T> {
    * to get a callback and use it to report the hot swap status.
    */
   fun performHotSwap(session: HotSwapSession<T>)
+}
+
+/**
+ * Implement this to enable hotswap in debug sessions.
+ */
+@ApiStatus.Internal
+interface HotSwapInDebugSessionEnabler {
+  fun createProvider(process: XDebugProcess): HotSwapProvider<*>?
+
+  companion object {
+    private val EP_NAME = ExtensionPointName<HotSwapInDebugSessionEnabler>("com.intellij.xdebugger.hotSwapInDebugSessionEnabler")
+
+    internal fun createProviderForProcess(process: XDebugProcess): HotSwapProvider<*>? {
+      return EP_NAME.computeSafeIfAny { it.createProvider(process) }
+    }
+  }
 }
 
 /**

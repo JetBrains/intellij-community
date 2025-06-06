@@ -28,6 +28,7 @@
     <extensionPoint name="xdebugger.controlExceptionBreakpointSupport" interface="com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport" dynamic="true"/>
 
     <extensionPoint name="xdebugger.hotSwapUiExtension" interface="com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension" dynamic="true"/>
+    <extensionPoint name="xdebugger.hotSwapInDebugSessionEnabler" interface="com.intellij.xdebugger.impl.hotswap.HotSwapInDebugSessionEnabler" dynamic="true"/>
 
     <extensionPoint name="xdebugger.customEvaluateHandler"
                     interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandler" dynamic="true"/>
@@ -121,6 +122,7 @@
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <projectService serviceImplementation="com.intellij.xdebugger.impl.frame.XDebuggerExecutionStackDescriptionService" />
+    <postStartupActivity implementation="com.intellij.xdebugger.impl.hotswap.HotSwapManagerInitActivity"/>
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
     <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false" bundle="messages.XDebuggerBundle" key="notification.group.debugger.messages"/>
