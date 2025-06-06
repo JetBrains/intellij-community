@@ -121,6 +121,9 @@
     <extensionPoint name="projectOpenProcessor"
                     interface="com.intellij.projectImport.ProjectOpenProcessor"
                     dynamic="true"/>
+    <extensionPoint name="multipleFileOpener"
+                    interface="com.intellij.ide.impl.MultipleFileOpener"
+                    dynamic="true"/>
     <extensionPoint name="projectSetProcessor" interface="com.intellij.projectImport.ProjectSetProcessor" dynamic="true"/>
     <extensionPoint name="lowLevelProjectOpenProcessor"
                     interface="com.intellij.openapi.project.ex.LowLevelProjectOpenProcessor"

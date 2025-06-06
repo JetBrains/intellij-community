@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.MultipleFileOpener
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.*
@@ -89,8 +90,10 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
         }
       }
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-        for (file in files) {
-          doOpenFile(project, file)
+        if (!MultipleFileOpener.openFiles(files, project)) {
+          for (file in files) {
+            doOpenFile(project, file)
+          }
         }
       }
     }
