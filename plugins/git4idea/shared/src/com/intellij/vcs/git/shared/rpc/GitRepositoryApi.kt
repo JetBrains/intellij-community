@@ -62,15 +62,13 @@ sealed interface GitRepositoryEvent {
   @Serializable
   @ApiStatus.Internal
   class ReloadState(val repositories: List<GitRepositoryDto>) : GitRepositoryEvent {
-    override fun toString(): String = "Full state of ${repositories.size} repositories: " +
-                                      repositories.joinToString(", ") { it.repositoryId.toString() }
+    override fun toString(): String = "Full state of ${repositories.size} repositories"
   }
 
   @Serializable
   @ApiStatus.Internal
   class RepositoriesSync(val repositories: List<RepositoryId>) : GitRepositoryEvent {
-    override fun toString(): String = "Sync for ${repositories.size} repositories: " +
-                                      repositories.joinToString(", ") { it.toString() }
+    override fun toString(): String = "Sync of ${repositories.size} repositories"
   }
 
   @Serializable
