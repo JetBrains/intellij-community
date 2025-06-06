@@ -3,6 +3,12 @@ ManifestDPIAware true
 SetCompressor lzma
 RequestExecutionLevel user
 
+!define "__check_${NSIS_MAX_STRLEN}"
+!ifndef "__check_8192"
+  !error "'strlen_8192' build is required to compile this script (see 'NSIS-upgrade.md'). NSIS_MAX_STRLEN=${NSIS_MAX_STRLEN}."
+!endif
+!undef "__check_${NSIS_MAX_STRLEN}"
+
 !addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
 !addincludedir "${NSIS_DIR}\Include"
 
