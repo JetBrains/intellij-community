@@ -35,6 +35,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 
 internal class GitWidgetApiImpl : GitWidgetApi {
   override suspend fun getWidgetState(projectId: ProjectId, selectedFile: VirtualFileId?): Flow<GitWidgetState> {
@@ -47,7 +48,9 @@ internal class GitWidgetApiImpl : GitWidgetApi {
           close()
           return@readAction null
         }
-        project.messageBus.connect(GitDisposable.getInstance(project).coroutineScope).also {
+        val coroutineScope = GitDisposable.getInstance(project).coroutineScope
+        coroutineScope.launch { trySendNewState(project, file) }
+        project.messageBus.connect(coroutineScope).also {
           it.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
             LOG.debug("VCS mapping changed. Sending new value")
             trySendNewState(project, file)
