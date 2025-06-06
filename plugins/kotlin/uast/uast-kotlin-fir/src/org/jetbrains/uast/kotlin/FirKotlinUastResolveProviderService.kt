@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.unwrapParenthesesLabelsAndAnnotations
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.yieldIfNotNull
@@ -77,8 +78,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val handledParameters = mutableSetOf<KaValueParameterSymbol>()
             val valueArguments = SmartList<UNamedExpression>()
             // NB: we need a loop over call element's value arguments to preserve their order.
-            ktCallElement.valueArguments.forEach {
-                val parameter = argumentMapping[it.getArgumentExpression()]?.symbol ?: return@forEach
+            ktCallElement.valueArguments.forEach { valueArg ->
+                val exp = valueArg.getArgumentExpression()?.unwrapParenthesesLabelsAndAnnotations()
+                val parameter = argumentMapping[exp]?.symbol ?: return@forEach
                 if (!handledParameters.add(parameter)) return@forEach
                 val arguments = argumentMapping.entries
                     .filter { (_, param) -> param.symbol == parameter }
