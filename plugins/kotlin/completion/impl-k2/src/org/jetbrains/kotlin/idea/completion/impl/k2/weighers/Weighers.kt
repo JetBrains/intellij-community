@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
-import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
@@ -305,10 +304,6 @@ internal object Weighers {
         symbolWithOrigin: KtSymbolWithOrigin<*>? = null,
     ): E = also { lookupElement -> // todo replace everything with apply
         val symbol = symbolWithOrigin?.symbol
-
-        if (lookupElement is OverridesCompletionLookupElementDecorator) {
-            PreferAbstractForOverrideWeigher.addWeight(lookupElement)
-        }
 
         ExpectedTypeWeigher.addWeight(context, lookupElement, symbol)
         KindWeigher.addWeight(lookupElement, symbol, context)

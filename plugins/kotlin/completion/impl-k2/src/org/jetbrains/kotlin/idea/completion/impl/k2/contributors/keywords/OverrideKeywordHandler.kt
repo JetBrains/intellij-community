@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferAbstractForOverrideWeigher
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.renderVerbose
@@ -77,7 +78,10 @@ internal class OverrideKeywordHandler(
             requireNotNull(memberSymbol) { "${symbolPointer::class} can't be restored" }
 
             if (declaration != null && !canCompleteDeclarationWithMember(declaration, memberSymbol)) continue
-            result += createLookupElementToGenerateSingleOverrideMember(member, declaration, classOrObject, isConstructorParameter, project)
+
+            val overrideLookupElement = createLookupElementToGenerateSingleOverrideMember(member, declaration, classOrObject, isConstructorParameter, project)
+            PreferAbstractForOverrideWeigher.addWeight(overrideLookupElement)
+            result += overrideLookupElement
         }
         return result
     }
