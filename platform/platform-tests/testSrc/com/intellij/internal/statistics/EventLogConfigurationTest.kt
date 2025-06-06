@@ -60,6 +60,10 @@ class EventLogConfigurationTest : BasePlatformTestCase() {
 
     override fun loadMetadataFromServer(): String = ""
 
+    override fun getDictionariesLastModifiedOnServer(recorderId: String?): Map<String?, Long?> = emptyMap()
+
+    override fun loadDictionaryFromServer(recorderId: String?, dictionaryName: String?): String = ""
+
     override fun getOptionValues(): Map<String, String> = values
   }
 }

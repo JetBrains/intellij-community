@@ -65,6 +65,10 @@ private class TestEventLogMetadataPersistence(recorderId: String, private var co
 private class TestEventLogMetadataLoader(private val provider: () -> String, private val lastModified: Long) : EventLogMetadataLoader {
   override fun loadMetadataFromServer(): String = provider.invoke()
 
+  override fun getDictionariesLastModifiedOnServer(recorderId: String?): Map<String?, Long?> = emptyMap()
+
+  override fun loadDictionaryFromServer(recorderId: String?, dictionaryName: String?): String = ""
+
   override fun getLastModifiedOnServer(): Long = lastModified
 
   override fun getOptionValues(): Map<String, String> = emptyMap()
