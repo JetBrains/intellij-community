@@ -296,6 +296,9 @@ public class JavaExecutionStack extends XExecutionStack {
       flushHiddenFrames();
       myAdded += frames.size();
       myContainer.addStackFrames(frames, last);
+      if (last) {
+        myTracker.finish();
+      }
     }
 
     private boolean addFrameIfNeeded(XStackFrame frame, boolean last) {

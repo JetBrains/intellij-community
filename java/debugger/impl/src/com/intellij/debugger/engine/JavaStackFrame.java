@@ -42,6 +42,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ExceptionEvent;
+import kotlinx.coroutines.flow.Flow;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -96,18 +97,29 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
   @Override
   public void customizePresentation(@NotNull ColoredTextContainer component) {
-    StackFrameDescriptorImpl selectedDescriptor = null;
+    StackFrameDescriptorImpl selectedDescriptor = getSelectedDescriptor();
+    JavaFramesListRenderer.customizePresentation(myDescriptor, component, selectedDescriptor);
+  }
+
+  @Override
+  public @NotNull Flow<@NotNull XStackFrameUiPresentationContainer> customizePresentation() {
+    StackFrameDescriptorImpl selectedDescriptor = getSelectedDescriptor();
+    return JavaFramesListRendererUtilsKt.computeUiPresentation(myDescriptor, selectedDescriptor);
+  }
+
+  private StackFrameDescriptorImpl getSelectedDescriptor() {
+    StackFrameDescriptorImpl result = null;
     DebuggerSession session = myDebugProcess.getSession();
     if (session != null) {
       XDebugSession xSession = session.getXDebugSession();
       if (xSession != null) {
         XStackFrame frame = xSession.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
-          selectedDescriptor = ((JavaStackFrame)frame).getDescriptor();
+          result = ((JavaStackFrame)frame).getDescriptor();
         }
       }
     }
-    JavaFramesListRenderer.customizePresentation(myDescriptor, component, selectedDescriptor);
+    return result;
   }
 
   @Override

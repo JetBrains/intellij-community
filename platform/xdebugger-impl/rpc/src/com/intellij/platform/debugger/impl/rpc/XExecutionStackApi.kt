@@ -22,6 +22,8 @@ interface XExecutionStackApi : RemoteApi<Unit> {
   suspend fun canDrop(sessionId: XDebugSessionId, stackFrameId: XStackFrameId): Boolean
   suspend fun dropFrame(sessionId: XDebugSessionId, stackFrameId: XStackFrameId)
 
+  suspend fun computeUiPresentation(stackFrameId: XStackFrameId): Flow<XStackFramePresentation>
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XExecutionStackApi {

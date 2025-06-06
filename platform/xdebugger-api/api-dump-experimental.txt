@@ -20,6 +20,21 @@ a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - a:drop(com.intellij.xdebugger.frame.XStackFrame):V
 a:com.intellij.xdebugger.frame.XExecutionStack
 - *sf:SELECTED_STACKS:com.intellij.openapi.actionSystem.DataKey
+a:com.intellij.xdebugger.frame.XStackFrame
+- com.intellij.xdebugger.frame.XValueContainer
+- *:customizePresentation():kotlinx.coroutines.flow.Flow
+*f:com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
+- com.intellij.ui.ColoredTextContainer
+- <init>():V
+- append(com.intellij.ui.ColoredText):V
+- append(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- append(java.lang.String,com.intellij.ui.SimpleTextAttributes,java.lang.Object):V
+- f:customizePresentation(com.intellij.ui.ColoredTextContainer):V
+- f:getFragments():java.util.List
+- f:getIcon():javax.swing.Icon
+- f:getTooltipText():java.lang.String
+- setIcon(javax.swing.Icon):V
+- setToolTipText(java.lang.String):V
 *:com.intellij.xdebugger.frame.XStringValueModifier
 - a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
 *:com.intellij.xdebugger.hotswap.HotSwapInDebugSessionEnabler

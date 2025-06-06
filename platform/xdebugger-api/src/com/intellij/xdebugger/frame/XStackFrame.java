@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import kotlinx.coroutines.flow.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +64,38 @@ public abstract class XStackFrame extends XValueContainer {
 
   /**
    * Customize the presentation of the stack frame in the frame list.
+   * <p>
+   * Override this method if all the data needed for the presentation is available in the frame immediately.
+   * Otherwise, override {@link #customizePresentation()} to provide (asynchronous) presentation update.
    */
   public void customizePresentation(@NotNull ColoredTextContainer component) {
+    customizeTextPresentation(component);
+  }
+
+  /**
+   * Customize the presentation of the stack frame in the frame list.
+   * <p>
+   * Override this method if the presentation can change over time (for example, because some parts are computed asynchronously).
+   * Otherwise, override {@link #customizePresentation(ColoredTextContainer)} to provide immediate and immutable presentation update.
+   *
+   * @return a flow of {@link XStackFrameUiPresentationContainer}. Each element of the flow should contain
+   * the entire presentation of the frame.
+   * The frame list shows the last available presentation for a frame, but some intermediate presentations may be skipped.
+   * <p>
+   * <b>The flow must be finite</b>, as it's not expected for a presentation to update frequently over time.
+   */
+  @ApiStatus.Experimental
+  public @NotNull Flow<@NotNull XStackFrameUiPresentationContainer> customizePresentation() {
+    XStackFrameUiPresentationContainer coloredText = new XStackFrameUiPresentationContainer();
+    customizePresentation(coloredText);
+    return FlowKt.flowOf(coloredText);
+  }
+
+  /**
+   * Customize the textual presentation of the stack frame. Used in places that use the presentation as a string,
+   * not as a visible UI component. "Copy Stack" is one of the prominent examples.
+   */
+  public void customizeTextPresentation(@NotNull ColoredTextContainer component) {
     XSourcePosition position = getSourcePosition();
     if (position != null) {
       component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

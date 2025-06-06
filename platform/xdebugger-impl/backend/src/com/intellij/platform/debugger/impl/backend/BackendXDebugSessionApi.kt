@@ -308,7 +308,7 @@ internal fun createXStackFrameDto(frame: XStackFrame, coroutineScope: CoroutineS
   }
   val canEvaluateInDocument = frame.isDocumentEvaluator
   val evaluatorDto = XDebuggerEvaluatorDto(canEvaluateInDocument)
-  return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, frame.initialPresentation(),
+  return XStackFrameDto(id, frame.sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, frame.computeTextPresentation(),
                         frame.captionInfo(), frame.customBackgroundInfo(), frame.canDrop(session))
 }
 
@@ -333,22 +333,8 @@ private fun XStackFrame.canDrop(session: XDebugSessionImpl): ThreeState {
   return handler.canDropFrame(this)
 }
 
-private fun XStackFrame.initialPresentation(): XStackFramePresentation {
+internal fun XStackFrame.computeTextPresentation(): XStackFramePresentation {
   val parts = mutableListOf<XStackFramePresentationFragment>()
-  var iconId: IconId? = null
-  var tooltip: String? = null
-  customizePresentation(object : ColoredTextContainer {
-    override fun append(fragment: @NlsContexts.Label String, attributes: SimpleTextAttributes) {
-      parts += XStackFramePresentationFragment(fragment, attributes.toRpc())
-    }
-
-    override fun setIcon(icon: Icon?) {
-      iconId = icon?.rpcId()
-    }
-
-    override fun setToolTipText(text: @NlsContexts.Tooltip String?) {
-      tooltip = text
-    }
-  })
-  return XStackFramePresentation(parts, iconId, tooltip)
+  customizeTextPresentation { fragment, attributes -> parts += XStackFramePresentationFragment(fragment, attributes.toRpc()) }
+  return XStackFramePresentation(parts, null, null)
 }

@@ -7,12 +7,15 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * @author Eugene Zhuravlev
  */
 public class MethodsTracker {
   @SuppressWarnings("SSBasedInspection") private final Object2IntOpenHashMap<Method> myMethodCounter = new Object2IntOpenHashMap<>();
   private final Int2ObjectMap<MethodOccurrence> myCache = new Int2ObjectOpenHashMap<>();
+  private final CompletableFuture<Void> myFinished = new CompletableFuture<>();
 
   public final class MethodOccurrence {
     private final @Nullable Method myMethod;
@@ -25,6 +28,20 @@ public class MethodsTracker {
 
     public @Nullable Method getMethod() {
       return myMethod;
+    }
+
+    /**
+     * @return recursion index, or 0 if this is not a recursive call
+     */
+    public CompletableFuture<Integer> getExactRecursiveIndex() {
+      if (myMethod == null) {
+        return CompletableFuture.completedFuture(0);
+      }
+      return getExactOccurrenceCount(myMethod).thenApply(occurrenceCount -> {
+                                                           if (occurrenceCount <= 1) return -1;
+                                                           return occurrenceCount - myIndex;
+                                                         }
+      );
     }
 
     public int getIndex() {
@@ -40,6 +57,10 @@ public class MethodsTracker {
     }
   }
 
+  public void finish() {
+    myFinished.complete(null);
+  }
+
   public MethodOccurrence getMethodOccurrence(int frameIndex, @Nullable Method method) {
     return myCache.computeIfAbsent(frameIndex, __ -> {
       synchronized (myMethodCounter) {
@@ -53,5 +74,9 @@ public class MethodsTracker {
     synchronized (myMethodCounter) {
       return myMethodCounter.getInt(method);
     }
+  }
+
+  private CompletableFuture<Integer> getExactOccurrenceCount(@Nullable Method method) {
+    return myFinished.thenApply(__ -> myMethodCounter.getInt(method));
   }
 }

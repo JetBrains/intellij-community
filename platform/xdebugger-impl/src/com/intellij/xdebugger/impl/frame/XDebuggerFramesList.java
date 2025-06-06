@@ -36,17 +36,21 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -59,6 +63,7 @@ import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.wrapKeepEditorAreaFo
 public class XDebuggerFramesList extends DebuggerFramesList implements UiCompatibleDataProvider {
   private final Project myProject;
   private final XStackFramesListColorsCache myFileColorsCache;
+  private final @NotNull XFramesAsyncPresentationHandler myPresentationHandler;
   private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
 
   private void copyStack() {
@@ -76,7 +81,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
 
         if (value != null) {
           if (value instanceof XStackFrame) {
-            ((XStackFrame)value).customizePresentation(coloredTextContainer);
+            ((XStackFrame)value).customizeTextPresentation(coloredTextContainer);
             coloredTextContainer.appendTo(plainBuf);
           }
           else {
@@ -113,7 +118,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     myFileColorsCache = sessionProxy == null
                         ? new OldFileColorsCache(project)
                         : sessionProxy.createFileColorsCache(this);
-
+    myPresentationHandler = XFramesAsyncPresentationManager.getInstance(project).createFor(this);
     doInit();
 
     // This is a workaround for the performance issue IDEA-187063
@@ -138,6 +143,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         }
       }
     });
+    getModel().addListDataListener(new PresentationScheduler());
   }
 
   @Override
@@ -237,6 +243,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
   protected @Nullable Navigatable getFrameNavigatable(@NotNull XStackFrame frame, boolean isMainSourceKindPreferred) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.createNavigatable(myProject) : null;
+  }
+
+  public void sessionStopped() {
+    myPresentationHandler.sessionStopped();
   }
 
   private static @Nullable VirtualFile getFile(XStackFrame frame) {
@@ -376,7 +386,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
         mySelectionForeground = getForeground();
       }
 
-      stackFrame.customizePresentation(this);
+      myPresentationHandler.customizePresentation(stackFrame, this);
 
       // override icon which is set by customizePresentation if needed
       if ((hovered && canDropSomething)
@@ -779,6 +789,37 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
           inputEvent.consume();
         }
       }
+    }
+  }
+
+  private class PresentationScheduler implements ListDataListener {
+    @Override
+    public void intervalAdded(ListDataEvent e) {
+      schedulePresentations(e);
+    }
+
+    @Override
+    public void contentsChanged(ListDataEvent e) {
+      schedulePresentations(e);
+    }
+
+    @Override
+    public void intervalRemoved(ListDataEvent e) {
+      if (getModel().isEmpty()) {
+        myPresentationHandler.clear();
+      }
+    }
+
+    private void schedulePresentations(ListDataEvent e) {
+      ArrayList<XStackFrame> frames = new ArrayList<>();
+      for (int i = e.getIndex0(); i <= e.getIndex1(); i++) {
+        Object item = getModel().getElementAt(i);
+        if (item instanceof XStackFrame frame) {
+          frames.add(frame);
+        }
+      }
+      if (frames.isEmpty()) return;
+      myPresentationHandler.scheduleForFrames(frames);
     }
   }
 }

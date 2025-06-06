@@ -14,12 +14,12 @@ import kotlin.coroutines.CoroutineContext
 internal class FrontendXStackFramesStorage : AbstractCoroutineContextElement(FrontendXStackFramesStorage) {
   companion object Key : CoroutineContext.Key<FrontendXStackFramesStorage>
 
-  private val cache = ConcurrentHashMap<XStackFrameId, ImmutableFrameWithMutablePresentation>()
+  private val cache = ConcurrentHashMap<XStackFrameId, FrontendXStackFrame>()
 
   fun getOrCreateStackFrame(project: Project, scope: CoroutineScope, frameDto: XStackFrameDto): FrontendXStackFrame {
-    val (id, sourcePosition, equalityObject, evaluator, initialPresentation, captionInfo, customBackgroundInfo, canDrop) = frameDto
-    val frameWithMutablePresentation = cache.computeIfAbsent(id) {
-      val frame = FrontendXStackFrame(
+    val (id, sourcePosition, equalityObject, evaluator, textPresentation, captionInfo, customBackgroundInfo, canDrop) = frameDto
+    return cache.computeIfAbsent(id) {
+      FrontendXStackFrame(
         id,
         project,
         scope,
@@ -28,17 +28,11 @@ internal class FrontendXStackFramesStorage : AbstractCoroutineContextElement(Fro
         equalityObject,
         evaluator,
         captionInfo,
+        textPresentation,
         canDrop,
       )
-      ImmutableFrameWithMutablePresentation(frame, initialPresentation)
     }
-    frameWithMutablePresentation.presentation = frameDto.initialPresentation
-    return frameWithMutablePresentation.frame
   }
-
-  fun currentPresentation(id: XStackFrameId): XStackFramePresentation? = cache[id]?.presentation
-
-  private class ImmutableFrameWithMutablePresentation(val frame: FrontendXStackFrame, var presentation: XStackFramePresentation)
 }
 
 internal fun CoroutineScope.getOrCreateStackFrame(frameDto: XStackFrameDto, project: Project): FrontendXStackFrame {
@@ -46,11 +40,4 @@ internal fun CoroutineScope.getOrCreateStackFrame(frameDto: XStackFrameDto, proj
   requireNotNull(storageCache) { "StacksStorage not found" }
 
   return storageCache.getOrCreateStackFrame(project, this, frameDto)
-}
-
-internal fun CoroutineScope.currentPresentation(id: XStackFrameId): XStackFramePresentation? {
-  val storageCache = coroutineContext[FrontendXStackFramesStorage]
-  requireNotNull(storageCache) { "StacksStorage not found" }
-
-  return storageCache.currentPresentation(id)
 }

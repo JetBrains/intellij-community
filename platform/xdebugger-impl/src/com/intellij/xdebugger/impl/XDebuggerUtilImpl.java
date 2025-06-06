@@ -930,7 +930,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
           DebuggerUIUtil.invokeLater(() -> view.print("Stack: ", ConsoleViewContentType.SYSTEM_OUTPUT));
           myFrames.forEach(f -> {
             SimpleColoredText text = new SimpleColoredText();
-            ReadAction.run(() -> f.customizePresentation(text));
+            ReadAction.run(() -> f.customizeTextPresentation(text));
             XSourcePosition position = f.getSourcePosition();
             Navigatable navigatable = position != null ? position.createNavigatable(project) : null;
             DebuggerUIUtil.invokeLater(() -> {
