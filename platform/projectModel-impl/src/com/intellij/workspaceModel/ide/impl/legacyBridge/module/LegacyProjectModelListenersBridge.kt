@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -169,7 +168,7 @@ internal class LegacyProjectModelListenersBridge(
       is EntityChange.Removed -> {
         val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity)
         if (library != null) {
-          Disposer.dispose(library as Disposable)
+          LibraryBridgeImpl.disposeLibrary(library)
         }
       }
       is EntityChange.Replaced -> {

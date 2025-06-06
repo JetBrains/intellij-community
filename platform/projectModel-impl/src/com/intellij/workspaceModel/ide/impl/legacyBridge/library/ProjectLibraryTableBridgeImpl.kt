@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
@@ -116,7 +115,7 @@ open class ProjectLibraryTableBridgeImpl(
               if (library != null) {
                 // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
                 dispatcher.multicaster.afterLibraryRemoved(library)
-                Disposer.dispose(library as Disposable)
+                LibraryBridgeImpl.disposeLibrary(library)
               }
             }
             is EntityChange.Replaced -> {
@@ -250,7 +249,7 @@ open class ProjectLibraryTableBridgeImpl(
 
   override fun dispose() {
     for (library in libraries) {
-      Disposer.dispose(library as Disposable)
+      LibraryBridgeImpl.disposeLibrary(library)
     }
   }
 
