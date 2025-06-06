@@ -276,6 +276,7 @@ class GitRepositoryImpl private constructor(
         val updater = GitRepositoryUpdater(this, this.repositoryFiles)
         updater.installListeners()
         notifyIfRepoChanged(this, null, initialRepoInfo)
+        tagHolder.reload()
         this.untrackedFilesHolder.invalidate()
         this.resolvedConflictsFilesHolder.invalidate()
       }

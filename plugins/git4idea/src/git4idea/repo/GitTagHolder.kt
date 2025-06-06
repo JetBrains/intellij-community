@@ -50,7 +50,6 @@ class GitTagHolder(val repository: GitRepository) {
 
   init {
     isEnabled = GitVcsSettings.getInstance(repository.project).showTags()
-    reload()
 
     repository.project.messageBus.connect(cs)
       .subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, object : DvcsBranchManagerListener {
