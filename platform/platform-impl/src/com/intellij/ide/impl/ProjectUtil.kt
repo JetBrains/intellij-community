@@ -695,7 +695,7 @@ object ProjectUtil {
 
   @Internal
   @VisibleForTesting
-  suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
+  suspend fun openExistingDir(file: Path, currentProject: Project?, forceReuseFrame: Boolean = false): Project? {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
@@ -705,11 +705,16 @@ object ProjectUtil {
     }
 
     val project = if (canAttach) {
-      val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject)
+      val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject).copy(
+        forceReuseFrame = forceReuseFrame
+      )
       (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
     else {
-      openOrImportAsync(file, OpenProjectTask().withProjectToClose(currentProject))
+      val options = OpenProjectTask().withProjectToClose(currentProject).copy(
+        forceReuseFrame = forceReuseFrame
+      )
+      openOrImportAsync(file, options)
     }
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       FileChooserUtil.setLastOpenedFile(project, file)

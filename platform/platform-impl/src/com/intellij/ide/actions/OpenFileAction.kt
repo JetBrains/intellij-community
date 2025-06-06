@@ -11,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.*
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -92,7 +93,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         if (!MultipleFileOpener.openFiles(files, project)) {
           for (file in files) {
-            doOpenFile(project, file)
+            doOpenFile(project, file, e)
           }
         }
       }
@@ -162,11 +163,12 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     override fun isChooseMultiple() = true
   }
 
-  protected open suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile) {
+  protected open suspend fun doOpenFile(project: Project?, virtualFile: VirtualFile, e: AnActionEvent) {
     val file = virtualFile.toNioPath()
     if (Files.isDirectory(file)) {
+      val fromWelcomeScreen = e.place == ActionPlaces.WELCOME_SCREEN
       @Suppress("TestOnlyProblems")
-      val openedProject = ProjectUtil.openExistingDir(file, project)
+      val openedProject = ProjectUtil.openExistingDir(file, project, forceReuseFrame = fromWelcomeScreen)
       if (openedProject != null && Registry.`is`("ide.create.project.root.entity")) {
         registerProjectRoot(openedProject, virtualFile.toNioPath())
       }
