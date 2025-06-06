@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle.statusbar
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -73,7 +74,13 @@ class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(pro
         override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions.toTypedArray()
       }
 
-      return JBPopupFactory.getInstance().createActionGroupPopup(uiContributor?.actionGroupTitle,
+      val popupTitle = if (uiContributor != null) {
+        uiContributor.actionGroupTitle
+      }
+      else {
+        ApplicationBundle.message("code.style.language.settings.indent.provider", psiFile.language.displayName)
+      }
+      return JBPopupFactory.getInstance().createActionGroupPopup(popupTitle,
                                                                  actionGroup,
                                                                  context,
                                                                  JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

@@ -296,9 +296,14 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     @Override
     public @Nullable String getHint() {
       if (areDetected(getIndentOptions())) {
-        return LangBundle.message("indent.option.detected");
+        return ApplicationBundle.message("code.style.indent.option.detected");
       }
       return null;
+    }
+
+    @Override
+    public @NotNull String getActionGroupTitle() {
+      return ApplicationBundle.message("code.style.indent.detector.title");
     }
 
     @Override
@@ -350,7 +355,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   public static boolean isIndentDetectionContributor(CodeStyleStatusBarUIContributor codeStyleStatusBarUIContributor) {
     if (codeStyleStatusBarUIContributor instanceof IndentStatusBarUIContributor indentStatusBarUIContributor) {
       String hint = indentStatusBarUIContributor.getHint();
-      return hint == null || hint.equals(LangBundle.message("indent.option.detected"));
+      return hint == null || hint.equals(ApplicationBundle.message("code.style.indent.option.detected"));
     }
     return false;
   }
