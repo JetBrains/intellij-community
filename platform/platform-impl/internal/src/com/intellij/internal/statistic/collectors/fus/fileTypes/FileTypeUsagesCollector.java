@@ -27,14 +27,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 
 @ApiStatus.Internal
 public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
-  private static final StringEventField FILE_EXTENSION = EventFields.String("file_extension", emptyList());
+  private static final StringEventField FILE_EXTENSION = EventFields.StringValidatedByCustomRule(
+    "file_extension", FileExtensionValidationRule.class
+  );
 
   private final RoundedIntEventField COUNT = EventFields.RoundedInt("count");
 

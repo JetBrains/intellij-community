@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes
 
-import com.intellij.ide.fileTemplates.FileTemplate
+import  com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.PluginBundledTemplate
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -20,7 +20,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorComposite
-import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypeManager   
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
@@ -49,7 +49,10 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   private val IS_WRITABLE: EventField<Boolean> = Boolean("is_writable")
   private val IS_PREVIEW_TAB: EventField<Boolean> = Boolean("is_preview_tab")
   private val INCOMPLETE_DEPENDENCIES_MODE = Enum("incomplete_dependencies_mode", DependenciesState::class.java)
-  private val FILE_EXTENSION: StringEventField = EventFields.String("file_extension", emptyList())
+  private val FILE_EXTENSION: StringEventField = StringValidatedByCustomRule(
+    "file_extension",
+    FileExtensionValidationRule::class.java
+  )
 
   const val FILE_NAME_PATTERN: String = "file_name_pattern"
   const val FILE_TEMPLATE_NAME: String = "file_template_name"

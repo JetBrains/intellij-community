@@ -1089,6 +1089,9 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
     <statistics.validation.customValidationRule
+      implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileExtensionValidationRule"/>
+
+    <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector$ValidationRule"/>
