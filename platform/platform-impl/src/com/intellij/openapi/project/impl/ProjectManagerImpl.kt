@@ -929,7 +929,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     )
 
     if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
-      StartupManager.getInstance(project).runAfterOpened {
+      project.serviceAsync<StartupManager>().runAfterOpened {
         conversionResult.postStartupActivity(project)
       }
     }
@@ -938,8 +938,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun runConversion(projectPath: Path): ConversionResult? {
     val conversionService = (ApplicationManager.getApplication() as ComponentManagerEx)
-                              .getServiceAsyncIfDefined(ConversionService::class.java)
-                            ?: return null
+                              .getServiceAsyncIfDefined(ConversionService::class.java) ?: return null
     val result = span("project conversion") {
       conversionService.convert(projectPath)
     }
@@ -952,7 +951,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 
   open suspend fun configureWorkspace(project: Project, projectStoreBaseDir: Path, options: OpenProjectTask): Module? {
-    if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())
+    if (options.runConfigurators && (options.isNewProject || project.serviceAsync<ModuleManager>().modules.isEmpty())
         || isLoadedFromCacheButHasNoModules(project)
     ) {
       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
