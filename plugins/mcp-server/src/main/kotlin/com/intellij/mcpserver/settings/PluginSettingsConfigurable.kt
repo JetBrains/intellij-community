@@ -3,7 +3,7 @@ package com.intellij.mcpserver.settings
 
 import com.intellij.icons.AllIcons
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
@@ -20,7 +20,7 @@ class PluginSettingsConfigurable : SearchableConfigurable {
   override fun getDisplayName(): String = McpServerBundle.message("configurable.name.mcp.plugin")
 
   override fun createComponent(): JComponent {
-    val settings = ApplicationManager.getApplication().getService(PluginSettings::class.java)
+    val settings = service<PluginSettings>()
     lateinit var enabledCheckBox: Cell<JBCheckBox>
 
     val panel = panel {
