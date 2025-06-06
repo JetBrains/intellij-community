@@ -43,7 +43,8 @@
         <applicationConfigurable 
             instance="com.intellij.mcpserver.settings.PluginSettingsConfigurable"
             id="com.intellij.mcpserver.settings"
-            displayName="MCP Plugin"
+            key="mcp.server.configurable.name"
+            bundle="messages.McpServerBundle"
             dynamic="true"
             parentId="tools"/>
     </extensions>
