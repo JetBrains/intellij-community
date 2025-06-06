@@ -38,7 +38,7 @@ internal class GHPRDataProviderRepositoryImpl(
   private val filesService: GHPRFilesService,
   private val commentService: GHPRCommentService,
   private val changesService: GHPRChangesService,
-  private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>,
+  private val timelineLoaderFactory: CoroutineScope.(GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>,
 ) : GHPRDataProviderRepository {
   private val cs = parentCs.childScope(javaClass.name)
 
