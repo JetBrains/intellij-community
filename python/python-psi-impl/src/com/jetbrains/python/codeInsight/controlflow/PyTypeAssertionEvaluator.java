@@ -208,10 +208,15 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                                                           @NotNull TypeEvalContext context) {
     if (suggested == null) return null;
     if (positive) {
+      // Find all initial type members that are subtypes of the suggested (more specific than the narrowing "suggested" type).
+      // Imagine having `list[int] | int` narrowed by `list[Any]`.
       List<PyType> initialSubtypes = PyTypeUtil.toStream(initial)
         .filter(initialSubtype -> match(suggested, initialSubtype, context))
         .toList();
 
+      // Find all suggested subtype members that are subtypes of the initial (more specific than the initial type)
+      // AND are not subtypes of those more specific initial types. 
+      // This is needed to support generics of `Any`, because `list[Any]` is both a subtype, and a supertype of `list[str]`.
       StreamEx<PyType> suggestedSubtypes = PyTypeUtil.toStream(suggested)
         .filter(suggestedSubtype -> match(initial, suggestedSubtype, context))
         .filter(suggestedSubtype -> !ContainerUtil.exists(initialSubtypes,
