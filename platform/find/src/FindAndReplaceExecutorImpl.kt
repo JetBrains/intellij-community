@@ -63,7 +63,6 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
 
         onResult(usage)
       }
-      onFinish()
     }
   }
 
