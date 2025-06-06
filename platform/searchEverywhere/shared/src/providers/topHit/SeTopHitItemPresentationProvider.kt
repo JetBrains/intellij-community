@@ -67,7 +67,7 @@ object SeTopHitItemPresentationProvider {
             }
 
           if (item is BooleanOptionDescription) {
-            SeOptionActionItemPresentation(SeActionItemPresentation.Common(text + " TOP_HIT", _switcherState = item.isOptionEnabled),
+            SeOptionActionItemPresentation(SeActionItemPresentation.Common(text, _switcherState = item.isOptionEnabled),
                                            isBooleanOption = true)
           }
           else SeSimpleItemPresentation(iconId = EmptyIcon.ICON_16.rpcId(),
