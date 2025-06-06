@@ -339,6 +339,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val maven_opts = map["MAVEN_OPTS"] ?: ""
       map["MAVEN_OPTS"] = mavenConnectionWrapper!!.enhanceMavenOpts(maven_opts)
     }
+    myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(it) }
     return map
   }
 

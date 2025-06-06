@@ -66,7 +66,7 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
   }
 
 
-  protected fun execute(params: MavenRunnerParameters, maxTimeToWait: Duration = 1.minutes): ExecutionInfo {
+  protected fun execute(params: MavenRunnerParameters, settings: MavenRunnerSettings = MavenRunnerSettings(), maxTimeToWait: Duration = 1.minutes): ExecutionInfo {
     val sema = Semaphore()
     val stdout = StringBuilder()
     val stderr = StringBuilder()
@@ -75,7 +75,7 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
     edt<RuntimeException> {
       MavenRunConfigurationType.runConfiguration(
         project, params, mavenGeneralSettings,
-        MavenRunnerSettings(),
+        settings,
         ProgramRunner.Callback { descriptor ->
           descriptor.processHandler!!.addProcessListener(MyTestExecutionListener(stdout, stderr, system, sema, descriptor))
         }, false)

@@ -111,6 +111,28 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
   }
 
 
+  @Test
+  fun testShouldExecuteMavenScriptWithEnvVariablesInRunConfiguration() = runBlocking {
+    importProjectAsync("""
+         <groupId>test</groupId>
+         <artifactId>project</artifactId>
+         <version>1</version>
+         """
+    )
+    createFakeProjectWrapper()
+    mavenGeneralSettings.mavenHomeType = MavenWrapper
+    val executionInfo = execute(params = MavenRunnerParameters(
+      true, projectPath.toCanonicalPath(),
+      null as String?,
+      mutableListOf("verify"), emptyList()),
+                                settings = MavenRunnerSettings().also {
+                                  it.environmentProperties = mapOf("FOOOOO" to "BAAAAAAR")
+                                })
+    assertTrue("Should run wrapper", executionInfo.stdout.contains(wrapperOutput))
+    assertTrue("Should pass env variables in run configuration", executionInfo.stdout.contains("FOOOOO=BAAAAAAR"))
+
+  }
+
   companion object {
     const val wrapperOutput = "WRAPPER REPLACEMENT in Intellij tests"
   }
