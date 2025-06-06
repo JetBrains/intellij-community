@@ -2,11 +2,7 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle
-import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-import com.intellij.codeInsight.completion.command.CommandProvider
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.getDataContext
-import com.intellij.codeInsight.completion.command.getTargetContext
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.GutterIntentionAction
 import com.intellij.codeInsight.daemon.impl.IntentionActionFilter
@@ -17,16 +13,7 @@ import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.execution.lineMarker.LineMarkerActionWrapper
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.ActionUiKind
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.actionSystem.UpdateSession
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.keymap.KeymapUtil
@@ -144,12 +131,12 @@ private fun collectActions(
 
 private class RunMarkerCompletionCommand(
   private val offsetElement: Int,
-  @NlsSafe override val name: String,
+  @param:NlsSafe override val commandId: String,
   override val icon: Icon?,
   override val additionalInfo: String?,
 ) : CompletionCommand(), PossiblyDumbAware {
-  override val i18nName: @Nls String
-    get() = ""
+  override val presentableName: @Nls String
+    get() = commandId
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val (_, collectedActions) = runWithModalProgressBlocking(psiFile.project, AnalysisBundle.message("scanning.scope.progress.title")) {
@@ -162,7 +149,7 @@ private class RunMarkerCompletionCommand(
     cachedIntentions.wrapAndUpdateGutters()
     var intentionAction: IntentionAction? = null
     for (caching in cachedIntentions.gutters) {
-      if (caching.text == name) {
+      if (caching.text == commandId) {
         intentionAction = caching.action
         break
       }
@@ -170,7 +157,7 @@ private class RunMarkerCompletionCommand(
     if (intentionAction == null) return
     if (editor == null) return
     if (ShowIntentionActionsHandler.availableFor(psiFile, editor, offset, intentionAction)) {
-      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction, name)
+      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction, commandId)
     }
   }
 }

@@ -13,8 +13,8 @@ import com.intellij.psi.PsiNameIdentifierOwner
 
 abstract class AbstractCopyFQNCompletionCommandProvider :
   ActionCommandProvider(actionId = "CopyReference",
-                        name = "Copy reference",
-                        i18nName = CodeInsightBundle.message("command.completion.copy.reference.text"),
+                        commandId = "Copy reference",
+                        presentableName = CodeInsightBundle.message("command.completion.copy.reference.text"),
                         icon = null,
                         priority = -150,
                         previewText = null) {
@@ -45,8 +45,8 @@ abstract class AbstractCopyFQNCompletionCommandProvider :
     }
     val range = element.textRange ?: return null
     return ActionCompletionCommand(actionId = super.actionId,
-                                   name = super.name,
-                                   i18nName = super.i18nName,
+                                   commandId = super.commandId,
+                                   presentableActionName = super.presentableName,
                                    icon = super.icon,
                                    priority = super.priority,
                                    previewText = CodeInsightBundle.message("command.completion.copy.reference.description", element.text),

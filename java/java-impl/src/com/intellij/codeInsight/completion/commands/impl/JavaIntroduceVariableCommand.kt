@@ -18,6 +18,7 @@ import com.intellij.refactoring.JavaRefactoringActionHandlerFactory
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.actions.IntroduceVariableAction
 import org.jetbrains.annotations.Nls
+import java.util.Locale.getDefault
 import javax.swing.Icon
 
 //disabled because there is a conflict
@@ -41,11 +42,12 @@ internal class JavaIntroduceVariableCommandProvider : CommandProvider {
 }
 
 internal class JavaIntroduceVariableCommand : CompletionCommand(), CompletionCommandWithPreview {
-  override val name: String
+  override val commandId: String
     get() = "Introduce variable"
 
-  override val i18nName: @Nls String
-    get() = RefactoringBundle.message("introduce.variable.title")
+  @Suppress("HardCodedStringLiteral")
+  override val presentableName: @Nls String
+    get() = RefactoringBundle.message("introduce.variable.title").lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
 
   override val icon: Icon
     get() = AllIcons.Nodes.Variable
@@ -61,7 +63,7 @@ internal class JavaIntroduceVariableCommand : CompletionCommand(), CompletionCom
     ActionUtil.performAction(action, event)
   }
 
-  override fun getPreview(): IntentionPreviewInfo? {
+  override fun getPreview(): IntentionPreviewInfo {
     return IntentionPreviewInfo.Html(ActionsBundle.message("action.IntroduceVariable.description"))
   }
 }

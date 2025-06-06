@@ -8,8 +8,8 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractMoveCompletionCommandProvider : ActionCommandProvider(
   actionId = "Move",
-  name = "Move element",
-  i18nName = ActionsBundle.message("action.Move.text"),
+  commandId = "Move",
+  presentableName = ActionsBundle.message("action.Move.text"),
   icon = null,
   priority = -100,
   previewText = ActionsBundle.message("action.Move.description"),
@@ -34,8 +34,8 @@ abstract class AbstractMoveCompletionCommandProvider : ActionCommandProvider(
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            name = super.name,
-                                            i18nName = super.i18nName,
+                                            commandId = super.commandId,
+                                            presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,
                                             previewText = super.previewText) {
@@ -56,8 +56,8 @@ abstract class AbstractMoveCompletionCommandProvider : ActionCommandProvider(
 
 abstract class AbstractCopyClassCompletionCommandProvider : ActionCommandProvider(
   actionId = "CopyElement",
-  name = "Copy class",
-  i18nName = ActionsBundle.message("action.CopyElement.text"),
+  commandId = "Copy",
+  presentableName = ActionsBundle.message("action.CopyElement.text"),
   icon = null,
   priority = -100,
   previewText = ActionsBundle.message("action.CopyElement.description"),
@@ -82,8 +82,8 @@ abstract class AbstractCopyClassCompletionCommandProvider : ActionCommandProvide
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            name = super.name,
-                                            i18nName = super.i18nName,
+                                            commandId = super.commandId,
+                                            presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,
                                             previewText = super.previewText) {

@@ -7,8 +7,8 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractExtractConstantCompletionCommandProvider :
   ActionCommandProvider(actionId = "IntroduceConstant",
-                        name = "Introduce constant",
-                        i18nName = ActionsBundle.message("action.IntroduceConstant.text"),
+                        commandId = "Introduce constant",
+                        presentableName = ActionsBundle.message("action.IntroduceConstant.text"),
                         icon = null,
                         priority = -150,
                         previewText = ActionsBundle.message("action.IntroduceConstant.description"),
@@ -24,8 +24,8 @@ abstract class AbstractExtractConstantCompletionCommandProvider :
 
 abstract class AbstractExtractFieldCompletionCommandProvider :
   ActionCommandProvider(actionId = "IntroduceField",
-                        name = "Introduce field",
-                        i18nName = ActionsBundle.message("action.IntroduceField.text"),
+                        commandId = "Introduce field",
+                        presentableName = ActionsBundle.message("action.IntroduceField.text"),
                         icon = null,
                         priority = -150,
                         previewText = ActionsBundle.message("action.IntroduceField.description"),
@@ -40,8 +40,8 @@ abstract class AbstractExtractFieldCompletionCommandProvider :
 
 abstract class AbstractExtractParameterCompletionCommandProvider :
   ActionCommandProvider(actionId = "IntroduceParameter",
-                        name = "Introduce parameter",
-                        i18nName = ActionsBundle.message("action.IntroduceParameter.text"),
+                        commandId = "Introduce parameter",
+                        presentableName = ActionsBundle.message("action.IntroduceParameter.text"),
                         icon = null,
                         priority = -150,
                         previewText = ActionsBundle.message("action.IntroduceParameter.description"),

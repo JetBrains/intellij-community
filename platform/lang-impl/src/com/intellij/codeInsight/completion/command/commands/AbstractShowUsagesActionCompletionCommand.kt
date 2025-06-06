@@ -12,8 +12,8 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractShowUsagesActionCompletionCommandProvider :
   ActionCommandProvider(actionId = ShowUsagesAction.ID,
-                        name = "Show usages",
-                        i18nName = ActionsBundle.message("action.ShowUsages.text"),
+                        commandId = "Show usages",
+                        presentableName = ActionsBundle.message("action.ShowUsages.text"),
                         icon = null,
                         priority = -100,
                         previewText = ActionsBundle.message("action.ShowUsages.description")) {

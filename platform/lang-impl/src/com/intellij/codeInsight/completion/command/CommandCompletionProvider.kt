@@ -161,13 +161,14 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     commandCompletionFactory: CommandCompletionFactory,
     prefix: String,
   ): LookupElement {
-    val i18nName = command.i18nName.replace("_", "").replace("...", "").replace("…", "")
+    val presentableName = command.presentableName.replace("_", "").replace("...", "").replace("…", "")
     val additionalInfo = command.additionalInfo ?: ""
-    var tailText = if (command.name.equals(i18nName, ignoreCase = true)) "" else " $i18nName"
+    var tailText = ""
     if (additionalInfo.isNotEmpty()) {
       tailText += " ($additionalInfo)"
     }
-    val lookupString = command.name.trim().let {
+    val name = presentableName.ifEmpty { command.commandId }
+    val lookupString = name.trim().let {
       if (it.length > 50) {
         it.substring(0, 50) + "\u2026"
       }
@@ -176,7 +177,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       }
     }
     val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(lookupString)
-                                                                  .withLookupString(i18nName.trim())
+                                                                  .withLookupString(command.commandId)
                                                                   .withLookupString(lookupString)
                                                                   .withLookupStrings(command.synonyms)
                                                                   .withPresentableText(lookupString)

@@ -1,17 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
-import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-import com.intellij.codeInsight.completion.command.CommandProvider
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-import com.intellij.codeInsight.completion.command.HighlightInfoLookup
-import com.intellij.codeInsight.completion.command.getCommandContext
-import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.java.JavaBundle
 import com.intellij.modcommand.ActionContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
@@ -29,9 +24,9 @@ internal class GenerateGetterSetterHandleCompletionCommandProvider : CommandProv
 
     val result = mutableListOf<CompletionCommand>()
     val possibleCases = listOf(
-      GetterSetterCase(true, true, "Generate 'Getter/Setter'", QuickFixBundle.message("create.getter.setter")),
-      GetterSetterCase(false, true, "Generate 'Setter'", QuickFixBundle.message("create.setter")),
-      GetterSetterCase(true, false, "Generate 'Getter'", QuickFixBundle.message("create.getter")),
+      GetterSetterCase(true, true, "Create 'Getter/Setter'", JavaBundle.message("command.completion.generate.getter.setter")),
+      GetterSetterCase(false, true, "Create 'Setter'", JavaBundle.message("command.completion.generate.setter")),
+      GetterSetterCase(true, false, "Create 'Getter'", JavaBundle.message("command.completion.generate.getter")),
     )
     for (case in possibleCases) {
       val action = QuickFixFactory.getInstance()
@@ -56,8 +51,8 @@ private data class GetterSetterCase(val generateGetter: Boolean, val generateSet
 private class BaseGenerateGetterSetterHandleCompletionCommand(
   val generateGetter: Boolean,
   val generateSetter: Boolean,
-  override val name: String,
-  override val i18nName: String,
+  override val commandId: String,
+  override val presentableName: String,
   override val highlightInfo: HighlightInfoLookup?,
   private val preview: () -> IntentionPreviewInfo?,
 ) : CompletionCommand(), CompletionCommandWithPreview {

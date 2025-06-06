@@ -240,7 +240,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
 
                 result[toolId + ":" + action.text] = (DirectInspectionFixCompletionCommand(
                   inspectionId = toolId,
-                  name = action.text,
+                  commandId = action.text,
                   priority = priority,
                   icon = icon,
                   highlightInfo = HighlightInfoLookup(textRange, level.attributesKey, priority),
@@ -335,7 +335,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
                 @Suppress("HardCodedStringLiteral")
                 name = name.substring(prefix.length, name.length - suffix.length)
               }
-              val command = DirectErrorFixCompletionCommand(name = name,
+              val command = DirectErrorFixCompletionCommand(commandId = name,
                                                             priority = 100,
                                                             icon = AllIcons.Actions.QuickfixBulb,
                                                             highlightInfo = HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),

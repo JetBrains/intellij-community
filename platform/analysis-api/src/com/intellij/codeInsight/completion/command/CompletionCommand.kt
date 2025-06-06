@@ -23,14 +23,15 @@ import javax.swing.Icon
  */
 abstract class CompletionCommand : UserDataHolderBase() {
   /**
-   * Represents the name which is used as a main lookup string
+   * ID to identify this command. It is also used as a lookup string.
+   * It should present this action in English
    */
-  abstract val name: String
+  abstract val commandId: String
 
   /**
-   * Represents a localized, human-readable name for the command, used in tail lookup string
+   * Represents a localized, human-readable name for the command, used as a main lookup string
    */
-  abstract val i18nName: @Nls String
+  abstract val presentableName: @Nls String
   abstract val icon: Icon?
 
   /**
@@ -72,7 +73,7 @@ abstract class CompletionCommand : UserDataHolderBase() {
   abstract fun execute(offset: Int, psiFile: PsiFile, editor: Editor?)
 
   override fun toString(): String {
-    return "CompletionCommand(name='$name', class='${this::class.simpleName}')"
+    return "CompletionCommand(name='$commandId', class='${this::class.simpleName}')"
   }
 
 

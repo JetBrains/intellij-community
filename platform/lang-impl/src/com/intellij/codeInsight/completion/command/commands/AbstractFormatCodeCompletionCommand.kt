@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
+import java.util.Locale.getDefault
 import javax.swing.Icon
 
 /**
@@ -31,13 +32,15 @@ abstract class AbstractFormatCodeCompletionCommandProvider :
 }
 
 abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), CompletionCommandWithPreview {
-  final override val name: String
+  final override val commandId: String
     get() = "Format"
 
-  final override val i18nName: @Nls String
+  @Suppress("HardCodedStringLiteral")
+  final override val presentableName: @Nls String
     get() = ActionsBundle.message("action.ReformatCode.text")
-  override val synonyms: List<String>
-    get() = listOf("Reformat")
+      .replaceFirst("_", "")
+      .lowercase()
+      .replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
   final override val icon: Icon
     get() = AllIcons.Actions.ReformatCode // Use the reformat icon
 

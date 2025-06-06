@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.codeInsight.completion.command.getCommandContext
 import com.intellij.idea.ActionsBundle
@@ -10,8 +11,8 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractGoToDeclarationCompletionCommandProvider :
   ActionCommandProvider(actionId = "GotoDeclaration",
-                        name = "Go to declaration",
-                        i18nName = ActionsBundle.message("action.GotoDeclaration.text"),
+                        commandId = "Go to declaration",
+                        presentableName = CodeInsightBundle.message("command.completion.GotoDeclaration.text"),
                         icon = null,
                         priority = -100,
                         previewText = ActionsBundle.message("action.GotoDeclaration.description")) {

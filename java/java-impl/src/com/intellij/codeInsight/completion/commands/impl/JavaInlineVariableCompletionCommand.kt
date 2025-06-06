@@ -50,14 +50,14 @@ internal class JavaInlineVariableCompletionCommandProvider : CommandProvider {
 private class JavaInlineVariableCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
 ) : CompletionCommand(), DumbAware, CompletionCommandWithPreview {
-  override val name: String
+  override val commandId: String
     get() = "Inline"
 
-  override val i18nName: @Nls String
+  override val presentableName: @Nls String
     get() = JavaBundle.message("command.completion.inline.text")
 
 
-  override val icon: Icon?
+  override val icon: Icon
     get() = AllIcons.Actions.RefactoringBulb // Use an appropriate icon from IntelliJ's icon set
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
@@ -77,7 +77,7 @@ private class JavaInlineVariableCompletionCommand(
     }
   }
 
-  override fun getPreview(): IntentionPreviewInfo? {
+  override fun getPreview(): IntentionPreviewInfo {
     return IntentionPreviewInfo.Html(ActionsBundle.message("action.Inline.description"))
   }
 }

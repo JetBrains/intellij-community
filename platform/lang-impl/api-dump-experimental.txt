@@ -189,11 +189,10 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - <init>():V
 - f:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - a:findTargetToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- f:getI18nName():java.lang.String
+- f:getCommandId():java.lang.String
 - f:getIcon():javax.swing.Icon
-- f:getName():java.lang.String
+- f:getPresentableName():java.lang.String
 - getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-- getSynonyms():java.util.List
 *a:com.intellij.codeInsight.completion.command.commands.AbstractFormatCodeCompletionCommandProvider
 - com.intellij.codeInsight.completion.command.CommandProvider
 - <init>():V
@@ -212,11 +211,11 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - b:<init>(com.intellij.codeInsight.actions.CodeInsightAction,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - f:getAction():com.intellij.codeInsight.actions.CodeInsightAction
+- getCommandId():java.lang.String
 - f:getCustomI18nName():java.lang.String
 - f:getCustomName():java.lang.String
-- getI18nName():java.lang.String
 - getIcon():javax.swing.Icon
-- getName():java.lang.String
+- getPresentableName():java.lang.String
 - f:setCustomI18nName(java.lang.String):V
 - f:setCustomName(java.lang.String):V
 *a:com.intellij.codeInsight.completion.command.commands.AbstractGoToDeclarationCompletionCommandProvider
@@ -273,10 +272,10 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:createCommand(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - pf:createCommandWithNameIdentifier(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):com.intellij.codeInsight.completion.command.commands.ActionCompletionCommand
 - f:getActionId():java.lang.String
+- f:getCommandId():java.lang.String
 - getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
-- f:getI18nName():java.lang.String
 - f:getIcon():javax.swing.Icon
-- f:getName():java.lang.String
+- f:getPresentableName():java.lang.String
 - f:getPreviewText():java.lang.String
 - f:getPriority():java.lang.Integer
 - f:getSynonyms():java.util.List
@@ -292,10 +291,10 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - f:getActionId():java.lang.String
 - getAdditionalInfo():java.lang.String
+- getCommandId():java.lang.String
 - getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
-- getI18nName():java.lang.String
 - getIcon():javax.swing.Icon
-- getName():java.lang.String
+- getPresentableName():java.lang.String
 - getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - getPriority():java.lang.Integer
 - getSynonyms():java.util.List

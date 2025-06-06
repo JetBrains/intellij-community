@@ -12,16 +12,16 @@ import com.intellij.psi.PsiFile
  */
 internal class LineCommentCompletionCommandProvider :
   ActionCommandProvider(actionId = "CommentByLineComment",
-                        name = "Comment line",
-                        i18nName = ActionsBundle.message("action.CommentByLineComment.text"),
+                        commandId = "Comment line",
+                        presentableName = ActionsBundle.message("action.CommentByLineComment.text"),
                         icon = null,
                         priority = -100,
                         previewText = ActionsBundle.message("action.CommentByLineComment.description")) {
 
-  override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
+  override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand {
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            name = super.name,
-                                            i18nName = super.i18nName,
+                                            commandId = super.commandId,
+                                            presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,
                                             previewText = super.previewText) {

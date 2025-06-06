@@ -86,7 +86,7 @@ private class CommandCompletionDocumentationTarget(
     completionLookupElement.renderElement(presentation)
 
     return TargetPresentation.builder(presentation.itemText
-                                      ?: completionLookupElement.command.name).icon(presentation.icon).containerText(presentation.tailText).presentation()
+                                      ?: completionLookupElement.command.commandId).icon(presentation.icon).containerText(presentation.tailText).presentation()
   }
 
   override fun computeDocumentation(): DocumentationResult? {

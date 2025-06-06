@@ -10,8 +10,8 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractGoToSuperMethodCompletionCommandProvider :
   ActionCommandProvider(actionId = "GotoSuperMethod",
-                        name = "Go to super method",
-                        i18nName = ActionsBundle.message("action.GotoSuperMethod.text"),
+                        commandId = "Go to super method",
+                        presentableName = ActionsBundle.message("action.GotoSuperMethod.text"),
                         icon = null,
                         priority = -100,
                         previewText = ActionsBundle.message("action.GotoSuperMethod.description")) {

@@ -8,8 +8,8 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractChangeSignatureCompletionCommandProvider : ActionCommandProvider(
   actionId = "ChangeSignature",
-  name = "Change signature",
-  i18nName = ActionsBundle.message("action.ChangeSignature.text"),
+  commandId = "Change signature",
+  presentableName = ActionsBundle.message("action.ChangeSignature.text"),
   icon = null,
   priority = -100,
   previewText = ActionsBundle.message("action.ChangeSignature.description"),
@@ -35,8 +35,8 @@ abstract class AbstractChangeSignatureCompletionCommandProvider : ActionCommandP
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            name = super.name,
-                                            i18nName = super.i18nName,
+                                            commandId = super.commandId,
+                                            presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,
                                             previewText = super.previewText) {

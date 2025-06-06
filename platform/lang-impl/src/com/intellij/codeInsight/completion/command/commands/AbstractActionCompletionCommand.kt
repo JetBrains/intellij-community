@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import java.util.Locale.getDefault
 import javax.swing.Icon
 
 
@@ -26,16 +27,16 @@ import javax.swing.Icon
  * allowing actions to be triggered through code completion features.
  *
  * @property actionId The unique identifier of the IDE action to be executed
- * @property name The display name of the command
- * @property i18nName The internationalized name of the command
+ * @property commandId id, which will be used as  lookup string
+ * @property presentableName The display internationalized name of the command
  * @property icon Optional icon to be displayed with the command
  * @property priority Optional priority value affecting command ordering
  * @property previewText Optional preview text shown when the command is selected
  */
 open class ActionCommandProvider(
   @field:Language("devkit-action-id") var actionId: String,
-  val name: String,
-  val i18nName: @Nls String,
+  val commandId: String,
+  val presentableName: @Nls String,
   val icon: Icon? = null,
   val priority: Int? = null,
   val previewText: @Nls String?,
@@ -67,8 +68,8 @@ open class ActionCommandProvider(
    */
   protected open fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? =
     ActionCompletionCommand(actionId = actionId,
-                            name = name,
-                            i18nName = i18nName,
+                            commandId = commandId,
+                            presentableActionName = presentableName,
                             icon = icon,
                             priority = priority,
                             previewText = previewText,
@@ -124,8 +125,8 @@ open class ActionCommandProvider(
     }
     val range = element.textRange ?: return null
     return ActionCompletionCommand(actionId = actionId,
-                                   name = name,
-                                   i18nName = i18nName,
+                                   commandId = commandId,
+                                   presentableActionName = presentableName,
                                    icon = icon,
                                    priority = priority,
                                    previewText = previewText,
@@ -139,16 +140,24 @@ open class ActionCommandProvider(
  * as part of code completion features, ensuring that the action is applicable and
  * executable within a given code editor context.
  */
+@Suppress("HardCodedStringLiteral")
 open class ActionCompletionCommand(
   @field:Language("devkit-action-id") var actionId: String,
-  override val name: String,
-  override val i18nName: @Nls String,
+  override val commandId: String,
+  presentableActionName: @Nls String,
   private val previewText: @Nls String?,
   override val icon: Icon? = null,
   override val priority: Int? = null,
   override val highlightInfo: HighlightInfoLookup? = null,
   override val synonyms: List<String> = emptyList()
 ) : CompletionCommand(), DumbAware, CompletionCommandWithPreview {
+
+  override val presentableName: @Nls String = presentableActionName
+    .replaceFirst("_", "")
+    .lowercase()
+    .replaceFirstChar {
+    if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
+
   private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
 
   override val additionalInfo: String?

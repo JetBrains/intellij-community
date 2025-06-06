@@ -80,7 +80,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       .<caret>
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.equals("format", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("Reformat", ignoreCase = true) })
     myFixture.checkResult("""
       class A {
           void foo() {
@@ -177,7 +177,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Generate 'Ge", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("Getter", ignoreCase = true) })
     myFixture.checkResult("""
       class A {
           String y;
@@ -242,7 +242,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }.<caret>""".trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment by line comment", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("Comment with line comment", ignoreCase = true) })
     myFixture.checkResult("""
       //class A {
       //    public String getY() {
@@ -260,7 +260,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }""".trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment line", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("Comment with line", ignoreCase = true) })
     myFixture.checkResult("""
       class A {
           public String getY() {
@@ -279,7 +279,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }.<caret>""".trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment by block", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("Comment with block", ignoreCase = true) })
     myFixture.checkResult("""
       /*
       class A {
@@ -565,7 +565,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.doHighlighting()
     myFixture.type(".")
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("comment line", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("comment with line", ignoreCase = true) })
     myFixture.checkResult("""
       class A { 
         void foo() {
@@ -799,7 +799,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    assertTrue(elements.any { element -> element.lookupString.equals("Move element", ignoreCase = true) })
+    assertTrue(elements.any { element -> element.lookupString.equals("Move", ignoreCase = true) })
   }
 
   fun testCopyClass() {
@@ -815,7 +815,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    assertTrue(elements.any { element -> element.lookupString.equals("Copy class", ignoreCase = true) })
+    assertTrue(elements.any { element -> element.lookupString.equals("Copy", ignoreCase = true) })
   }
 
   fun testInlineReferenceOnlyVariables() {

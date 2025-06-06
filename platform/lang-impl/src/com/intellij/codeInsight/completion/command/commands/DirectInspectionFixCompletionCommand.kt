@@ -34,7 +34,7 @@ import javax.swing.Icon
 
 internal class DirectInspectionFixCompletionCommand(
   private val inspectionId: String,
-  override val name: @Nls String,
+  override val commandId: @Nls String,
   override val priority: Int?,
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup,
@@ -42,8 +42,8 @@ internal class DirectInspectionFixCompletionCommand(
   private val previewProvider: () -> IntentionPreviewInfo?,
 ) : CompletionCommand(), CompletionCommandWithPreview {
 
-  override val i18nName: @Nls String
-    get() = name
+  override val presentableName: @Nls String
+    get() = commandId
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
@@ -94,7 +94,7 @@ internal class DirectInspectionFixCompletionCommand(
             val fixes = descriptor.fixes ?: continue
             for (i in 0..fixes.size - 1) {
               val intentionAction = wrap(descriptor, i)
-              if (intentionAction.text == name && availableFor(psiFile, editor, targetOffset, intentionAction)) {
+              if (intentionAction.text == commandId && availableFor(psiFile, editor, targetOffset, intentionAction)) {
                 return@readAction intentionAction
               }
             }
@@ -108,7 +108,7 @@ internal class DirectInspectionFixCompletionCommand(
     val marker = editor.document.createRangeMarker(offset, offset)
     val targetMarker = editor.document.createRangeMarker(targetOffset, targetOffset)
     editor.caretModel.moveToOffset(targetOffset)
-    ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelFile, topLevelEditor, action, name)
+    ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelFile, topLevelEditor, action, commandId)
     if (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset) {
       //probably, intention moves the cursor
       return
