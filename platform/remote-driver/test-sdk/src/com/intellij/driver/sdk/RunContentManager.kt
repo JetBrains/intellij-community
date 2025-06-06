@@ -23,4 +23,5 @@ interface ProcessHandlerRef {
   fun isProcessTerminated(): Boolean
   fun isProcessTerminating(): Boolean
   fun waitFor(millis: Long): Boolean
+  fun destroyProcess()
 }
