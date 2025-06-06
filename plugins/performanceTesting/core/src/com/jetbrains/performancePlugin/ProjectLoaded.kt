@@ -162,6 +162,9 @@ private fun runOnProjectInit(project: Project) {
 }
 
 private class PerformancePluginInitProjectActivity : InitProjectActivity {
+  override val isParallelExecution: Boolean
+    get() = true
+
   override suspend fun run(project: Project) {
     runOnProjectInit(project)
   }

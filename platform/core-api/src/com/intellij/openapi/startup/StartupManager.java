@@ -24,11 +24,13 @@ public abstract class StartupManager {
   }
 
   /**
-   * Registers an activity that is performed during the project load while the "Loading Project"
-   * progress bar is displayed.
+   * Registers an activity performed during the project load while the "Loading Project" progress bar is displayed.
    * You may NOT access PSI from this activity.
+   * @deprecated Do not use.
    */
   @ApiStatus.Internal
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public abstract void registerStartupActivity(@NotNull Runnable runnable);
 
   /**

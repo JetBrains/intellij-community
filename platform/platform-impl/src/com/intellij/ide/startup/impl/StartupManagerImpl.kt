@@ -197,38 +197,50 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   private suspend fun runInitProjectActivities() {
-    runActivities(initProjectStartupActivities)
-
     val extensionPoint = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
       .getExtensionPoint<InitProjectActivity>("com.intellij.initProjectActivity")
-    // do not create an extension if not allow-listed
-    for (adapter in extensionPoint.sortedAdapters) {
-      val pluginId = adapter.pluginDescriptor.pluginId
-      val idString = pluginId.idString
-      if (!isCorePlugin(adapter.pluginDescriptor) &&
-          idString != "com.jetbrains.performancePlugin" &&
-          idString != "com.jetbrains.performancePlugin.yourkit" &&
-          idString != "com.intellij.clion-swift" &&
-          idString != "com.intellij.clion.performanceTesting" &&
-          idString != "com.intellij.appcode" &&
-          idString != "com.jetbrains.kmm" &&
-          idString != "com.jetbrains.codeWithMe" &&
-          idString != "intellij.rider.plugins.cwm" &&
-          idString != "org.jetbrains.plugins.clion.radler") {
-        if (!(idString == "com.intellij.ml.llm" && adapter.assignableToClassName.endsWith("XNextRootPaneCustomizer"))) {
-          LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
+    coroutineScope {
+      // do not create an extension if not allow-listed
+      for (adapter in extensionPoint.sortedAdapters) {
+        val idString = adapter.pluginDescriptor.pluginId.idString
+        if (!isCorePlugin(adapter.pluginDescriptor) &&
+            idString != "com.jetbrains.performancePlugin" &&
+            idString != "com.jetbrains.performancePlugin.yourkit" &&
+            idString != "com.intellij.clion-swift" &&
+            idString != "com.intellij.clion.performanceTesting" &&
+            idString != "com.intellij.appcode" &&
+            idString != "com.jetbrains.kmm" &&
+            idString != "com.jetbrains.codeWithMe" &&
+            idString != "intellij.rider.plugins.cwm" &&
+            idString != "org.jetbrains.plugins.clion.radler") {
+          if (!(idString == "com.intellij.ml.llm" && adapter.assignableToClassName.endsWith("XNextRootPaneCustomizer"))) {
+            LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
+            continue
+          }
+        }
+
+        val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
+        if (project is LightEditCompatible && activity !is LightEditCompatible) {
           continue
         }
-      }
 
-      val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
-      if (project !is LightEditCompatible || activity is LightEditCompatible) {
         val fqn = activity.javaClass.name
-        withContext(tracer.span("run init activity ${fqn.substringAfterLast('.')}", arrayOf("class", fqn, "plugin", idString))) {
-          activity.run(project)
+        val context = tracer.span("run init activity ${fqn.substringAfterLast('.')}", arrayOf("class", fqn, "plugin", idString))
+        if (activity.isParallelExecution) {
+          launch(context) {
+            activity.run(project)
+          }
+        }
+        else {
+          withContext(context) {
+            activity.run(project)
+          }
         }
       }
     }
+
+    // execute programmatically registered init activities after declarative ones
+    runActivities(initProjectStartupActivities)
   }
 
   // Must be executed in a pooled thread outside a project loading modal task. The only exclusion - test mode.

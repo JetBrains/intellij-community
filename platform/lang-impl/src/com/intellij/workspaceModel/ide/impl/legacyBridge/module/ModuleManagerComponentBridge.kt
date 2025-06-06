@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
+import com.intellij.facet.impl.FacetEventsPublisher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleComponentManager
+import com.intellij.openapi.project.ModuleListener.TOPIC
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -34,38 +36,40 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializati
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.fireModulesAdded
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ModuleRootListenerBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ModuleManagerComponentBridge>()
 
 private class ModuleManagerInitProjectActivity : InitProjectActivity {
   override suspend fun run(project: Project) {
-    val modules = (project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge).modules().toList()
-    coroutineContext.ensureActive()
+    val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
+    val modules = moduleManager.modules().toList()
     span("firing modules_added event") {
-      fireModulesAdded(project, modules)
+      project.messageBus.syncPublisher(TOPIC).modulesAdded(project, modules)
     }
     for (module in modules) {
       module.markAsLoaded()
     }
+
+    // listen only after we executed `fireModulesAdded`
+    project.serviceAsync<FacetEventsPublisher>().listen()
   }
 }
 
 @ApiStatus.Internal
 open class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
-  init {
+    init {
     // a default project doesn't have facets
     if (!project.isDefault) {
       // Instantiate facet change listener as early as possible
@@ -166,7 +170,9 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
   }
 
   final override fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>) {
-    ModuleBridgeImpl.initFacets(modules, project, coroutineScope)
+    coroutineScope.launch(CoroutineName("init facets")) {
+      ModuleBridgeImpl.initFacets(modules = modules, project = project)
+    }
   }
 
   override fun createModule(

@@ -694,6 +694,9 @@ private fun installGlobalListener() {
 }
 
 private class PsiVfsInitProjectActivity : InitProjectActivity {
+  override val isParallelExecution: Boolean
+    get() = true
+
   override suspend fun run(project: Project) {
     val connection = project.messageBus.simpleConnect()
 
