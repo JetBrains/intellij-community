@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler;
@@ -47,7 +47,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
         """,
       """
         <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://Gr"><code><span style="color:#000000;">Gr</span></code></a></div><div class='definition'><pre><span style="color:#000043;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">foo</span><span style="">(</span><span style="">)</span></pre></div><div class='content'>
-             Use <a href="psi_element://Gr#bar()"><code><span style="color:#0000ff;">bar</span><span style="">()</span></code></a> from class <a href="psi_element://Gr"><code><span style="color:#0000ff;">Gr</span></code></a> instead
+             Use <a href="psi_element://Gr#bar()"><code>#bar()</code></a> from class <a href="psi_element://Gr"><code>Gr</code></a> instead
            </div><table class='sections'></table>""");
   }
 

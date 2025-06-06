@@ -47,10 +47,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -2303,10 +2305,11 @@ public class JavaDocInfoGenerator {
 
   private void generateLinkValue(PsiInlineDocTag tag, StringBuilder buffer, boolean plainLink) {
     PsiElement[] tagElements = tag.getDataElements();
-    String text = createLinkText(tagElements);
-    if (!text.isEmpty()) {
-      generateLink(buffer, text, tagElements[0], plainLink);
-    }
+    PsiElement ref = getRefElement(tagElements);
+    String label = getLinkLabel(tagElements, ref);
+    StringBuilder b = new StringBuilder();
+    collectElementText(b, ref != null ? ref : tag);
+    generateLink(buffer, b.toString(), label, tag, plainLink, !hasLinkLabel(tagElements, ref));
   }
 
   private void generateMarkdownLinkValue(PsiMarkdownReferenceLink referenceLink, StringBuilder buffer) {
@@ -2322,7 +2325,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generateValueValue(PsiInlineDocTag tag, StringBuilder buffer, PsiElement element) {
-    String text = createLinkText(tag.getDataElements());
+    String text = getRefText(tag.getDataElements());
     PsiField valueField = null;
     if (text.isEmpty()) {
       if (myElement instanceof PsiField) valueField = (PsiField)myElement;
@@ -2364,16 +2367,51 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  protected String createLinkText(PsiElement[] tagElements) {
-    int predictOffset = tagElements.length > 0 ? tagElements[0].getTextOffset() + tagElements[0].getText().length() : 0;
-    StringBuilder buffer = new StringBuilder();
-    for (PsiElement tagElement : tagElements) {
-      if (tagElement.getTextOffset() > predictOffset) buffer.append(' ');
-      predictOffset = tagElement.getTextOffset() + tagElement.getText().length();
+  protected String getLinkLabel(PsiElement[] tagElements, @Nullable PsiElement ref) {
+    if (!hasLinkLabel(tagElements, ref)) return null;
 
-      collectElementText(buffer, tagElement);
-    }
+    StringBuilder buffer = new StringBuilder();
+    Arrays.stream(tagElements)
+      .skip(ref == null ? 0 : ContainerUtil.indexOf(tagElements, e -> e == ref) + 1)
+      .forEach(element -> collectElementText(buffer, element));
     return buffer.toString().trim();
+  }
+
+  private String getRefText(PsiElement[] tagElements) {
+    StringBuilder buffer = new StringBuilder();
+    PsiElement ref =  getRefElement(tagElements);
+    if (ref != null) collectElementText(buffer, ref);
+    return buffer.toString().trim();
+  }
+
+  private static @Nullable PsiElement getRefElement(PsiElement[] tagElements) {
+    for (PsiElement element : tagElements) {
+      if (element instanceof PsiWhiteSpace) { continue; }
+
+      if (element instanceof PsiDocMethodOrFieldRef) {
+        return element;
+      }
+      // JavaDoc references
+      if (element instanceof TreeElement treeElement && treeElement.getTokenType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
+        return element;
+      }
+      // JavaDoc module references
+      if (element instanceof PsiDocTagValue docTagValue) {
+        PsiElement firstChild = docTagValue.getFirstChild();
+        if (firstChild instanceof PsiJavaModuleReferenceElement || firstChild instanceof PsiJavaModuleReference) {
+          return element;
+        }
+      }
+      break;
+    }
+    return null;
+  }
+
+  /**
+   * Returns true if the link has a custom label.
+   */
+  private static boolean hasLinkLabel(PsiElement[] tagElements, PsiElement ref) {
+    return !(ContainerUtil.and(tagElements, element -> element == ref || element.getText().isBlank()));
   }
 
   protected void collectElementText(StringBuilder buffer, PsiElement element) {
@@ -2426,15 +2464,17 @@ public class JavaDocInfoGenerator {
         PsiDocTag tag = tags[i];
         PsiElement[] elements = tag.getDataElements();
         if (elements.length > 0) {
-          String text = createLinkText(elements);
-          if (StringUtil.startsWithChar(text, '<')) {
-            buffer.append(text);
+          PsiElement ref = getRefElement(elements);
+          String linkLabel = getLinkLabel(elements, ref);
+          if (StringUtil.startsWithChar(linkLabel, '<')) {
+            buffer.append(linkLabel);
           }
-          else if (StringUtil.startsWithChar(text, '"')) {
-            appendPlainText(buffer, text);
+          else if (StringUtil.startsWithChar(linkLabel, '"')) {
+            appendPlainText(buffer, linkLabel);
           }
           else {
-            generateLink(buffer, text, comment, false);
+            boolean plain = hasLinkLabel(elements, ref);
+            generateLink(buffer, ref != null ? ref.getText() : tag.getText(), plain ? linkLabel : null, tag, plain);
           }
         }
         if (i < tags.length - 1) {
@@ -2706,13 +2746,6 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generateLink(StringBuilder buffer, String linkText, @NotNull PsiElement context, boolean plainLink) {
-    int index = JavaDocUtil.extractReference(linkText);
-    String refText = linkText.substring(0, index).trim();
-    String label = StringUtil.nullize(linkText.substring(index).trim());
-    generateLink(buffer, refText, label, context, plainLink);
-  }
-
   void generateLink(StringBuilder buffer, PsiElement element, String label, boolean plainLink) {
     String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
     if (refText != null) {
@@ -2721,13 +2754,22 @@ public class JavaDocInfoGenerator {
   }
 
   /**
+   * @param refText The text of the target element.
+   * @param label   An optional user-defined label. When not null, it will always be used as the link text.
    * @return Length of the generated label.
    */
   int generateLink(StringBuilder buffer, String refText, String label, @NotNull PsiElement context, boolean plainLink) {
-    if (label == null) {
-      PsiManager manager = context.getManager();
-      label = JavaDocUtil.getLabelText(manager.getProject(), manager, refText, context);
-    }
+    return generateLink(buffer, refText, label, context, plainLink, !plainLink);
+  }
+
+  /**
+   * @param refText             The text of the target element.
+   * @param label               An optional user-defined label. When not null, it will always be used as the link text.
+   * @param shouldHighlightLabel True if syntax highlighting should be applied to the link (package, class, …).
+   * @return Length of the generated label.
+   */
+  int generateLink(StringBuilder buffer, String refText, String label, @NotNull PsiElement context, boolean plainLink, boolean shouldHighlightLabel) {
+    // Resolve link target
     LOG.assertTrue(refText != null, "refText appears to be null.");
     PsiElement target = null;
     try {
@@ -2736,8 +2778,16 @@ public class JavaDocInfoGenerator {
     catch (IndexNotReadyException e) {
       LOG.debug(e);
     }
-    appendMaybeUnresolvedLink(buffer, target, label, context.getProject(), plainLink);
-    return StringUtil.stripHtml(label, true).length();
+
+    // Resolve link text
+    String linkLabel = label;
+    if (label == null) {
+      PsiManager manager = context.getManager();
+      linkLabel = JavaDocUtil.getLabelText(manager.getProject(), manager, refText, context);
+    }
+
+    appendMaybeUnresolvedLink(buffer, target, linkLabel, context.getProject(), plainLink, shouldHighlightLabel);
+    return StringUtil.stripHtml(linkLabel, true).length();
   }
 
   public void appendMaybeUnresolvedLink(
@@ -2747,6 +2797,20 @@ public class JavaDocInfoGenerator {
     @NotNull Project project,
     boolean plainLink
   ) {
+    appendMaybeUnresolvedLink(buffer, target, label, project, plainLink, true);
+  }
+
+  /**
+   * @param canHighlightLink false if the link should not receive syntax highlighting (e.g., it has a custom label)
+   */
+  public void appendMaybeUnresolvedLink(
+    StringBuilder buffer,
+    @Nullable PsiElement target,
+    String label,
+    @NotNull Project project,
+    boolean plainLink,
+    boolean canHighlightLink
+  ) {
     if (target == null && DumbService.isDumb(project)) {
       buffer.append(label);
     }
@@ -2754,9 +2818,8 @@ public class JavaDocInfoGenerator {
       buffer.append(getSpanForUnresolvedItem()).append(label).append("</span>");
     }
     else {
-      String highlightedLabel = myIsSignatureGenerationInProgress && doHighlightSignatures() || doSemanticHighlightingOfLinks()
-                                ? tryHighlightLinkLabel(target, label)
-                                : label;
+      boolean doHighlight = canHighlightLink && ((myIsSignatureGenerationInProgress && doHighlightSignatures() || doSemanticHighlightingOfLinks()));
+      String highlightedLabel = doHighlight ? tryHighlightLinkLabel(target, label) : label;
       generateLink(buffer, target, highlightedLabel, plainLink);
     }
   }
