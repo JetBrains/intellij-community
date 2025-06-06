@@ -18,11 +18,6 @@ public interface ZipOutputBuilder extends CloseableExt {
   boolean deleteEntry(String entryName);
 
   @Override
-  default void close() throws IOException {
-    close(true);
-  }
-
-  @Override
   void close(boolean saveChanges) throws IOException;
 
   static @Nullable String getParentEntryName(String entryName) {

@@ -135,6 +135,11 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
 
   @Override
+  public void close() throws IOException {
+    close(false);
+  }
+
+  @Override
   public void close(boolean saveChanges) throws IOException {
     try {
       if (!myHasChanges || !saveChanges) {

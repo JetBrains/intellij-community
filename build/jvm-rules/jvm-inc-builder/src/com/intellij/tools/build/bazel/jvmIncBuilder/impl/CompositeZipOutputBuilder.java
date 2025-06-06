@@ -59,6 +59,21 @@ public class CompositeZipOutputBuilder implements ZipOutputBuilder {
   }
 
   @Override
+  public void close() throws IOException {
+    IOException ex = null;
+    for (ZipOutputBuilder delegate : myDelegates) {
+      try {
+        delegate.close();
+      }
+      catch (IOException e) {
+        if (ex == null) {
+          ex = e;
+        }
+      }
+    }
+  }
+
+  @Override
   public void close(boolean saveChanges) throws IOException {
     IOException ex = null;
     for (ZipOutputBuilder delegate : myDelegates) {
