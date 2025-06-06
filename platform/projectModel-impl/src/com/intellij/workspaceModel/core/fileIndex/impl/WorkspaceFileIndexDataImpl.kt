@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.ide.highlighter.ArchiveFileType
@@ -218,7 +218,7 @@ internal class WorkspaceFileIndexDataImpl(
     val contributors: List<WorkspaceFileIndexContributor<E>> = getContributors(entityClass, storageKind)
 
     WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTime {
-      contributors.forEach { contributor ->
+      for (contributor in contributors) {
         contributor.registerFileSets(entity, registrar, storage)
       }
     }

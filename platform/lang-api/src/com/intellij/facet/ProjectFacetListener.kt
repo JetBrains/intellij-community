@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.facet;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.facet
 
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.project.Project
 
 /**
  * Implement this interface to be notified about changes in facets in all project modules. The implementation must be registered in plugin.xml
@@ -10,28 +9,28 @@ import org.jetbrains.annotations.NotNull;
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;
  * &nbsp;&nbsp;&lt;projectFacetListener facet-type="facet-type-id" implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
- * </pre>
- * If {@code facet-type-id} is set to {@link FacetType#getStringId ID} of a specific facet type, the listener will be notified about changes
- * in facets of this type only. If it is {@code "any"} the listener will get events about all facets in the project.
+</pre> *
+ * If `facet-type-id` is set to [ID][FacetType.getStringId] of a specific facet type, the listener will be notified about changes
+ * in facets of this type only. If it is `"any"` the listener will get events about all facets in the project.
  *
  * @see FacetManagerListener
  */
-public interface ProjectFacetListener<F extends Facet<?>> {
-  default void firstFacetAdded(@NotNull Project project) {
+interface ProjectFacetListener<F : Facet<*>> {
+  fun firstFacetAdded(project: Project) {
   }
 
-  default void facetAdded(@NotNull F facet) {
+  fun facetAdded(facet: F) {
   }
 
-  default void beforeFacetRemoved(@NotNull F facet){
+  fun beforeFacetRemoved(facet: F) {
   }
 
-  default void facetRemoved(@NotNull F facet, @NotNull Project project){
+  fun facetRemoved(facet: F, project: Project) {
   }
 
-  default void allFacetsRemoved(@NotNull Project project){
+  fun allFacetsRemoved(project: Project) {
   }
 
-  default void facetConfigurationChanged(@NotNull F facet){
+  fun facetConfigurationChanged(facet: F) {
   }
 }
