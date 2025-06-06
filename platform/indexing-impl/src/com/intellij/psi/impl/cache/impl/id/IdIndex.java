@@ -3,6 +3,7 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.indexing.*;
@@ -29,6 +30,8 @@ import java.util.Map;
  */
 @ApiStatus.Internal
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
+  private static final Logger LOG = Logger.getInstance(IdIndex.class);
+
   public static final @NonNls ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
   private static final FileBasedIndex.InputFilter INPUT_FILES_FILTER = new IdIndexFilter();
@@ -104,7 +107,20 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
                                                      @NotNull FileTypeSpecificSubIndexer<IdIndexer> indexer) throws MapReduceIndexMappingException {
         IdIndexer subIndexerType = indexer.getSubIndexerType();
         try {
-          return subIndexerType.map(inputData);
+          Map<IdIndexEntry, Integer> idsMap = subIndexerType.map(inputData);
+          if (!(idsMap instanceof IdEntryToScopeMapImpl)) {
+            //RC: it is strongly recommended for all the IdIndexer implementations to use IdDataConsumer helper to
+            //    collect IDs and occurrence masks. Such a helper class returns IdEntryToScopeMapImpl instance,
+            //    which is  optimized for memory consumption and serialization. All the implementations in intellij
+            //    follow that rule.
+            //    But if there are some implementations outside our control that doesn't follow, we 'correct' it by
+            //    wrapping the map into IdEntryToScopeMapImpl -- with the associated costs -- and log a warning so
+            //    devs could fix it later:
+            LOG.warn(subIndexerType.getClass() + " for [" + inputData.getFile().getPath() + "] " +
+                     "returned non-IdEntryToScopeMapImpl map: " + idsMap.getClass());
+            return new IdEntryToScopeMapImpl(idsMap);
+          }
+          return idsMap;
         }
         catch (Exception e) {
           if (e instanceof ControlFlowException) throw e;

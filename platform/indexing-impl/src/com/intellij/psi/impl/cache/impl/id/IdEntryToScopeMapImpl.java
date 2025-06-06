@@ -39,6 +39,10 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
     this(new Int2IntOpenHashMapWithFastMergeInt(initialCapacity));
   }
 
+  public IdEntryToScopeMapImpl(@NotNull Map<IdIndexEntry, Integer> toCopy) {
+    this(compactCopyOf(toCopy));
+  }
+
   private IdEntryToScopeMapImpl(@NotNull Int2IntOpenHashMapWithFastMergeInt hashToScopeMask) {
     idHashToScopeMask = hashToScopeMask;
   }
@@ -297,5 +301,17 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
         }
       }
     }
+
+  }
+
+  private static Int2IntOpenHashMapWithFastMergeInt compactCopyOf(@NotNull Map<IdIndexEntry, Integer> toCopy) {
+    Int2IntOpenHashMapWithFastMergeInt copy = new Int2IntOpenHashMapWithFastMergeInt(toCopy.size());
+    for (Map.Entry<IdIndexEntry, Integer> entry : toCopy.entrySet()) {
+      copy.put(
+        entry.getKey().getWordHashCode(),
+        entry.getValue().intValue()
+      );
+    }
+    return copy;
   }
 }
