@@ -182,7 +182,7 @@ object KotlinPluginLayout {
             }
         }
 
-        check(standaloneCompilerVersion <= ideCompilerVersion) {
+        check(standaloneCompilerVersion.kotlinVersion <= ideCompilerVersion.kotlinVersion) {
             "standaloneCompilerVersion: $standaloneCompilerVersion, ideCompilerVersion: $ideCompilerVersion"
         }
     }
