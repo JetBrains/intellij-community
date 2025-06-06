@@ -14359,5 +14359,59 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/memberFunction1.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter")
+        public static class RegularParameterToContextParameter extends AbstractK2IntentionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractOverride.kt")
+            public void testAbstractOverride() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/abstractOverride.kt");
+            }
+
+            @TestMetadata("doubleReceiver.kt")
+            public void testDoubleReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/doubleReceiver.kt");
+            }
+
+            @TestMetadata("inapplicableAlreadyContext.kt")
+            public void testInapplicableAlreadyContext() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableAlreadyContext.kt");
+            }
+
+            @TestMetadata("inapplicableFeatureDisabled.kt")
+            public void testInapplicableFeatureDisabled() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/inapplicableFeatureDisabled.kt");
+            }
+
+            @TestMetadata("parametersContextsAndReceiver.kt")
+            public void testParametersContextsAndReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/parametersContextsAndReceiver.kt");
+            }
+
+            @TestMetadata("qualifiedExpressionArgument.kt")
+            public void testQualifiedExpressionArgument() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/qualifiedExpressionArgument.kt");
+            }
+
+            @TestMetadata("sameType.kt")
+            public void testSameType() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/sameType.kt");
+            }
+
+            @TestMetadata("singleParameter.kt")
+            public void testSingleParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/singleParameter.kt");
+            }
+        }
     }
 }
