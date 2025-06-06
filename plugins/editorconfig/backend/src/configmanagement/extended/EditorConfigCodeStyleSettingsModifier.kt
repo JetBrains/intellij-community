@@ -53,23 +53,24 @@ private val LOG: Logger
 class EditorConfigCodeStyleSettingsModifier : CodeStyleSettingsModifier {
   private val reportedErrorIds: MutableSet<String> = HashSet()
 
-  override fun modifySettings(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
-    val file = psiFile.virtualFile
-    if (!Utils.isFullIntellijSettingsSupport() ||
-        file == null ||
-        (!Handler.isEnabledInTests() && ApplicationManager.getApplication().isUnitTestMode)) {
-      return false
+  override fun modifySettingsAndUiCustomization(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
+    if (isActiveForFile(settings, psiFile)) {
+      settings.setModifier(this)
+      return modifySettings(settings, psiFile)
     }
-
-    val project = psiFile.project
-    if (project.isDisposed || !Utils.isEnabled(settings)) {
-      return false
-    }
-
-    return doModifySettings(psiFile, settings, project)
+    return false
   }
 
-  private fun doModifySettings(psiFile: PsiFile, settings: TransientCodeStyleSettings, project: Project): Boolean {
+  private fun isActiveForFile(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
+    return Utils.isFullIntellijSettingsSupport()
+           && psiFile.virtualFile != null
+           && (Handler.isEnabledInTests() || !ApplicationManager.getApplication().isUnitTestMode)
+           && !psiFile.project.isDisposed
+           && Utils.isEnabled(settings)
+  }
+
+  override fun modifySettings(settings: TransientCodeStyleSettings, psiFile: PsiFile): Boolean {
+    val project = psiFile.project
     try {
       // Get editorconfig settings
       val (properties, editorConfigs) = processEditorConfig(project, psiFile)

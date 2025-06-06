@@ -3,7 +3,9 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,8 +52,12 @@ public class EditorConfigEditorWithPreview extends TextEditorWithPreview {
 
     @Override
     public void onInactivity() {
-      ApplicationManager.getApplication().invokeLater(
-        () -> FileDocumentManager.getInstance().saveDocumentAsIs(getEditor().getDocument()));
+      Application application = ApplicationManager.getApplication();
+      application.invokeLater(() -> {
+        application.runWriteAction(
+          () -> FileDocumentManager.getInstance().saveDocumentAsIs(getEditor().getDocument())
+        );
+      }, ModalityState.nonModal());
     }
   }
 }
