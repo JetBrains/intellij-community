@@ -17,7 +17,7 @@ internal class ProcessSemiInteractiveHandlerImpl<T>(
     coroutineScope {
       pyProcessListener?.emit(ProcessEvent.ProcessStarted(whatToExec, args))
       val processOutput = async { process.awaitWithReporting(pyProcessListener) }
-      val result = code(process.stdin, process.exitCode)
+      val result = code(process.stdin, processOutput)
       pyProcessListener?.emit(ProcessEvent.ProcessEnded(process.exitCode.await()))
       return@coroutineScope result.mapError { customErrorMessage ->
         Pair(processOutput.await(), customErrorMessage)

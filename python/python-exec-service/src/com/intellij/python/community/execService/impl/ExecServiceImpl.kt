@@ -9,7 +9,10 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.spawnProcess
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ProcessInteractiveHandler
+import com.intellij.python.community.execService.WhatToExec
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
@@ -27,7 +30,7 @@ import kotlin.time.Duration
 
 
 internal object ExecServiceImpl : ExecService {
-  override suspend fun <T> executeInteractive(
+  override suspend fun <T> execute(
     whatToExec: WhatToExec,
     args: List<String>,
     options: ExecOptions,
@@ -52,32 +55,6 @@ internal object ExecServiceImpl : ExecService {
     }
 
     return result
-  }
-
-  override suspend fun <T> execute(
-    whatToExec: WhatToExec,
-    args: List<String>,
-    options: ExecOptions,
-    procListener: PyProcessListener?,
-    processOutputTransformer: ProcessOutputTransformer<T>,
-  ): PyExecResult<T> {
-    val executableProcess = whatToExec.buildExecutableProcess(args, options)
-    val eelProcess = executableProcess.run().getOr { return it }
-
-    procListener?.emit(ProcessEvent.ProcessStarted(whatToExec, args))
-    val eelProcessExecutionResult = try {
-      withTimeout(options.timeout) { eelProcess.awaitWithReporting(procListener) }
-    }
-    catch (_: TimeoutCancellationException) {
-      return executableProcess.killProcessAndFailAsTimeout(eelProcess, options.timeout)
-    }
-
-    val processOutput = eelProcessExecutionResult
-    procListener?.emit(ProcessEvent.ProcessEnded(eelProcessExecutionResult.exitCode))
-    val transformerSuccess = processOutputTransformer.invoke(processOutput).getOr { failure ->
-      return executableProcess.failAsExecutionFailed(ExecErrorReason.UnexpectedProcessTermination(processOutput), failure.error)
-    }
-    return Result.success(transformerSuccess)
   }
 }
 

@@ -60,7 +60,7 @@ class HatchRuntime(
   }
 
   internal suspend fun <T> executeInteractive(vararg arguments: String, processSemiInteractiveFun: ProcessSemiInteractiveFun<T>): PyExecResult<T> {
-    return execService.executeInteractive(hatchBinary, arguments.toList(), execOptions, processSemiInteractiveHandler(code = processSemiInteractiveFun))
+    return execService.execute(hatchBinary, arguments.toList(), execOptions, processSemiInteractiveHandler(code = processSemiInteractiveFun))
   }
 
   internal suspend fun resolvePythonVirtualEnvironment(pythonHomePath: PythonHomePath): PyResult<PythonVirtualEnvironment> {

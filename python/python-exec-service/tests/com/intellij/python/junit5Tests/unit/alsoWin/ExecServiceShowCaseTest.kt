@@ -32,26 +32,39 @@ import kotlin.time.Duration.Companion.minutes
  */
 @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS, OS.LINUX, OS.MAC])
 class ExecServiceShowCaseTest {
+  enum class SimpleApiExecType { IN_SHELL, RELATIVE, FULL_PATH }
 
   @CartesianTest
   fun testExecSimpleApi(
     @EelSource eelHolder: EelHolder,
     @CartesianTest.Values(booleans = [true, false]) rainyDay: Boolean,
-    @CartesianTest.Values(booleans = [true, false]) useShell: Boolean,
+    @CartesianTest.Enum execType: SimpleApiExecType,
   ): Unit = timeoutRunBlocking(5.minutes) {
     val eel = eelHolder.eel
     val sut = ExecService()
     val hello = "hello"
 
-    val r = if (useShell) {
-      sut.execGetStdoutInShell(eel, if (rainyDay) "abc123" else "echo $hello")
+    val (binary, args) = when (eel.platform) {
+      is EelPlatform.Windows -> Pair("cmd.exe", arrayOf("/C", "echo $hello\r\nexit\r\n"))
+      is EelPlatform.Posix -> Pair("sh", arrayOf("-c", "echo $hello && exit"))
     }
-    else {
-      val (binary, args) = when (eel.platform) {
-        is EelPlatform.Windows -> Pair("cmd.exe", arrayOf("/C", "echo $hello\r\nexit\r\n"))
-        is EelPlatform.Posix -> Pair("sh", arrayOf("-c", "echo $hello && exit"))
+
+    val r = when (execType) {
+      SimpleApiExecType.IN_SHELL -> {
+        sut.execGetStdoutInShell(eel, if (rainyDay) "abc123" else "echo $hello")
       }
-      sut.execGetStdout(eel, if (rainyDay) "abc123" else binary, args.toList())
+      SimpleApiExecType.RELATIVE -> {
+        sut.execGetStdout(eel, if (rainyDay) "abc123" else binary, args.toList())
+      }
+      SimpleApiExecType.FULL_PATH -> {
+        var fullPath = eel.exec.findExeFilesInPath(binary).firstOrNull()
+                       ?: error("no $binary found on ${eel.descriptor.userReadableDescription}")
+        if (rainyDay) {
+          fullPath = fullPath.resolve("junk")
+        }
+
+        sut.execGetStdout(fullPath.asNioPath(), args.toList())
+      }
     }
 
     when (r) {
@@ -59,7 +72,7 @@ class ExecServiceShowCaseTest {
         assertTrue(rainyDay, "unexpected error ${r.error}")
       }
       is Result.Success -> {
-        assertFalse(rainyDay)
+        assertFalse(rainyDay, "unexpected success:${r.result}")
         assertThat("No expected stdout", r.result, CoreMatchers.containsString(hello))
       }
     }
@@ -131,7 +144,7 @@ class ExecServiceShowCaseTest {
   fun testInteractive(eelHolder: EelHolder): Unit = timeoutRunBlocking {
     val string = "abc123"
     val shell = eelHolder.eel.exec.getShell().first
-    val output = ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = ProcessInteractiveHandler<String> { _, _, process ->
+    val output = ExecService().execute(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = ProcessInteractiveHandler<String> { _, _, process ->
       val stdout = async {
         process.stdout.readWholeText()
       }
@@ -149,9 +162,9 @@ class ExecServiceShowCaseTest {
   ): Unit = timeoutRunBlocking {
     val messageToUser = "abc123"
     val shell = eelHolder.eel.exec.getShell().first
-    val result = ExecService().executeInteractive(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit> { channel, exitCode ->
+    val result = ExecService().execute(WhatToExec.Binary(shell.asNioPath()), emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit> { channel, exitCode ->
       channel.sendWholeText("exit\n")
-      assertEquals(0, exitCode.await(), "Wrong exit code")
+      assertEquals(0, exitCode.await().exitCode, "Wrong exit code")
       if (sunny) {
         Result.success(Unit)
       }
@@ -218,7 +231,7 @@ class ExecServiceShowCaseTest {
       }
     }
 
-    ExecService().executeInteractive(whatToExec, args = emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit>(progressCapturer) { stdin, exitCode ->
+    ExecService().execute(whatToExec, args = emptyList(), processInteractiveHandler = processSemiInteractiveHandler<Unit>(progressCapturer) { stdin, exitCode ->
       for (string in text) {
         stdin.sendWholeText("echo $string\n")
         delay(500)
