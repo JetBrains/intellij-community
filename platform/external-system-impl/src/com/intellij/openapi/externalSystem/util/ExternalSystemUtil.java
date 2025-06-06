@@ -53,6 +53,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
@@ -572,6 +573,9 @@ public final class ExternalSystemUtil {
             externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
           }
           if (importSpec.shouldImportProjectData()) {
+            if (importSpec.shouldSelectProjectDataToImport()) {
+              selectProjectDataToImport(project, externalProjectData);
+            }
             projectDataManager.importData(externalProject, project);
           }
         }
@@ -622,6 +626,24 @@ public final class ExternalSystemUtil {
         project.putUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES, null);
         eventDispatcher.onEvent(taskId, getSyncFinishEvent(taskId, finishSyncEventSupplier));
       }
+    }
+  }
+
+  private static void selectProjectDataToImport(
+    @NotNull Project project,
+    @NotNull ExternalProjectInfo projectInfo
+  ) {
+    var application = ApplicationManager.getApplication();
+    if (!application.isHeadlessEnvironment()) {
+      application.invokeAndWait(() -> {
+        var dialog = new ExternalProjectDataSelectorDialog(project, projectInfo);
+        if (dialog.hasMultipleDataToSelect()) {
+          dialog.showAndGet();
+        }
+        else {
+          Disposer.dispose(dialog.getDisposable());
+        }
+      });
     }
   }
 
@@ -1011,7 +1033,9 @@ public final class ExternalSystemUtil {
     //noinspection unchecked
     systemSettings.linkProject(projectSettings);
 
-    refreshProject(projectSettings.getExternalProjectPath(), importSpec);
+    refreshProject(projectSettings.getExternalProjectPath(), new ImportSpecBuilder(importSpec)
+      .withSelectProjectDataToImport(systemSettings.showSelectiveImportDialogOnInitialImport())
+    );
   }
 
   public static @Nullable VirtualFile refreshAndFindFileByIoFile(final @NotNull File file) {

@@ -316,6 +316,7 @@ com.intellij.openapi.externalSystem.importing.ImportSpec
 - a:isPreviewMode():Z
 - a:shouldCreateDirectoriesForEmptyContentRoots():Z
 - a:shouldImportProjectData():Z
+- a:shouldSelectProjectDataToImport():Z
 c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - <init>(com.intellij.openapi.externalSystem.importing.ImportSpec):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
@@ -338,6 +339,7 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withImportProjectData(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withPreviewMode(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withRerunAction(java.lang.Runnable):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+- withSelectProjectDataToImport(Z):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - withVmOptions(java.lang.String):com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 c:com.intellij.openapi.externalSystem.model.DataNode
