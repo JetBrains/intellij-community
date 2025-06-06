@@ -61,7 +61,13 @@ public fun ActionButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable () -> Unit,
 ) {
-    Tooltip(tooltip, style = tooltipStyle, tooltipPlacement = tooltipPlacement, modifier = modifier) {
+    Tooltip(
+        tooltip = tooltip,
+        style = tooltipStyle,
+        tooltipPlacement = tooltipPlacement,
+        modifier = modifier,
+        autoHideBehavior = tooltipStyle.autoHideBehavior,
+    ) {
         CoreActionButton(
             onClick = onClick,
             enabled = enabled,

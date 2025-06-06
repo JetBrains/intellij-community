@@ -1107,6 +1107,7 @@ public final class org/jetbrains/jewel/ui/component/ToggleableIconButtonState$Co
 public final class org/jetbrains/jewel/ui/component/TooltipKt {
 	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Lorg/jetbrains/jewel/ui/component/AutoHideBehavior;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun rememberPopupPositionProviderAtFixedPosition-7KAyTs4 (JJLandroidx/compose/ui/Alignment;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/window/PopupPositionProvider;
 }
 
@@ -2925,6 +2926,15 @@ public final class org/jetbrains/jewel/ui/component/styling/TextFieldStylingKt {
 	public static final fun getLocalTextFieldStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
+public final class org/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior : java/lang/Enum {
+	public static final field Long Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+	public static final field Never Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+	public static final field Normal Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+	public static fun values ()[Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
+}
+
 public final class org/jetbrains/jewel/ui/component/styling/TooltipColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TooltipColors$Companion;
@@ -2967,7 +2977,9 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle$Companion;
 	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TooltipColors;Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/TooltipColors;Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAutoHideBehavior ()Lorg/jetbrains/jewel/ui/component/styling/TooltipAutoHideBehavior;
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/TooltipColors;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
 	public fun hashCode ()I
@@ -4915,6 +4927,10 @@ public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
 	public static final fun getTextFieldStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;
 	public static final fun getTooltipStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;
 	public static final fun getTreeStyle (Lorg/jetbrains/jewel/foundation/theme/JewelTheme$Companion;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/component/styling/LazyTreeStyle;
+}
+
+public final class org/jetbrains/jewel/ui/theme/TooltipStyleKt {
+	public static final fun zeroDelayNeverHide (Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;)Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;
 }
 
 public final class org/jetbrains/jewel/ui/util/ColorExtensionsKt {

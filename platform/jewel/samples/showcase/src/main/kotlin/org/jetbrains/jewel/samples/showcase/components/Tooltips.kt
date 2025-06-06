@@ -14,11 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
-import org.jetbrains.jewel.ui.component.AutoHideBehavior
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
+import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 
 @Composable
 public fun Tooltips() {
@@ -39,7 +39,7 @@ public fun Tooltips() {
         Tooltip(
             tooltip = { Text("This is a tooltip") },
             enabled = enabled,
-            autoHideBehavior = if (neverHide) AutoHideBehavior.Never else AutoHideBehavior.Normal,
+            autoHideBehavior = if (neverHide) TooltipAutoHideBehavior.Never else TooltipAutoHideBehavior.Normal,
         ) {
             // Any content works — this is a button just because it's focusable
             DefaultButton({}) { Text("Hover me!") }
