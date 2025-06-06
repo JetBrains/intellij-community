@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.fir.testGenerator
 
@@ -276,6 +276,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         testClass<AbstractK2JvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
+            model("basic/skipRangeTo", pattern = KT_WITHOUT_DOTS)
             model("../../idea-fir/testData/completion/basic/common", testClassName = "CommonFir")
         }
 

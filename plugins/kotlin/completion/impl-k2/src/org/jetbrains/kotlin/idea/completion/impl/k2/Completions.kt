@@ -1,10 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2
 
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.resolution.KaApplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaInapplicableCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -13,10 +17,8 @@ import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.*
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtValueArgumentList
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
 
 internal object Completions {
 
@@ -51,6 +53,7 @@ internal object Completions {
 
         when (positionContext) {
             is KotlinExpressionNameReferencePositionContext -> {
+                if (positionContext.isAfterRangeOperator()) return
                 FirTrailingFunctionParameterNameCompletionContributorBase.All(sink)
                     .complete(positionContext, weighingContext)
                 if (positionContext.allowsOnlyNamedArguments()) {
@@ -147,6 +150,7 @@ internal object Completions {
             }
 
             is KotlinUnknownPositionContext -> {
+                if (positionContext.isAfterRangeToken()) return
                 FirKeywordCompletionContributor(sink)
                     .complete(positionContext, weighingContext)
             }
@@ -231,6 +235,41 @@ internal object Completions {
             }
         }
     }
+}
+
+private fun KotlinUnknownPositionContext.isAfterRangeToken(): Boolean {
+    val errorParent = position.parent as? PsiErrorElement
+        ?: return false
+
+    val prevSibling = errorParent.prevSibling
+    val rangeToPrefix = KtTokens.RANGE.value
+    return prevSibling is PsiErrorElement && prevSibling.textMatches(rangeToPrefix)
+            || errorParent.text.startsWith(rangeToPrefix)
+}
+
+/**
+ * Determines whether the current context occurs after a double dot (`..`) operator, excluding `..`
+ * usages related to `rangeTo`.
+ * It is used for compatibility with command completion.
+ *
+ * @return `true` if the context is after a double dot (`..`) not associated with a `rangeTo` operation,
+ *         otherwise `false`.
+ */
+context(KaSession)
+private fun KotlinExpressionNameReferencePositionContext.isAfterRangeOperator(): Boolean {
+    val binaryExpression = nameExpression.parent as? KtBinaryExpression
+        ?: return false
+
+    if (binaryExpression.operationToken != KtTokens.RANGE) return false
+
+    return binaryExpression.operationReference
+        .resolveToCallCandidates()
+        .none { candidateInfo ->
+            when (candidateInfo) {
+                is KaApplicableCallCandidateInfo -> true
+                is KaInapplicableCallCandidateInfo -> candidateInfo.diagnostic is KaFirDiagnostic.InapplicableCandidate
+            }
+        }
 }
 
 context(KaSession)

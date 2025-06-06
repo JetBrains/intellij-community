@@ -4743,6 +4743,70 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/skipRangeTo")
+    public static class SkipRangeTo extends AbstractK2JvmBasicCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("afterClassName.kt")
+        public void testAfterClassName() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterClassName.kt");
+        }
+
+        @TestMetadata("afterExtensionRangeToFunction.kt")
+        public void testAfterExtensionRangeToFunction() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterExtensionRangeToFunction.kt");
+        }
+
+        @TestMetadata("afterExtensionRangeToOperator.kt")
+        public void testAfterExtensionRangeToOperator() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterExtensionRangeToOperator.kt");
+        }
+
+        @TestMetadata("afterNonRangeTo.kt")
+        public void testAfterNonRangeTo() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterNonRangeTo.kt");
+        }
+
+        @TestMetadata("afterPackageName.kt")
+        public void testAfterPackageName() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterPackageName.kt");
+        }
+
+        @TestMetadata("afterRangeTo.kt")
+        public void testAfterRangeTo() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterRangeTo.kt");
+        }
+
+        @TestMetadata("afterStandardRangeToOperator.kt")
+        public void testAfterStandardRangeToOperator() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterStandardRangeToOperator.kt");
+        }
+
+        @TestMetadata("afterVariableName.kt")
+        public void testAfterVariableName() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterVariableName.kt");
+        }
+
+        @TestMetadata("afterVirtualRangeToFunction.kt")
+        public void testAfterVirtualRangeToFunction() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterVirtualRangeToFunction.kt");
+        }
+
+        @TestMetadata("afterVirtualRangeToOperator.kt")
+        public void testAfterVirtualRangeToOperator() throws Exception {
+            runTest("../../completion/testData/basic/skipRangeTo/afterVirtualRangeToOperator.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea-fir/testData/completion/basic/common")
     public abstract static class CommonFir extends AbstractK2JvmBasicCompletionTest {
 
