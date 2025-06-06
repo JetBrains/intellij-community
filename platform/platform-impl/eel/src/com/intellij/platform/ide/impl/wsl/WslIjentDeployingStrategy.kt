@@ -46,7 +46,7 @@ class WslIjentDeployingStrategy(
   }
 
   override suspend fun getTargetDescriptor(): EelDescriptor {
-    return WslEelDescriptor(distribution, getTargetPlatform())
+    return WslEelDescriptor(distribution)
   }
 
   override suspend fun getConnectionStrategy(): IjentConnectionStrategy {

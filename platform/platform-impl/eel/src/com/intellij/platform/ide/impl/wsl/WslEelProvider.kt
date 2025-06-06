@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -152,7 +152,8 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
   }
 }
 
-data class WslEelDescriptor(val distribution: WSLDistribution, override val platform: EelPlatform) : EelDescriptor {
+data class WslEelDescriptor(val distribution: WSLDistribution) : EelDescriptor {
+  override val platform: EelOsFamily = EelOsFamily.Posix
 
   override val userReadableDescription: @NonNls String = "WSL: ${distribution.presentableName}"
 

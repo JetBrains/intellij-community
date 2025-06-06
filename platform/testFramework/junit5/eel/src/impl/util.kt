@@ -67,7 +67,7 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   val service = EelNioBridgeService.getInstanceSync()
   val fakeLocalFileSystem = EelUnitTestFileSystem(EelUnitTestFileSystemProvider(defaultProvider), os, directory, fakeRoot)
   val apiRef = AtomicReference<EelApi>(null)
-  val descriptor = EelTestDescriptor(Ksuid.generate().toString(), os, apiRef::get)
+  val descriptor = EelTestDescriptor(Ksuid.generate().toString(), os.osFamily, apiRef::get)
   service.register(fakeRoot, descriptor, descriptor.id, true, (os is EelPlatform.Windows)) { _, _ ->
     fakeLocalFileSystem
   }

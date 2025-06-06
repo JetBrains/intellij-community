@@ -30,7 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -407,7 +407,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   }
 
   private fun isWindows() =
-    myConfiguration.project.getEelDescriptor().platform is EelPlatform.Windows
+    when (myConfiguration.project.getEelDescriptor().platform) {
+      EelOsFamily.Posix -> false
+      EelOsFamily.Windows -> true
+    }
 
   private fun isWrapperedOutput(): Boolean {
     val mavenDistribution = MavenDistributionsCache.getInstance(myConfiguration.project).getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)

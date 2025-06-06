@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.use
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExternalCliEntrypoint
-import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
@@ -519,10 +518,12 @@ class WSLDistributionTest {
 enum class WslTestStrategy { Legacy, Ijent }
 
 private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser: Boolean) : IjentPosixApi {
+  override val platform: EelPlatform.Posix = EelPlatform.Linux(EelPlatform.Arch.Unknown)
+
   override val descriptor: EelDescriptor
     get() = object : EelDescriptor {
       override val userReadableDescription: @NonNls String = "mock"
-      override val platform: EelPlatform = EelPlatform.Linux(EelPlatform.Arch.Unknown)
+      override val platform: EelOsFamily = this@MockIjentApi.platform.osFamily
 
       override suspend fun toEelApi(): EelApi {
         throw UnsupportedOperationException()

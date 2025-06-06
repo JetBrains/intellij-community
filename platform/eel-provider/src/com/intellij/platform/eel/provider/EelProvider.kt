@@ -11,9 +11,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.provider.utils.toEelArch
 import com.intellij.platform.util.coroutines.forEachConcurrent
-import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
@@ -100,17 +98,13 @@ data object LocalEelDescriptor : EelDescriptor {
   private val LOG = logger<LocalEelDescriptor>()
   override val userReadableDescription: @NonNls String = "Local: ${System.getProperty("os.name")}"
 
-  override val platform: EelPlatform by lazy {
-    val arch = CpuArch.CURRENT.toEelArch()
-
+  override val platform: EelOsFamily by lazy {
     when {
-      SystemInfo.isWindows -> EelPlatform.Windows(arch)
-      SystemInfo.isMac -> EelPlatform.Darwin(arch)
-      SystemInfo.isLinux -> EelPlatform.Linux(arch)
-      SystemInfo.isFreeBSD -> EelPlatform.FreeBSD(arch)
+      SystemInfo.isWindows -> EelOsFamily.Windows
+      SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isFreeBSD -> EelOsFamily.Posix
       else -> {
         LOG.info("Eel is not supported on current platform")
-        EelPlatform.Linux(arch)
+        EelOsFamily.Posix
       }
     }
   }

@@ -55,8 +55,8 @@ interface EelDescriptor {
   @get:ApiStatus.Internal
   val operatingSystem: OS
     get() = when (platform) {
-      is EelPlatform.Windows -> OS.WINDOWS
-      is EelPlatform.Posix -> OS.UNIX
+      EelOsFamily.Windows -> OS.WINDOWS
+      EelOsFamily.Posix -> OS.UNIX
     }
 
   /**
@@ -70,7 +70,7 @@ interface EelDescriptor {
    * The platform of an environment corresponding to this [EelDescriptor].
    */
   @get:ApiStatus.Experimental
-  val platform: EelPlatform
+  val platform: EelOsFamily
 
   @ApiStatus.Experimental
   suspend fun toEelApi(): EelApi

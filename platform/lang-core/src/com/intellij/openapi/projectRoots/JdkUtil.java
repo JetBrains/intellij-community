@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -19,12 +19,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.EelPlatform;
+import com.intellij.platform.eel.EelOsFamily;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -46,7 +47,7 @@ public final class JdkUtil {
 
   private JdkUtil() { }
 
-  /** @deprecated outdated, please use {@link org.jetbrains.jps.model.java.JdkVersionDetector} instead */
+  /** @deprecated outdated, please use {@link JdkVersionDetector} instead */
   @Deprecated
   public static @Nullable String getJdkMainAttribute(@NotNull Sdk jdk, @NotNull Attributes.Name attribute) {
     String homePath = jdk.getHomePath();
@@ -204,13 +205,11 @@ public final class JdkUtil {
   }
 
   private static boolean isCompatibleWithOs(@NotNull EelDescriptor descriptor) {
-    EelPlatform os = descriptor.getPlatform();
-    if (SystemInfo.isWindows) {
-      return os instanceof EelPlatform.Windows;
-    }
-    else {
-      return os instanceof EelPlatform.Posix;
-    }
+    EelOsFamily os = descriptor.getPlatform();
+    return switch (os) {
+      case Windows -> SystemInfo.isWindows;
+      case Posix -> SystemInfo.isUnix;
+    };
   }
 
   //<editor-fold desc="Deprecated stuff.">

@@ -272,14 +272,14 @@ fun EelExecWindowsApi.spawnProcess(exe: String, vararg args: String): EelExecWin
 @ApiStatus.Internal
 suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
   val (shell, cmdArg) = when (this.descriptor.platform) {
-    is EelPlatform.Windows -> {
+    EelOsFamily.Windows -> {
       val envs = fetchLoginShellEnvVariables()
       Pair(envs["ComSpec"] ?: run {
         val winRoot = envs.getOrDefault("SystemRoot", "c:\\Windows")
         "$winRoot\\system32\\cmd.exe"
       }, "/C")
     }
-    is EelPlatform.Posix -> {
+    EelOsFamily.Posix -> {
       // TODO: use `confstr(3)` to get `PATH` with posix tools.
       val sh = findExeFilesInPath("sh").firstOrNull()?.toString() ?: "/bin/sh"
       Pair(sh, "-c")

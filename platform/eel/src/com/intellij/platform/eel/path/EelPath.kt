@@ -2,11 +2,11 @@
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelOsFamily
 import org.jetbrains.annotations.ApiStatus
 
 @get:ApiStatus.Internal
-val EelPath.platform: EelPlatform get() = descriptor.platform
+val EelPath.platform: EelOsFamily get() = descriptor.platform
 
 /**
  * An interface for **absolute** paths on some environment.

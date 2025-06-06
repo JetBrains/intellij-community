@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.execution.configuration.EnvironmentVariablesData;
@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.terminal.ui.TerminalWidget;
@@ -117,7 +116,13 @@ public final class LocalOptionsConfigurer {
                                                                      @NotNull String workingDir,
                                                                      @NotNull Project project,
                                                                      @Nullable EelDescriptor eelDescriptor) {
-    final var isWindows = eelDescriptor != null ? eelDescriptor.getPlatform() instanceof EelPlatform.Windows : SystemInfo.isWindows;
+    final var isWindows =
+      eelDescriptor == null
+      ? SystemInfo.isWindows
+      : switch (eelDescriptor.getPlatform()) {
+        case Posix -> false;
+        case Windows -> true;
+      };
 
     Map<String, String> envs = isWindows ? CollectionFactory.createCaseInsensitiveStringMap() : new HashMap<>();
     EnvironmentVariablesData envData = TerminalProjectOptionsProvider.getInstance(project).getEnvData();

@@ -161,7 +161,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
       return "powershell.exe"
     }
     val eelApi = eelDescriptor.toEelApi()
-    return eelApi.exec.fetchLoginShellEnvVariables()["SHELL"] ?: when (eelDescriptor.platform) {
+    return eelApi.exec.fetchLoginShellEnvVariables()["SHELL"] ?: when (eelApi.platform) {
       is EelPlatform.Darwin -> "/bin/zsh"
       is EelPlatform.Linux -> "/bin/bash"
       else -> "/bin/sh"

@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework
 
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonHomePath
@@ -35,8 +34,8 @@ suspend fun waitNoError(delay: Duration = 100.milliseconds, repeat: Int = 50, ch
 
 @RequiresBackgroundThread
 fun PythonHomePath.resolvePythonTool(name: String): Path = when (getEelDescriptor().platform) {
-  is EelPlatform.Windows -> resolve("Scripts/$name.exe")
-  is EelPlatform.Posix-> resolve("bin/$name")
+  EelOsFamily.Windows -> resolve("Scripts/$name.exe")
+  EelOsFamily.Posix-> resolve("bin/$name")
 }
 
 
@@ -57,9 +56,9 @@ private class PathMatcher(private val parent: Path) : TypeSafeMatcher<Path>(Path
       when (getEelDescriptor().platform) {
         // On Windows we change 8.3 problem (c:\users\William.~1 -> c:\users\William.Gates)
         // But you are encountered to disable 8.3 with `fsutil 8dot3name set 1`
-        is EelPlatform.Windows -> toRealPath()
+        EelOsFamily.Windows -> toRealPath()
         // On Unix, this function resolves symlinks (i.e `~/.venv/python` -> `/usr/bin/python`) which isn't what we want.
-        is EelPlatform.Posix -> this
+        EelOsFamily.Posix -> this
       }
       toRealPath()
     }

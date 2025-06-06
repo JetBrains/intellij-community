@@ -3,10 +3,10 @@ package com.intellij.platform.testFramework.junit5.eel.impl
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelOsFamily
 import org.jetbrains.annotations.NonNls
 
-internal class EelTestDescriptor(val id: String, override val platform: EelPlatform, val apiProvider: () -> EelApi) : EelDescriptor {
+internal class EelTestDescriptor(val id: String, override val platform: EelOsFamily, val apiProvider: () -> EelApi) : EelDescriptor {
 
   override val userReadableDescription: @NonNls String = "mock $id"
 

@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.path.platform
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.collections.plusAssign
 
 /**
  * Such paths are supposed to be created via the corresponding nio FileSystem. [Path.of] does NOT return instances of this class.
@@ -158,8 +157,8 @@ internal class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSys
 
   override fun toUri(): URI {
     val prefix = when (eelPath.platform) {
-      is EelPlatform.Windows -> "/" + eelPath.root.toString().replace('\\', '/')
-      is EelPlatform.Posix -> null
+      EelOsFamily.Windows -> "/" + eelPath.root.toString().replace('\\', '/')
+      EelOsFamily.Posix -> null
     }
     val allParts = listOfNotNull(prefix) + eelPath.parts
     return allParts.fold(nioFs.uri, URI::resolve)

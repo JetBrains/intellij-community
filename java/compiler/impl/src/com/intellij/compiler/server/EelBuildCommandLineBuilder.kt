@@ -49,7 +49,7 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
       runCatching {
         copyProjectSpecificPathToTargetIfRequired(project, Path.of(hostLocation)).asEelPath()
       }.onFailure { error -> logger.warn("Can't map classpath parameter: $hostLocation", error) }.getOrNull()
-    }.joinToString(eel.platform.pathSeparator)
+    }.joinToString(eel.platform.osFamily.pathSeparator)
     require(classpathInTarget.isEmpty()) {
       "Target classpath is not supported"
     }
