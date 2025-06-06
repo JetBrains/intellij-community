@@ -28,7 +28,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.graph.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -348,9 +347,9 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         final PsiCodeBlock body = method.getBody();
         assert body != null;
         if (isVoidReturn(element)) {
-          final PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
-          final PsiExpressionStatement prevExpressionStatement = ObjectUtils.tryCast(prevElement, PsiExpressionStatement.class);
-          tailCall = getTailCall(prevExpressionStatement, method);
+          final PsiExpressionStatement prevElement =
+            PsiTreeUtil.skipWhitespacesAndCommentsBackward(element) instanceof PsiExpressionStatement s ? s : null;
+          tailCall = getTailCall(prevElement, method);
           if (tailCall != null) {
             out.append("continue;");
             return;
