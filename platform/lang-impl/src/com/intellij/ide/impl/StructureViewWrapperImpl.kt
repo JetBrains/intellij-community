@@ -134,6 +134,7 @@ class StructureViewWrapperImpl(
           ToolWindowManagerEventType.ShowToolWindow -> loggedRun("update file") { checkUpdate() }
           ToolWindowManagerEventType.HideToolWindow -> if (!project.isDisposed) {
             myFile = null
+            myFirstRun = true
             rebuildNow("clear a structure on hide")
           }
           else -> {}
