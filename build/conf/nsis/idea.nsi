@@ -207,7 +207,6 @@ Function ConfirmDesktopShortcut
 
   Call customPreInstallActions
 
-  SetRegView 32
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
   ; start position for association checkboxes
@@ -287,7 +286,7 @@ UninstPage custom un.ConfirmDeleteSettings
 
 OutFile "${OUT_DIR}\${OUT_FILE}.exe"
 
-InstallDir "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
+InstallDir "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 !define MUI_BRANDINGTEXT " "
 BrandingText " "
 
@@ -914,7 +913,6 @@ FunctionEnd
 Section "IDEA Files" CopyIdeaFiles
   CreateDirectory $INSTDIR
   Call customInstallActions
-  SetRegView 32
 
   StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
   ${LogText} "Default launcher: $productLauncher"
@@ -1029,7 +1027,6 @@ skip_ipr:
 
   Call customPostInstallActions
 
-  SetRegView 32
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
   StrCpy $2 ""
@@ -1069,7 +1066,7 @@ SectionEnd
 
 
 Function .onInit
-  SetRegView 32
+  SetRegView 64
   Call createLog
 
   ${GetNativeMachineArchitecture} $R0
@@ -1284,6 +1281,8 @@ FunctionEnd
 
 
 Function un.onInit
+  SetRegView 64
+
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
   Call un.UninstallFeedback
 
@@ -1291,7 +1290,6 @@ Function un.onInit
   IfFileExists "$INSTDIR\fsnotifier.exe" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
-  SetRegView 32
   Call un.getRegKey
   StrCmp $baseRegKey "HKLM" uninstall_location UAC_Done
 
@@ -1550,7 +1548,6 @@ FunctionEnd
 
 Section "Uninstall"
   Call un.customUninstallActions
-  SetRegView 32
   DetailPrint "baseRegKey: $baseRegKey"
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
