@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -57,10 +58,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 @ApiStatus.Internal
 
 public final class PyPackageUtil {
@@ -166,7 +169,8 @@ public final class PyPackageUtil {
     return result;
   }
 
-  private static @Nullable Pair<String, List<PyRequirement>> getExtraRequires(@NotNull PyExpression extra, @Nullable PyExpression requires) {
+  private static @Nullable Pair<String, List<PyRequirement>> getExtraRequires(@NotNull PyExpression extra,
+                                                                              @Nullable PyExpression requires) {
     if (extra instanceof PyStringLiteralExpression) {
       final List<String> requiresValue = resolveRequiresValue(requires);
 
@@ -323,7 +327,9 @@ public final class PyPackageUtil {
       return false;
     }
     // Temporary fix because old UI doesn't support non-local conda
-    var data = calledFromInspection ? (ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class)) :  PySdkExtKt.getOrCreateAdditionalData(sdk);
+    var data = calledFromInspection
+               ? (ObjectUtils.tryCast(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class))
+               : PySdkExtKt.getOrCreateAdditionalData(sdk);
     if (!newUi
         && data != null
         && data.getFlavor() instanceof CondaEnvSdkFlavor
@@ -365,10 +371,15 @@ public final class PyPackageUtil {
 
     final Ref<List<PyPackage>> packagesRef = Ref.create();
     final Throwable callStacktrace = new Throwable();
+    var lock = new AtomicBoolean(false);
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       if (PythonSdkUtil.isDisposed(sdk)) {
         packagesRef.set(Collections.emptyList());
+        synchronized (lock) {
+          lock.set(true);
+          lock.notifyAll();
+        }
         return;
       }
 
@@ -376,13 +387,33 @@ public final class PyPackageUtil {
       try {
         final PyPackageManager manager = PyPackageManager.getInstance(sdk);
         packagesRef.set(manager.refreshAndGetPackages(false));
+        synchronized (lock) {
+          lock.set(true);
+          lock.notifyAll();
+        }
       }
       catch (ExecutionException e) {
         packagesRef.set(Collections.emptyList());
+        synchronized (lock) {
+          lock.set(true);
+          lock.notifyAll();
+        }
         e.initCause(callStacktrace);
         LOG.warn(e);
       }
     });
+    if (!SwingUtilities.isEventDispatchThread()) {
+      synchronized (lock) {
+        while (!lock.get()) {
+          try {
+            lock.wait();
+          }
+          catch (InterruptedException e) {
+            throw new ProcessCanceledException(e);
+          }
+        }
+      }
+    }
     return packagesRef.get();
   }
 
