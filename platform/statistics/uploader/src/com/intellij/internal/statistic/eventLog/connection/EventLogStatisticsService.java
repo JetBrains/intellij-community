@@ -113,7 +113,7 @@ public class EventLogStatisticsService implements StatisticsService {
         ValidationErrorInfo error = validate(recordRequest, file);
         if (error != null) {
           if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + "-> " + error.getMessage());
+            logger.trace("Statistics. " + file.getName() + "-> " + error.getMessage());
           }
           decorator.onFailed(recordRequest, error.getCode(), null);
           toRemove.add(file);
@@ -121,6 +121,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         try {
+          logger.info("Statistics. Starting sending " + file.getName() + " to " + serviceUrl);
           StatsHttpRequests.post(serviceUrl, connectionSettings).
             withBody(LogEventSerializer.INSTANCE.toString(recordRequest), "application/json", StandardCharsets.UTF_8).
             succeed((r, code) -> {
@@ -136,7 +137,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
         catch (Exception e) {
           if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + " -> " + e.getMessage());
+            logger.trace("Statistics. " + file.getName() + " -> " + e.getMessage());
           }
           //noinspection InstanceofCatchParameter
           int errorCode = e instanceof StatsRequestBuilder.InvalidHttpRequest ? ((StatsRequestBuilder.InvalidHttpRequest)e).getCode() : 50;
@@ -150,7 +151,7 @@ public class EventLogStatisticsService implements StatisticsService {
     catch (Exception e) {
       final String message = e.getMessage();
       logger.info(message != null ? message : "", e);
-      throw new StatServiceException("Error during data sending.", e);
+      throw new StatServiceException("Statistics. Error during data sending.", e);
     }
   }
 

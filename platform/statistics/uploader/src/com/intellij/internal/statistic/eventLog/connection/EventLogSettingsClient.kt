@@ -45,6 +45,8 @@ abstract class EventLogSettingsClient {
     val result: Boolean? = logError {
       configurationClient.isConfigurationReachable()
     }
+    applicationInfo.logger.info("Statistics. Configuration url: ${configurationClient.configurationUrl}")
+    applicationInfo.logger.info("Statistics. Configuration is reachable: $result")
     return result != null && result
   }
 
@@ -58,6 +60,7 @@ abstract class EventLogSettingsClient {
     val result: Boolean? = logError {
       configurationClient.isSendEnabled()
     }
+    applicationInfo.logger.info("Statistics. Send is enabled: $result")
     return result != null && result
   }
 
@@ -69,6 +72,7 @@ abstract class EventLogSettingsClient {
     val result: Map<String, String>? = logError {
       configurationClient.provideOptions()
     }
+    applicationInfo.logger.info("Statistics. Configuration options: $result")
     return result ?: emptyMap()
   }
 
@@ -77,9 +81,11 @@ abstract class EventLogSettingsClient {
    * null otherwise. Info/warn exception, log exception to 'recorderId.event.log' group.
    */
   fun provideEndpointValue(endpoint: String): String? {
-    return logError {
+    val result = logError {
       configurationClient.provideEndpointValue(endpoint)
     }
+    applicationInfo.logger.info("Statistics. Configuration endpoint: $result")
+    return result
   }
 
   /**
@@ -87,9 +93,11 @@ abstract class EventLogSettingsClient {
    * null otherwise. Info/warn exception, log exception to 'recorderId.event.log' group.
    */
   fun provideServiceUrl(): String? {
-    return logError {
+    val result = logError {
       configurationClient.provideSendEndpoint()
     }
+    applicationInfo.logger.info("Statistics. Configuration service url: $result")
+    return result
   }
 
   /**
@@ -97,9 +105,11 @@ abstract class EventLogSettingsClient {
    * null otherwise. Info/warn exception, log exception to 'recorderId.event.log' group.
    */
   fun provideDictionaryServiceUrl(): String? {
-    return logError {
+    val result = logError {
       configurationClient.provideDictionaryEndpoint()
     }
+    applicationInfo.logger.info("Statistics. Configuration dictionary service url: $result")
+    return result
   }
 
   /**
@@ -107,9 +117,11 @@ abstract class EventLogSettingsClient {
    * null otherwise. Info/warn exception, log exception to 'recorderId.event.log' group.
    */
   fun provideMetadataEndpoint(): String? {
-    return logError {
+    val result = logError {
       configurationClient.provideMetadataEndpoint()
     }
+    applicationInfo.logger.info("Statistics. Configuration metadata endpoint: $result")
+    return result
   }
 
   /**
@@ -117,9 +129,11 @@ abstract class EventLogSettingsClient {
    * null otherwise. Info/warn exception, log exception to 'recorderId.event.log' group.
    */
   fun provideMetadataProductUrl(): String? {
-    return logError {
+    val result = logError {
       configurationClient.provideMetadataProductUrl()
     }
+    applicationInfo.logger.info("Statistics. Configuration metadata product url: $result")
+    return result
   }
 
   /**
@@ -127,9 +141,11 @@ abstract class EventLogSettingsClient {
    * null otherwise. Info/warn exception, log exception to 'recorderId.event.log' group.
    */
   fun provideMetadataProductUrl(metadataVersion: Int): String? {
-    return logError {
+    val result = logError {
       configurationClient.provideMetadataProductUrl(metadataVersion)
     }
+    applicationInfo.logger.info("Statistics. Configuration metadata product url: $result")
+    return result
   }
 
   /**

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.LogSystemCollector.sendingForAllRecordersDisabledField
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType.*
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions
@@ -51,7 +52,7 @@ object EventLogExternalUploader {
       tempDir.deleteRecursively()
     }
     catch (e: Exception) {
-      LOG.warn("Failed reading previous upload result: " + e.message)
+      LOG.warn("Statistics. External uploader. Failed reading previous upload result: " + e.message)
     }
   }
 
@@ -84,7 +85,8 @@ object EventLogExternalUploader {
   fun startExternalUpload(recordersProviders: List<StatisticsEventLoggerProvider>, isTestConfig: Boolean, isTestSendEndpoint: Boolean) {
     val enabledEventLoggerProviders = recordersProviders.filter { it.isSendEnabled() }
     if (enabledEventLoggerProviders.isEmpty()) {
-      LOG.info("Don't start external process because sending logs is disabled for all recorders")
+      LOG.info("Statistics. Don't start external uploader because sending logs is disabled for all recorders")
+      LogSystemCollector.externalUploaderLaunched.log(sendingForAllRecordersDisabledField.with(true))
       return
     }
     enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationStarted() }
@@ -94,22 +96,22 @@ object EventLogExternalUploader {
       enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationFinished(null) }
 
       if (LOG.isDebugEnabled) {
-        LOG.debug("Starting external process: '${command.joinToString(separator = " ")}'")
+        LOG.debug("Statistics. Starting external uploader: '${command.joinToString(separator = " ")}'")
       }
 
       Runtime.getRuntime().exec(command)
-      LOG.info("Started external process for uploading event log")
+      LOG.info("Statistics. Started external process for uploading event log")
     }
     catch (e: EventLogUploadException) {
       enabledEventLoggerProviders.forEach { it.eventLogSystemLogger.logExternalSendCommandCreationFinished(e.errorType) }
-      LOG.info(e)
+      LOG.info("Statistics. External uploader error: $e")
     }
   }
 
   private fun prepareUploadCommand(recorders: List<StatisticsEventLoggerProvider>, applicationInfo: EventLogApplicationInfo): Array<out String> {
     val sendConfigs = recorders.map { EventLogInternalSendConfig.createByRecorder(it.recorderId, false) }
     if (sendConfigs.isEmpty()) {
-      throw EventLogUploadException("No available logs to send", NO_LOGS)
+      throw EventLogUploadException("Statistics. External uploader. No available logs to send", NO_LOGS)
     }
 
     val tempDir = getOrCreateTempDir()
@@ -217,7 +219,7 @@ object EventLogExternalUploader {
     }
 
     if (uploader == null || !Files.isRegularFile(uploader)) {
-      throw EventLogUploadException("Cannot find uploader jar", NO_UPLOADER)
+      throw EventLogUploadException("Statistics. External uploader. Cannot find uploader jar", NO_UPLOADER)
     }
     return uploader
   }
@@ -226,7 +228,7 @@ object EventLogExternalUploader {
     val library = PathManager.getJarForClass(clazz)
 
     if (library == null || !Files.isRegularFile(library)) {
-      throw EventLogUploadException("Cannot find jar for $clazz", NO_UPLOADER)
+      throw EventLogUploadException("Statistics. External uploader. Cannot find jar for $clazz", NO_UPLOADER)
     }
     return library.toString()
   }
@@ -238,7 +240,7 @@ object EventLogExternalUploader {
   private fun getOrCreateTempDir(): File {
     val tempDir = getTempFile()
     if (!(tempDir.exists() || tempDir.mkdirs())) {
-      throw EventLogUploadException("Cannot create temp directory: $tempDir", NO_TEMP_FOLDER)
+      throw EventLogUploadException("Statistics. External uploader. Cannot create temp directory: $tempDir", NO_TEMP_FOLDER)
     }
     return tempDir
   }
