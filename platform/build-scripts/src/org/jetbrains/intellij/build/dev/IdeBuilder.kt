@@ -35,9 +35,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
-import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.MacDistributionCustomizer
-import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.ProductProperties
@@ -45,7 +43,6 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.computeAppClassPath
 import org.jetbrains.intellij.build.excludedLibJars
 import org.jetbrains.intellij.build.generatePluginClassPath
@@ -190,7 +187,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         val binDir = Files.createDirectories(runDir.resolve("bin"))
         val oldFiles = Files.newDirectoryStream(binDir).use { it.toCollection(HashSet()) }
 
-        val libcImpl = LibcImpl.current(OsFamily.currentOs)
+        val libcImpl = LibcImpl.current(request.os)
 
         val osDistributionBuilder = getOsDistributionBuilder(request.os, libcImpl, context)
         if (osDistributionBuilder != null) {
