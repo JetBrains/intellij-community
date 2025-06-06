@@ -62,6 +62,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @State(name = "AntConfiguration", storages = @Storage("ant.xml"), useLoadedStateAsExisting = false)
 public final class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element>, Disposable {
+  private static final AsyncFileListener.ChangeApplier NO_OP = new AsyncFileListener.ChangeApplier() {};
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<>("defaultAnt", AntReference.BUNDLED_ANT);
   private static final ValueProperty<AntConfiguration> INSTANCE = new ValueProperty<>("$instance", null);
   public static final AbstractProperty<String> DEFAULT_JDK_NAME = new AbstractProperty<@Nls String>() {
@@ -143,7 +144,6 @@ public final class AntConfigurationImpl extends AntConfigurationBase implements 
     });
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
-      private final ChangeApplier NO_OP = new ChangeApplier() {};
 
       @Override
       public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
