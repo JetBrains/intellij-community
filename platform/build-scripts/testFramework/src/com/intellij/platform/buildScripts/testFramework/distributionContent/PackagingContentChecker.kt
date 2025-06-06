@@ -32,12 +32,19 @@ private data class ContentReportList(
 )
 
 @ApiStatus.Internal
-fun createContentCheckTests(projectHomePath: Path, productProperties: ProductProperties, platformContentYamlPath: String, testInfo: TestInfo): Iterator<DynamicTest> {
+fun createContentCheckTests(
+  projectHomePath: Path,
+  productProperties: ProductProperties,
+  contentYamlPath: String,
+  testInfo: TestInfo,
+  buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+  checkPlugins: Boolean = true,
+): Iterator<DynamicTest> {
   val packageResult by lazy {
     lateinit var result: PackageResult
     computePackageResult(productProperties, testInfo, {
       result = it
-    }, projectHomePath)
+    }, projectHomePath, buildTools)
     result
   }
 
@@ -48,35 +55,37 @@ fun createContentCheckTests(projectHomePath: Path, productProperties: ProductPro
     yield(DynamicTest.dynamicTest("${testInfo.spanName}(platform)") {
       checkThatContentIsNotChanged(
         actualFileEntries = contentList.platform,
-        expectedFile = projectHome.resolve(platformContentYamlPath),
+        expectedFile = projectHome.resolve(contentYamlPath),
         projectHome = projectHome,
         isBundled = true,
       )
     })
 
-    val project = packageResult.jpsProject
-    // a non-bundled plugin may duplicated bundled one
-    // - first check non-bundled: any valid mismatch will lead to test failure
-    // - then check bundled: may be a mismatch due to a difference between bundled and non-bundled one
+    if (checkPlugins) {
+      val project = packageResult.jpsProject
+      // a non-bundled plugin may duplicated bundled one
+      // - first check non-bundled: any valid mismatch will lead to test failure
+      // - then check bundled: may be a mismatch due to a difference between bundled and non-bundled one
 
-    val bundled = toMap(contentList.bundled)
-    val nonBundled = toMap(contentList.nonBundled)
+      val bundled = toMap(contentList.bundled)
+      val nonBundled = toMap(contentList.nonBundled)
 
-    checkPlugins(
-      fileEntries = bundled.values.asSequence(),
-      project = project,
-      projectHome = projectHome,
-      nonBundled = nonBundled,
-      testInfo = testInfo,
-    )
+      checkPlugins(
+        fileEntries = bundled.values.asSequence(),
+        project = project,
+        projectHome = projectHome,
+        nonBundled = nonBundled,
+        testInfo = testInfo,
+      )
 
-    checkPlugins(
-      fileEntries = nonBundled.values.asSequence().filter { !bundled.containsKey(getPluginContentKey(it)) },
-      project = project,
-      projectHome = projectHome,
-      nonBundled = null,
-      testInfo = testInfo,
-    )
+      checkPlugins(
+        fileEntries = nonBundled.values.asSequence().filter { !bundled.containsKey(getPluginContentKey(it)) },
+        project = project,
+        projectHome = projectHome,
+        nonBundled = null,
+        testInfo = testInfo,
+      )
+    }
   }.iterator()
 }
 
@@ -129,12 +138,17 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
 
 private fun getPluginContentKey(item: PluginContentReport): String = item.mainModule + (if (item.os == null) "" else " (os=${item.os})")
 
-private fun computePackageResult(productProperties: ProductProperties, testInfo: TestInfo, contentConsumer: (PackageResult) -> Unit, homePath: Path) {
+private fun computePackageResult(
+  productProperties: ProductProperties,
+  testInfo: TestInfo, contentConsumer: (PackageResult) -> Unit,
+  homePath: Path,
+  buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+) {
   productProperties.buildDocAuthoringAssets = false
   runTestBuild(
     homeDir = homePath,
     productProperties = productProperties,
-    buildTools = ProprietaryBuildTools.DUMMY,
+    buildTools = buildTools,
     testInfo = testInfo,
     isReproducibilityTestAllowed = false,
     checkIntegrityOfEmbeddedFrontend = false,
