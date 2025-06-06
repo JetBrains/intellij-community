@@ -20,6 +20,7 @@ import java.awt.KeyboardFocusManager
 import java.awt.event.InputEvent
 import java.awt.event.InvocationEvent
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
@@ -93,7 +94,10 @@ object SuvorovProgress {
       else {
         val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
         PotemkinOverlayProgress(window, false)
-      }.apply { setDelayInMillis(0) }
+      }.apply {
+        setDelayInMillis(0)
+        repostAllEvents()
+      }
       progress.start()
       try {
         do {
@@ -212,33 +216,52 @@ object SuvorovProgress {
  */
 private class EternalEventStealer(disposable: Disposable) {
   @Volatile
-  var enabled = false
+  private var enabled = false
+
+  // We need to maintain the ordering of incoming input events.
+  // Sometimes we are moving events from IdeEventQueue to our `inputEventList`, and in the meantime some other thread performs `postEvent`.
+  // It is easy to break the order of events, so we protect ourselves with a plain lock.
+  private val lock = ReentrantLock()
 
   val inputEventList = LinkedBlockingQueue<InputEvent>()
   val invocationEventList = ArrayList<InvocationEvent>(16)
   init {
     IdeEventQueue.getInstance().addPostEventListener(
       { event ->
-        if (!enabled) {
-          return@addPostEventListener false
-        }
-        if (event is InputEvent) {
-          inputEventList.add(event)
-          return@addPostEventListener true
-        } else if (event is InvocationEvent && EventStealer.isUrgentInvocationEvent(event)) {
-          synchronized(this) {
-            invocationEventList.add(event)
-            (this as Object).notifyAll()
+        lock.lock()
+        try {
+          if (!enabled) {
+            return@addPostEventListener false
           }
-          return@addPostEventListener true
+
+          if (event is InputEvent) {
+            inputEventList.add(event)
+            return@addPostEventListener true
+          }
+          else if (event is InvocationEvent && EventStealer.isUrgentInvocationEvent(event)) {
+            synchronized(this) {
+              invocationEventList.add(event)
+              (this as Object).notifyAll()
+            }
+            return@addPostEventListener true
+          }
+        }
+        finally {
+          lock.unlock()
         }
         false
-   }, disposable)
+      }, disposable)
   }
 
   fun enable() {
-    enabled = true
-    repostAllEvents()
+    lock.lock()
+    try {
+      enabled = true
+      repostAllEvents()
+    }
+    finally {
+      lock.unlock()
+    }
   }
 
   fun dispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {
@@ -282,12 +305,20 @@ private class EternalEventStealer(disposable: Disposable) {
   }
 
   fun disable() {
-    enabled = false
-    inputEventList.forEach {
-      IdeEventQueue.getInstance().postEvent(it)
+    lock.lock()
+    try {
+      enabled = false
+      while (true) {
+        val event = inputEventList.poll() ?: break
+        IdeEventQueue.getInstance().postEvent(event)
+      }
+      for (invocationEvent in invocationEventList) {
+        IdeEventQueue.getInstance().postEvent(invocationEvent)
+      }
     }
-    inputEventList.clear()
-    invocationEventList.clear()
+    finally {
+      lock.unlock()
+    }
   }
 }
 

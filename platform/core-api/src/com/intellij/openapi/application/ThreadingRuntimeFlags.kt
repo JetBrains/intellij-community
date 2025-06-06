@@ -27,6 +27,9 @@ val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.writ
 @get:ApiStatus.Internal
 val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid.action.chains", "false").toBoolean()
 
+@get:ApiStatus.Internal
+val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.progress", "true").toBoolean()
+
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
  */

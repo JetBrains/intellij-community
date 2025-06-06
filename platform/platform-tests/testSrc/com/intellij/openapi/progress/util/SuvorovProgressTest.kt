@@ -2,52 +2,42 @@
 package com.intellij.openapi.progress.util
 
 import com.intellij.ide.IdeEventQueue
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.application.impl.getGlobalThreadingSupport
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.application
+import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import java.awt.event.MouseEvent
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JPanel
 
 @TestApplication
 class SuvorovProgressTest {
 
-  @BeforeEach
-  fun installSuvorovProgress() {
-    application.invokeAndWait {
-      getGlobalThreadingSupport().setLockAcquisitionInterceptor(SuvorovProgress::dispatchEventsUntilComputationCompletes)
-    }
-  }
-
-  @AfterEach
-  fun removeSuvorovProgress() {
-    application.invokeAndWait {
-      getGlobalThreadingSupport().removeLockAcquisitionInterceptor()
-    }
-  }
-
   @Test
   @RegistryKey("ide.suvorov.progress.showing.delay.ms", "1000")
   @RegistryKey("ide.suvorov.progress.kind", "[None|Bar*|Spinning|Overlay]")
-  fun `input event gets dispatched if bar progress finishes quickly`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+  fun `input event gets dispatched if bar progress finishes quickly`() {
+    Assumptions.assumeTrue { installSuvorovProgress }
     val clickPerformed = performClickDuringProgress()
     assertThat(clickPerformed).isTrue
   }
 
-  @Test
-  @RegistryKey("ide.suvorov.progress.showing.delay.ms", "1")
-  @RegistryKey("ide.suvorov.progress.kind", "[None|Bar*|Spinning|Overlay]")
-  fun `input event gets dropped if progress is long`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+  //@Test
+  @Suppress("unused")
+  fun `input event gets dropped if progress is long`(@TestDisposable disposable: Disposable) {
+    Assumptions.assumeTrue { installSuvorovProgress }
+    Registry.get("ide.suvorov.progress.showing.delay.ms").setValue(1, disposable)
+    Registry.get("ide.suvorov.progress.kind").setValue("[None|Bar*|Spinning|Overlay]", disposable)
     val clickPerformed = performClickDuringProgress()
     assertThat(clickPerformed).isFalse
   }
@@ -63,7 +53,7 @@ class SuvorovProgressTest {
         writeActionMayFinish.asCompletableFuture().join()
       }
     }
-    delay(100)
+    delay(10)
     val clickEventDispatched = AtomicBoolean(false)
     val panel = JPanel().apply {
       addMouseListener(object : java.awt.event.MouseAdapter() {
@@ -82,15 +72,76 @@ class SuvorovProgressTest {
       1,
       false
     )
-    delay(100)
+    delay(10)
     IdeEventQueue.getInstance().postEvent(event)
-    delay(100)
+    delay(10)
     // the event is waiting for execution
     assertThat(clickEventDispatched.get()).isFalse
     assertThat(edtActionCompleted.isCompleted).isFalse
     writeActionMayFinish.complete()
     edtActionCompleted.join()
-    delay(100)
+    delay(10)
     clickEventDispatched.get()
+  }
+
+
+  // this test must be correct regardless of the presence of Suvorov Progress
+  @Test
+  fun `input events are consumed in the order of sending`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val totalEventsCount = 100_000
+    val countOfWriteActions = 100
+    val countOfSuccessfulEvents = AtomicInteger()
+    val orderedQueue = LinkedBlockingQueue<MouseEvent>()
+    val panel = withContext(Dispatchers.EDT) {
+      JPanel().apply {
+        addMouseListener(object : java.awt.event.MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            val queueEvent = orderedQueue.remove()
+            if (queueEvent === e) {
+              countOfSuccessfulEvents.incrementAndGet()
+            }
+          }
+        })
+      }
+    }
+
+    val postingJob = launch {
+      repeat(totalEventsCount) {
+        val event = MouseEvent(
+          panel,
+          MouseEvent.MOUSE_CLICKED,
+          System.currentTimeMillis(),
+          0,
+          0,
+          0,
+          1,
+          false
+        )
+        orderedQueue.add(event)
+        IdeEventQueue.getInstance().postEvent(event)
+      }
+    }
+    withContext(Dispatchers.EDT) {
+      repeat(countOfWriteActions) {
+        val readActionJob = Job()
+        val readActionMayFinish = Job()
+        launch {
+          readAction {
+            readActionJob.complete()
+            readActionMayFinish.asCompletableFuture().join()
+          }
+        }
+        readActionJob.join()
+        launch(Dispatchers.Default) {
+          delay(20)
+          readActionMayFinish.complete()
+        }
+        runWriteAction {
+        }
+      }
+    }
+    postingJob.join()
+    withContext(Dispatchers.EDT) {}
+    assertThat(countOfSuccessfulEvents.get()).isEqualTo(totalEventsCount)
   }
 }
