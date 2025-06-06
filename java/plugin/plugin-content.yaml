@@ -18,7 +18,7 @@
   reason: withProjectLibrary
 - name: lib/frontend-split/java-frontend.jar
   modules:
-  - name: intellij.java.frontend
+  - name: intellij.java.frontend.split
 - name: lib/java-impl-frontend.jar
   contentModules:
   - name: intellij.java.frontback.psi
