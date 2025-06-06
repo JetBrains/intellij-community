@@ -54,11 +54,14 @@ interface SettingsSyncAuthService {
   /**
    * @param message - text message that will be shown in the configurable label
    * @param actionTitle - text to use in the button
+   * @param actionDescription - test that will be used in the explanation, i.e. click "[actionTitle]" to "[actionDescription]".
+   * If that parameter is null [message] will be used instead.
    * @param action - action to perform when clicked the button. The action will be performed under EDT
    */
   data class PendingUserAction(
     val message: @Nls String,
     val actionTitle: @Nls String,
+    val actionDescription: @Nls String? = null,
     val action: suspend (Component?) -> Unit
   )
 }

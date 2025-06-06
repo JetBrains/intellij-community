@@ -670,7 +670,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
       actionRequiredLabel.text = userActionRequired.message
       actionRequiredButton.text = userActionRequired.actionTitle
-      cellDropDownLink.comment?.text = message("sync.status.action.required.comment", userActionRequired.actionTitle, userActionRequired.message)
+      cellDropDownLink.comment?.text = message("sync.status.action.required.comment",
+                                               userActionRequired.actionTitle,
+                                               userActionRequired.actionDescription ?: userActionRequired.message)
     }
     else {
       cellDropDownLink.comment?.text = ""
