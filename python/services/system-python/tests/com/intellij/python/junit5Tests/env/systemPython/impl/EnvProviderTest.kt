@@ -13,6 +13,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerExtension
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
 import io.mockk.coEvery
 import io.mockk.mockk

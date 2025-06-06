@@ -18,6 +18,7 @@ import com.intellij.python.community.services.systemPython.impl.CoreSystemPython
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
