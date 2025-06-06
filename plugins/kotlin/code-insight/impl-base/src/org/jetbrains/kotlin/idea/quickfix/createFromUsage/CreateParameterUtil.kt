@@ -32,6 +32,17 @@ object CreateParameterUtil {
             KtSecondaryConstructor::class.java
         ) != null
 
+        val propertyAccessible = PsiTreeUtil.getParentOfType(
+            /* element = */ element,
+            /* aClass = */ KtClassOrObject::class.java,
+            /* strict = */ true,
+            /* ...stopAt = */
+            KtSuperTypeList::class.java,
+            KtPrimaryConstructor::class.java,
+            KtConstructorDelegationCall::class.java,
+            KtAnnotationEntry::class.java
+        ) != null
+
         return element.parents
             .map {
                 when {
@@ -50,7 +61,7 @@ object CreateParameterUtil {
                     }
 
                     it is KtConstructorDelegationCall -> {
-                        Pair(it.getStrictParentOfType<KtClassOrObject>(), ValVar.NONE)
+                        Pair(PsiTreeUtil.getParentOfType(it, KtClassOrObject::class.java, true, KtSecondaryConstructor::class.java), ValVar.NONE)
                     }
 
                     it is KtClassBody -> {
@@ -59,7 +70,7 @@ object CreateParameterUtil {
                             klass is KtEnumEntry -> chooseContainingClass(klass, varExpected)
                             klass is KtClass && klass.isInterface() -> Pair(null, ValVar.NONE)
                             klass is KtObjectDeclaration -> toxicPill
-                            else -> Pair(klass, if (primaryParametersAccessible) ValVar.NONE else ValVar.VAL)
+                            else -> Pair(klass, if (primaryParametersAccessible || !propertyAccessible) ValVar.NONE else ValVar.VAL)
                         }
                     }
 

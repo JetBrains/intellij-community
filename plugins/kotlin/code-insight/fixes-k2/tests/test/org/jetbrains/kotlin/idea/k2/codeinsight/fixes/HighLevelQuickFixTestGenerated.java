@@ -9327,6 +9327,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/dataClassPropertyByNamedArgument.kt");
             }
 
+            @TestMetadata("fromDelegateConstructorCall.kt")
+            public void testFromDelegateConstructorCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromDelegateConstructorCall.kt");
+            }
+
             @TestMetadata("inAccessorInClass.kt")
             public void testInAccessorInClass() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/inAccessorInClass.kt");
