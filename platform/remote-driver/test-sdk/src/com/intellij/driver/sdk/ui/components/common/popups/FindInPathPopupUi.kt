@@ -92,9 +92,9 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
     val selectedItem: String? get() = getSelectedRow().let { if (it != -1) items[it] else null }
 
     init {
-      replaceCellRendererReader(
-        driver.new(AccessibleNameCellRendererReader::class, rdTarget = (fixture as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT)
-      )
+      replaceCellRendererReader {
+        driver.new(AccessibleNameCellRendererReader::class, rdTarget = (it as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT)
+      }
     }
 
     fun rightClickItemAtRow(row: Int) {
