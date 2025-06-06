@@ -22,6 +22,7 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefClient
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.application
+import com.intellij.util.messages.Topic
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -105,7 +106,7 @@ class MarkdownJCEFHtmlPanel(
     // language=HTML
     return """
       <!DOCTYPE html>
-      <html>
+      <html lang=en>
         <head>
           <title>IntelliJ Markdown Preview</title>
           <meta http-equiv="Content-Security-Policy" content="$contentSecurityPolicy"/>
@@ -143,6 +144,8 @@ class MarkdownJCEFHtmlPanel(
     return panelComponent
   }
 
+  private val sourceEventValues = Regex("""^(\d+),(\d+)""")
+
   init {
     Disposer.register(browserPipe) { currentExtensions.forEach(Disposer::dispose) }
     Disposer.register(this, browserPipe)
@@ -151,12 +154,19 @@ class MarkdownJCEFHtmlPanel(
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
     jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
 
-    browserPipe.subscribe(SET_SCROLL_EVENT, object : BrowserPipe.Handler {
+    browserPipe.subscribe(SCROLL_SOURCE_EVENT, object : BrowserPipe.Handler {
       override fun processMessageReceived(data: String): Boolean {
-        data.toIntOrNull()?.let { offset -> scrollListeners.forEach { it.onScroll(offset) } }
+        var match = sourceEventValues.find(data)
+
+        if (match != null && virtualFile != null) {
+          val publisher = project?.messageBus?.syncPublisher(PreviewClickListener.TOPIC) ?: return false
+          publisher.receivedPosition(match.groupValues[1].toInt(), match.groupValues[2].toInt(), virtualFile)
+        }
+
         return false
       }
     })
+
     val connection = application.messageBus.connect(this)
     connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
       changeFontSize(settings.state.fontSize)
@@ -177,7 +187,37 @@ class MarkdownJCEFHtmlPanel(
       val projectRoot = projectRoot.await()
       val fileSchemeResourcesProcessor = createFileSchemeResourcesProcessor(projectRoot)
 
+      // Detect double clicks on elements in the Markdown preview, report matching source position.
+      // language=JavaScript
+      val code = """
+      |(function() {
+      |  document.addEventListener('dblclick', function(evt) {
+      |    const element = document.elementFromPoint(evt.clientX, evt.clientY);
+      |    const pos = element?.getAttribute('${HtmlGenerator.SRC_ATTRIBUTE_NAME}')
+      |
+      |    if (pos) {
+      |      const rect = element.getBoundingClientRect();
+      |      const offset = (/^\d+/.exec(pos) || [])[0];
+      |      const computedStyle = window.getComputedStyle(element);
+      |      const fontSize = parseFloat(computedStyle.getPropertyValue('font-size'));
+      |      let lineHeight = parseFloat(computedStyle.getPropertyValue('line-height')) * fontSize;
+      |
+      |      if (isNaN(lineHeight) || lineHeight === 0)
+      |        lineHeight = fontSize * 1.2;
+      |
+      |      if (offset != null) {
+      |        window.__IntelliJTools.messagePipe.post("$SCROLL_SOURCE_EVENT", offset + ',' + Math.floor((event.clientY - rect.top) / lineHeight));
+      |        evt.stopPropagation();
+      |        evt.preventDefault();
+      |      }
+      |    }
+      |  });
+      |})();
+      """.trimMargin()
+
+      executeJavaScript(code)
       loadIndexContent()
+
       updateHandler.requests.collectLatest { request ->
         when (request) {
           is PreviewRequest.Update -> {
@@ -196,16 +236,19 @@ class MarkdownJCEFHtmlPanel(
     }
   }
 
+  @Suppress("JSUnresolvedReference")
   private suspend fun updateDom(renderClosure: String, initialScrollOffset: Int, firstUpdate: Boolean) {
     previousRenderClosure = renderClosure
     // language=JavaScript
     val scrollCode = when {
-      firstUpdate -> "window.scrollController?.scrollTo($initialScrollOffset, true);"
+      firstUpdate -> "window.scrollController?.ensureMarkdownSrcOffsetIsVisible($initialScrollOffset, true, true).finally();"
       else -> ""
     }
     // language=JavaScript
     val code = """
       (function() {
+        window.scrollController.clearMarkdownElementsCache();
+
         return new Promise( resolve => {
           const action = () => {
             console.time("incremental-dom-patch");
@@ -227,11 +270,39 @@ class MarkdownJCEFHtmlPanel(
         });
       })();
     """.trimIndent()
+
     executeCancellableJavaScript(code)
   }
 
+  private val imageMatcher = Regex("""<img\s+(?!class)[^>]+?>""", RegexOption.DOT_MATCHES_ALL)
+  private val rangeMatcher = Regex("""$md_src_pos="(\d+)\.\.(\d+)"""")
+
   override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
-    updateHandler.setContent(html, initialScrollOffset, document)
+    val updatedHtml = StringBuilder()
+    var highestIndex = 0
+
+    // Some images don't get properly annotated with a source range. Add those source ranges now.
+    imageMatcher.findAll(html).forEach {
+      val before = html.substring(highestIndex, it.range.first)
+      var img = it.value
+
+      if (!img.contains(md_src_pos)) {
+        val after = html.substring(it.range.last)
+        val previousSrcIndex = rangeMatcher.findAll(before).lastOrNull()?.groupValues?.get(2)?.toIntOrNull()
+        val nextSrcIndex = rangeMatcher.find(after)?.groupValues?.get(1)?.toIntOrNull()
+
+        if (previousSrcIndex != null && nextSrcIndex != null) {
+          img = "<img md-src-pos=\"$previousSrcIndex..$nextSrcIndex\"" + img.substring(4)
+        }
+      }
+
+      updatedHtml.append(before)
+      updatedHtml.append(img)
+      highestIndex = it.range.last + 1
+    }
+
+    updatedHtml.append(html.substring(highestIndex))
+    updateHandler.setContent(updatedHtml.toString(), initialScrollOffset, document)
   }
 
   @ApiStatus.Internal
@@ -275,13 +346,14 @@ class MarkdownJCEFHtmlPanel(
     scrollListeners.remove(listener)
   }
 
-  override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) {
-    executeJavaScript("window.scrollController?.scrollTo($offset, $smooth)")
+  override fun ensureMarkdownSrcOffsetIsVisible(offset: Int) {
+    executeJavaScript("window.scrollController?.ensureMarkdownSrcOffsetIsVisible($offset)")
   }
 
   override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {
     val horizontal = JBCefApp.normalizeScaledSize(horizontalUnits)
     val vertical = JBCefApp.normalizeScaledSize(verticalUnits)
+    @Suppress("JSUnresolvedReference")
     executeJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
   }
 
@@ -439,10 +511,22 @@ class MarkdownJCEFHtmlPanel(
     }
   }
 
+  interface PreviewClickListener {
+    fun receivedPosition(charOffset: Int, lineOffset: Int, file: VirtualFile) {
+    }
+
+    companion object {
+      @Topic.ProjectLevel
+      @JvmField
+      val TOPIC = Topic("MarkdownPreviewClicked", PreviewClickListener::class.java, Topic.BroadcastDirection.NONE)
+    }
+  }
+
   companion object {
     private val logger = logger<MarkdownJCEFHtmlPanel>()
-
-    private const val SET_SCROLL_EVENT = "setScroll"
+    @Suppress("JSUnresolvedReference")
+    private const val SCROLL_SOURCE_EVENT = "scrollSource"
+    private val md_src_pos = HtmlGenerator.SRC_ATTRIBUTE_NAME
 
     private val baseScripts = listOf(
       "incremental-dom.min.js",
