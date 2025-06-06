@@ -11,15 +11,20 @@ import com.intellij.openapi.components.Service
 import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.sequences.groupBy
 
 @Service(Service.Level.APP)
 internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope) {
+  // Small temporary inconsistency between eventLoggerProviders and eventLoggerProvidersExt doesn't really matter and it will be smaller than other white noise in data
   private val eventLoggerProviders: AtomicReference<Map<String, StatisticsEventLoggerProvider>> =
     AtomicReference(calculateEventLogProvider())
+  private val eventLoggerProvidersExt: AtomicReference<Map<String, Collection<StatisticsEventLoggerProvider>>> =
+    AtomicReference(calculateEventLogProviderExt())
 
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME)) {
       EP_NAME.addChangeListener(coroutineScope) { eventLoggerProviders.set(calculateEventLogProvider()) }
+      EP_NAME.addChangeListener(coroutineScope) { eventLoggerProvidersExt.set(calculateEventLogProviderExt()) }
     }
   }
 
@@ -31,9 +36,18 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
     return eventLoggerProviders.get().values
   }
 
-  private fun calculateEventLogProvider(): Map<String, StatisticsEventLoggerProvider> {
-    return getAllEventLogProviders().associateBy { it.recorderId }
+  fun getEventLogProvidersExt(recorderId: String): Collection<StatisticsEventLoggerProvider> {
+    return eventLoggerProvidersExt.get()[recorderId] ?: listOf(EmptyStatisticsEventLoggerProvider(recorderId))
   }
+
+  private fun calculateEventLogProvider(): Map<String, StatisticsEventLoggerProvider> {
+    return calculateEventLogProviderExt().mapValues { it.value.find { provider -> getPluginInfo(provider::class.java).isDevelopedByJetBrains() }?: it.value.first() }
+  }
+
+  private fun calculateEventLogProviderExt(): Map<String, Collection<StatisticsEventLoggerProvider>> {
+    return getAllEventLogProviders().groupBy { it.recorderId }
+  }
+
 
   private fun getAllEventLogProviders(): Sequence<StatisticsEventLoggerProvider> {
     val providers = EP_NAME.extensionsIfPointIsRegistered
@@ -43,7 +57,6 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
     val isJetBrainsProduct = isJetBrainsProduct()
     return providers.asSequence()
       .filter { isProviderApplicable(isJetBrainsProduct, it.recorderId, it) }
-      .distinctBy { it.recorderId }
   }
 
   private fun isJetBrainsProduct(): Boolean {
