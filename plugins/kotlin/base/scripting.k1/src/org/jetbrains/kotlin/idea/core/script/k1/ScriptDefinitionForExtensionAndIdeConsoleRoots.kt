@@ -1,6 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.jsr223
+package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.scratch.RootType
@@ -17,7 +17,7 @@ import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.templates.standard.ScriptTemplateWithBindings
 
-object ScriptDefinitionForExtensionAndIdeConsoleRoots : ScriptDefinition.FromConfigurations(
+private object ScriptDefinitionForExtensionAndIdeConsoleRoots : ScriptDefinition.FromConfigurations(
     defaultJvmScriptingHostConfiguration,
     ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots,
     ScriptEvaluationConfigurationForExtensionAndIdeConsoleRoots

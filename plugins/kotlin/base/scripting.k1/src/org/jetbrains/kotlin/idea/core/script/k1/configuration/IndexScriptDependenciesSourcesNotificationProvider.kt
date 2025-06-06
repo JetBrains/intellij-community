@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.script.configuration
+package org.jetbrains.kotlin.idea.core.script.k1.configuration
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.application.runWriteAction
@@ -13,7 +13,10 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.script.ucache.*
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
+import org.jetbrains.kotlin.idea.core.script.ucache.findDependentScripts
+import org.jetbrains.kotlin.idea.core.script.ucache.modifyKotlinScriptLibraryEntity
 import java.util.function.Function
 import javax.swing.JComponent
 

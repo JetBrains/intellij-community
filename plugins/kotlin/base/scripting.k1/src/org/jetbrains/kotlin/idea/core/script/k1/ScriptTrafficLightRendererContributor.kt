@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.core.script
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
@@ -11,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContributor {
@@ -21,11 +21,11 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
     }
 
     class ScriptTrafficLightRenderer(project: Project, editor: Editor, private val file: KtFile) :
-        TrafficLightRenderer(project, editor) {
+      TrafficLightRenderer(project, editor) {
         override fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 
-            if (ScriptConfigurationManager.getInstance(project).isConfigurationLoadingInProgress(file)) {
+            if (ScriptConfigurationManager.Companion.getInstance(project).isConfigurationLoadingInProgress(file)) {
                 status.reasonWhySuspended = KotlinBaseScriptingBundle.message("text.loading.kotlin.script.configuration")
                 status.errorAnalyzingFinished = false
             }

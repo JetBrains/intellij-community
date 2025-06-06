@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.core.script.dependencies
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -18,9 +17,9 @@ class JavaClassesInScriptDependenciesShortNameCache(private val project: Project
     override fun getAllClassNames() = emptyArray<String>()
 
     override fun getClassesByName(name: String, scope: GlobalSearchScope): Array<out PsiClass> {
-        val classpathScope = ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope()
+        val classpathScope = ScriptDependencyAware.Companion.getInstance(project).getAllScriptsDependenciesClassFilesScope()
         val classes = StubIndex.getElements(
-            JavaShortClassNameIndex.getInstance().key, name, project, classpathScope.intersectWith(scope), PsiClass::class.java
+          JavaShortClassNameIndex.getInstance().key, name, project, classpathScope.intersectWith(scope), PsiClass::class.java
         )
         return classes.toTypedArray()
     }
@@ -34,9 +33,9 @@ class JavaClassesInScriptDependenciesShortNameCache(private val project: Project
     override fun getMethodsByNameIfNotMoreThan(name: String, scope: GlobalSearchScope, maxCount: Int): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
 
     override fun processMethodsWithName(
-        name: String,
-        scope: GlobalSearchScope,
-        processor: Processor<in PsiMethod>
+      name: String,
+      scope: GlobalSearchScope,
+      processor: Processor<in PsiMethod>
     ) = true
 
     override fun getAllFieldNames() = emptyArray<String>()

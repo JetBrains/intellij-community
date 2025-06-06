@@ -2,17 +2,14 @@
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
-import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.ScriptClassPathUtil
-import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.lang.ref.SoftReference
 
@@ -221,13 +218,5 @@ class ScriptClassRootsCache(
         override val hasNewRoots: Boolean get() = false
         override val hasUpdatedScripts: Boolean get() = false
         override fun isScriptChanged(scriptPath: String): Boolean = false
-    }
-}
-
-class ScriptCacheDependenciesFileInvalidator : CachesInvalidator() {
-    override fun invalidateCaches() {
-        ProjectManager.getInstance().openProjects.forEach {
-            ScriptClassRootsStorage.getInstance(it).clear()
-        }
     }
 }

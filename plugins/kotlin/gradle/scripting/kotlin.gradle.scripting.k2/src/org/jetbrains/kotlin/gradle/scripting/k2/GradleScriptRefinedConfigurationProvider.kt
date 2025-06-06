@@ -16,7 +16,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.gradle.scripting.shared.*
 import org.jetbrains.kotlin.idea.core.script.*
-import org.jetbrains.kotlin.idea.core.script.dependencies.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptRefinedConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptWorkspaceModelManager
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptModuleRelativeLocation

@@ -58,6 +58,7 @@ jvm_library(
     "//java/idea-ui:ui",
     "@lib//:kotlinc-kotlin-scripting-dependencies",
     "//plugins/kotlin/scripting",
+    "//platform/refactoring",
   ],
   runtime_deps = [":scripting.k1_resources"]
 )

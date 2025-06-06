@@ -49,6 +49,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//plugins/kotlin/kotlin.ide:ide",
     "//plugins/kotlin/jvm/k1",
+    "//plugins/kotlin/base/scripting.k1",
   ],
   runtime_deps = ["//platform/core-api:core"]
 )

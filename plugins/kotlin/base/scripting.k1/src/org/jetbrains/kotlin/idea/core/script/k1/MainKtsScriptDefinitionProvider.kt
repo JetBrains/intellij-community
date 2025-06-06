@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.script
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.core.script.k1
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import java.io.File
@@ -13,10 +12,10 @@ class MainKtsScriptDefinitionProvider : ScriptDefinitionsProvider {
 
     override fun getDefinitionsClassPath(): Iterable<File> {
         return listOf(
-            KotlinArtifacts.kotlinMainKts,
-            KotlinArtifacts.kotlinScriptRuntime,
-            KotlinArtifacts.kotlinStdlib,
-            KotlinArtifacts.kotlinReflect
+          KotlinArtifacts.kotlinMainKts,
+          KotlinArtifacts.kotlinScriptRuntime,
+          KotlinArtifacts.kotlinStdlib,
+          KotlinArtifacts.kotlinReflect
         )
     }
 

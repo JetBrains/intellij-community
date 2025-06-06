@@ -19,47 +19,8 @@
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink"/>
-
-    <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependenciesFileInvalidator"/>
-
-    <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
-
-    <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
-
-    <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
-
-    <registryKey
-            key="kotlin.scripting.support.warning"
-            description="Show Kotlin scripting support warning"
-            defaultValue="true"
-            restartRequired="false"/>
-
-    <registryKey
-            key="kotlin.resolve.scripting.limit.dependency.element.finder"
-            description="Limit applicability of an element finder for scripting dependencies"
-            defaultValue="true"
-            restartRequired="true"/>
-
-    <registryKey
-            key="kotlin.scripting.fs.roots.storage.enabled"
-            description="Cache resolved dependencies paths across all scripts"
-            defaultValue="false"
-            restartRequired="true"/>
-
-    <registryKey
-            key="kotlin.scripting.index.dependencies.sources"
-            description="Index script dependencies sources eagerly (not deferred)"
-            defaultValue="false"
-            restartRequired="true"/>
-
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"/>
-
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.MultipleScriptDefinitionsChecker"/>
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.ScriptingSupportChecker"/>
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.IndexScriptDependenciesSourcesNotificationProvider"/>
 
     <projectConfigurable groupId="language"
                          bundle="messages.KotlinBundle"
@@ -67,11 +28,6 @@
                          id="preferences.language.Kotlin.scripting"
                          instance="org.jetbrains.kotlin.idea.script.configuration.KotlinScriptingSettingsConfigurable"
                          parentId="preferences.language.Kotlin"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider"
-                    serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KotlinFe10CompilerPluginsProvider"/>
-
-    <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -80,26 +36,7 @@
             order="last"
             implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
 
-    <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
-    <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
-
-    <scriptDefinitionsSource
-            id="ScriptTemplatesFromCompilerSettingsProvider"
-            implementation="org.jetbrains.kotlin.idea.script.ScriptTemplatesFromCompilerSettingsProvider"/>
-
-    <scriptDefinitionsSource
-            id="ScriptTemplatesFromDependenciesProvider"
-            implementation="org.jetbrains.kotlin.idea.script.ScriptTemplatesFromDependenciesProvider"/>
-
     <scriptDefinitionsSource id="ConsoleScriptDefinitionContributor"
                                  implementation="org.jetbrains.kotlin.console.ConsoleScriptDefinitionSource"/>
-
-    <scriptDefinitionsSource id="ScriptDefinitionForExtensionAndIdeConsoleRootsSource"
-                                 implementation="org.jetbrains.kotlin.jsr223.ScriptDefinitionForExtensionAndIdeConsoleRootsSource"/>
-
-    <scriptDefinitionsProvider id="MainKtsScriptDefinitionProvider"
-                               implementation="org.jetbrains.kotlin.idea.script.MainKtsScriptDefinitionProvider"/>
-
-    <ideScriptConfigurationControlFacade implementation="org.jetbrains.kotlin.idea.script.DefaultIdeScriptingConfigurationFacade"/>
   </extensions>
 </idea-plugin>

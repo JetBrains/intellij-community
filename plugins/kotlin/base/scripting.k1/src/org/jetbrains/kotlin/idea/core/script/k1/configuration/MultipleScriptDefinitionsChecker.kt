@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.script.configuration
+package org.jetbrains.kotlin.idea.core.script.k1.configuration
 
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.fileEditor.FileEditor
@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -31,7 +30,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (!file.isKotlinFileType()) return null
 
-        val ktFile = PsiManager.getInstance(project).findFile(file).safeAs<KtFile>()?.takeIf(KtFile::isScript) ?: return null
+        val ktFile = (PsiManager.getInstance(project).findFile(file) as? KtFile)?.takeIf(KtFile::isScript) ?: return null
 
         if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck) return null
 
@@ -47,7 +46,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
     }
 
     private fun ScriptDefinition.isGradleDefinition(): Boolean {
-        val pattern = safeAs<ScriptDefinition.FromConfigurationsBase>()?.fileNamePattern ?: return false
+        val pattern = (this as? ScriptDefinition.FromConfigurationsBase)?.fileNamePattern ?: return false
         return pattern.endsWith("\\.gradle\\.kts") || pattern.endsWith("\\.gradle\\.kts$") || fileExtension.endsWith("gradle.kts")
     }
 
@@ -77,7 +76,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
             }
 
             createActionLabel(KotlinBundle.message("script.action.text.open.settings")) {
-                ShowSettingsUtilImpl.showSettingsDialog(project, KotlinScriptingSettingsConfigurable.ID, "")
+                ShowSettingsUtilImpl.showSettingsDialog(project, "preferences.language.Kotlin.scripting", "")
             }
         }
 }

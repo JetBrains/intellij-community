@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.core.script
+package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesWorkspaceModelNode
@@ -36,22 +36,22 @@ class KotlinScriptExternalLibrariesNodesProvider: ExternalLibrariesWorkspaceMode
             "Script: $scriptFileName", KotlinIcons.SCRIPT, settings
         )
     }
-}
 
-private fun KotlinScriptEntity.listDependencies(project: Project): ScriptDependencies {
-    val storage = WorkspaceModel.getInstance(project).currentSnapshot
+    private fun KotlinScriptEntity.listDependencies(project: Project): ScriptDependencies {
+        val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
-    fun List<KotlinScriptLibraryRoot>.files() = asSequence()
-        .mapNotNull { it.url.virtualFile }
-        .filter { it.isValid }
-        .toList()
+        fun List<KotlinScriptLibraryRoot>.files() = asSequence()
+            .mapNotNull { it.url.virtualFile }
+            .filter { it.isValid }
+            .toList()
 
-    val (compiledRoots, sourceRoots) = dependencies.asSequence()
-        .map { storage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=$path") }
-        .flatMap { it.roots }
-        .partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
+        val (compiledRoots, sourceRoots) = dependencies.asSequence()
+            .map { storage.resolve(it) ?: error("Unresolvable library: ${it.name}, script=$path") }
+            .flatMap { it.roots }
+            .partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
 
-    return ScriptDependencies(Pair(compiledRoots.files(), sourceRoots.files()))
+        return ScriptDependencies(Pair(compiledRoots.files(), sourceRoots.files()))
+    }
 }
 
 @JvmInline
