@@ -399,6 +399,14 @@ final class PsiUpdateImpl {
       return TextRange.create(range);
     }
 
+    private static @NotNull TextRange templateRange(@NotNull TextRange elementRange, @Nullable TextRange rangeInElement) {
+      if (rangeInElement == null) return elementRange;
+      int start = rangeInElement.getStartOffset();
+
+      int templateStartOffset = elementRange.getStartOffset() + start;
+      return TextRange.from(templateStartOffset, rangeInElement.getLength());
+    }
+
     @Override
     public void select(@NotNull TextRange range) {
       myPositionUpdated = true;
@@ -430,25 +438,35 @@ final class PsiUpdateImpl {
       return new ModTemplateBuilder() {
         @Override
         public @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull Expression expression) {
-          return createField(element, null, expression);
+          return createField(element, null, expression, null);
         }
 
         @Override
         public @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull String varName, @NotNull Expression expression) {
-          return createField(element, varName, expression);
+          return createField(element, varName, expression, null);
         }
 
-        private @NotNull ModTemplateBuilder createField(@NotNull PsiElement element, @Nullable String varName, @NotNull Expression expression) {
+        @Override
+        public @NotNull ModTemplateBuilder field(@NotNull PsiElement element,
+                                                 @NotNull TextRange rangeInElement,
+                                                 @NotNull String varName,
+                                                 @NotNull Expression expression) {
+          return createField(element, varName, expression, rangeInElement);
+        }
+
+        private @NotNull ModTemplateBuilder createField(@NotNull PsiElement element, @Nullable String varName, @NotNull Expression expression,
+                                                        @Nullable TextRange rangeInElement) {
           TextRange elementRange = getRange(element);
           if (elementRange == null) {
             throw new IllegalStateException("Unable to restore element for template");
           }
-          TextRange range = mapRange(elementRange);
+          TextRange rangeForTemplate = templateRange(elementRange, rangeInElement);
+          TextRange range = mapRange(rangeForTemplate);
           Result result = expression.calculateResult(new DummyContext(range, element));
           myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
           if (result != null) {
             FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call
-            tracker.myDocument.replaceString(elementRange.getStartOffset(), elementRange.getEndOffset(), result.toString());
+            tracker.myDocument.replaceString(rangeForTemplate.getStartOffset(), rangeForTemplate.getEndOffset(), result.toString());
           }
           return this;
         }
