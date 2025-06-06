@@ -35,7 +35,6 @@ import com.intellij.project.stateStore
 import com.intellij.psi.*
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.util.FileContentUtilCore
 import one.util.streamex.StreamEx
@@ -81,7 +80,7 @@ class PsiVFSListener internal constructor(private val project: Project) {
     val vFile = event.file
 
     val parent = vFile.parent
-    // do not notify listeners if parent directory was never accessed via PSI
+    // do not notify listeners if the parent directory was never accessed via PSI
     val parentDir = getCachedDirectory(parent) ?: return
 
     ApplicationManager.getApplication().runWriteAction(ExternalChangeAction {
@@ -150,7 +149,7 @@ class PsiVFSListener internal constructor(private val project: Project) {
 
     val parent = vFile.parent
     val parentDir = if (viewProvider != null && parent != null) fileManager.findDirectory(parent) else getCachedDirectory(parent)
-    // do not notifyListeners event if parent directory was never accessed via PSI
+    // do not notifyListeners event if the parent directory was never accessed via PSI
     if (parent != null && parentDir == null) {
       return
     }

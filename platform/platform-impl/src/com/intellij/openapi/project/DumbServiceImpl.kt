@@ -182,7 +182,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance DUMB > SMART
   }
 
-  internal suspend fun queueStartupActivitiesRequiredForSmartMode() {
+  internal fun queueStartupActivitiesRequiredForSmartMode() {
     if (!initialDumbTaskRequiredForSmartModeSubmitted.compareAndSet(false, true)) {
       return
     }

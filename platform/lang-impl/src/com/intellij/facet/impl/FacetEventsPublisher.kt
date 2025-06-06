@@ -11,6 +11,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
+private val LISTENER_EP = ExtensionPointName<ProjectFacetListenerEP>("com.intellij.projectFacetListener")
+private val LISTENER_EP_CACHE_KEY = java.util.function.Function<ProjectFacetListenerEP, String?> { it.facetTypeId }
+private const val ANY_TYPE = "any"
+
 internal class FacetEventsPublisher(private val project: Project) {
   private val facetsByType = HashMap<FacetTypeId<*>, MutableMap<Facet<*>, Boolean>>()
   private val manuallyRegisteredListeners = ContainerUtil.createConcurrentList<Pair<FacetTypeId<*>?, ProjectFacetListener<*>>>()
@@ -42,13 +46,7 @@ internal class FacetEventsPublisher(private val project: Project) {
   }
 
   companion object {
-    @JvmStatic
     fun getInstance(project: Project): FacetEventsPublisher = project.service()
-
-    @JvmField
-    internal val LISTENER_EP: ExtensionPointName<ProjectFacetListenerEP> = ExtensionPointName("com.intellij.projectFacetListener")
-    private val LISTENER_EP_CACHE_KEY = java.util.function.Function<ProjectFacetListenerEP, String?> { it.facetTypeId }
-    private const val ANY_TYPE = "any"
   }
 
   fun <F : Facet<*>> registerListener(type: FacetTypeId<F>?, listener: ProjectFacetListener<out F>) {
