@@ -2,11 +2,13 @@
 package com.intellij.unscramble
 
 import com.intellij.icons.AllIcons
+import com.intellij.java.frontback.impl.JavaFrontbackBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.threadDumpParser.ThreadOperation
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.util.*
 import javax.swing.Icon
@@ -22,6 +24,8 @@ interface DumpItem {
   val interestLevel: Int
 
   val icon: Icon
+
+  val iconToolTip: @Nls String?
 
   val attributes: SimpleTextAttributes
 
@@ -173,6 +177,13 @@ private class JavaThreadDumpItem(private val threadState: ThreadState) : Mergeab
         threadState.isDaemon -> IconsCache.getIconWithDaemonOverlay(baseIcon)
         else -> baseIcon
       }
+    }
+
+  override val iconToolTip: @Nls String?
+    get() = when {
+      threadState.isVirtual -> JavaFrontbackBundle.message("dump.item.java.thread.icon.tooltip.virtual")
+      threadState.isDaemon -> JavaFrontbackBundle.message("dump.item.java.thread.icon.tooltip.daemon")
+      else -> null
     }
 
   override val attributes: SimpleTextAttributes = when {

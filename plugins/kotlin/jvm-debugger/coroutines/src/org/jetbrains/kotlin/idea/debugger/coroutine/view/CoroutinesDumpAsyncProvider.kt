@@ -15,6 +15,7 @@ import com.intellij.unscramble.IconsCache
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.MergeableToken
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.State
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
@@ -51,6 +52,9 @@ private class CoroutineDumpItem(info: CoroutineInfoData) : MergeableDumpItem {
     override val name: String = info.name + ":" + info.id
 
     override val stateDesc: String = " (${info.state.name.lowercase()})"
+
+    override val iconToolTip: String
+        get() = KotlinDebuggerCoroutinesBundle.message("dump.item.coroutine.tooltip")
 
     private val dispatcher = info.dispatcher
 

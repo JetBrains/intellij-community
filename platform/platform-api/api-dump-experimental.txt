@@ -356,6 +356,11 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - f:setup(javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent):V
 - bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,com.intellij.ui.Side,javax.swing.JComponent,I,java.lang.Object):V
 - bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent,I,java.lang.Object):V
+c:com.intellij.ui.SimpleColoredComponent
+- javax.swing.JComponent
+- com.intellij.ui.ColoredTextContainer
+- javax.accessibility.Accessible
+- *p:getIconToolTipText():java.lang.String
 *c:com.intellij.ui.components.JBHtmlPane
 - com.intellij.openapi.Disposable
 - javax.swing.JEditorPane

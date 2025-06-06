@@ -243,9 +243,12 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
   }
 
   private static class ThreadListCellRenderer extends ColoredListCellRenderer<DumpItem> {
+    private String iconToolTip;
+
     @Override
     protected void customizeCellRenderer(@NotNull JList<? extends DumpItem> list, DumpItem threadState, int index, boolean selected, boolean hasFocus) {
       setIcon(threadState.getIcon());
+      iconToolTip = threadState.getIconToolTip();
       if (!selected) {
         DumpItem selectedThread = list.getSelectedValue();
         setBackground(getBackgroundColor(threadState, selectedThread));
@@ -253,6 +256,11 @@ public final class ThreadDumpPanel extends JPanel implements NoStackTraceFolding
       SimpleTextAttributes attrs = threadState.getAttributes();
       append(threadState.getName(), attrs);
       append(threadState.getStateDesc(), attrs);
+    }
+
+    @Override
+    protected String getIconToolTipText() {
+      return iconToolTip;
     }
 
     private static @NotNull Color getBackgroundColor(DumpItem threadState, DumpItem selectedThread) {

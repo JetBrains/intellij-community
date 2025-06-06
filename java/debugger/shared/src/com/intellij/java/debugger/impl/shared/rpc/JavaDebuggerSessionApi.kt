@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Rpc
@@ -54,6 +55,7 @@ data class ThreadDumpWithAwaitingDependencies(
   val attributes: List<SerializableSimpleTextAttributes>,
   val stackTraces: List<@NlsSafe String>,
   val stateDescriptions: List<@NlsSafe String>,
+  val iconToolTips: List<@Nls String?>,
   val awaitingDependencies: Map<Int, IntArray>,
   val truncatedItemsNumber: Int,
 )
@@ -65,6 +67,7 @@ data class JavaThreadDumpItemDto(
   val firstLine: @NlsSafe String,
   val stateDescriptionIndex: Int,
   val stackTraceIndex: Int,
+  val iconToolTipIndex: Byte,
   val interestLevel: Int,
   val iconIndex: Byte,
   val attributesIndex: Byte,

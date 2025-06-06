@@ -31,6 +31,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
 import javax.swing.Icon
 
@@ -114,7 +115,7 @@ private fun ThreadDumpWithAwaitingDependencies.toDumpItems(): List<DumpItem> {
   val iconsCache = icons.map { it.icon() }
   val attributesCache = attributes.map { it.toSimpleTextAttributes() }
 
-  val feDumpItems = items.map { FrontendDumpItem(it, iconsCache, attributesCache, stackTraces, stateDescriptions) }
+  val feDumpItems = items.map { FrontendDumpItem(it, iconsCache, attributesCache, stackTraces, stateDescriptions, iconToolTips) }
   for ((index, awaitingIndices) in awaitingDependencies) {
     val awaitingItems = awaitingIndices.map { feDumpItems[it] }.toHashSet()
     feDumpItems[index].setAwaitingItems(awaitingItems)
@@ -128,12 +129,14 @@ private class FrontendDumpItem(
   private val attributesCache: List<SimpleTextAttributes>,
   private val stackTracesCache: List<@NlsSafe String>,
   private val stateDescriptionsCache: List<@NlsSafe String>,
+  private val iconToolTipsCache: List<@Nls String?>,
 ) : DumpItem {
   private var internalAwaitingItems: Set<DumpItem> = emptySet()
 
   override val name: @NlsSafe String get() = itemDto.name
   override val stateDesc: @NlsSafe String get() = stateDescriptionsCache[itemDto.stateDescriptionIndex]
   override val stackTrace: @NlsSafe String get() = "${itemDto.firstLine}\n${stackTracesCache[itemDto.stackTraceIndex]}"
+  override val iconToolTip: @Nls String? get() = iconToolTipsCache[itemDto.iconToolTipIndex.toUInt().toInt()]
   override val interestLevel: Int get() = itemDto.interestLevel
   override val icon: Icon get() = iconsCache[itemDto.iconIndex.toUInt().toInt()]
   override val attributes: SimpleTextAttributes get() = attributesCache[itemDto.attributesIndex.toInt().toUInt().toInt()]

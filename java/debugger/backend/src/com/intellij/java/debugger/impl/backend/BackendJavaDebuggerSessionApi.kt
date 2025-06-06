@@ -71,12 +71,17 @@ private fun truncateIfNeeded(allDumpItems: List<DumpItem>, maxItems: Int): Pair<
 
 private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDumpWithAwaitingDependencies {
   val (dumpItems, truncatedSize) = truncateIfNeeded(allDumpItems, maxItems)
-  val attributes = dumpItems.map { it.attributes }.distinct()
-  val attributesToIndex = attributes.withIndex().associate { it.value to it.index.toByte() }
-  val icons = dumpItems.map { it.icon }.distinct()
-  val iconToIndex = icons.withIndex().associate { it.value to it.index.toByte() }
-  val stateDescriptions = dumpItems.map { it.stateDesc }.distinct()
-  val stateDescriptionsToIndex = stateDescriptions.withIndex().associate { it.value to it.index }
+
+  fun <T> prepareIndex(selector: (DumpItem) -> T): Pair<List<T>, Map<T, Int>> {
+    val values = dumpItems.map(selector).distinct()
+    val valueToIndex = values.withIndex().associate { it.value to it.index }
+    return Pair(values, valueToIndex)
+  }
+
+  val (attributes, attributesToIndex) = prepareIndex { it.attributes }
+  val (icons, iconToIndex) = prepareIndex { it.icon }
+  val (stateDescriptions, stateDescriptionToIndex) = prepareIndex { it.stateDesc }
+  val (iconToolTips, iconToolTipToIndex) = prepareIndex { it.iconToolTip }
 
   val awaiting = hashMapOf<Int, IntArray>()
   val itemToIndex = dumpItems.withIndex().associate { it.value to it.index }
@@ -110,12 +115,13 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
   val items = dumpItems.map {
     val (firstLine, stackTraceIndex) = itemToStackTrace[it]!!
     JavaThreadDumpItemDto(name = it.name,
-                          stateDescriptionIndex = stateDescriptionsToIndex[it.stateDesc]!!,
+                          stateDescriptionIndex = stateDescriptionToIndex[it.stateDesc]!!,
                           interestLevel = it.interestLevel,
-                          iconIndex = iconToIndex[it.icon]!!,
-                          attributesIndex = attributesToIndex[it.attributes]!!,
+                          iconIndex = iconToIndex[it.icon]!!.toByte(),
+                          attributesIndex = attributesToIndex[it.attributes]!!.toByte(),
                           isDeadLocked = it.isDeadLocked,
                           stackTraceIndex = stackTraceIndex,
+                          iconToolTipIndex = iconToolTipToIndex[it.iconToolTip]!!.toByte(),
                           firstLine = firstLine)
   }
 
@@ -125,6 +131,7 @@ private fun dumpItemDtos(allDumpItems: List<DumpItem>, maxItems: Int): ThreadDum
                                             stackTraces = stackTraces,
                                             awaitingDependencies = awaiting,
                                             stateDescriptions = stateDescriptions,
+                                            iconToolTips = iconToolTips,
                                             truncatedItemsNumber = truncatedSize)
 }
 
