@@ -85,21 +85,38 @@ fun <T> IBifurcanVector<T>.asReversedSequence(): Sequence<T> {
   return ((size() - 1) downTo 0L).asSequence().map { nth(it) }
 }
 
-inline fun <T, K> Iterable<T>.chunkedBy(crossinline selector: (T) -> K): List<List<T>> {
-  val result = mutableListOf<List<T>>()
-  var lastList = mutableListOf<T>()
-  var lastSelector: K? = null
-  for (elem in this) {
-    val currentSelector = selector(elem)
-    if (lastList.isNotEmpty() && currentSelector != lastSelector) {
-      result.add(lastList)
-      lastList = mutableListOf()
+inline fun <T, K> Sequence<T>.chunkedBy(crossinline selector: (T) -> K): Sequence<List<T>> {
+  return sequence {
+    var lastList = mutableListOf<T>()
+    var lastSelector: K? = null
+    for (elem in this@chunkedBy) {
+      val currentSelector = selector(elem)
+      if (lastList.isNotEmpty() && currentSelector != lastSelector) {
+        yield(lastList)
+        lastList = mutableListOf()
+      }
+      lastList.add(elem)
+      lastSelector = currentSelector
     }
-    lastList.add(elem)
-    lastSelector = currentSelector
+    if (lastList.isNotEmpty()) {
+      yield(lastList)
+    }
   }
-  result.add(lastList)
-  return result
+}
+
+inline fun <T, K> Iterable<T>.chunkedBy(crossinline selector: (T) -> K): List<List<T>> {
+  return asSequence().chunkedBy(selector).toList()
+}
+
+inline fun <T> Sequence<T>.mergedBy(crossinline selector: (T, T) -> Boolean): Sequence<List<T>> {
+  var prev: T? = null
+  var chunkId = -1
+  return chunkedBy { curr ->
+    @Suppress("UNCHECKED_CAST")
+    if (chunkId == -1 || !selector(prev as T, curr)) chunkId++
+    prev = curr
+    chunkId
+  }
 }
 
 fun <T> ListIterator<T>.backwards(): ListIterator<T> {
