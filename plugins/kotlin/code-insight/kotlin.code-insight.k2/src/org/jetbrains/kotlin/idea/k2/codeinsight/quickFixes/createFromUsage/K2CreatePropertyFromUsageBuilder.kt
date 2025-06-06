@@ -16,6 +16,7 @@ import com.intellij.lang.jvm.actions.ExpectedTypeWithNullability
 import com.intellij.lang.jvm.types.JvmPrimitiveType
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
@@ -337,6 +338,7 @@ object K2CreatePropertyFromUsageBuilder {
                 val declarationInContainer =
                     CreateFromUsageUtil.placeDeclarationInContainer(createdDeclaration, adjustedContainer, actualAnchor)
                 editor?.caretModel?.moveToOffset(declarationInContainer.textRange.endOffset)
+                editor?.scrollingModel?.scrollToCaret(ScrollType.MAKE_VISIBLE)
                 shortenReferences(declarationInContainer)
             }
         }
