@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// IGNORE_K2
+
 
 context(c1: String, <caret>c2: Int)
 fun foo(p1: Double) {

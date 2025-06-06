@@ -1,5 +1,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 
+
 fun String.foo() {
 }
 

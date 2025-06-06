@@ -1,5 +1,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 
+
 context(c1: String)
 fun Int.foo(p1: Double) {
 }
