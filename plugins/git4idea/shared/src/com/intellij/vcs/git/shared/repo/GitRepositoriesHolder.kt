@@ -40,9 +40,10 @@ class GitRepositoriesHolder(
 ) {
   private val repositories: MutableMap<RepositoryId, GitRepositoryModelImpl> = ConcurrentHashMap()
 
-  @Volatile
-  var initialized: Boolean = false
-    private set
+  private val initSignal = CompletableDeferred<Unit>()
+
+  val initialized: Boolean
+    get() = initSignal.isCompleted
 
   private val initLock = Mutex()
 
@@ -71,17 +72,23 @@ class GitRepositoriesHolder(
       if (initialized) return
 
       subscribeToRepoEvents()
-
-      initialized = true
     }
+  }
+
+  /**
+   * Returns immediately if [GitRepositoriesHolder] is initialized or waits until the initialization is completed.
+   *
+   * **Doesn't trigger the initialization**
+   */
+  suspend fun awaitInitialization() {
+    initSignal.await()
   }
 
   /**
    * @return once the connection is established and the first [GitRepositoryEvent.ReloadState] is received
    */
   private suspend fun subscribeToRepoEvents() {
-    val initDeferred = CompletableDeferred<Unit>()
-    cs.childScope("Git repository state synchronization").launch() {
+    cs.childScope("Git repository state synchronization").launch {
       GitRepositoryApi.getInstance().getRepositoriesEvents(project.projectId()).collect { event ->
         LOG.debug("Received repository event: $event")
         when (event) {
@@ -90,8 +97,8 @@ class GitRepositoriesHolder(
             repositories.keys.retainAll(newState.keys)
             repositories.putAll(newState)
 
-            if (!initDeferred.isCompleted) {
-              initDeferred.complete(Unit)
+            if (!initSignal.isCompleted) {
+              initSignal.complete(Unit)
             }
           }
           is GitRepositoryEvent.RepositoriesSync -> {
@@ -119,7 +126,7 @@ class GitRepositoriesHolder(
         }
       }
     }
-    initDeferred.await()
+    initSignal.await()
   }
 
   private suspend fun handleSingleRepoUpdate(event: GitRepositoryEvent.SingleRepositoryUpdate) {

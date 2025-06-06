@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
@@ -43,13 +44,16 @@ class GitRepositoryApiImpl : GitRepositoryApi {
 
         val synchronizer = Synchronizer(project, this@callbackFlow)
         val coroutineScope = GitDisposable.getInstance(project).coroutineScope
-        coroutineScope.launch {
-          val allRepositories = getAllRepositories(project)
-          allRepositories.forEach { repository -> synchronizer.sendDeletedEventOnDispose(repository) }
-          send(GitRepositoryEvent.ReloadState(allRepositories.map { GitRepositoryToDtoConverter.convertToDto(it) }))
-          while (isActive) {
-            delay(SYNC_INTERVAL)
-            send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
+        // Sending of the initial state should be delayed until initialization is complete
+        ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
+          coroutineScope.launch {
+            val allRepositories = getAllRepositories(project)
+            allRepositories.forEach { repository -> synchronizer.sendDeletedEventOnDispose(repository) }
+            send(GitRepositoryEvent.ReloadState(allRepositories.map { GitRepositoryToDtoConverter.convertToDto(it) }))
+            while (isActive) {
+              delay(SYNC_INTERVAL)
+              send(GitRepositoryEvent.RepositoriesSync(getAllRepositories(project).map { it.rpcId }))
+            }
           }
         }
 

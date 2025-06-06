@@ -10,11 +10,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsMappingListener
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.vcs.git.shared.repo.GitRepositoriesHolder
 import com.intellij.vcs.git.shared.rpc.GitWidgetApi
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import git4idea.GitDisposable
@@ -53,6 +54,10 @@ internal class GitWidgetApiImpl : GitWidgetApi {
         project.messageBus.connect(coroutineScope).also {
           it.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
             LOG.debug("VCS mapping changed. Sending new value")
+            trySendNewState(project, file)
+          })
+          it.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
+            LOG.debug("VCS activated. Sending new value")
             trySendNewState(project, file)
           })
           it.subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
@@ -97,7 +102,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
     @RequiresBackgroundThread
     fun getWidgetState(project: Project, selectedFile: VirtualFile?): GitWidgetState {
       val vcsManager = ProjectLevelVcsManager.getInstance(project)
-      if (!vcsManager.areVcsesActivated() || !GitRepositoriesHolder.getInstance(project).initialized) return GitWidgetState.DoNotShow
+      if (!vcsManager.areVcsesActivated()) return GitWidgetState.DoNotShow
 
       val gitRepository = GitBranchUtil.guessWidgetRepository(project, selectedFile)
       if (gitRepository != null) {
@@ -109,7 +114,7 @@ internal class GitWidgetApiImpl : GitWidgetApi {
       val allVcss = vcsManager.allActiveVcss
       when {
         allVcss.isEmpty() -> return GitWidgetState.NoVcs(TrustedProjects.isProjectTrusted(project))
-        allVcss.any { it.keyInstanceMethod == GitVcs.getKey() } -> return GitWidgetState.UnknownGitRepository
+        allVcss.any { it.keyInstanceMethod == GitVcs.getKey() } -> return GitWidgetState.GitRepositoriesNotLoaded
         else -> return GitWidgetState.DoNotShow
       }
     }

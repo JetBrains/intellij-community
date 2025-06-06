@@ -6,6 +6,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.RowIcon
 import com.intellij.ui.util.maximumWidth
 import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopup
@@ -56,7 +58,7 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
         val repo = GitRepositoriesHolder.getInstance(project).get(state.repository)
         GitBranchesPopup.createDefaultPopup(project, repo)
       }
-      GitWidgetState.UnknownGitRepository -> getPopupForUnknownGitRepo(project, event)
+      GitWidgetState.GitRepositoriesNotLoaded -> awaitInitializationAndGetPopup(project, event)
     }
   }
 
@@ -69,10 +71,7 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
   }
 
   protected open fun doUpdate(e: AnActionEvent, project: Project) {
-    val state =
-      if (GitRepositoriesHolder.getInstance(project).initialized) GitWidgetStateHolder.getInstance(project).state.value
-      else GitWidgetState.DoNotShow
-
+    val state = GitWidgetStateHolder.getInstance(project).state.value
     if (state is GitWidgetState.OnRepository) {
       GitWidgetPlaceholder.updatePlaceholder(project, state.presentationData.text)
     }
@@ -83,7 +82,7 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
         e.presentation.isEnabledAndVisible = false
       }
       is GitWidgetState.NoVcs -> updateNoVcs(project, e)
-      GitWidgetState.UnknownGitRepository -> updateUnknownGitRepo(project, e)
+      GitWidgetState.GitRepositoriesNotLoaded -> updateWithReposNotLoadedGitRepo(project, e)
       is GitWidgetState.OnRepository -> updateOnGitRepo(project, state, e)
     }
   }
@@ -98,7 +97,7 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
     }
   }
 
-  private fun updateUnknownGitRepo(project: Project, e: AnActionEvent) {
+  private fun updateWithReposNotLoadedGitRepo(project: Project, e: AnActionEvent) {
     val placeholder = GitWidgetPlaceholder.getPlaceholder(project)
     with(e.presentation) {
       isEnabledAndVisible = true
@@ -124,7 +123,16 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
     e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, getInAndOutIcons(presentation))
   }
 
-  protected abstract fun getPopupForUnknownGitRepo(project: Project, event: AnActionEvent): JBPopup?
+  private fun awaitInitializationAndGetPopup(project: Project, event: AnActionEvent): JBPopup {
+    val repo = runWithModalProgressBlocking(project, GitBundle.message("action.Git.Loading.Branches.progress")) {
+      val repositoriesHolder = project.service<GitRepositoriesHolder>()
+      repositoriesHolder.awaitInitialization()
+      val repository = project.service<GitWidgetStateHolder>().state.value as? GitWidgetState.OnRepository
+      repository?.let { repositoriesHolder.get(it.repository) }
+    }
+
+    return GitBranchesPopup.createDefaultPopup(project, repo)
+  }
 
   private fun getPopupForRepoSetup(trustedProject: Boolean, event: AnActionEvent): ListPopup {
     val group = if (trustedProject) {

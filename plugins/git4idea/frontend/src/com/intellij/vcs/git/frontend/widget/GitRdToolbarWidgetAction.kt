@@ -3,14 +3,11 @@ package com.intellij.vcs.git.frontend.widget
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import com.intellij.vcs.git.shared.widget.GitToolbarWidgetActionBase
 
 class GitRdToolbarWidgetAction: GitToolbarWidgetActionBase() {
-  override fun getPopupForUnknownGitRepo(project: Project, event: AnActionEvent): JBPopup? = null
-
   override fun doUpdate(e: AnActionEvent, project: Project) {
     if (!Registry.isRdBranchWidgetEnabled()) {
       e.presentation.isEnabledAndVisible = false
