@@ -26,12 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupPositionProviderAtPosition
 import kotlinx.coroutines.delay
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
+import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 import org.jetbrains.jewel.ui.util.isDark
@@ -64,6 +64,7 @@ import org.jetbrains.jewel.ui.util.isDark
  * @param content The component for which to show the tooltip on hover
  * @see com.intellij.ide.HelpTooltip
  */
+@Deprecated("Please, use the overload without the [AutoHideBehavior].")
 @Composable
 public fun Tooltip(
     tooltip: @Composable () -> Unit,
@@ -133,8 +134,6 @@ public fun Tooltip(
  * @param content The component for which to show the tooltip on hover
  * @see com.intellij.ide.HelpTooltip
  */
-@ScheduledForRemoval(inVersion = "2025.2")
-@Deprecated("Please, use the overload with [AutoHideBehavior].")
 @Composable
 public fun Tooltip(
     tooltip: @Composable () -> Unit,
@@ -145,7 +144,35 @@ public fun Tooltip(
     content: @Composable () -> Unit,
 ) {
     TooltipArea(
-        tooltip = { if (enabled) TooltipImpl(style, tooltip) else Box {} },
+        tooltip = {
+            if (enabled) {
+                var isVisible by remember { mutableStateOf(true) }
+
+                LaunchedEffect(style.autoHideBehavior) {
+                    when (style.autoHideBehavior) {
+                        TooltipAutoHideBehavior.Normal -> {
+                            delay(style.metrics.regularDisappearDelay)
+                            isVisible = false
+                        }
+
+                        TooltipAutoHideBehavior.Long -> {
+                            delay(style.metrics.fullDisappearDelay)
+                            isVisible = false
+                        }
+                        TooltipAutoHideBehavior.Never -> {}
+                    }
+                }
+
+                if (isVisible) {
+                    TooltipImpl(style, tooltip)
+                } else {
+                    // Render an empty box when not visible to allow TooltipArea to dismiss properly
+                    Box {}
+                }
+            } else {
+                Box {}
+            }
+        },
         modifier = modifier,
         delayMillis = style.metrics.showDelay.inWholeMilliseconds.toInt(),
         tooltipPlacement = tooltipPlacement,
@@ -245,6 +272,13 @@ public fun rememberPopupPositionProviderAtFixedPosition(
         }
     }
 
+// TODO: When removing it, please replace usages with [TooltipAutoHideBehavior]
+@Deprecated(
+    "Replace with TooltipAutoHideBehavior",
+    replaceWith =
+        ReplaceWith("TooltipAutoHideBehavior", "org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior"),
+    level = DeprecationLevel.WARNING,
+)
 public enum class AutoHideBehavior {
     Never,
     Normal,

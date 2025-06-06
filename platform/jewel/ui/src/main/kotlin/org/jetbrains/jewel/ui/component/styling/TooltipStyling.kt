@@ -17,7 +17,16 @@ import org.jetbrains.jewel.ui.component.FixedCursorPoint
 
 @Stable
 @GenerateDataFunctions
-public class TooltipStyle(public val colors: TooltipColors, public val metrics: TooltipMetrics) {
+public class TooltipStyle(
+    public val colors: TooltipColors,
+    public val metrics: TooltipMetrics,
+    public val autoHideBehavior: TooltipAutoHideBehavior,
+) {
+    public constructor(
+        colors: TooltipColors,
+        metrics: TooltipMetrics,
+    ) : this(colors, metrics, TooltipAutoHideBehavior.Normal)
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -26,6 +35,7 @@ public class TooltipStyle(public val colors: TooltipColors, public val metrics: 
 
         if (colors != other.colors) return false
         if (metrics != other.metrics) return false
+        if (autoHideBehavior != other.autoHideBehavior) return false
 
         return true
     }
@@ -33,10 +43,12 @@ public class TooltipStyle(public val colors: TooltipColors, public val metrics: 
     override fun hashCode(): Int {
         var result = colors.hashCode()
         result = 31 * result + metrics.hashCode()
+        result = 31 * result + autoHideBehavior.hashCode()
         return result
     }
 
-    override fun toString(): String = "TooltipStyle(colors=$colors, metrics=$metrics)"
+    override fun toString(): String =
+        "TooltipStyle(colors=$colors, metrics=$metrics, autoHideBehavior=$autoHideBehavior)"
 
     public companion object
 }
@@ -160,6 +172,12 @@ public class TooltipMetrics(
                 fullDisappearDelay,
             )
     }
+}
+
+public enum class TooltipAutoHideBehavior {
+    Never,
+    Normal,
+    Long,
 }
 
 public val LocalTooltipStyle: ProvidableCompositionLocal<TooltipStyle> = staticCompositionLocalOf {
