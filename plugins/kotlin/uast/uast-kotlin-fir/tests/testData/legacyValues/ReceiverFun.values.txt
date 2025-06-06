@@ -1,21 +1,21 @@
 UFile (package = ) [public final class ReceiverFunKt {...]
     UClass (name = ReceiverFunKt) [public final class ReceiverFunKt {...}]
-        UMethod (name = foo) [public static final fun foo(@MyReceiverAnnotation @org.jetbrains.annotations.NotNull $this$foo: java.lang.String) : int {...}]
-            UParameter (name = $this$foo) [@MyReceiverAnnotation @org.jetbrains.annotations.NotNull var $this$foo: java.lang.String]
-                UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation]
+        UMethod (name = foo) [public static final fun foo(@org.jetbrains.annotations.NotNull @MyReceiverAnnotation $this$foo: java.lang.String) : int {...}]
+            UParameter (name = $this$foo) [@org.jetbrains.annotations.NotNull @MyReceiverAnnotation var $this$foo: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+                UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return this.length] = Nothing
                     UQualifiedReferenceExpression [this.length] = external length()
                         UThisExpression (label = null) [this] = Undetermined
                         USimpleNameReferenceExpression (identifier = length) [length] = external length()
-        UMethod (name = getRx) [public static final fun getRx(@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull $this$rx: java.lang.String) : kotlin.text.Regex {...}]
-            UParameter (name = $this$rx) [@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull var $this$rx: java.lang.String]
+        UMethod (name = getRx) [public static final fun getRx(@org.jetbrains.annotations.NotNull @MyReceiverAnnotation(name = "RegExp") $this$rx: java.lang.String) : kotlin.text.Regex {...}]
+            UParameter (name = $this$rx) [@org.jetbrains.annotations.NotNull @MyReceiverAnnotation(name = "RegExp") var $this$rx: java.lang.String]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation(name = "RegExp")]
                     UNamedExpression (name = name) [name = "RegExp"] = Undetermined
                         UPolyadicExpression (operator = +) ["RegExp"] = "RegExp"
                             ULiteralExpression (value = "RegExp") ["RegExp"] = "RegExp"
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return toRegex()] = Nothing
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toRegex()] = external toRegex()()
