@@ -17,3 +17,12 @@ interface SearchEverywhereManagerFactory {
     val EP_NAME: ExtensionPointName<SearchEverywhereManagerFactory> = ExtensionPointName("com.intellij.searchEverywhere.manager")
   }
 }
+
+@ApiStatus.Internal
+interface SearchEverywhereSplitIncompatible {
+  companion object {
+    @ApiStatus.Internal
+    @JvmField
+    val EP_NAME: ExtensionPointName<SearchEverywhereSplitIncompatible> = ExtensionPointName("com.intellij.searchEverywhere.splitIncompatible")
+  }
+}
