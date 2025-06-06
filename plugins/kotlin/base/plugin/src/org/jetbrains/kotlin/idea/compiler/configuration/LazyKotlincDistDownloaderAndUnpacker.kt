@@ -76,7 +76,7 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
             jarInMavenRepo.copyTo(lib.resolve(getDistJarNameFromMavenJar(jarInMavenRepo) ?: continue))
         }
         val jsEngines = KotlinPluginLayout.jsEngines
-        jsEngines.copyTo(lib.resolve(jsEngines.name)) // js.engines is required to avoid runtime errors when compiling kts via JPS
+        jsEngines?.copyTo(lib.resolve(jsEngines.name)) // js.engines is required to avoid runtime errors when compiling kts via JPS
         return listOf(unpackedDistDestination)
     }
 

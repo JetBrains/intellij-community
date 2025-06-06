@@ -92,8 +92,8 @@ object KotlinPluginLayout {
     val jpsPluginClasspath: List<File>
         get() = jpsPluginClasspathProvider.value
 
-    val jsEngines: File by lazy {
-        kotlinc.resolve("lib").resolve("js.engines.jar").also { check(it.exists()) { "$it doesn't exist" } }
+    val jsEngines: File? by lazy {
+        kotlinc.resolve("lib").resolve("js.engines.jar").takeIf { it.exists() }
     }
 
     /**
