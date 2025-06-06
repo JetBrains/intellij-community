@@ -84,13 +84,13 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
     /**
      * Returns the name filter that should be used for index lookups.
-     * If the prefix is less than 3 characters, we do not use the regular [scopeNameFilter] as it will
+     * If the prefix is less than 4 characters, we do not use the regular [scopeNameFilter] as it will
      * match occurrences anywhere in the name, which might yield too many results.
      * For other cases (unless the user invokes completion multiple times), this function will return
      * the [startOnlyNameFilter] that requires a match at the start of the lookup item's lookup strings.
      */
     internal fun getIndexNameFilter(): (Name) -> Boolean {
-        return if (parameters.invocationCount >= 2 || sink.prefixMatcher.prefix.length > 2) {
+        return if (parameters.invocationCount >= 2 || sink.prefixMatcher.prefix.length > 3) {
             scopeNameFilter
         } else {
             startOnlyNameFilter
