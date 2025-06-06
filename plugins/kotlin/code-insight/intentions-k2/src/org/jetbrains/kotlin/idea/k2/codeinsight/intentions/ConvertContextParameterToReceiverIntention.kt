@@ -9,15 +9,20 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParam
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.isConvertibleContextParameter
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.runChangeSignatureForParameter
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntention<KtParameter>(
-    KtParameter::class.java, KotlinBundle.lazyMessage("convert.to.regular.parameter")
+class ConvertContextParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
+    KtParameter::class.java, KotlinBundle.lazyMessage("convert.to.receiver.parameter")
 ) {
     override fun startInWriteAction(): Boolean = false
 
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
-        return isConvertibleContextParameter(element)
+        if (!isConvertibleContextParameter(element)) return false
+        val ownerDeclaration = element.getStrictParentOfType<KtCallableDeclaration>() ?: return false
+        if (ownerDeclaration.receiverTypeReference != null) return false
+        return true
     }
 
     override fun applyTo(element: KtParameter, editor: Editor?) {
@@ -29,6 +34,7 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
     private fun configureChangeInfo(element: KtParameter, changeInfo: KotlinChangeInfo): Boolean {
         val changedParameter = findContextParameterInChangeInfo(element, changeInfo) ?: return false
         changedParameter.isContextParameter = false
+        changeInfo.receiverParameterInfo = changedParameter
         return true
     }
 }

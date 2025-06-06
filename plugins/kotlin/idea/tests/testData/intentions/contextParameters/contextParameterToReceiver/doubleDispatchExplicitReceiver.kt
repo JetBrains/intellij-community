@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// SHOULD_FAIL_WITH: Explicit receiver is already present in call element: instance.foo()
+
+interface Foo {
+    context(<caret>c1: String)
+    fun foo() {
+    }
+}
+
+context(c1: String)
+fun bar(instance: Foo) {
+    instance.foo()
+}

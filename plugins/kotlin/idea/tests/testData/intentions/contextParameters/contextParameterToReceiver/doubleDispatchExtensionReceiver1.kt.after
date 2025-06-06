@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// IGNORE_K2
+
+interface Foo {
+    fun String.foo() {
+    }
+}
+
+context(c1: String)
+fun Foo.bar() {
+    c1.foo()
+}
