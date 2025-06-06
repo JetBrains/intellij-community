@@ -1,6 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.distributionContent
 
+import com.intellij.platform.distributionContent.testFramework.FileEntry
+import com.intellij.platform.distributionContent.testFramework.ModuleEntry
+import com.intellij.platform.distributionContent.testFramework.deserializeContentData
+import com.intellij.platform.distributionContent.testFramework.serializeContentEntries
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import kotlinx.serialization.SerializationException
 import org.assertj.core.util.diff.DiffUtils

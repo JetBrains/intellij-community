@@ -4,6 +4,10 @@ package com.intellij.platform.buildScripts.testFramework.distributionContent
 
 import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import com.intellij.platform.buildScripts.testFramework.spanName
+import com.intellij.platform.distributionContent.testFramework.FileEntry
+import com.intellij.platform.distributionContent.testFramework.PluginContentReport
+import com.intellij.platform.distributionContent.testFramework.deserializeContentData
+import com.intellij.platform.distributionContent.testFramework.deserializePluginData
 import com.intellij.util.lang.HashMapZipFile
 import kotlinx.serialization.SerializationException
 import org.jetbrains.annotations.ApiStatus
