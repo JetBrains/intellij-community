@@ -13,16 +13,19 @@ function highlightedText(text) {
     let resultElement;
 
     if (inlineComment !== undefined) {
-      textElement = document.createElement("span");
+      textElement = document.createElement("pre");
       textElement.innerText = text;
+      textElement.style.display = "inline-block";
 
-      const commentComponent = document.createElement("span");
+      const commentComponent = document.createElement("pre");
+      commentComponent.classList.add("copy-text-ignore");
       commentComponent.style.marginLeft = "10px";
       commentComponent.innerText = inlineComment;
       commentComponent.style.textDecoration = "";
       commentComponent.style.color = "grey";
 
-      resultElement = document.createElement("pre");
+      resultElement = document.createElement("div");
+      resultElement.style.display = "block ruby"
       resultElement.appendChild(textElement);
       resultElement.appendChild(commentComponent);
     }

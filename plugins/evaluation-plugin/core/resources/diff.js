@@ -477,6 +477,7 @@ function renderDiff(originalText, suggestedText) {
     if (position === 'top') {
       if (topIndex > 0) {
         const btn = document.createElement('button');
+        btn.classList.add('copy-text-ignore');
         btn.innerText = 'Unfold 50 lines ↑';
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -493,12 +494,14 @@ function renderDiff(originalText, suggestedText) {
       } else {
         const label = document.createElement('span');
         label.innerText = 'All lines are unfolded (top)';
+        label.classList.add('copy-text-ignore');
         buttonWrapper.appendChild(label);
       }
     } else {
       if (bottomIndex < unifiedDiff.length) {
         const btn = document.createElement('button');
         btn.innerText = 'Unfold 50 lines ↓';
+        btn.classList.add('copy-text-ignore');
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
           const newBottomIndex = Math.min(unifiedDiff.length, bottomIndex + UNFOLD_STEP);
@@ -514,6 +517,7 @@ function renderDiff(originalText, suggestedText) {
       } else {
         const label = document.createElement('span');
         label.innerText = 'All lines are unfolded (bottom)';
+        label.classList.add('copy-text-ignore');
         buttonWrapper.appendChild(label);
       }
     }

@@ -129,7 +129,7 @@ class CardReportGenerator(
                   renderProperty(property, fileIndex, session.id, lookupIndex)
                 }
                 else if (i == tableSize) {
-                  popupContainer(lookupId(session.id, lookupIndex, category))
+                  popupContainer(popupId(session.id, lookupIndex, category))
                 }
               }
             }
@@ -151,7 +151,7 @@ class CardReportGenerator(
       if (property.suffix != null) ": ${property.suffix}"
       else if (propertyValue.inline != null) ": ${propertyValue.inline}"
       else ""
-    
+
     a {
       style = ""
 
@@ -179,29 +179,54 @@ class CardReportGenerator(
     }
   }
 
-  private fun FlowContent.popupContainer(containerId: String) {
+  private fun FlowContent.popupContainer(popupId: String) {
     div {
       style = "position: relative;"
 
       div("popup-container") {
-        id = containerId
+        id = popupId
         style = """
               position: absolute;
               border: 1px solid #d4d4d4;
               border-bottom: none;
               border-top: none;
               z-index: 99;
-              overflow: scroll;
               top: 1.5em;
               left: 0;
               
-              width: 60em;
-              max-height: 40em;
-              min-height: 10em;
-              
-              background-color: lightgray;
               visibility: hidden;
             """.trimIndent()
+
+        div("popup-container-header") {
+          style = """
+            display: flex;
+            justify-content: flex-start;
+            background-color: #e0e0e0;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+          """
+
+          button {
+            id = "${popupId}-copy-button"
+            onClick = "copyPopupText('$popupId')"
+            style = """
+              cursor: pointer;
+              margin: 4px;
+            """
+            +"Copy"
+          }
+        }
+
+        div("popup-container-content") {
+          id = "${popupId}-content"
+          style = """
+            width: 60em;
+            max-height: 40em;
+            min-height: 10em;
+            background-color: lightgray;
+            overflow: scroll;
+          """.trimIndent()
+        }
       }
     }
   }
@@ -214,7 +239,7 @@ class CardReportGenerator(
 
 private fun fileVariable(fileIndex: Int): String = "fileText${fileIndex}"
 
-private fun lookupId(sessionId: String, lookupIndex: Int, category: PresentationCategory): String =
+private fun popupId(sessionId: String, lookupIndex: Int, category: PresentationCategory): String =
   "${sessionId}-${lookupIndex}-${category.name}"
 
 private fun embedString(string: String): String = "pako.ungzip(atob(`${zipString(string)}`), { to: 'string' })"
@@ -303,7 +328,7 @@ private data class PropertyValue(
         return PropertyValue(null, null)
       }
 
-      val element = """document.getElementById("${lookupId(sessionId, lookupIndex, property.category)}")"""
+      val element = "'${popupId(sessionId, lookupIndex, property.category)}'"
       val stringValues =
         if (property.placement != null) nativeTexts(property.placement, fileIndex, sessionId, lookupIndex, property.placementIndex)
         else embeddedTexts(property.renderer, property.value)
