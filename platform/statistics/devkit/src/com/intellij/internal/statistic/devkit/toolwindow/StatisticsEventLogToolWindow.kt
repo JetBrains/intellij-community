@@ -109,7 +109,13 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
 
   companion object {
     @Suppress("DEPRECATION")
-    val rejectedValidationTypes = setOf(REJECTED, INCORRECT_RULE, UNDEFINED_RULE, UNREACHABLE_METADATA, UNREACHABLE_METADATA_OBSOLETE, PERFORMANCE_ISSUE)
+    val rejectedValidationTypes = setOf(REJECTED,
+                                        INCORRECT_RULE,
+                                        UNDEFINED_RULE,
+                                        UNREACHABLE_METADATA,
+                                        UNREACHABLE_METADATA_OBSOLETE,
+                                        PERFORMANCE_ISSUE,
+                                        REQUIRED_FIELD_MISSED)
     val alertEvents = setOf(EventLogSystemEvents.TOO_MANY_EVENTS_ALERT, EventLogSystemEvents.TOO_MANY_EVENTS)
   }
 }
