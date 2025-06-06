@@ -31,7 +31,7 @@ class OverridesCompletionLookupElementDecorator(
     private val text: String,
     private val tailText: String?,
     @ApiStatus.Internal
-    val isImplemented: Boolean,
+    val isImplement: Boolean, // True if the element would implement a method that is not implemented yet
     private val icon: RowIcon,
     private val baseClassName: String?,
     private val baseClassIcon: Icon?,
@@ -49,7 +49,7 @@ class OverridesCompletionLookupElementDecorator(
         super.renderElement(presentation)
 
         presentation.itemText = text
-        presentation.isItemTextBold = isImplemented
+        presentation.isItemTextBold = isImplement
         presentation.icon = icon
         presentation.clearTail()
         presentation.setTailText(tailText, true)
