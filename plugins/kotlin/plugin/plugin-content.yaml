@@ -5,7 +5,7 @@
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
-  - name: kotlin.frontend
+  - name: kotlin.frontend.split
 - name: lib/jackson-dataformat-toml.jar
   library: jackson-dataformat-toml
   files:

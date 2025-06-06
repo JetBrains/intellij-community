@@ -23,7 +23,7 @@ object KotlinPluginBuilder {
    * Module which contains META-INF/plugin.xml
    */
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
-  const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend"
+  const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
 
   val MODULES: List<String> = java.util.List.of(
     "kotlin.plugin.common",
