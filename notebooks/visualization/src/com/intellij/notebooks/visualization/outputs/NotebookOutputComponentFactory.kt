@@ -74,7 +74,7 @@ interface NotebookOutputComponentFactory<C : JComponent, K : NotebookOutputDataK
   /**
    * May return `null` if the factory can't create any component for specific subtype of [NotebookOutputDataKey].
    */
-  fun createComponent(editor: EditorImpl, output: K): CreatedComponent<C>? = null
+  fun createComponent(editor: EditorImpl, outputDataKey: K): CreatedComponent<C>? = null
 
   fun createComponent(editor: EditorImpl, output: EditorCellOutput, outputDataKey: K): CreatedComponent<C>? {
     return createComponent(editor, outputDataKey)

@@ -35,7 +35,7 @@ class EditorCellView(val cell: EditorCell) : EditorCellViewComponent() {
     cell.source.bind(this) {
       updateInput()
     }
-    cell.isSelected.bind(this) { selected ->
+    cell.isSelected.bind(this) {
       updateFolding()
     }
     cell.isHovered.bind(this) {

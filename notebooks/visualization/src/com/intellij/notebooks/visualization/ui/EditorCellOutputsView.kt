@@ -136,8 +136,17 @@ class EditorCellOutputsView(
     }
   }
 
+
   @RequiresEdt
   private fun updateData(outputs: List<EditorCellOutput>): Boolean {
+
+    var outputs = outputs
+    if(outputs.isNotEmpty()) {
+      EditorCellOutputsPreprocessor.EP_NAME.extensionList.forEach {
+        outputs = it.processOutputs(outputs)
+      }
+    }
+
     val newOutputsIterator = outputs.iterator()
     val oldComponentsWithFactories = getComponentsWithFactories().iterator()
     var isFilled = false
