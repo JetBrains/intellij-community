@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFi
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataParseException;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
+import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleProducer;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -129,6 +131,33 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     catch (EventLogMetadataLoadException | EventLogMetadataParseException e) {
       eventLogSystemCollector.logMetadataUpdateFailed(e);
     }
+
+    var dictionariesLastModifiedLocally = myMetadataPersistence.getDictionariesLastModified();
+    var dictionariesLastModifiedOnServer = myMetadataLoader.getDictionariesLastModifiedOnServer(myRecorderId);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+        "Loading dictionaries, last modified cached=" + dictionariesLastModifiedLocally +
+        ", last modified on the server=" + dictionariesLastModifiedOnServer
+      );
+    }
+
+    DictionaryStorage dictionaryStorage = getDictionaryStorage();
+    for(Map.Entry<String, Long> dictionarylastModifiedOnServerEntry : dictionariesLastModifiedOnServer.entrySet()) {
+      try {
+        String dictionaryName = dictionarylastModifiedOnServerEntry.getKey();
+        Long dictionaryLastModifiedLocally = dictionariesLastModifiedLocally.getOrDefault(dictionaryName, 0L);
+        Long dictionaryLastModifiedOnServer = dictionarylastModifiedOnServerEntry.getValue();
+        if (dictionaryLastModifiedOnServer <= 0 || dictionaryLastModifiedOnServer > dictionaryLastModifiedLocally || isUnreachable()) {
+          String rawDictionary = myMetadataLoader.loadDictionaryFromServer(myRecorderId, dictionaryName);
+          dictionaryStorage.updateDictionaryByName(dictionaryName, rawDictionary.getBytes(StandardCharsets.UTF_8));
+          myMetadataPersistence.setDictionaryLastModified(dictionarylastModifiedOnServerEntry.getKey(), dictionaryLastModifiedOnServer);
+
+          //TODO: send FUS logs
+        }
+      } catch(Exception e) {
+        // TODO: log error via FUS
+      }
+    }
   }
 
   @Override
@@ -143,18 +172,24 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
 
   protected @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
-    return createValidators(build, groups, globalRulesHolder, myRecorderId);
+    return createValidators(build, groups, globalRulesHolder, myRecorderId, getDictionaryStorage());
+  }
+
+  @Override
+  public @NotNull DictionaryStorage getDictionaryStorage() {
+    return myMetadataPersistence.getDictionaryStorage();
   }
 
   public static @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,
                                                                        @NotNull EventGroupRemoteDescriptors groups,
                                                                        @NotNull GlobalRulesHolder globalRulesHolder,
-                                                                       @NotNull String recorderId) {
+                                                                       @NotNull String recorderId,
+                                                                       DictionaryStorage dictionaryStorage) {
     ValidationSimpleRuleFactory ruleFactory = new ValidationSimpleRuleFactory(new CustomRuleProducer(recorderId));
     return groups.groups.stream()
       .filter(group -> EventGroupFilterRules.create(group, EventLogBuild.EVENT_LOG_BUILD_PRODUCER).accepts(build))
       .collect(Collectors.toMap(group -> group.id, group -> {
-        return EventGroupRules.create(group, globalRulesHolder, ruleFactory, FeatureUsageData.Companion.getPlatformDataKeys());
+        return EventGroupRules.create(group, globalRulesHolder, ruleFactory, FeatureUsageData.Companion.getPlatformDataKeys(), dictionaryStorage);
       }));
   }
 }

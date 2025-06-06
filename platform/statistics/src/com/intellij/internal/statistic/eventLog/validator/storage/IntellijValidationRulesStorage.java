@@ -43,7 +43,7 @@ public interface IntellijValidationRulesStorage extends ValidationRuleStorage<Ev
     final ArrayList<EventGroupRemoteDescriptors.EventGroupRemoteDescriptor> groups = descriptors.groups;
     return groups.stream().collect(Collectors.toMap(
       descriptor -> descriptor.id,
-      descriptor -> EventGroupRules.create(descriptor, globalRulesHolder, validationSimpleRuleFactory, excludeFields)
+      descriptor -> EventGroupRules.create(descriptor, globalRulesHolder, validationSimpleRuleFactory, excludeFields, getDictionaryStorage())
     ));
   }
 }

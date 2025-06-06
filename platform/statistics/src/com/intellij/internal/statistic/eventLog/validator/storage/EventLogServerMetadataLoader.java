@@ -35,6 +35,18 @@ public class EventLogServerMetadataLoader implements EventLogMetadataLoader {
   }
 
   @Override
+  public @NotNull Map<String, Long> getDictionariesLastModifiedOnServer(String recorderId) {
+    EventLogConnectionSettings settings = mySettingsService.getApplicationInfo().getConnectionSettings();
+    return EventLogMetadataUtils.dictionariesLastModified(mySettingsService.getDictionaryServiceUrl(), recorderId, settings);
+  }
+
+  @Override
+  public @NotNull String loadDictionaryFromServer(String recorderId, String dictionaryName) throws EventLogMetadataLoadException {
+    EventLogConnectionSettings settings = mySettingsService.getApplicationInfo().getConnectionSettings();
+    return EventLogMetadataUtils.loadDictionaryFromServer(mySettingsService.getDictionaryServiceUrl(), recorderId, dictionaryName, settings);
+  }
+
+  @Override
   public @NotNull Map<String, String> getOptionValues() {
     return mySettingsClient.provideOptions();
   }
