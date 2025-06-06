@@ -6799,6 +6799,15 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-51768
+  public void testImportedDecoratedFunctionWithParamSpec() {
+    doMultiFileStubAwareTest("(x: int) -> None", """
+      from mod import f
+      
+      expr = f
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

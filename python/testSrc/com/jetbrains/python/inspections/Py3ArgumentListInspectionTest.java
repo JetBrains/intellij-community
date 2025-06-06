@@ -639,4 +639,9 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    func(<warning descr="Unexpected argument">42</warning>)
                    """);
   }
+
+  // PY-51768
+  public void testImportedDecoratedFunctionWithParamSpec() {
+    doMultiFileTest();
+  }
 }
