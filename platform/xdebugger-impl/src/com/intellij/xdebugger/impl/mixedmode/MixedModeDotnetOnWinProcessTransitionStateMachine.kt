@@ -220,7 +220,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
         when (currentState) {
           is BothStopped -> {
             changeState(ResumeLowResumeStarted(currentState.high))
-            lowExtension.continueAllThreads(exceptThreads = emptySet(), silent = false)
+            low.resume(currentState.low)
           }
           else -> throwTransitionIsNotImplemented(event)
         }
