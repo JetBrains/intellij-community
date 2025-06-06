@@ -475,34 +475,6 @@ http_file(
 )
 
 http_file(
-  name = "ap-validation-76_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation/76/ap-validation-76.jar",
-  sha256 = "3d2123e0a17edd77776f083d04b2465fdb30d07484be658db0304587bd54ba07",
-  downloaded_file_path = "ap-validation-76.jar"
-)
-
-http_file(
-  name = "model-76_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/model/76/model-76.jar",
-  sha256 = "2d931e26e6632f608a6dab0fb60d27fae075260bf4532bb6ba8828d81bd167b3",
-  downloaded_file_path = "model-76.jar"
-)
-
-http_file(
-  name = "ap-validation-76-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation/76/ap-validation-76-sources.jar",
-  sha256 = "2bd09851d7f94c8fa7c7200b7bc16e6df2e32c4856330315ccc1c5c3aa0e2ad2",
-  downloaded_file_path = "ap-validation-76-sources.jar"
-)
-
-http_file(
-  name = "model-76-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/model/76/model-76-sources.jar",
-  sha256 = "15bd360a82aa002157da0b6b7c580689df5db9cc134d56d774c2cb8a50f2bb26",
-  downloaded_file_path = "model-76-sources.jar"
-)
-
-http_file(
   name = "sshd-osgi-2_15_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/sshd/sshd-osgi/2.15.0/sshd-osgi-2.15.0.jar",
   sha256 = "3c8a183f81e176d9c452c9bb94007574bc8188446b4fc98b527aa79074cd0dda",
@@ -780,6 +752,76 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/cloudconfig/cloudconfig/2023.9/cloudconfig-2023.9-sources.jar",
   sha256 = "86c94c625ccc61677a07bb5c7646cd0186a8b1f1f7bbf9238019caae4500d0e9",
   downloaded_file_path = "cloudconfig-2023.9-sources.jar"
+)
+
+http_file(
+  name = "ap-validation-134_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation/134/ap-validation-134.jar",
+  sha256 = "188a260d833e3182b9764e71bf6ca283083e75edf984addbb18cda8983e16107",
+  downloaded_file_path = "ap-validation-134.jar"
+)
+
+http_file(
+  name = "ap-validation-134-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/ap-validation/134/ap-validation-134-sources.jar",
+  sha256 = "8fc6db778617071cd75bbe69da6d8a41490ec1994e81a9c2990f5fd5fb15b4e5",
+  downloaded_file_path = "ap-validation-134-sources.jar"
+)
+
+http_file(
+  name = "configuration-134_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/configuration/134/configuration-134.jar",
+  sha256 = "c58ea5f79ebfd97700782b1fcd9023d3a875f3aff4ac9f08004a3b455369d35e",
+  downloaded_file_path = "configuration-134.jar"
+)
+
+http_file(
+  name = "configuration-134-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/configuration/134/configuration-134-sources.jar",
+  sha256 = "a17ef48b22110f61366e1c2a5979075213ffbbe6d18000b58147f8e6a07acd15",
+  downloaded_file_path = "configuration-134-sources.jar"
+)
+
+http_file(
+  name = "connection-client-134_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/connection-client/134/connection-client-134.jar",
+  sha256 = "37d162fa8c57f22a0e3985f3802b46132d4ac774d515be46bacc7d465ce8fcfb",
+  downloaded_file_path = "connection-client-134.jar"
+)
+
+http_file(
+  name = "connection-client-134-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/connection-client/134/connection-client-134-sources.jar",
+  sha256 = "33d507cb05755a68d354e4a9b9b5f5da383f93aa1fa4a74c4f83195b52ccfb9f",
+  downloaded_file_path = "connection-client-134-sources.jar"
+)
+
+http_file(
+  name = "model-134_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/model/134/model-134.jar",
+  sha256 = "be7ec5d04a89a47bff030be33c402505461cc9a88ed2b1654b6004aa24b03d29",
+  downloaded_file_path = "model-134.jar"
+)
+
+http_file(
+  name = "model-134-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/model/134/model-134-sources.jar",
+  sha256 = "9dfd10956200626c580d0cd8a3483961f6dd3862c914517bc69606bba0aeb245",
+  downloaded_file_path = "model-134-sources.jar"
+)
+
+http_file(
+  name = "serialization-kotlin-134_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/serialization-kotlin/134/serialization-kotlin-134.jar",
+  sha256 = "ba4ee8bdedc23b8873e43932e51f5ece07473c45db8c59f4c3ebf2249d357f9c",
+  downloaded_file_path = "serialization-kotlin-134.jar"
+)
+
+http_file(
+  name = "serialization-kotlin-134-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fus/reporting/serialization-kotlin/134/serialization-kotlin-134-sources.jar",
+  sha256 = "5455dc642a93195c9368ceec8e21c396aab3cea11aaac81fe61037545b73c208",
+  downloaded_file_path = "serialization-kotlin-134-sources.jar"
 )
 
 http_file(

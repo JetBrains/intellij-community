@@ -19,9 +19,11 @@ jvm_library(
     "@lib//:testcontainers",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
+    "@lib//:com-jetbrains-fus-reporting-model",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation",
+    "@lib//:com-jetbrains-fus-reporting-configuration",
     "//platform/core-ui",
     "//platform/statistics/uploader",
-    "@lib//:ap-validation",
     "@lib//:jackson",
     "@lib//:jackson-databind",
   ]

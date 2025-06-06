@@ -648,27 +648,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "ap-validation",
-  exports = [
-    ":ap-validation-76_http_import",
-    ":model-76_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "ap-validation-76_http_import",
-  jar = "@ap-validation-76_http//file",
-  source_jar = "@ap-validation-76-sources_http//file"
-)
-
-jvm_import(
-  name = "model-76_http_import",
-  jar = "@model-76_http//file",
-  source_jar = "@model-76-sources_http//file"
-)
-
 jvm_import(
   name = "apache-sshd-osgi",
   jar = "@sshd-osgi-2_15_0_http//file",
@@ -855,6 +834,41 @@ jvm_import(
   name = "cloud-config-client",
   jar = "@cloudconfig-2023_9_http//file",
   source_jar = "@cloudconfig-2023_9-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com-jetbrains-fus-reporting-ap-validation",
+  jar = "@ap-validation-134_http//file",
+  source_jar = "@ap-validation-134-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com-jetbrains-fus-reporting-configuration",
+  jar = "@configuration-134_http//file",
+  source_jar = "@configuration-134-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com-jetbrains-fus-reporting-connection-client",
+  jar = "@connection-client-134_http//file",
+  source_jar = "@connection-client-134-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com-jetbrains-fus-reporting-model",
+  jar = "@model-134_http//file",
+  source_jar = "@model-134-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com-jetbrains-fus-reporting-serialization-kotlin",
+  jar = "@serialization-kotlin-134_http//file",
+  source_jar = "@serialization-kotlin-134-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -23,7 +23,6 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:jna",
     "//platform/util",
-    "@lib//:ap-validation",
     "//platform/runtime/product",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util-ex",
@@ -37,8 +36,18 @@ jvm_library(
     "@lib//:jackson-module-kotlin",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:com-jetbrains-fus-reporting-model",
+    "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
+    "@lib//:com-jetbrains-fus-reporting-connection-client",
+    "@lib//:com-jetbrains-fus-reporting-configuration",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation",
   ],
-  exports = ["@lib//:ap-validation"],
+  exports = [
+    "@lib//:com-jetbrains-fus-reporting-model",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation",
+  ],
   runtime_deps = [":statistics_resources"]
 )
 
@@ -59,7 +68,6 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:jna",
     "//platform/util",
-    "@lib//:ap-validation",
     "//platform/runtime/product",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util-ex",
@@ -75,6 +83,13 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:junit5",
     "@lib//:assert_j",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:com-jetbrains-fus-reporting-model",
+    "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
+    "@lib//:com-jetbrains-fus-reporting-connection-client",
+    "@lib//:com-jetbrains-fus-reporting-configuration",
+    "@lib//:com-jetbrains-fus-reporting-ap-validation",
   ],
   runtime_deps = [":statistics_resources"]
 )
