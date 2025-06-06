@@ -19,6 +19,8 @@ import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.version
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -64,15 +66,14 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
 
   private suspend fun installWheelIfMissing(requirementCheck: suspend () -> Boolean, wheelNameToInstall: String): Boolean {
     if (!requirementCheck()) {
-      val wheelPathToInstall = findPathInHelpers(wheelNameToInstall)?.toString() ?: return false
+      val wheelPathToInstall = withContext(Dispatchers.IO) { findPathInHelpers(wheelNameToInstall).toString() }
       return installUsingPipWheel("--no-index", wheelPathToInstall)
     }
     return true
   }
 
   private fun installUsingPipWheel(vararg additionalArgs: String): Boolean {
-    val pipWheelPath = findPathInHelpers(WheelFiles.PIP_WHEEL_NAME)?.resolve(Path.of(PyPackageUtil.PIP))
-    if (pipWheelPath == null) return false
+    val pipWheelPath = findPathInHelpers(WheelFiles.PIP_WHEEL_NAME).resolve(Path.of(PyPackageUtil.PIP))
     val commandArguments = buildCommandArguments(pipWheelPath, *additionalArgs)
     return executeCommand(commandArguments)
   }

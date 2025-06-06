@@ -68,14 +68,18 @@ interface PythonHelpersLocator {
      */
     @JvmStatic
     @RequiresBackgroundThread
-    fun findPathInHelpers(resourceName: String): Path? {
+    fun findPathInHelpers(resourceName: String): Path {
+      return findPathInHelpersPossibleNull(resourceName) ?: error("File $resourceName does not exist in helpers root. Installation broken?")
+    }
+
+    @JvmStatic
+    @RequiresBackgroundThread
+    fun findPathInHelpersPossibleNull(resourceName: String): Path? {
       for (helperRoot in getHelpersRoots()) {
         val path = Path.of(helperRoot.pathString, resourceName)
         if (path.exists())
           return path
       }
-
-      LOG.info("File $resourceName does not exist in helpers root")
       return null
     }
 
@@ -101,7 +105,7 @@ interface PythonHelpersLocator {
     @Internal
     @JvmStatic
     @RequiresBackgroundThread
-    fun findPathStringInHelpers(@NonNls resourceName: String): String = findPathInHelpers(resourceName)?.absolutePathString() ?: ""
+    fun findPathStringInHelpers(@NonNls resourceName: String): String = findPathInHelpers(resourceName).absolutePathString()
 
     @Deprecated("Use {@link PythonHelpersLocator#findPathInHelpers}.", ReplaceWith("findPathInHelpers(resourceName)"), DeprecationLevel.ERROR)
     @JvmStatic

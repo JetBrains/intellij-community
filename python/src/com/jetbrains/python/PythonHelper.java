@@ -13,7 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.intellij.python.community.impl.venv.VenvKt.LEGACY_VIRTUALENV_ZIPAPP_NAME;
@@ -90,10 +93,10 @@ public enum PythonHelper implements HelperPackage {
   private static @NotNull PathHelperPackage findModule(String moduleEntryPoint, String path, boolean asModule, String[] thirdPartyDependencies) {
     List<HelperDependency> dependencies = HelperDependency.findThirdPartyDependencies(thirdPartyDependencies);
 
-    if (findPathInHelpers(path + ".zip") != null) {
+    if (findPathInHelpersPossibleNull(path + ".zip") != null) {
       return new ModuleHelperPackage(moduleEntryPoint, path + ".zip", dependencies);
     }
-    Path pathInHelpers = findPathInHelpers(path);
+    Path pathInHelpers = findPathInHelpersPossibleNull(path);
     if (!asModule && pathInHelpers != null && new File(pathInHelpers.toFile(), moduleEntryPoint + ".py").isFile()) {
       return new ScriptPythonHelper(moduleEntryPoint + ".py", pathInHelpers.toFile(), dependencies);
     }
@@ -254,7 +257,7 @@ public enum PythonHelper implements HelperPackage {
     }
 
     private static @NotNull File getHelpersThirdPartyDir() {
-      return Objects.requireNonNull(findPathInHelpers("third_party")).toFile();
+      return findPathInHelpers("third_party").toFile();
     }
   }
 

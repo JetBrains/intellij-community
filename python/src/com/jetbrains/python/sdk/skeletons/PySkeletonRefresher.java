@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -166,7 +166,7 @@ public class PySkeletonRefresher {
   }
 
   private static int readGeneratorVersion() {
-    File versionFile = Objects.requireNonNull(PythonHelpersLocator.findPathInHelpers("generator3/version.txt")).toFile();
+    File versionFile = PythonHelpersLocator.findPathInHelpers("generator3/version.txt").toFile();
     try (Reader reader = new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8)) {
       return PySkeletonHeader.fromVersionString(StreamUtil.readText(reader).trim());
     }

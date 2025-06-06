@@ -16,7 +16,9 @@ import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.failure
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
@@ -92,8 +94,7 @@ private suspend fun WhatToExec.buildExecutableProcess(args: List<String>, option
     is WhatToExec.Binary -> Pair(binary, args)
     is WhatToExec.Helper -> {
       val eel = python.getEelDescriptor().toEelApi()
-      val localHelper = PythonHelpersLocator.findPathInHelpers(helper)
-                        ?: error("No ${helper} found: installation broken?")
+      val localHelper = withContext(Dispatchers.IO) { PythonHelpersLocator.findPathInHelpers(helper) }
       val remoteHelper = EelPathUtils.transferLocalContentToRemote(
         source = localHelper,
         target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
