@@ -238,6 +238,11 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         ideModule.createChild(ProjectKeys.TEST, testData);
       }
     }
+
+    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getRootModel(VersionCatalogsModel.class);
+    if (versionCatalogsModel != null) {
+      ideModule.createChild(BuildScriptClasspathData.VERSION_CATALOGS, versionCatalogsModel);
+    }
   }
 
   @Override
