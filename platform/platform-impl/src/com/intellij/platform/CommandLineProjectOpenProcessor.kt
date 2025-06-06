@@ -4,6 +4,7 @@ package com.intellij.platform
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenProcessor
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -21,7 +22,10 @@ interface CommandLineProjectOpenProcessor {
   suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask = OpenProjectTask()): Project?
 
   companion object {
-    fun getInstance(): CommandLineProjectOpenProcessor = getInstanceIfExists() ?: PlatformProjectOpenProcessor.getInstance()
+    fun getInstance(): CommandLineProjectOpenProcessor = getInstanceIfExists() ?: getDefaultInstance()
+
+    @ApiStatus.Internal
+    fun getDefaultInstance(): CommandLineProjectOpenProcessor = PlatformProjectOpenProcessor.getInstance()
 
     fun getInstanceIfExists(): CommandLineProjectOpenProcessor? {
       return ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()

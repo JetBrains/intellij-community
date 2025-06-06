@@ -177,7 +177,7 @@ public final class LightEditUtil {
   }
 
   public static boolean isLightEditEnabled() {
-    return Registry.is(ENABLED_FILE_OPEN_KEY) && !PlatformUtils.isDataGrip();
+    return Registry.is(ENABLED_FILE_OPEN_KEY) && !PlatformUtils.isDataGrip() && !PlatformUtils.isGoIde();
   }
 
   @ApiStatus.Internal
