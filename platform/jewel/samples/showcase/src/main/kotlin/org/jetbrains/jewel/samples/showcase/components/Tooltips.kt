@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,17 +15,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
-import org.jetbrains.jewel.ui.component.AutoHideBehavior
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
+import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
+import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 
 @Composable
 public fun Tooltips() {
     var toggleEnabled by remember { mutableStateOf(true) }
     var enabled by remember { mutableStateOf(true) }
     var neverHide by remember { mutableStateOf(false) }
+
+    val originalStyle = LocalTooltipStyle.current
+    val tooltipStyle by
+        remember(originalStyle) {
+            derivedStateOf {
+                TooltipStyle(
+                    colors = originalStyle.colors,
+                    metrics = originalStyle.metrics,
+                    autoHideBehavior = if (neverHide) TooltipAutoHideBehavior.Never else TooltipAutoHideBehavior.Normal,
+                )
+            }
+        }
 
     LaunchedEffect(toggleEnabled) {
         if (!toggleEnabled) return@LaunchedEffect
@@ -36,11 +51,7 @@ public fun Tooltips() {
     }
 
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Tooltip(
-            tooltip = { Text("This is a tooltip") },
-            enabled = enabled,
-            autoHideBehavior = if (neverHide) AutoHideBehavior.Never else AutoHideBehavior.Normal,
-        ) {
+        Tooltip(tooltip = { Text("This is a tooltip") }, enabled = enabled, style = tooltipStyle) {
             // Any content works — this is a button just because it's focusable
             DefaultButton({}) { Text("Hover me!") }
         }

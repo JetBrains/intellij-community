@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,11 +29,12 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
+import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 import org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
-import org.jetbrains.jewel.ui.theme.tooltipStyle
 
 @ExperimentalLayoutApi
 @Composable
@@ -47,22 +49,22 @@ public fun ComponentsView(viewModel: ComponentsViewModel, toolbarButtonMetrics: 
 @ExperimentalLayoutApi
 @Composable
 public fun ComponentsToolBar(viewModel: ComponentsViewModel, buttonMetrics: IconButtonMetrics) {
-    Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
-        val iconButtonStyle = JewelTheme.iconButtonStyle
-        val style = remember(iconButtonStyle) { IconButtonStyle(iconButtonStyle.colors, buttonMetrics) }
-        viewModel.getViews().forEach {
-            SelectableIconActionButton(
-                key = it.iconKey,
-                contentDescription = "Show ${it.title}",
-                selected = viewModel.getCurrentView() == it,
-                onClick = { viewModel.setCurrentView(it) },
-                style = style,
-                tooltip = { Text(it.title) },
-                tooltipStyle =
-                    TooltipStyle(JewelTheme.tooltipStyle.colors, TooltipMetrics.defaults(showDelay = 150.milliseconds)),
-                tooltipPlacement = TooltipPlacement.ComponentRect(Alignment.CenterEnd, Alignment.CenterEnd),
-                extraHints = arrayOf(Size(20)),
-            )
+    ZeroDelayNeverHideTooltips {
+        Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+            val iconButtonStyle = JewelTheme.iconButtonStyle
+            val style = remember(iconButtonStyle) { IconButtonStyle(iconButtonStyle.colors, buttonMetrics) }
+            viewModel.getViews().forEach {
+                SelectableIconActionButton(
+                    key = it.iconKey,
+                    contentDescription = "Show ${it.title}",
+                    selected = viewModel.getCurrentView() == it,
+                    onClick = { viewModel.setCurrentView(it) },
+                    style = style,
+                    tooltip = { Text(it.title) },
+                    tooltipPlacement = TooltipPlacement.ComponentRect(Alignment.CenterEnd, Alignment.CenterEnd),
+                    extraHints = arrayOf(Size(20)),
+                )
+            }
         }
     }
 }
@@ -73,4 +75,31 @@ internal fun ComponentView(view: ViewInfo) {
         Text(view.title, style = Typography.h1TextStyle())
         view.content()
     }
+}
+
+@Composable
+private fun ZeroDelayNeverHideTooltips(content: @Composable () -> Unit) {
+    val currentTooltipStyle = LocalTooltipStyle.current
+    val updatedStyle =
+        remember(currentTooltipStyle) {
+            TooltipStyle(
+                colors = currentTooltipStyle.colors,
+                metrics =
+                    with(currentTooltipStyle.metrics) {
+                        TooltipMetrics(
+                            contentPadding = contentPadding,
+                            showDelay = 0.milliseconds,
+                            cornerSize = cornerSize,
+                            borderWidth = borderWidth,
+                            shadowSize = shadowSize,
+                            placement = placement,
+                            regularDisappearDelay = regularDisappearDelay,
+                            fullDisappearDelay = fullDisappearDelay,
+                        )
+                    },
+                autoHideBehavior = TooltipAutoHideBehavior.Never,
+            )
+        }
+
+    CompositionLocalProvider(LocalTooltipStyle provides updatedStyle, content = content)
 }
