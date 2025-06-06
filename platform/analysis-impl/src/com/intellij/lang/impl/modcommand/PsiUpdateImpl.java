@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.intellij.modcommand.ModCommand.error;
@@ -257,6 +258,7 @@ final class PsiUpdateImpl {
     private @NotNull TextRange mySelection;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
+    private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = f -> nop();
     private @Nullable ModStartRename myRenameSymbol;
     private final List<ModUpdateReferences> myTrackedDeclarations = new ArrayList<>();
     private boolean myPositionUpdated = false;
@@ -491,6 +493,15 @@ final class PsiUpdateImpl {
           myTemplateFields.add(new ModStartTemplate.EndField(range));
           return this;
         }
+
+        @Override
+        public @NotNull ModTemplateBuilder onTemplateFinished(@NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> templateFinishFunction) {
+          if (myTemplateFields.isEmpty()) {
+            throw new IllegalStateException("Template was not created");
+          }
+          myTemplateFinishFunction = templateFinishFunction;
+          return this;
+        }
       };
     }
 
@@ -716,7 +727,7 @@ final class PsiUpdateImpl {
 
     private @NotNull ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
-      return new ModStartTemplate(navigationFile(), myTemplateFields, f -> nop());
+      return new ModStartTemplate(navigationFile(), myTemplateFields, myTemplateFinishFunction);
     }
 
     private class DummyContext implements ExpressionContext {
