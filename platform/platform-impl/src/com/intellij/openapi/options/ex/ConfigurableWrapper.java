@@ -365,8 +365,10 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       }
       Collections.addAll(list, myKids);
 
-      // sort by default
-      list.sort(COMPARATOR);
+      if (!(getRawConfigurable() instanceof Configurable.WithEpDependencies)) {
+        // sort by default
+        list.sort(COMPARATOR);
+      }
 
       // sort configurables is needed
       for (Configurable configurable : list) {
