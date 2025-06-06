@@ -38,6 +38,9 @@ sealed class Op {
   }
 }
 
+fun Op.isEmpty(): Boolean = lenBefore == 0L && lenAfter == 0L
+
+
 class OpsIterator(
   private val owner: Any?,
   private var cursor: Rope.Cursor<Array<Op>>?,
@@ -304,9 +307,8 @@ fun deduce(deletes: String, inserts: String): List<Op> {
       val deletesPrefix = deletes.take(deletesIdx)
       val insertsPrefix = inserts.take(insertsIdx)
 
-      if (deletesPrefix.isNotEmpty() || insertsPrefix.isNotEmpty()) {
-        result.add(Op.Replace(deletesPrefix, insertsPrefix))
-      }
+      check(deletesPrefix.isNotEmpty() || insertsPrefix.isNotEmpty())
+      result.add(Op.Replace(deletesPrefix, insertsPrefix))
       deletes = deletes.drop(deletesIdx)
       inserts = inserts.drop(insertsIdx)
     }
@@ -613,90 +615,59 @@ operator fun Operation.plus(operation: Operation): Operation {
 }
 
 fun Operation.normalizeHard(): Operation {
-  val result = mutableListOf<Op>()
-  var accOp: Op? = null
-  for (op in this.ops) {
-    when {
-      accOp == null -> {
-        accOp = op
-      }
-      accOp is Op.Retain && op is Op.Retain -> {
-        accOp = Op.Retain(accOp.len + op.len)
-      }
-      accOp is Op.Replace && op is Op.Replace -> {
-        accOp = Op.Replace(accOp.delete + op.delete, accOp.insert + op.insert)
-      }
-      accOp is Op.Retain && op is Op.Replace -> {
-        if (accOp.len != 0L) result.add(accOp)
-        accOp = op
-      }
-      accOp is Op.Replace && op is Op.Retain -> {
-        if (op.len != 0L) {
-          val deduced = deduce(accOp.delete, accOp.insert)
-          val deducedFirst = deduced.firstOrNull()
-          val resultLast = result.lastOrNull()
-          when {
-            deducedFirst is Op.Retain && resultLast is Op.Retain -> {
-              result[result.size - 1] = Op.Retain(deducedFirst.len + resultLast.len)
-              result.addAll(deduced.subList(1, deduced.size))
-            }
-            else -> {
-              result.addAll(deduced)
-            }
-          }
-          when (val resultLast2 = result.lastOrNull()) {
-            is Op.Retain -> {
-              accOp = Op.Retain(resultLast2.len + op.len)
-              result.removeLast()
-            }
-            else -> {
-              accOp = op
-            }
-          }
+  val deducedOps = sequence<Op> {
+    val deletes = StringBuilder()
+    val inserts = StringBuilder()
+
+    suspend fun SequenceScope<Op>.flushDeducedReplacement() {
+      yieldAll(deduce(deletes.toString(), inserts.toString()))
+      deletes.clear()
+      inserts.clear()
+    }
+
+    for (op in this@normalizeHard.ops) {
+      if (op.isEmpty()) continue
+      when (op) {
+        is Op.Retain -> {
+          flushDeducedReplacement()
+          yield(op)
+        }
+        is Op.Replace -> {
+          deletes.append(op.delete)
+          inserts.append(op.insert)
         }
       }
     }
+    flushDeducedReplacement()
   }
-  when (accOp) {
-    is Op.Retain -> if (accOp.len != 0L) result.add(accOp)
-    is Op.Replace -> result.addAll(deduce(accOp.delete, accOp.insert))
-    else -> {}
-  }
-  return Operation(result)
+
+  return Operation(deducedOps.normalizeSoft())
 }
 
 fun Operation.normalizeSoft(): Operation {
-  val result = mutableListOf<Op>()
-  var accOp: Op? = null
-  for (op in this.ops) {
-    when {
-      accOp == null -> {
-        accOp = op
-      }
-      accOp is Op.Retain && op is Op.Retain -> {
-        accOp = Op.Retain(accOp.len + op.len)
-      }
-      accOp is Op.Replace && op is Op.Replace -> {
-        accOp = Op.Replace(accOp.delete + op.delete, accOp.insert + op.insert)
-      }
-      accOp is Op.Retain && op is Op.Replace -> {
-        if (accOp.len != 0L) result.add(accOp)
-        accOp = op
-      }
-      accOp is Op.Replace && op is Op.Retain -> {
-        if (op.len != 0L) {
-          result.add(accOp)
+  return Operation(ops.normalizeSoft())
+}
+
+private fun Sequence<Op>.normalizeSoft(): List<Op> {
+  return buildList {
+    var accOp: Op? = null
+    for (op in this@normalizeSoft) {
+      when {
+        op.isEmpty() -> {}
+        accOp is Op.Retain && op is Op.Retain -> {
+          accOp = Op.Retain(accOp.len + op.len)
+        }
+        accOp is Op.Replace && op is Op.Replace -> {
+          accOp = Op.Replace(accOp.delete + op.delete, accOp.insert + op.insert)
+        }
+        else -> {
+          if (accOp != null) add(accOp)
           accOp = op
         }
       }
     }
+    if (accOp != null) add(accOp)
   }
-  when (accOp) {
-    is Op.Retain -> if (accOp.len != 0L) result.add(accOp)
-    is Op.Replace -> result.add(accOp)
-    else -> {}
-  }
-  return Operation(result)
 }
 
 fun CaretPosition.transformOnto(operation: Operation, direction: Sticky): CaretPosition {
@@ -1253,6 +1224,17 @@ fun <K, V> shiftPoints2(points: List<IntervalPoint<K, V>>, operation: Operation,
   return result
 }
 
+/**
+ * For N ranges, it creates N local projections of the Operation,
+ * each constrained to retain or replace something only within a corresponding range.
+ *
+ * Important!
+ * It doesn't split the Operation in parts that can be later combined back.
+ * For example, if the Operation has the only Op.Replace, which replaces three consecutive lines by the whole text of War and Peace,
+ * and it is "split" by the ranges of those three lines, then the result will be three Operations,
+ * each replacing a single line with a whole text of War and Peace.
+ * When combined, three operations would insert the novel three times.
+ */
 fun Operation.splitEditsByRanges(ranges: List<TextRange>): List<Operation> {
   var rangeIndex = 0
   val opIter = this.ops.iterator()
