@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -22,10 +23,10 @@ import kotlin.system.measureTimeMillis
 /**
  * Loading the real state of the project after loading from cache.
  *
- * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronizes the state
- * of workspace model with project model files (iml/xml).
+ * Initially IJ loads the state of a workspace model from the cache. In this startup activity it synchronizes the state
+ * of a workspace model with project model files (iml/xml).
  *
- * If this synchronizer overrides your changes and you'd like to postpone the changes to be after this synchronization,
+ * If this synchronizer overrides your changes, and you'd like to postpone the changes to be after this synchronization,
  *   you can use [com.intellij.workspaceModel.ide.JpsProjectLoadingManager].
  */
 @ApiStatus.Internal
@@ -37,17 +38,18 @@ class DelayedProjectSynchronizer : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    fun logJpsEntities(state: String) {
+    suspend fun logJpsEntities(state: String) {
       val logger = thisLogger()
       if (logger.isDebugEnabled) {
         try {
-          fun <T> List<T>.safeSubList(fromIndex: Int, toIndex: Int): List<T> =
-            this.subList(fromIndex.coerceAtLeast(0), toIndex.coerceAtMost(this.size))
+          fun <T> List<T>.safeSubList(fromIndex: Int, toIndex: Int): List<T> {
+            return this.subList(fromIndex.coerceAtLeast(0), toIndex.coerceAtMost(this.size))
+          }
 
-          val wsm = WorkspaceModel.getInstance(project).currentSnapshot
+          val wsm = project.serviceAsync<WorkspaceModel>().currentSnapshot
           val jpsEntities = wsm.entitiesBySource { entitySource -> entitySource is JpsFileEntitySource }.toList()
           val sampleSize = 50
-          val entitySources = jpsEntities.stream().map { e -> e.entitySource }.distinct().limit(sampleSize.toLong()).toList()
+          val entitySources = jpsEntities.asSequence().map { it.entitySource }.distinct().take(sampleSize).toList()
           logger.warn("$state: ${jpsEntities.size} entities.\n" +
                       "First $sampleSize entities are: ${jpsEntities.safeSubList(0, sampleSize)}.\n" +
                       "First $sampleSize entity sources are: ${entitySources}")
@@ -71,8 +73,8 @@ class DelayedProjectSynchronizer : ProjectActivity {
 
     // This function is effectively "private". It's internal because otherwise it's not available for DelayedProjectSynchronizer
     internal suspend fun doSync(project: Project) {
-      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-      if (!(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+      val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
+      if (!(project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl).loadedFromCache) {
         return
       }
 
@@ -89,9 +91,9 @@ class DelayedProjectSynchronizer : ProjectActivity {
 
     @TestOnly
     suspend fun backgroundPostStartupProjectLoading(project: Project) {
-      // Due to making [DelayedProjectSynchronizer] as backgroundPostStartupActivity we should have this hack because
+      // Due to making [DelayedProjectSynchronizer] as backgroundPostStartupActivity, we should have this hack because
       // background activity doesn't start in the tests
-      StartupManager.getInstance(project).allActivitiesPassedFuture.join()
+      project.serviceAsync<StartupManager>().allActivitiesPassedFuture.join()
       doSync(project)
     }
 

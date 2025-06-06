@@ -27,9 +27,11 @@ private val projectPath: Path
   get() = Path.of(PathManager.getConfigPath() + File.separator + "light-edit")
 
 internal class LightEditProjectImpl private constructor(projectPath: Path) :
-  ProjectImpl(parent = ApplicationManager.getApplication().getComponentManagerImpl(),
-              filePath = projectPath,
-              projectName = PROJECT_NAME), LightEditCompatible {
+  ProjectImpl(
+    parent = ApplicationManager.getApplication().getComponentManagerImpl(),
+    filePath = projectPath,
+    projectName = PROJECT_NAME,
+  ), LightEditCompatible {
   constructor() : this(projectPath)
 
   init {
@@ -39,7 +41,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
     runUnderModalProgressIfIsEdt {
       val project = this@LightEditProjectImpl
       ProjectServiceInitializer.initEssential(project)
-      serviceAsync<ProjectEntitiesStorage>().createEntity(project)
+      ApplicationManager.getApplication().serviceAsync<ProjectEntitiesStorage>().createEntity(project)
       schedulePreloadServices(project)
       launch {
         project.createComponentsNonBlocking()

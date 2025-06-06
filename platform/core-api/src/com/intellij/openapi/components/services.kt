@@ -6,7 +6,7 @@ import com.intellij.openapi.client.ClientKind
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Initializes the service instance if not yet initialized, and returns the service instance.
+ * Initializes the service instance if not yet initialized and returns the service instance.
  *
  * This is primarily intended to be used by the service implementation. When introducing a new service,
  * please add a static `getInstance(Project)` method. For better tooling performance, it is always advised
@@ -72,7 +72,7 @@ suspend inline fun <reified T : Any> serviceAsync(): T {
 
 @ApiStatus.Experimental
 suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): T {
-  return serviceAsync(T::class.java)
+  return (this as ComponentManagerEx).getServiceAsync(T::class.java)
 }
 
 @ApiStatus.Experimental
