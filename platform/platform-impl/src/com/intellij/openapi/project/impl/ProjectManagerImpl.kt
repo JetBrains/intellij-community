@@ -55,7 +55,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.PROJECT_PATH
-import com.intellij.openapi.project.impl.ProjectImpl.Companion.schedulePreloadServices
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -1488,3 +1487,17 @@ internal suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
 }
 
 internal class ProjectLoadingCancelled(reason: String) : CancellationException(reason)
+
+// for light projects, preload only services that are essential
+// ("await" means "project component loading activity is completed only when all such services are completed")
+internal fun CoroutineScope.schedulePreloadServices(project: ProjectImpl) {
+  launch(CoroutineName("project service preloading (sync)")) {
+    project.preloadServices(
+      modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+      activityPrefix = "project ",
+      syncScope = this,
+      onlyIfAwait = project.isLight,
+      asyncScope = project.asyncPreloadServiceScope,
+    )
+  }
+}

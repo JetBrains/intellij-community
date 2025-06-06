@@ -1010,11 +1010,13 @@ abstract class ComponentManagerImpl(
 
   open fun activityNamePrefix(): String? = null
 
-  fun preloadServices(modules: List<IdeaPluginDescriptorImpl>,
-                      activityPrefix: String,
-                      syncScope: CoroutineScope,
-                      onlyIfAwait: Boolean = false,
-                      asyncScope: CoroutineScope) {
+  fun preloadServices(
+    modules: List<IdeaPluginDescriptorImpl>,
+    activityPrefix: String,
+    syncScope: CoroutineScope,
+    onlyIfAwait: Boolean = false,
+    asyncScope: CoroutineScope,
+  ) {
     // we want to group async preloaded services (parent trace), but `CoroutineScope()` requires explicit completion,
     // so, we collect all services and then use launch
     val asyncServices = mutableListOf<ServiceDescriptor>()
@@ -1095,10 +1097,12 @@ abstract class ComponentManagerImpl(
     postPreloadServices(modules = modules, activityPrefix = activityPrefix, syncScope = syncScope, onlyIfAwait = onlyIfAwait)
   }
 
-  protected open fun postPreloadServices(modules: List<IdeaPluginDescriptorImpl>,
-                                         activityPrefix: String,
-                                         syncScope: CoroutineScope,
-                                         onlyIfAwait: Boolean) {
+  protected open fun postPreloadServices(
+    modules: List<IdeaPluginDescriptorImpl>,
+    activityPrefix: String,
+    syncScope: CoroutineScope,
+    onlyIfAwait: Boolean,
+  ) {
   }
 
   protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {

@@ -9,7 +9,6 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -47,7 +46,10 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.messages.impl.MessageBusEx
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -94,20 +96,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     @TestOnly
     @JvmField
     val USED_TEST_NAMES: Key<String> = Key.create("ProjectImpl.USED_TEST_NAMES")
-
-    // for light projects, preload only services that are essential
-    // ("await" means "project component loading activity is completed only when all such services are completed")
-    internal fun CoroutineScope.schedulePreloadServices(project: ProjectImpl) {
-      launch(CoroutineName("project service preloading (sync)")) {
-        project.preloadServices(
-          modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-          activityPrefix = "project ",
-          syncScope = this,
-          onlyIfAwait = project.isLight,
-          asyncScope = project.asyncPreloadServiceScope,
-        )
-      }
-    }
   }
 
   // used by Rider
