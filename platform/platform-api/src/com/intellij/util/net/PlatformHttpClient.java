@@ -76,7 +76,10 @@ public final class PlatformHttpClient {
       .connectTimeout(Duration.ofMillis(HttpRequests.CONNECTION_TIMEOUT))
       .followRedirects(HttpClient.Redirect.NORMAL);
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
-      builder = builder.sslContext(CertificateManager.getInstance().getSslContext());
+      var app = ApplicationManager.getApplication();
+      if (app != null && !app.isDisposed()) {
+        builder = builder.sslContext(CertificateManager.getInstance().getSslContext());
+      }
     }
     return builder;
   }
