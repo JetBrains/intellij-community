@@ -203,20 +203,19 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       .getExtensionPoint<InitProjectActivity>("com.intellij.initProjectActivity")
     // do not create an extension if not allow-listed
     for (adapter in extensionPoint.sortedAdapters) {
-      coroutineContext.ensureActive()
-
       val pluginId = adapter.pluginDescriptor.pluginId
-      if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
-          && pluginId.idString != "com.jetbrains.performancePlugin.yourkit"
-          && pluginId.idString != "com.intellij.clion-swift"
-          && pluginId.idString != "com.intellij.clion.performanceTesting"
-          && pluginId.idString != "com.intellij.appcode"
-          && pluginId.idString != "com.jetbrains.kmm"
-          && pluginId.idString != "com.jetbrains.codeWithMe"
-          && pluginId.idString != "intellij.rider.plugins.cwm"
-          && pluginId.idString != "org.jetbrains.plugins.clion.radler"
-        ) {
-        if (!(pluginId.idString == "com.intellij.ml.llm" && adapter.assignableToClassName.endsWith("XNextRootPaneCustomizer"))) {
+      val idString = pluginId.idString
+      if (!isCorePlugin(adapter.pluginDescriptor) &&
+          idString != "com.jetbrains.performancePlugin" &&
+          idString != "com.jetbrains.performancePlugin.yourkit" &&
+          idString != "com.intellij.clion-swift" &&
+          idString != "com.intellij.clion.performanceTesting" &&
+          idString != "com.intellij.appcode" &&
+          idString != "com.jetbrains.kmm" &&
+          idString != "com.jetbrains.codeWithMe" &&
+          idString != "intellij.rider.plugins.cwm" &&
+          idString != "org.jetbrains.plugins.clion.radler") {
+        if (!(idString == "com.intellij.ml.llm" && adapter.assignableToClassName.endsWith("XNextRootPaneCustomizer"))) {
           LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
           continue
         }
@@ -224,7 +223,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
       val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
       if (project !is LightEditCompatible || activity is LightEditCompatible) {
-        withContext(tracer.span("run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))) {
+        val fqn = activity.javaClass.name
+        withContext(tracer.span("run init activity ${fqn.substringAfterLast('.')}", arrayOf("class", fqn, "plugin", idString))) {
           activity.run(project)
         }
       }
