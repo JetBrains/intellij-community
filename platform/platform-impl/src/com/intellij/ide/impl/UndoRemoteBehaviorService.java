@@ -24,7 +24,7 @@ public class UndoRemoteBehaviorService {
   }
 
   protected boolean isFrontendUndoEnabled() {
-    return Registry.is("ide.undo.frontend.if.possible", false) &&
+    return Registry.is("ide.undo.frontend.if.possible", true) &&
            !PlatformUtils.isRider();
   }
 }
