@@ -77,13 +77,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   init {
     val listener = AWTEventListener { event ->
-      if (isManyIslandEnabled) {
+      if (isManyIslandEnabled && JBColor.isBright()) {
         val component = (event as HierarchyEvent).component
         val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
 
         if (isToolWindow) {
           UIUtil.forEachComponentInHierarchy(component) {
-            if (it.background == UIUtil.getPanelBackground()) {
+            if (it.background == JBColor.PanelBackground) {
               it.background = JBUI.CurrentTheme.ToolWindow.background()
             }
           }
