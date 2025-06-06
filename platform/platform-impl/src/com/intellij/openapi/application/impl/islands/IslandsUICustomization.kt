@@ -27,9 +27,10 @@ import com.intellij.ui.tabs.impl.TabPainterAdapter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Graphics
+import com.intellij.util.ui.UIUtil
+import java.awt.*
+import java.awt.event.AWTEventListener
+import java.awt.event.HierarchyEvent
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
 import javax.swing.JFrame
@@ -72,6 +73,24 @@ internal class IslandsUICustomization : InternalUICustomization() {
         child.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
       }
     }
+  }
+
+  init {
+    val listener = AWTEventListener { event ->
+      if (isManyIslandEnabled) {
+        val component = (event as HierarchyEvent).component
+        val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
+
+        if (isToolWindow) {
+          UIUtil.forEachComponentInHierarchy(component) {
+            if (it.background == UIUtil.getPanelBackground()) {
+              it.background = JBUI.CurrentTheme.ToolWindow.background()
+            }
+          }
+        }
+      }
+    }
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.HIERARCHY_EVENT_MASK)
   }
 
   private val tabPainterAdapter = ManyIslandsTabPainterAdapter()

@@ -1067,7 +1067,7 @@ public final class JBUI {
 
     public static final class ToolWindow {
       public static @NotNull Color background() {
-        return JBColor.namedColor("ToolWindow.background");
+        return JBColor.namedColor("ToolWindow.background", JBColor.PanelBackground);
       }
 
       public static @NotNull Color stripeBackground() {
