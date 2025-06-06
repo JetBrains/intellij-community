@@ -21,7 +21,7 @@ public class DeleteRowsAction extends DeleteActionBase {
   @Override
   protected boolean isEnabled(@NotNull DataGrid grid) {
     GridDataSupport support = grid.getDataSupport();
-    return !support.isDeletedRows(grid.getSelectionModel().getSelectedRows()) && grid.isEditable();
+    return !support.isDeletedRows(grid.getSelectionModel().getSelectedRows()) && grid.isEditable() && grid.getDataHookup().isForSingleSource();
   }
 
   @Override
