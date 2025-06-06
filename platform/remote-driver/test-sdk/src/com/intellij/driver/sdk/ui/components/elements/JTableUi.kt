@@ -38,6 +38,13 @@ open class JTableUiComponent(data: ComponentData) : UiComponent(data) {
   fun rowCount(): Int = fixture.rowCount()
   fun selectionValue(): String = fixture.selectionValue()
   fun clickCell(row: Int, column: Int) = fixture.clickCell(row, column)
+  fun clickCell(predicate: (String) -> Boolean) {
+    val filteredItems = content().entries.flatMap { (row, rowValue) ->
+      rowValue.entries.map { Triple(row, it.key, it.value) }
+    }.filter { predicate(it.third) }
+    val targetItem = filteredItems.singleOrNull() ?: error("cell not found, found items: $filteredItems")
+    clickCell(targetItem.first, targetItem.second)
+  }
   fun rightClickCell(row: Int, column: Int) = fixture.rightClickCell(row, column)
   fun doubleClickCell(row: Int, column: Int) = fixture.doubleClickCell(row, column)
   fun replaceCellRendererReader(readerSupplier: (JTableFixtureRef) -> CellRendererReader) {
