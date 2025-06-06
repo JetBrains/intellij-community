@@ -57,7 +57,7 @@ public final class RegionUrlMapper {
     }
   }
 
-  private static final AsyncLoadingCache<Region, RegionMapping> ourCache = Caffeine.newBuilder()
+  private static final AsyncLoadingCache<@NotNull Region, @NotNull RegionMapping> ourCache = Caffeine.newBuilder()
     .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
     .buildAsync(RegionUrlMapper::doLoadMappingOrThrow);
 
@@ -145,12 +145,6 @@ public final class RegionUrlMapper {
       .thenApply(mapping -> mapping.apply(url));
   }
 
-  /** @deprecated needlessly exposes internal data; use {@link #tryMapUrl(String, Region)} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull CompletableFuture<@NotNull RegionMapping> loadMapping(@NotNull Region region) {
-    return ourCache.get(region);
-  }
-
   private static RegionMapping doLoadMappingOrThrow(Region reg) throws Exception {
     var configUrl = getConfigUrl(reg);
     var client = PlatformHttpClient.client();
@@ -169,8 +163,7 @@ public final class RegionUrlMapper {
    * Represents the contents of the JSON configuration loaded for a particular region
    * and provides the methods for applying the mapping rules found in that configuration.
    */
-  @ApiStatus.Internal
-  public static final class RegionMapping {
+  private static final class RegionMapping {
     private static final RegionMapping EMPTY = new RegionMapping(List.of());
     private static final RegionMapping FAILED = new RegionMapping(List.of(
       new RegionMapping.PatternReplacement("https:", "mapping-failed:"),
