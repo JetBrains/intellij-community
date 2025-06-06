@@ -23,6 +23,7 @@ import com.intellij.ui.BalloonLayout
 import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -171,6 +172,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   fun doDispose() {
     EdtInvocationManager.invokeLaterIfNeeded {
       Disposer.dispose(mouseActivationWatcher)
+      fixDragRecognitionSupportLeak()
       // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
       isVisible = false
       super.dispose()
@@ -305,4 +307,26 @@ private class EventLogger(private val frame: IdeFrameImpl, private val log: Logg
       "screen bounds: ${toDebugString(screenBounds)}"
     )
   }
+}
+
+private fun fixDragRecognitionSupportLeak() {
+  // sending a "mouse release" event to any DnD-supporting component indirectly calls javax.swing.plaf.basic.DragRecognitionSupport.clearState,
+  // cleaning up the potential leak (that can happen if the user started dragging something and released the mouse outside the component)
+  val fakeTree = object : Tree() {
+    fun releaseDND() {
+      processMouseEvent(MouseEvent(
+        this,
+        MouseEvent.MOUSE_RELEASED,
+        System.currentTimeMillis(),
+        0,
+        0,
+        0,
+        1,
+        false,
+        MouseEvent.BUTTON1
+      ))
+    }
+  }
+  fakeTree.dragEnabled = true
+  fakeTree.releaseDND()
 }
