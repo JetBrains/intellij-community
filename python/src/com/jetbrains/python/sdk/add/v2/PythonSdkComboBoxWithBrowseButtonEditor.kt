@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.observable.util.addMouseHoverListener
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.AnimatedIcon
@@ -11,7 +12,9 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.hover.HoverListener
+import com.intellij.util.SlowOperations
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.sdk.PythonSdkType
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.event.ActionListener
@@ -47,59 +50,43 @@ internal class PythonSdkComboBoxWithBrowseButtonEditor(
           .applyToComponent {
             isOpaque = true
             toolTipText = message("sdk.create.tooltip.browse")
-
             addMouseHoverListener(null, object : HoverListener() {
               val defaultBackground = this@applyToComponent.background
 
               override fun mouseEntered(component: Component, x: Int, y: Int) {
-                if (!isBusy) {
-                  (component as JLabel).let {
-                    icon = AllIcons.General.OpenDiskHover
-                    background = JBColor.namedColor("ComboBox.nonEditableBackground")
-                  }
-                  cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                if (isBusy) return
+
+                (component as JLabel).let {
+                  icon = AllIcons.General.OpenDiskHover
+                  background = JBColor.namedColor("ComboBox.nonEditableBackground")
                 }
+                cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
               }
 
               override fun mouseMoved(component: Component, x: Int, y: Int) {}
 
               override fun mouseExited(component: Component) {
-                if (!isBusy) {
-                  (component as JLabel).let {
-                    icon = AllIcons.General.OpenDisk
-                    background = defaultBackground
-                  }
-                  cursor = Cursor.getDefaultCursor()
+                if (isBusy) return
+
+                (component as JLabel).let {
+                  icon = AllIcons.General.OpenDisk
+                  background = defaultBackground
                 }
+                cursor = Cursor.getDefaultCursor()
               }
             })
 
-            val browseAction = controller.createBrowseAction()
-
             addMouseListener(object : MouseAdapter() {
               override fun mouseClicked(e: MouseEvent?) {
-                if (!isBusy) {
+                if (isBusy) return
 
-                  // todo add interpreter to allSdks
-                  browseAction()?.let { onPathSelected(it) }
-
-
-
-                  //onPathSelected(selectedInterpreter)
-
-                  //val currentBaseSdkVirtualFile = (_item as? Sdk)?.let { sdk ->
-                  //  val currentBaseSdkPathOnTarget = sdk.homePath.nullize(nullizeSpaces = true)
-                  //  currentBaseSdkPathOnTarget?.let { presenter.tryGetVirtualFile(it) }
-                  //}
-                  //
-                  //FileChooser.chooseFile(PythonSdkType.getInstance().homeChooserDescriptor,
-                  //                       null,
-                  //                       currentBaseSdkVirtualFile) { file ->
-                  //  val nioPath = file?.toNioPath() ?: return@chooseFile
-                  //  val targetPath = presenter.getPathOnTarget(nioPath)
-                  //  comboBox.setPathToSelectAfterModelUpdate(targetPath)
-                  //  onPathSelected(targetPath)
-                  //}
+                SlowOperations.knownIssue("PY-666").use { // TODO FIX ME PLEASE if you know how
+                  FileChooser.chooseFile(PythonSdkType.getInstance().homeChooserDescriptor, null, parent, null) { file ->
+                    val path = file?.toNioPath()
+                    path?.toString()?.let {
+                      onPathSelected(it)
+                    }
+                  }
                 }
               }
             })
@@ -117,7 +104,7 @@ internal class PythonSdkComboBoxWithBrowseButtonEditor(
     if (_item == anObject) return
     _item = anObject
     component.clear()
-    if (anObject is PythonSelectableInterpreter) component.customizeForPythonInterpreter(anObject)
+    component.customizeForPythonInterpreter(controller.interpreterLoading.value, anObject as? PythonSelectableInterpreter)
   }
 
   fun setBusy(busy: Boolean) {
@@ -125,13 +112,9 @@ internal class PythonSdkComboBoxWithBrowseButtonEditor(
     iconLabel.icon = if (isBusy) AnimatedIcon.Default.INSTANCE else AllIcons.General.OpenDisk
     component.isEnabled = !isBusy
     comboBox.isEnabled = !isBusy
-    if (busy) {
-      component.clear()
-      component.append("Loading interpeterers")
-    }
-    else {
-      component.clear()
-      if (item is PythonSelectableInterpreter) component.customizeForPythonInterpreter(item as PythonSelectableInterpreter)
+    component.clear()
+    (item as? PythonSelectableInterpreter).takeIf { !busy }.let {
+      component.customizeForPythonInterpreter(controller.interpreterLoading.value, it)
     }
   }
 

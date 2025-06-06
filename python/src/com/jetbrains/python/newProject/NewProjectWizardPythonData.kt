@@ -2,31 +2,34 @@
 package com.jetbrains.python.newProject
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.ide.wizard.*
+import com.intellij.ide.wizard.AbstractNewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
-import com.intellij.openapi.Disposable
+import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.util.Disposer
-import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
-import com.jetbrains.python.newProject.steps.PyAddExistingSdkPanel
-import com.jetbrains.python.sdk.PySdkProvider
-import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvPanel
-import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
-import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
+import com.jetbrains.python.onFailure
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.v2.PySdkCreator
+import com.jetbrains.python.sdk.add.v2.PythonSdkPanelBuilderAndSdkCreator
 import com.jetbrains.python.sdk.configurePythonSdk
+import com.jetbrains.python.sdk.moduleIfExists
+import com.jetbrains.python.util.ShowingMessageErrorSync
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.io.files.SystemPathSeparator
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import javax.swing.JComponent
 
 /**
  * Data for sharing among the steps of the new Python project wizard.
@@ -53,33 +56,88 @@ interface NewProjectWizardPythonData : NewProjectWizardBaseData {
   val module: Module?
 }
 
+private fun <T> GraphProperty<T>.toFlow(): Flow<T> {
+  val flow = MutableStateFlow(get())
+  this.afterChange {
+    flow.value = it
+  }
+  return flow
+}
+
 /**
  * A new Python project wizard step that allows you to either create a new Python environment or select an existing Python interpreter.
  *
  * It works for both PyCharm (where the *.iml file resides in .idea/ directory and the SDK is set for the project) and other
  * IntelliJ-based IDEs (where the *.iml file resides in the module directory and the SDK is set for the module).
  */
-class NewPythonProjectStep(parent: NewProjectWizardStep)
+class NewPythonProjectStep(parent: NewProjectWizardStep, val createPythonModuleStructure: Boolean)
   : AbstractNewProjectWizardStep(parent),
     NewProjectWizardBaseData by parent.baseData!!,
     NewProjectWizardPythonData {
+  constructor(parent: NewProjectWizardStep) : this(parent, false) // a separated constructor was made for compatibility with existing plugins
 
-  override val pythonSdkProperty = propertyGraph.property<Sdk?>(null)
-  override var pythonSdk by pythonSdkProperty
+  override val pythonSdkProperty: GraphProperty<Sdk?> = propertyGraph.property(null)
+  override var pythonSdk: Sdk? by pythonSdkProperty
   override val module: Module?
-    get() = intellijModule ?: context.project?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+    get() = intellijModule
 
   private var intellijModule: Module? = null
-  private val sdkStep: PythonSdkStep<NewPythonProjectStep> by lazy { PythonSdkStep(this) }
+  private lateinit var pySdkCreator: PySdkCreator
+  private val errorSink: ErrorSink = ShowingMessageErrorSync
+
+  private val projectPathFlows = ProjectPathFlows.create(
+    pathProperty.toFlow().combine(nameProperty.toFlow()) { dirPath, projectName ->
+      try {
+        Path.of(dirPath, projectName).toString()
+      }
+      catch (_: InvalidPathException) {
+        "$dirPath$SystemPathSeparator$projectName"
+      }
+    }
+  )
 
   override fun setupUI(builder: Panel) {
-    sdkStep.setupUI(builder)
+    val onShowTrigger = object : JComponent() {}
+    builder.row { cell(onShowTrigger) }
+
+    val sdkPanelBuilder = PythonSdkPanelBuilderAndSdkCreator(
+      onlyAllowedInterpreterTypes = null,
+      errorSink = ShowingMessageErrorSync,
+      module = null,
+    )
+
+    sdkPanelBuilder.buildPanel(builder, projectPathFlows)
+    sdkPanelBuilder.onShownInitialization(onShowTrigger)
+
+    this.pySdkCreator = sdkPanelBuilder
   }
 
   override fun setupProject(project: Project) {
     commitIntellijModule(project)
-    sdkStep.setupProject(project)
-    setupSdk(project)
+
+    val moduleOrProject = when (val module = module) {
+      null -> ModuleOrProject.ProjectOnly(project)
+      else -> ModuleOrProject.ModuleAndProject(module)
+    }
+
+    moduleOrProject.moduleIfExists?.takeIf { createPythonModuleStructure }?.let { module ->
+      runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.module.structure")) {
+        pySdkCreator.createPythonModuleStructure(module).onFailure {
+          errorSink.emit(it)
+        }
+      }
+    }
+
+    runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.sdk")) {
+      val (sdk, _) = pySdkCreator.getSdk(moduleOrProject).getOr {
+        errorSink.emit(it.error)
+        return@runWithModalProgressBlocking
+      }
+      pythonSdk = sdk
+      moduleOrProject.moduleIfExists?.let { module ->
+        configurePythonSdk(project, module, sdk)
+      }
+    }
   }
 
   private fun commitIntellijModule(project: Project) {
@@ -90,151 +148,6 @@ class NewPythonProjectStep(parent: NewProjectWizardStep)
       contentEntryPath = projectPath.toString()
       moduleFilePath = projectPath.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION).toString()
     }
-    intellijModule = setupProjectFromBuilder(project, moduleBuilder)
+    intellijModule = moduleBuilder.commit(project).firstOrNull()
   }
-
-  private fun setupSdk(project: Project) {
-    var sdk = pythonSdk ?: return
-    val existingSdk = ProjectJdkTable.getInstance().findJdk(sdk.name)
-    if (existingSdk != null) {
-      pythonSdk = existingSdk
-      sdk = existingSdk
-    }
-    else {
-      SdkConfigurationUtil.addSdk(sdk)
-    }
-
-    // TODO: ensure module exists
-    if (intellijModule != null) {
-      configurePythonSdk(project, intellijModule!!, sdk)
-    }
-    else {
-      SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk)
-    }
-  }
-}
-
-/**
- * A new Python project wizard step that allows you to get or create a Python SDK for your [path]/[name].
- *
- * The resulting SDK is available as [pythonSdk]. The SDK may have not been saved to the project JDK table yet.
- */
-class PythonSdkStep<P>(parent: P)
-  : AbstractNewProjectWizardMultiStepBase(parent),
-    NewProjectWizardPythonData by parent
-  where P : NewProjectWizardStep, P : NewProjectWizardPythonData {
-
-  override val label: String = PyBundle.message("python.sdk.new.project.environment")
-
-  override fun initSteps(): Map<String, NewProjectWizardStep> {
-    val existingSdkPanel = PyAddExistingSdkPanel(null, null, existingSdks(context), "$path/$name", null)
-    return mapOf(
-      "New" to NewEnvironmentStep(this),
-      // TODO: Handle remote project creation for remote SDKs
-      "Existing" to PythonSdkPanelAdapterStep(this, existingSdkPanel),
-    )
-  }
-
-  override fun setupUI(builder: Panel) {
-    super.setupUI(builder)
-    step = if (PySdkSettings.instance.useNewEnvironmentForNewProject) "New" else "Existing"
-  }
-
-  override fun setupProject(project: Project) {
-    super.setupProject(project)
-    PySdkSettings.instance.useNewEnvironmentForNewProject = step == "New"
-  }
-}
-
-/**
- * A new Python project wizard step that allows you to create a new Python environment of various types.
- *
- * The following environment types are supported:
- *
- * * Virtualenv
- * * Conda
- * * Pipenv
- *
- * as well as other environments offered by third-party plugins via [PySdkProvider.createNewEnvironmentPanel].
- *
- * The suggested new environment path for some types of Python environments depends on the path of your new project.
- */
-private class NewEnvironmentStep<P>(parent: P)
-  : AbstractNewProjectWizardMultiStepBase(parent),
-    NewProjectWizardPythonData by parent
-  where P : NewProjectWizardStep, P : NewProjectWizardPythonData {
-
-  override val label: String = PyBundle.message("python.sdk.new.project.environment.type")
-
-  override fun initSteps(): Map<String, PythonSdkPanelAdapterStep<NewEnvironmentStep<P>>> {
-    val sdks = existingSdks(context)
-    val newProjectPath = "$path/$name"
-    val basePanels = listOf(
-      PyAddNewVirtualEnvPanel(null, null, sdks, newProjectPath, context),
-      PyAddNewCondaEnvPanel(null, null, sdks, newProjectPath),
-    )
-    val providedPanels = PySdkProvider.EP_NAME.extensionList.mapNotNull { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
-    val panels = basePanels + providedPanels
-    return panels
-      .associateBy { it.envName }
-      .mapValues { (_, v) -> PythonSdkPanelAdapterStep(this, v) }
-  }
-
-  override fun setupUI(builder: Panel) {
-    super.setupUI(builder)
-    val preferred = PySdkSettings.instance.preferredEnvironmentType
-    step = if (preferred != null && preferred in steps.keys) preferred else steps.keys.first()
-  }
-
-  override fun setupProject(project: Project) {
-    super.setupProject(project)
-    PySdkSettings.instance.preferredEnvironmentType = step
-  }
-}
-
-/**
- * A new Python project wizard step that allows you to get or create a Python environment via its [PyAddSdkPanel].
- */
-private class PythonSdkPanelAdapterStep<P>(parent: P, val panel: PyAddSdkPanel)
-  : AbstractNewProjectWizardStep(parent),
-    NewProjectWizardPythonData by parent
-  where P : NewProjectWizardStep, P : NewProjectWizardPythonData {
-
-  override fun setupUI(builder: Panel) {
-    with(builder) {
-      row {
-        cell(panel)
-          .validationRequestor { panel.addChangeListener(it) }
-          .align(AlignX.FILL)
-          .validationOnInput { panel.validateAll().firstOrNull() }
-          .validationOnApply { panel.validateAll().firstOrNull() }
-      }
-    }
-    panel.addChangeListener {
-      pythonSdk = panel.sdk
-    }
-    nameProperty.afterChange { updateNewProjectPath() }
-    pathProperty.afterChange { updateNewProjectPath() }
-  }
-
-  override fun setupProject(project: Project) {
-    pythonSdk = panel.getOrCreateSdk()
-  }
-
-  private fun updateNewProjectPath() {
-    panel.newProjectPath = "$path/$name"
-  }
-}
-
-/**
- * Return the list of already configured Python SDKs.
- */
-private fun existingSdks(context: WizardContext): List<Sdk> {
-  val sdksModel = ProjectSdksModel().apply {
-    reset(context.project)
-    Disposer.register(context.disposable, Disposable {
-      disposeUIResources()
-    })
-  }
-  return DeprecatedUtils.getValidPythonSdks(sdksModel.sdks.toList())
 }

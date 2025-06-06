@@ -7,6 +7,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.text.nullize
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.pipenv.pipEnvPath
 import com.jetbrains.python.sdk.pipenv.setupPipEnvSdkUnderProgress
@@ -14,10 +15,9 @@ import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-internal class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterModel) : CustomNewEnvironmentCreator("pipenv", model) {
+internal class EnvironmentCreatorPip(model: PythonMutableTargetAddInterpreterModel, errorSink: ErrorSink) : CustomNewEnvironmentCreator("pipenv", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.PIPENV
   override val executable: ObservableMutableProperty<String> = model.state.pipenvExecutable
-  override val installationVersion: String? = null
 
   override fun savePathToExecutableToProperties(path: Path?) {
     val savingPath = path?.pathString ?: executable.get().nullize() ?: return

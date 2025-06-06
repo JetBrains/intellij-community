@@ -12,7 +12,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
@@ -24,8 +23,8 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
@@ -33,28 +32,26 @@ import java.nio.file.Path
 internal abstract class CustomNewEnvironmentCreator(
   private val name: String,
   model: PythonMutableTargetAddInterpreterModel,
+  protected val errorSink: ErrorSink,
 ) : PythonNewEnvironmentCreator(model) {
   internal lateinit var basePythonComboBox: PythonInterpreterComboBox
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
-      row(message("sdk.create.custom.base.python")) {
-        basePythonComboBox = pythonInterpreterComboBox(
-          model.state.baseInterpreter,
-          model,
-          model::addInterpreter,
-          model.interpreterLoading
-        )
-          .align(Align.FILL)
-          .component
-      }
+      basePythonComboBox = pythonInterpreterComboBox(
+        title = message("sdk.create.custom.base.python"),
+        selectedSdkProperty = model.state.baseInterpreter,
+        model = model,
+        validationRequestor = validationRequestor,
+        onPathSelected = model::addInterpreter,
+      )
 
       executableSelector(
-        executable,
-        validationRequestor,
-        message("sdk.create.custom.venv.executable.path", name),
-        message("sdk.create.custom.venv.missing.text", name),
-        createInstallFix(errorSink)
+        executable = executable,
+        validationRequestor = validationRequestor,
+        labelText = message("sdk.create.custom.venv.executable.path", name),
+        missingExecutableText = message("sdk.create.custom.venv.missing.text", name),
+        installAction = createInstallFix(errorSink)
       )
 
       row("") {
@@ -65,12 +62,8 @@ internal abstract class CustomNewEnvironmentCreator(
     }
   }
 
-  override fun onShown() {
-    model.scope.launch {
-      model.baseInterpreters.collect {
-        basePythonComboBox.setItems(model.baseInterpreters)
-      }
-    }
+  override fun onShown(scope: CoroutineScope) {
+    basePythonComboBox.initialize(scope, model.baseInterpreters)
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
@@ -90,7 +83,7 @@ internal abstract class CustomNewEnvironmentCreator(
         project = moduleOrProject.project,
         module = module,
         baseSdks = ProjectJdkTable.getInstance().allJdks.asList(),
-        projectPath = model.myProjectPathFlows.projectPathWithDefault.first().toString(),
+        projectPath = model.projectPathFlows.projectPathWithDefault.first().toString(),
         homePath = homePath,
         installPackages = false
       )
@@ -110,13 +103,15 @@ internal abstract class CustomNewEnvironmentCreator(
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo =
-    InterpreterStatisticsInfo(interpreterType,
-                              target.toStatisticsField(),
-                              false,
-                              model.state.makeAvailableForAllProjects.get(),
-                              false,
-                              false, // todo fix for wsl
-                              InterpreterCreationMode.CUSTOM)
+    InterpreterStatisticsInfo(
+      type = interpreterType,
+      target = target.toStatisticsField(),
+      globalSitePackage = false,
+      makeAvailableToAllProjects = model.state.makeAvailableForAllProjects.get(),
+      previouslyConfigured = false,
+      isWSLContext = false, // todo fix for wsl
+      creationMode = InterpreterCreationMode.CUSTOM
+    )
 
   /**
    * Creates an installation fix for an executable (poetry, pipenv, uv, hatch).
@@ -183,7 +178,7 @@ internal abstract class CustomNewEnvironmentCreator(
 
   internal abstract val executable: ObservableMutableProperty<String>
 
-  internal abstract val installationVersion: String?
+  internal open val installationVersion: String? = null
 
 
   /**

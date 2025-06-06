@@ -20,6 +20,6 @@ internal class PythonNewProjectWizard : LanguageGeneratorNewProjectWizard {
 
   override val ordinal = 600
 
-  override fun createStep(parent: NewProjectWizardStep): NewProjectWizardStep = NewPythonProjectStep(parent)
+  override fun createStep(parent: NewProjectWizardStep): NewProjectWizardStep = NewPythonProjectStep(parent, createPythonModuleStructure = true)
 }
 

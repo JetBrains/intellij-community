@@ -121,6 +121,7 @@
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
 
     <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

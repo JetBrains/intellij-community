@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v1
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.pycharm.community.ide.impl.configuration.ui
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileTypes.PlainTextFileType
@@ -22,8 +22,8 @@ import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel.Companion.validateSdkComboBox
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
-import com.jetbrains.python.sdk.add.v1.PyAddNewEnvCollector.InputData
-import com.jetbrains.python.sdk.add.v1.PyAddNewEnvCollector.RequirementsTxtOrSetupPyData
+import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector.InputData
+import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector.RequirementsTxtOrSetupPyData
 import com.jetbrains.python.sdk.basePath
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
@@ -51,7 +51,7 @@ class PyAddNewVirtualEnvFromFilePanel(
 
   init {
     pathField.apply {
-      text = FileUtil.toSystemDependentName(PySdkSettings.Companion.instance.getPreferredVirtualEnvBasePath(projectBasePath))
+      text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
 
       addBrowseFolderListener(module.project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
         .withTitle(PySdkBundle.message("python.venv.location.chooser")))
@@ -83,7 +83,7 @@ class PyAddNewVirtualEnvFromFilePanel(
   }
 
   fun validateAll(@NlsContexts.Button defaultButtonName: String): List<ValidationInfo> =
-    listOfNotNull(PyAddSdkPanel.Companion.validateEnvironmentDirectoryLocation(pathField, PlatformAndRoot.Companion.local),
+    listOfNotNull(PyAddSdkPanel.validateEnvironmentDirectoryLocation(pathField, PlatformAndRoot.local),
                   validateSdkComboBox(baseSdkField, defaultButtonName))
 
   /**
@@ -109,7 +109,7 @@ class PyAddNewVirtualEnvFromFilePanel(
       InputData.CHANGED
     }
     else {
-      PyAddNewEnvCollector.InputData.UNCHANGED
+      InputData.UNCHANGED
     }
   }
 

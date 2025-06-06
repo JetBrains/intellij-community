@@ -24,7 +24,6 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -34,6 +33,7 @@ import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
+import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 
 abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
@@ -44,8 +44,8 @@ abstract class PythonAddEnvironment(open val model: PythonAddInterpreterModel) {
   internal val propertyGraph
     get() = model.propertyGraph
 
-  abstract fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink)
-  open fun onShown() {}
+  abstract fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor)
+  abstract fun onShown(scope: CoroutineScope)
 
   /**
    * Returns created SDK ready to use

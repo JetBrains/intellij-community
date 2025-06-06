@@ -5,8 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
@@ -24,8 +22,8 @@ import com.jetbrains.python.venvReader.tryResolvePath
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterpreterModel, moduleOrProject: ModuleOrProject)
-  : CustomExistingEnvironmentSelector("uv", model, moduleOrProject) {
+internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterpreterModel, module: Module?)
+  : CustomExistingEnvironmentSelector("uv", model, module) {
   override val executable: ObservableMutableProperty<String> = model.state.uvExecutable
   override val interpreterType: InterpreterType = InterpreterType.UV
 
@@ -45,26 +43,22 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
     val usePip = existingWorkingDir != null && !existingSdk.isUv
 
     return setupExistingEnvAndSdk(
-      selectedInterpreterPath,
-      existingWorkingDir,
-      usePip,
-      projectDir,
-      allSdk.toList()
+      envExecutable = selectedInterpreterPath,
+      envWorkingDir = existingWorkingDir,
+      usePip = usePip,
+      projectDir = projectDir,
+      existingSdks = allSdk.toList()
     )
   }
 
-  override suspend fun detectEnvironments(modulePath: Path) {
+  override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter> {
     val existingEnvs = ProjectJdkTable.getInstance().allJdks.filter {
       it.isUv && (it.associatedModulePath == modulePath.pathString || it.associatedModulePath == null)
     }.mapNotNull { env ->
       env.homePath?.let { path -> DetectedSelectableInterpreter(path, env.version, false) }
     }
-
-    existingEnvironments.value = existingEnvs
+    return existingEnvs
   }
-
-  override suspend fun findModulePath(module: Module): Path? =
-    PyProjectToml.findFile(module)?.toNioPathOrNull()?.parent
 
   private fun extractModule(moduleOrProject: ModuleOrProject): Module? =
     when (moduleOrProject) {

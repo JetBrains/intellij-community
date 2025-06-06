@@ -35,7 +35,7 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyTargetEnvironmentPackageManager
 import com.jetbrains.python.requirements.RequirementsFileType
-import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvFromFilePanel
+import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewVirtualEnvFromFilePanel
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvAndSdkSynchronously

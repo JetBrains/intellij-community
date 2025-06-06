@@ -9,7 +9,6 @@ import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.resolveHatchWorkingDirectory
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -25,15 +24,17 @@ import com.jetbrains.python.sdk.destructured
 import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class HatchExistingEnvironmentSelector(
   override val model: PythonMutableTargetAddInterpreterModel,
-  val moduleOrProject: ModuleOrProject,
 ) : PythonExistingEnvironmentConfigurator(model) {
   val interpreterType: InterpreterType = InterpreterType.HATCH
   val executable: ObservableMutableProperty<String> = propertyGraph.property(model.state.hatchExecutable.get())
+
+  private lateinit var hatchFormFields: HatchFormFields
 
   init {
     propertyGraph.dependsOn(executable, model.state.hatchExecutable, deleteWhenChildModified = false) {
@@ -41,8 +42,8 @@ internal class HatchExistingEnvironmentSelector(
     }
   }
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
-    panel.buildHatchFormFields(
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
+    hatchFormFields = panel.buildHatchFormFields(
       model = model,
       hatchEnvironmentProperty = state.selectedHatchEnv,
       hatchExecutableProperty = executable,
@@ -50,6 +51,10 @@ internal class HatchExistingEnvironmentSelector(
       validationRequestor = validationRequestor,
       isGenerateNewMode = false,
     )
+  }
+
+  override fun onShown(scope: CoroutineScope) {
+    hatchFormFields.onShown(scope, model, state, isFilterOnlyExisting = true)
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {

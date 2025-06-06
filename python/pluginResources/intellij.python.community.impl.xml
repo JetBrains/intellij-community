@@ -575,7 +575,6 @@
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <toolWindowExtractorMode id="Python Packages" mode="mirror"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.v1.PyAddNewEnvCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector"/>
 
@@ -830,16 +829,14 @@
     <visitorFilter language="Python"
                    implementationClass="com.jetbrains.python.inspections.PyExpressionCodeFragmentVisitorFilter"/>
 
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.add.v2.PyLocalAddSdkProvider"/>
     <!-- Pipenv -->
-    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
 
     <!-- Poetry -->
-    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.poetry.PyAddPoetrySdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
 
     <!-- Uv -->
-    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.uv.ui.PyAddUvSdkProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.uv.UvSdkFlavorProvider"/>
 
     <!-- Hatch -->

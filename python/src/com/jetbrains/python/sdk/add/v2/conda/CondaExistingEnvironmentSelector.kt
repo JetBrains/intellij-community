@@ -2,18 +2,18 @@
 package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.layout.predicate
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -24,106 +24,112 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
+import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
+
 
 internal class CondaExistingEnvironmentSelector(model: PythonAddInterpreterModel, private val errorSink: ErrorSink) : PythonExistingEnvironmentConfigurator(model) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
+  private lateinit var condaExecutable: TextFieldWithBrowseButton
+  private lateinit var reloadLink: ActionLink
+  private val isReloadLinkVisible = AtomicBooleanProperty(false)
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
+
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
-      executableSelector(state.condaExecutable,
-                         validationRequestor,
-                         message("sdk.create.custom.venv.executable.path", "conda"),
-                         message("sdk.create.custom.venv.missing.text", "conda"),
-                         createInstallCondaFix(model, errorSink))
-        .displayLoaderWhen(model.condaEnvironmentsLoading, scope = model.scope, uiContext = model.uiContext)
+      condaExecutable = executableSelector(
+        executable = state.condaExecutable,
+        validationRequestor = validationRequestor,
+        labelText = message("sdk.create.custom.venv.executable.path", "conda"),
+        missingExecutableText = message("sdk.create.custom.venv.missing.text", "conda"),
+        installAction = createInstallCondaFix(model, errorSink)
+      ).component
 
       row(message("sdk.create.custom.env.creation.type")) {
-        val condaEnvironmentsLoaded = model.condaEnvironmentsLoading.predicate(model.scope) { !it }
-
-        envComboBox = comboBox(emptyList(), CondaEnvComboBoxListCellRenderer())
+        envComboBox = comboBox(
+          items = emptyList(),
+          renderer = CondaEnvComboBoxListCellRenderer()
+        ).withExtendableTextFieldEditor()
           .bindItem(state.selectedCondaEnv)
-          .displayLoaderWhen(model.condaEnvironmentsLoading, makeTemporaryEditable = true,
-                             scope = model.scope, uiContext = model.uiContext)
-
-          .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(state.condaExecutable))
-          .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(state.selectedCondaEnv))
+          .validationRequestor(
+            validationRequestor
+              and WHEN_PROPERTY_CHANGED(state.selectedCondaEnv)
+              and WHEN_PROPERTY_CHANGED(state.condaExecutable)
+          )
           .validationOnInput {
             return@validationOnInput if (it.isVisible && it.selectedItem == null) ValidationInfo(message("python.sdk.conda.no.env.selected.error")) else null
           }
           .component
 
-        link(message("sdk.create.custom.conda.refresh.envs"), action = { onReloadCondaEnvironments() })
-          .visibleIf(condaEnvironmentsLoaded)
+        reloadLink = link(
+          text = message("sdk.create.custom.conda.refresh.envs"),
+          action = { }
+        ).visibleIf(isReloadLinkVisible).component
+
       }.visibleIf(state.condaExecutable.notEqualsTo(UNKNOWN_EXECUTABLE))
     }
   }
 
-  private fun onReloadCondaEnvironments() {
-    model.scope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+  private fun onReloadCondaEnvironments(scope: CoroutineScope) {
+    scope.launch(Dispatchers.EDT) {
       model.condaEnvironmentsLoading.value = true
       model.detectCondaEnvironmentsOrError(errorSink)
       model.condaEnvironmentsLoading.value = false
     }
   }
 
-  override fun onShown() {
-    model.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+  override fun onShown(scope: CoroutineScope) {
+    scope.launch(Dispatchers.EDT) {
       model.condaEnvironments.collectLatest { environments ->
         envComboBox.removeAllItems()
         environments.forEach(envComboBox::addItem)
       }
     }
 
+    reloadLink.action = object : AbstractAction(message("sdk.create.custom.conda.refresh.envs")) {
+      override fun actionPerformed(e: ActionEvent?) {
+        onReloadCondaEnvironments(scope)
+      }
+    }
 
-    //model.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    //  presenter.currentCondaExecutableFlow
-    //    .debounce(1.seconds)
-    //    .collectLatest { condaExecutablePath ->
-    //      withContext(Dispatchers.EDT + modalityState) {
-    //        val pathOnTarget = condaExecutablePath?.let { presenter.getPathOnTarget(it) }
-    //        if (pathOnTarget != null) {
-    //          reloadCondaEnvironments(pathOnTarget)
-    //        }
-    //        else {
-    //          loadingCondaEnvironments.value = false
-    //        }
-    //      }
-    //    }
-    //}
+    model.condaEnvironmentsLoading.onEach { isLoading ->
+      isReloadLinkVisible.set(!isLoading)
+    }.launchIn(scope + Dispatchers.EDT)
 
-    //state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    //  presenter.currentCondaExecutableFlow.collectLatest {
-    //    loadingCondaEnvironments.value = true
-    //  }
-    //}
-    //
-    //state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    //  presenter.detectingCondaExecutable.collectLatest { isDetecting ->
-    //    if (isDetecting) loadingCondaEnvironments.value = true
-    //  }
-    //}
+    envComboBox.displayLoaderWhen(
+      loading = model.condaEnvironmentsLoading,
+      makeTemporaryEditable = true,
+      scope = scope,
+    )
+
+    condaExecutable.displayLoaderWhen(
+      loading = model.condaEnvironmentsLoading,
+      scope = scope,
+    )
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> =
-    model.selectCondaEnvironment(base = false)
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
+    return model.selectCondaEnvironment(base = false)
+  }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
-    //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
-    val statisticsTarget = target.toStatisticsField()
     val identity = model.state.selectedCondaEnv.get()?.envIdentity as? PyCondaEnvIdentity.UnnamedEnv
     val selectedConda = if (identity?.isBase == true) InterpreterType.BASE_CONDA else InterpreterType.CONDAVENV
-    return InterpreterStatisticsInfo(selectedConda,
-                                     statisticsTarget,
-                                     false,
-                                     false,
-                                     true,
-      //presenter.projectLocationContext is WslContext,
-                                     false,
-                                     InterpreterCreationMode.CUSTOM)
+    return InterpreterStatisticsInfo(
+      type = selectedConda,
+      target = target.toStatisticsField(),
+      globalSitePackage = false,
+      makeAvailableToAllProjects = false,
+      previouslyConfigured = true,
+      isWSLContext = false,
+      creationMode = InterpreterCreationMode.CUSTOM
+    )
   }
-
 }

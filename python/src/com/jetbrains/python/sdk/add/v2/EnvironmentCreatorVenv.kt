@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
@@ -12,9 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.validationTooltip
-import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
@@ -26,7 +25,11 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.venvReader.VirtualEnvReader
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.plus
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -51,7 +54,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
       }
     }
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     val firstFixLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
       PythonNewProjectWizardCollector.logSuggestedVenvDirFixUsed()
       val newPath = suggestedLocation.resolve(suggestedVenvName)
@@ -68,14 +71,13 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     }
 
     with(panel) {
-      row(message("sdk.create.custom.base.python")) {
-        versionComboBox = pythonInterpreterComboBox(model.state.baseInterpreter,
-                                                    model,
-                                                    model::addInterpreter,
-                                                    model.interpreterLoading)
-          .align(Align.FILL)
-          .component
-      }
+      versionComboBox = pythonInterpreterComboBox(
+        title = message("sdk.create.custom.base.python"),
+        selectedSdkProperty = model.state.baseInterpreter,
+        model = model,
+        validationRequestor = validationRequestor,
+        onPathSelected = model::addInterpreter,
+      )
       row(message("sdk.create.custom.location")) {
         // TODO" Extract this logic to the presenter or view model, do not touch nio from EDT, cover with test
         textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(message("sdk.create.custom.venv.location.browse.title")))
@@ -132,19 +134,18 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
           .bindSelected(model.state.makeAvailableForAllProjects)
       }
     }
-
-    versionComboBox.showingScope("...") {
-      model.myProjectPathFlows.projectPathWithDefault.collect {
-        if (!locationModified) {
-          val suggestedVirtualEnvPath = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(it.toString())) // todo nullability issue
-          model.state.venvPath.set(suggestedVirtualEnvPath)
-        }
-      }
-    }
   }
 
-  override fun onShown() {
-    versionComboBox.setItems(model.baseInterpreters)
+  override fun onShown(scope: CoroutineScope) {
+    versionComboBox.initialize(scope, model.baseInterpreters)
+
+    model.projectPathFlows.projectPathWithDefault.onEach {
+      if (locationModified) return@onEach
+
+      val preferedFilePath = PySdkSettings.instance.getPreferredVirtualEnvBasePath(it.toString())
+      val suggestedVirtualEnvPath = FileUtil.toSystemDependentName(preferedFilePath)
+      model.state.venvPath.set(suggestedVirtualEnvPath)
+    }.launchIn(scope + Dispatchers.EDT)
   }
 
   private fun suggestVenvName(currentName: String): String {
@@ -158,22 +159,21 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     // todo remove project path, or move to controller
     try {
       val venvPath = Path.of(model.state.venvPath.get())
-      model.setupVirtualenv(venvPath, model.myProjectPathFlows.projectPathWithDefault.first(), moduleOrProject)
+      model.setupVirtualenv(venvPath, moduleOrProject)
     }
     catch (e: InvalidPathException) {
       PyResult.localizedError(e.localizedMessage)
     }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
-    //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
-    val statisticsTarget = target.toStatisticsField() // todo fix for wsl
-    return InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
-                                     statisticsTarget,
-                                     model.state.inheritSitePackages.get(),
-                                     model.state.makeAvailableForAllProjects.get(),
-                                     false,
-      //presenter.projectLocationContext is WslContext,
-                                     false, // todo fix for wsl
-                                     InterpreterCreationMode.CUSTOM)
+    return InterpreterStatisticsInfo(
+      type = InterpreterType.VIRTUALENV,
+      target = target.toStatisticsField() ,
+      globalSitePackage = model.state.inheritSitePackages.get(),
+      makeAvailableToAllProjects = model.state.makeAvailableForAllProjects.get(),
+      previouslyConfigured = false,
+      isWSLContext = false, // todo fix for wsl
+      creationMode = InterpreterCreationMode.CUSTOM
+    )
   }
 }

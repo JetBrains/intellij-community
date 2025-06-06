@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.python.community.impl.poetry.poetryPath
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
@@ -171,7 +172,7 @@ class PyAddNewPoetryPanel(
   private fun update() {
     service<PythonSdkCoroutineService>().cs.launch {
       selectedModule?.let {
-        installPackagesCheckBox.isEnabled = findPyProjectToml(it) != null
+        installPackagesCheckBox.isEnabled = PyProjectToml.findFile(it) != null
       }
     }
   }

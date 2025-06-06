@@ -22,14 +22,17 @@ import com.jetbrains.python.onSuccess
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
 import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
 internal class HatchNewEnvironmentCreator(
   override val model: PythonMutableTargetAddInterpreterModel,
-) : CustomNewEnvironmentCreator("hatch", model) {
+  errorSink: ErrorSink,
+) : CustomNewEnvironmentCreator("hatch", model, errorSink) {
   override val interpreterType: InterpreterType = InterpreterType.HATCH
   override val executable: ObservableMutableProperty<String> = propertyGraph.property(model.state.hatchExecutable.get())
   private val hatchEnvironmentProperty: ObservableMutableProperty<HatchVirtualEnvironment?> = propertyGraph.property(null)
+  private lateinit var hatchFormFields: HatchFormFields
 
   init {
     propertyGraph.dependsOn(executable, model.state.hatchExecutable, deleteWhenChildModified = false) {
@@ -37,10 +40,8 @@ internal class HatchNewEnvironmentCreator(
     }
   }
 
-  override val installationVersion: String? = null
-
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
-    panel.buildHatchFormFields(
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
+    hatchFormFields = panel.buildHatchFormFields(
       model = model,
       hatchExecutableProperty = executable,
       hatchEnvironmentProperty = hatchEnvironmentProperty,
@@ -48,9 +49,13 @@ internal class HatchNewEnvironmentCreator(
       validationRequestor = validationRequestor,
       isGenerateNewMode = true,
       installHatchActionLink = createInstallFix(errorSink)
-    ) {
-      basePythonComboBox = it
-    }
+    )
+    basePythonComboBox = requireNotNull(hatchFormFields.basePythonComboBox)
+  }
+
+  override fun onShown(scope: CoroutineScope) {
+    super.onShown(scope)
+    hatchFormFields.onShown(scope, model, state, isFilterOnlyExisting = false)
   }
 
   override fun savePathToExecutableToProperties(path: Path?) {

@@ -3,14 +3,10 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
-import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
-import com.jetbrains.python.sdk.uv.ui.PyAddNewUvPanel
 import org.jdom.Element
 import javax.swing.Icon
 
@@ -39,16 +35,6 @@ class UvSdkProvider : PySdkProvider {
     return if (sdk.isUv) UvInstallQuickFix() else null
   }
 
-  override fun createNewEnvironmentPanel(
-    project: Project?,
-    module: Module?,
-    existingSdks: List<Sdk>,
-    newProjectPath: String?,
-    context: UserDataHolder,
-  ): PyAddNewEnvPanel {
-    return PyAddNewUvPanel(project, module, existingSdks, newProjectPath, context)
-  }
-
   override fun getSdkAdditionalText(sdk: Sdk): String? = if (sdk.isUv) sdk.versionString else null
 
   override fun getSdkIcon(sdk: Sdk): Icon? {
@@ -58,11 +44,4 @@ class UvSdkProvider : PySdkProvider {
   override fun loadAdditionalDataForSdk(element: Element): SdkAdditionalData? {
     return UvSdkAdditionalData.load(element)
   }
-}
-// TODO: PythonInterpreterService: validate system python
-internal fun validateSdks(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<Sdk> {
-  val sdks = findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() }
-             ?: detectSystemWideSdks(module, existingSdks, context)
-
-  return sdks.filter { it.sdkSeemsValid && !it.isUv }
 }
