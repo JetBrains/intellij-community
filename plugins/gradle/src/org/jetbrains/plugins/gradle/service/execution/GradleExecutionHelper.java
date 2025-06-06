@@ -273,7 +273,6 @@ public final class GradleExecutionHelper {
 
     GradleExecutionHelperExtension.EP_NAME.forEachExtensionSafe(proc -> {
       proc.configureOperation(operation, context);
-      proc.prepareForExecution(id, operation, settings, buildEnvironment);
     });
   }
 
