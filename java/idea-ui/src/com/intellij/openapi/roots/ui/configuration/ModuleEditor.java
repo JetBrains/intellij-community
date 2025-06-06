@@ -192,7 +192,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
   private static void reportDeprecatedModuleEditor(@NotNull Class<?> aClass) {
     if (ourReportedDeprecatedClasses.add(aClass)) {
-      LOG.warn(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
+      LOG.error(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
     }
   }
 
