@@ -2,12 +2,15 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.BuildNumber
+import org.jetbrains.annotations.ApiStatus
 
-internal object UntilBuildDeprecation {
+@ApiStatus.Internal
+object UntilBuildDeprecation {
   private val LOG get() = PluginManagerCore.logger
 
-  private const val MINIMAL_API_VERSION = 251
-  private val forceHonorUntilBuild = System.getProperty("idea.plugins.honor.until.build", "false").toBoolean()
+  private const val MINIMAL_API_VERSION = 252
+
+  val forceHonorUntilBuild: Boolean = System.getProperty("idea.plugins.honor.until.build", "true").toBoolean()
 
   fun nullizeIfTargets243OrLater(untilBuild: String?, diagnosticId: String?): String? {
     if (forceHonorUntilBuild || untilBuild == null) {
