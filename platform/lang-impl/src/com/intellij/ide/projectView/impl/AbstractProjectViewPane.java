@@ -11,6 +11,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -348,7 +349,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     uiDataSnapshotForSelection(sink, selectedUserObjects, singleSelectedPathUserObjects);
 
     if (myTreeStructure instanceof AbstractTreeStructureBase treeStructure) {
-      List<TreeStructureProvider> providers = treeStructure.getProviders();
+      List<TreeStructureProvider> providers = ReadAction.compute(treeStructure::getProviders);
       if (providers != null && !providers.isEmpty()) {
         //noinspection unchecked
         List<AbstractTreeNode<?>> selection = (List)ContainerUtil.filterIsInstance(
