@@ -39,6 +39,14 @@ org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - a:getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - a:getTrackThickness-D9Ej5fM():F
 - a:getTrackThicknessExpanded-D9Ej5fM():F
+e:org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- java.lang.Enum
+- sf:Long:org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- sf:Never:org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- sf:Normal:org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
+- s:values():org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior[]
 f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
@@ -55,6 +63,9 @@ f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 f:org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion
 - f:defaults-L5TaK9c(androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 - bs:defaults-L5TaK9c$default(org.jetbrains.jewel.ui.component.styling.TooltipMetrics$Companion,androidx.compose.foundation.layout.PaddingValues,J,J,J,androidx.compose.foundation.shape.CornerSize,F,F,androidx.compose.foundation.TooltipPlacement,I,java.lang.Object):org.jetbrains.jewel.ui.component.styling.TooltipMetrics
+f:org.jetbrains.jewel.ui.component.styling.TooltipStyle
+- <init>(org.jetbrains.jewel.ui.component.styling.TooltipColors,org.jetbrains.jewel.ui.component.styling.TooltipMetrics,org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior):V
+- f:getAutoHideBehavior():org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 org.jetbrains.jewel.ui.icon.IconKey
 - a:getIconClass():java.lang.Class
 - a:path(Z):java.lang.String
