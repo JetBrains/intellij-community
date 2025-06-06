@@ -86,6 +86,7 @@ com.intellij.openapi.util.Throwable2Computable
 - a:compute():java.lang.Object
 com.intellij.openapi.util.ThrowableNotNullFunction
 - a:fun(java.lang.Object):java.lang.Object
+f:com.intellij.openapi.util.UserDataAccessorsKt
 com.intellij.openapi.util.UserDataHolder
 - a:getUserData(com.intellij.openapi.util.Key):java.lang.Object
 - a:putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
