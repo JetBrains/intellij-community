@@ -272,6 +272,7 @@
       <action id="StatisticsPanel.Show.Off" class="com.intellij.database.run.actions.StatisticsShowAction$StatisticsShowOff"/>
       <action id="StatisticsPanel.Show.Compact" class="com.intellij.database.run.actions.StatisticsShowAction$StatisticsShowCompact"/>
       <action id="StatisticsPanel.Show.Detailed" class="com.intellij.database.run.actions.StatisticsShowAction$StatisticsShowDetailed"/>
+      <separator/>
     </group>
     <!--suppress PluginXmlCapitalization -->
     <group id="Console.TableResult.ViewAs" popup="true" icon="AllIcons.Actions.Show">
