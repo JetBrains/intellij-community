@@ -5,6 +5,6 @@ fun String.foo() {
 
 fun bar() {
     with("baz") {
-        foo()
+        this.foo()
     }
 }

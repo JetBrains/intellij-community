@@ -6,6 +6,6 @@ fun String.foo(p1: Double) {
 
 fun String.bar() {
     fun Int.baz() {
-        foo(2.0)
+        this@bar.foo(2.0)
     }
 }
