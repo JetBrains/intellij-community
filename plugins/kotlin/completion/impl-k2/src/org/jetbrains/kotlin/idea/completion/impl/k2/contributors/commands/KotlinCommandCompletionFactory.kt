@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands
 
-import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.command.CommandCompletionFactory
 import com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
 import com.intellij.openapi.project.DumbAware
@@ -13,16 +12,13 @@ import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.analysisContextModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.contextModule
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name.identifier
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import org.jetbrains.kotlin.util.OperatorNameConventions.RANGE_TO
 
 class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
     override fun isApplicable(psiFile: PsiFile, offset: Int): Boolean {
@@ -51,20 +47,6 @@ class KotlinCommandCompletionFactory : CommandCompletionFactory, DumbAware {
     }
 
     override fun supportFiltersWithDoublePrefix(): Boolean = false
-
-    @OptIn(KaExperimentalApi::class)
-    override fun forcePrioritize(parameters: CompletionParameters): Boolean {
-        if (!super.forcePrioritize(parameters)) return false
-        val binaryExpressionParent = parameters.position.parent?.parent
-        if (binaryExpressionParent !is KtBinaryExpression) return false
-        if (binaryExpressionParent.operationToken != KtTokens.RANGE) return false
-        val left = binaryExpressionParent.left ?: return false
-        return analyze(left) {
-            val kaTypeScope = left.expressionType?.scope ?: return@analyze  false
-            return@analyze  kaTypeScope.getCallableSignatures(RANGE_TO)
-                .none { (it.symbol as? KaNamedFunctionSymbol)?.isOperator == true }
-        }
-    }
 
     @OptIn(KaImplementationDetail::class, KaExperimentalApi::class)
     override fun createFile(originalFile: PsiFile, text: String): PsiFile {

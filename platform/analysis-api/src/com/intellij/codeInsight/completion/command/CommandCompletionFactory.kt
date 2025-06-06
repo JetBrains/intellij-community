@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
-import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.project.DumbService
@@ -70,16 +69,6 @@ interface CommandCompletionFactory : PossiblyDumbAware {
    * @return true if double prefix filtering is supported, false otherwise
    */
   fun supportFiltersWithDoublePrefix(): Boolean = true
-
-  /**
-   * Determines whether the command completion process should prioritize this specific action based on the given parameters.
-   * It will be placed at the first items.
-   * It only applies if it is auto-popup completion and contains a full-suffix
-   *
-   * @param parameters the completion parameters containing the context and state for the current completion process
-   * @return true if the action should be prioritized during the completion process, false otherwise
-   */
-  fun forcePrioritize(parameters: CompletionParameters) : Boolean = parameters.process.isAutopopupCompletion
 }
 
 private val EP_NAME = LanguageExtension<CommandProvider>("com.intellij.codeInsight.completion.command.provider")

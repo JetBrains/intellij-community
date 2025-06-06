@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.CharFilter.CUSTOM_DEFAULT_CHAR_FILTERS
 import com.intellij.codeInsight.lookup.impl.LookupCustomizer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.template.impl.TemplateColors
+import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -107,8 +108,11 @@ internal class CommandCompletionService(
     lookup.showIfMeaningless() // stop hiding
     if (completionFactory.supportFiltersWithDoublePrefix()) {
       lookup.arranger.registerAdditionalMatcher(CommandCompletionLookupItemFilter)
-      lookup.arranger.prefixChanged(lookup)
     }
+    else {
+      lookup.arranger.registerAdditionalMatcher(NotPostfixCompletionLookupItemFilter)
+    }
+    lookup.arranger.prefixChanged(lookup)
     lookup.requestResize()
     lookup.refreshUi(false, true)
     lookup.ensureSelectionVisible(true)
@@ -173,6 +177,11 @@ internal class CommandCompletionService(
   private object CommandCompletionLookupItemFilter : Condition<LookupElement> {
     override fun value(e: LookupElement?): Boolean {
       return e != null && e.`as`(CommandCompletionLookupElement::class.java) != null
+    }
+  }
+  private object NotPostfixCompletionLookupItemFilter : Condition<LookupElement> {
+    override fun value(e: LookupElement?): Boolean {
+      return e != null && e.`as`(PostfixTemplateLookupElement::class.java) == null
     }
   }
 }
