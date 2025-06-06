@@ -24,6 +24,9 @@ import java.util.Map;
 public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndexEntry, Integer>>,
                                                     ToByteArraySequenceExternalizer<Map<IdIndexEntry, Integer>> {
 
+  /** Serialized form of an empty map: single '\0' byte (=map size, as varint, see {@link DataInputOutputUtil#writeINT(DataOutput, int)})) */
+  private static final ByteArraySequence EMPTY_MAP_SERIALIZED = new ByteArraySequence(new byte[1]);
+
   private final DataExternalizer<Map<IdIndexEntry, Integer>> fallbackExternalizer;
 
   public IdIndexEntryMapExternalizer(@NotNull DataExternalizer<Map<IdIndexEntry, Integer>> externalizer) {
@@ -54,11 +57,18 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
 
   @Override
   public ByteArraySequence save(Map<IdIndexEntry, Integer> entries) throws IOException {
-    if (!(entries instanceof IdEntryToScopeMapImpl idToScopeMap)) {
-      throw new IllegalStateException(entries + " must be an instance of IdEntryToScopeMapImpl");
+    if (entries.isEmpty()) {
+      //Many IdIndexer impls use Collections.emptyMap() instead of IdDataConsumer.getResult() (=IdEntryToScopeMapImpl),
+      // so we need to support this case specifically:
+      return EMPTY_MAP_SERIALIZED;
     }
-    //return cached serialized form:
-    return idToScopeMap.asByteArraySequence();
+    
+    if (entries instanceof IdEntryToScopeMapImpl idToScopeMap) {
+      //return cached serialized form:
+      return idToScopeMap.asByteArraySequence();
+    }
+
+    throw new IllegalStateException(entries + " must be an instance of IdEntryToScopeMapImpl");
   }
 
   @Override
