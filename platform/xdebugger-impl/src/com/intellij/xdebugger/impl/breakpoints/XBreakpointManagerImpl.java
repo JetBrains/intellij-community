@@ -291,8 +291,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         myBreakpoints.remove(type, breakpointBase);
       }
       myAllBreakpoints.remove(breakpointBase);
-      if (breakpointBase instanceof XLineBreakpointImpl) {
-        myLineBreakpointManager.unregisterBreakpoint(asProxy((XLineBreakpointImpl<?>)breakpointBase));
+      if (breakpointBase instanceof XLineBreakpointImpl<?> lineBreakpoint) {
+        myLineBreakpointManager.unregisterBreakpoint(asProxy(lineBreakpoint));
       }
     });
 

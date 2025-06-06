@@ -281,5 +281,6 @@ fun <T : XBreakpointBase<*, *, *>> T.asProxy(): XBreakpointProxy {
   }
 }
 
+@Suppress("DEPRECATION")
 @ApiStatus.Internal
 fun <T : XLineBreakpointImpl<*>> T.asProxy(): XLineBreakpointProxy = XLineBreakpointProxy.Monolith(this)
