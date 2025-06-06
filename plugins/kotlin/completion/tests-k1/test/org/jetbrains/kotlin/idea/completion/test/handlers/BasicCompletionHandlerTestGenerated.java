@@ -116,6 +116,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("DotAfterOperator.kt")
+        public void testDotAfterOperator() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/DotAfterOperator.kt");
+        }
+
         @TestMetadata("GetOperator.kt")
         public void testGetOperator() throws Exception {
             runTest("../testData/handlers/basic/bracketOperators/GetOperator.kt");
@@ -131,6 +136,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/bracketOperators/Newline.kt");
         }
 
+        @TestMetadata("SetOperator.kt")
+        public void testSetOperator() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/SetOperator.kt");
+        }
+
         @TestMetadata("SpacesAfter.kt")
         public void testSpacesAfter() throws Exception {
             runTest("../testData/handlers/basic/bracketOperators/SpacesAfter.kt");
@@ -144,6 +154,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("SpacesMixed.kt")
         public void testSpacesMixed() throws Exception {
             runTest("../testData/handlers/basic/bracketOperators/SpacesMixed.kt");
+        }
+
+        @TestMetadata("WithComment.kt")
+        public void testWithComment() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/WithComment.kt");
         }
     }
 
