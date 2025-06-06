@@ -3,6 +3,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -93,6 +95,16 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @Override
   public @Nullable XSourcePosition getSourcePosition() {
     return myXSourcePosition;
+  }
+
+  @Override
+  public void customizeTextPresentation(@NotNull ColoredTextContainer component) {
+    Location location = myDescriptor.getLocation();
+    if (location == null) {
+      return;
+    }
+    //noinspection HardCodedStringLiteral
+    component.append(ThreadDumpAction.renderLocation(location), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   @Override
