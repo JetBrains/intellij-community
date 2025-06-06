@@ -24,10 +24,10 @@ private class FacetDependentToolWindowManager : RegisterToolWindowTaskProvider {
       return emptyList()
     }
 
+    val projectFacetManager = project.serviceAsync<ProjectFacetManager>()
+    val projectWideFacetListenersRegistry = project.serviceAsync<ProjectWideFacetListenersRegistry>()
     return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val result = ArrayList<ToolWindowEP>()
-      // in EDT - not clear is it safe to load not in EDT (preserve old behaviour)
-      val projectFacetManager = project.serviceAsync<ProjectFacetManager>()
       l@ for (extension in facetDependentToolWindows) {
         for (type in extension.getFacetTypes()) {
           if (projectFacetManager.hasFacets(type.getId())) {
@@ -37,14 +37,14 @@ private class FacetDependentToolWindowManager : RegisterToolWindowTaskProvider {
         }
       }
 
-      projectOpened(project)
+      projectOpened(project, projectWideFacetListenersRegistry)
       result
     }
   }
 }
 
-private fun projectOpened(project: Project) {
-  ProjectWideFacetListenersRegistry.getInstance(project).registerListener(object : ProjectWideFacetAdapter<Facet<*>?>() {
+private fun projectOpened(project: Project, projectWideFacetListenersRegistry: ProjectWideFacetListenersRegistry) {
+  projectWideFacetListenersRegistry.registerListener(object : ProjectWideFacetAdapter<Facet<*>?>() {
     override fun facetAdded(facet: Facet<*>) {
       checkIfToolwindowMustBeAdded(facet.getType())
     }
