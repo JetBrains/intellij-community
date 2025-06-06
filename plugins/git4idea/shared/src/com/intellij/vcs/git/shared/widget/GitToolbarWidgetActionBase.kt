@@ -70,7 +70,7 @@ abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
 
   protected open fun doUpdate(e: AnActionEvent, project: Project) {
     val state =
-      if (GitRepositoriesHolder.getInstance(project).initialized) GitWidgetStateHolder.getInstance(project).currentState
+      if (GitRepositoriesHolder.getInstance(project).initialized) GitWidgetStateHolder.getInstance(project).state.value
       else GitWidgetState.DoNotShow
 
     if (state is GitWidgetState.OnRepository) {
