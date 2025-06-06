@@ -199,6 +199,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   @Override
   public String toString() {
-    return "XLineBreakpointImpl(" + myType.getId() + " at " + getShortFilePath() + ":" + getLine() + ")";
+    return "XLineBreakpointImpl(id = " + getBreakpointId() + ", " + myType.getId() + " at " + getShortFilePath() + ":" + getLine() + ")";
   }
 }

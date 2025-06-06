@@ -206,8 +206,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
         }
       }
       myAllBreakpoints.add(breakpoint);
-      if (breakpoint instanceof XLineBreakpointImpl) {
-        myLineBreakpointManager.registerBreakpoint(asProxy((XLineBreakpointImpl)breakpoint), initUI);
+      if (breakpoint instanceof XLineBreakpointImpl<?> lineBreakpoint) {
+        myLineBreakpointManager.registerBreakpoint(asProxy(lineBreakpoint), initUI);
       }
     });
     sendBreakpointEvent(type, listener -> listener.breakpointAdded(breakpoint));
@@ -230,8 +230,8 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
     if (isRegistered(breakpoint)) {
-      if (breakpoint instanceof XLineBreakpointImpl) {
-        myLineBreakpointManager.breakpointChanged(asProxy((XLineBreakpointImpl<?>)breakpoint));
+      if (breakpoint instanceof XLineBreakpointImpl<?> lineBreakpoint) {
+        myLineBreakpointManager.breakpointChanged(asProxy(lineBreakpoint));
       }
       sendBreakpointEvent(breakpoint.getType(), listener -> listener.breakpointChanged(breakpoint));
     }

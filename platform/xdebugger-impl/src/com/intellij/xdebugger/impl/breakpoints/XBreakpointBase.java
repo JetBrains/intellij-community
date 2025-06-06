@@ -363,7 +363,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Override
   public String toString() {
-    return "XBreakpointBase(type=" + myType + ")";
+    return "XBreakpointBase(id = " + myId + ", type=" + myType + ")";
   }
 
   protected List<? extends AnAction> getAdditionalPopupMenuActions(XDebugSession session) {

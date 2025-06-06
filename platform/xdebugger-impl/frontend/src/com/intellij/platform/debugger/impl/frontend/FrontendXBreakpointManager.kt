@@ -5,6 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+
+private val log = logger<FrontendXBreakpointManager>()
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -67,6 +70,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
             addBreakpoint(event.breakpointDto)
           }
           is XBreakpointEvent.BreakpointRemoved -> {
+            log.info("Breakpoint removal request from backend: ${event.breakpointId}")
             removeBreakpointLocally(event.breakpointId)
             // breakpointRemoved event happened on the server, so we can remove id from the frontend
             breakpointIdsRemovedLocally.remove(event.breakpointId)
@@ -79,10 +83,12 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
     if (breakpointDto.id in breakpointIdsRemovedLocally) {
       // don't add breakpoints if it was already removed locally
+      log.info("Breakpoint creation skipped for ${breakpointDto.id}, because it was removed locally")
       return null
     }
     val currentBreakpoint = breakpoints[breakpointDto.id]
     if (currentBreakpoint != null) {
+      log.info("Breakpoint creation skipped for ${breakpointDto.id}, because it already exists")
       return currentBreakpoint
     }
     val type = FrontendXBreakpointTypesManager.getInstance(project).getTypeById(breakpointDto.typeId) ?: return null
@@ -95,11 +101,13 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     val previousBreakpoint = breakpoints.putIfAbsent(breakpointDto.id, newBreakpoint)
     if (previousBreakpoint != null) {
       newBreakpoint.dispose()
+      log.info("Breakpoint creation skipped for ${breakpointDto.id}, because it is already created")
       return previousBreakpoint
     }
     if (newBreakpoint is XLineBreakpointProxy) {
       lineBreakpointManager.registerBreakpoint(newBreakpoint, true)
     }
+    log.info("Breakpoint created for ${breakpointDto.id}")
     breakpointsChanged.tryEmit(Unit)
     return newBreakpoint
   }
@@ -166,6 +174,12 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   private fun removeBreakpointLocally(breakpointId: XBreakpointId) {
     val removedBreakpoint = breakpoints.remove(breakpointId)
     removedBreakpoint?.dispose()
+    if (removedBreakpoint == null) {
+      log.info("Breakpoint removal has no effect for $breakpointId, because it doesn't exist locally")
+    }
+    else {
+      log.info("Breakpoint removed for $breakpointId")
+    }
     if (removedBreakpoint is XLineBreakpointProxy) {
       lineBreakpointManager.unregisterBreakpoint(removedBreakpoint)
     }
@@ -225,6 +239,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   override fun removeBreakpoint(breakpoint: XBreakpointProxy) {
+    log.info("Breakpoint removal request from frontend: ${breakpoint.id}")
     removeBreakpointLocally(breakpoint.id)
     breakpointsChanged.tryEmit(Unit)
     cs.launch {
