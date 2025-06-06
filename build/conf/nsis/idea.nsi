@@ -1,17 +1,36 @@
 Unicode true
 ManifestDPIAware true
+SetCompressor lzma
+RequestExecutionLevel user
+
 !addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
 !addincludedir "${NSIS_DIR}\Include"
 
-SetCompressor lzma
-
-!include "paths.nsi"
-!include "strings.nsi"
-!include "log.nsi"
-!include "registry.nsi"
-!include "version.nsi"
+!include FileFunc.nsh
+!include InstallOptions.nsh
+!include LogicLib.nsh
+!include MUI2.nsh
+!include StrFunc.nsh
+!include TextFunc.nsh
+!include UAC.nsh
 !include WinVer.nsh
 !include x64.nsh
+
+; `StrFunc.nsh` requires priming the commands which actually get used later
+${StrStr}
+${UnStrStr}
+${StrLoc}
+${UnStrLoc}
+${UnStrRep}
+
+!include "log.nsi"
+!include "paths.nsi"
+!include "registry.nsi"
+!include "strings.nsi"
+!include "version.nsi"
+!include "customInstallActions.nsi"
+
+Name "${MUI_PRODUCT}"
 
 ; Product with version (IntelliJ IDEA #xxxx).
 ; Used in registry to put each build info into the separate subkey
@@ -19,13 +38,6 @@ SetCompressor lzma
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
-Name "${MUI_PRODUCT}"
-; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
-RequestExecutionLevel user
-
-;------------------------------------------------------------------------------
-; Variables
-;------------------------------------------------------------------------------
 Var STARTMENU_FOLDER
 Var config_path
 Var system_path
@@ -48,27 +60,6 @@ Var launcherShortcut
 Var addToPath
 Var updateContextMenu
 
-;------------------------------------------------------------------------------
-; include "Modern User Interface"
-;------------------------------------------------------------------------------
-!include "MUI2.nsh"
-!include "FileFunc.nsh"
-!include "TextFunc.nsh"
-!include UAC.nsh
-!include "InstallOptions.nsh"
-!include StrFunc.nsh
-!include LogicLib.nsh
-
-; `StrFunc.nsh` requires priming the commands which actually get used later
-${StrStr}
-${UnStrStr}
-${StrLoc}
-${UnStrLoc}
-${StrRep}
-${UnStrRep}
-
-!include "customInstallActions.nsi"
-
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
 ReserveFile "UninstallOldVersions.ini"
@@ -81,75 +72,31 @@ ReserveFile "UninstallOldVersions.ini"
 !define MUI_HEADERIMAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_HEADER_FILE}"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_LOGO_FILE}"
 
-;------------------------------------------------------------------------------
-; on GUI initialization installer checks whether IDEA is already installed
-;------------------------------------------------------------------------------
-
 !define MUI_CUSTOMFUNCTION_GUIINIT GUIInit
+
+
 !macro INST_UNINST_SWITCH un
-  ;check if the window is win7 or newer
-  Function ${un}winVersion
-    ;The platform is returned into $0, minor version into $1.
-    ;Windows 7 is equals values of 6 as platform and 1 as minor version.
-    ;Windows 8 is equals values of 6 as platform and 2 as minor version.
-    ${If} ${AtLeastWin8}
-      StrCpy $0 "1"
-    ${else}
-      StrCpy $0 "0"
-    ${EndIf}
-  FunctionEnd
-
-
-  Function ${un}compareFileInstallationTime
-    StrCpy $9 ""
-  get_first_file:
-    Pop $7
-    IfFileExists "$7" get_next_file 0
-      StrCmp $7 "Complete" complete get_first_file
-  get_next_file:
-    Pop $8
-    StrCmp $8 "Complete" 0 +2
-      ; check if there is only one property file
-      StrCmp $9 "no changes" complete different
-    IfFileExists "$8" 0 get_next_file
-    ClearErrors
-    ${GetTime} "$7" "M" $0 $1 $2 $3 $4 $5 $6
-    ${GetTime} "$8" "M" $R0 $R1 $R2 $R3 $R4 $R5 $R6
-    StrCmp $0 $R0 0 different
-      StrCmp $1 $R1 0 different
-        StrCmp $2 $R2 0 different
-          StrCmp $4 $R4 0 different
-            StrCmp $5 $R5 0 different
-              StrCmp $6 $R6 0 different
-		StrCpy $9 "no changes"
-		Goto get_next_file
-  different:
-    StrCpy $9 "Modified"
-  complete:
-FunctionEnd
-
-
-Function ${un}SplitStr
-  Exch $0 ; str
-  Push $1 ; inQ
-  Push $3 ; idx
-  Push $4 ; tmp
-  StrCpy $1 0
-  StrCpy $3 0
-loop:
-  StrCpy $4 $0 1 $3
-  ${If} $4 == '"'
-    ${If} $1 <> 0
-      StrCpy $0 $0 "" 1
-      IntOp $3 $3 - 1
-    ${EndIf}
-    IntOp $1 $1 !
-  ${EndIf}
-  ${If} $4 == '' ; The end?
+  Function ${un}SplitStr
+    Exch $0 ; str
+    Push $1 ; inQ
+    Push $3 ; idx
+    Push $4 ; tmp
     StrCpy $1 0
-    StrCpy $4 ','
-  ${EndIf}
-  ${If} $4 == ','
+    StrCpy $3 0
+  loop:
+    StrCpy $4 $0 1 $3
+    ${If} $4 == '"'
+      ${If} $1 <> 0
+        StrCpy $0 $0 "" 1
+        IntOp $3 $3 - 1
+      ${EndIf}
+      IntOp $1 $1 !
+    ${EndIf}
+    ${If} $4 == '' ; The end?
+      StrCpy $1 0
+      StrCpy $4 ','
+    ${EndIf}
+    ${If} $4 == ','
     ${AndIf} $1 = 0
       StrCpy $4 $0 $3
       StrCpy $1 $4 "" -1
@@ -163,148 +110,25 @@ loop:
       Push $0 ; Remaining
       Exch 4
       Pop $0
-      StrCmp $4 "" 0 moreleft
+      ${If} $4 == ""
         Pop $4
         Pop $3
         Pop $1
         Return
-  moreleft:
+      ${EndIf}
       Exch $4
       Exch 2
       Pop $1
       Pop $3
       Return
-  ${EndIf}
-  IntOp $3 $3 + 1
-  Goto loop
-FunctionEnd
-
-
-Function ${un}deleteFiles
-  ClearErrors
-  FindFirst $2 $1 $0\*.*
-loop:
-  StrCmp $1 "." next 0
-  StrCmp $1 ".." next 0
-  StrCmp $1 "" done
-  Delete "$0\$1"
-next:
-  FindNext $2 $1
-  Goto loop
-done:
-  FindClose $2
-FunctionEnd
-
-
-Function ${un}deleteDirIfEmpty
-  ClearErrors
-  FindFirst $R0 $R1 "$0\*.*"
-  StrCmp $R1 "." 0 done
-  FindNext $R0 $R1
-  StrCmp $R1 ".." 0 done
-  ClearErrors
-  FindNext $R0 $R1
-  IfErrors 0 done
-  Sleep 1000
-  RMDir "$0"
-done:
-  FindClose $R0
-FunctionEnd
+    ${EndIf}
+    IntOp $3 $3 + 1
+    Goto loop
+  FunctionEnd
 !macroend
 
 !insertmacro INST_UNINST_SWITCH ""
 !insertmacro INST_UNINST_SWITCH "un."
-
-
-Function InstDirState
-  !define InstDirState `!insertmacro InstDirStateCall`
-
-  !macro InstDirStateCall _PATH _RESULT
-    Push `${_PATH}`
-    Call InstDirState
-    Pop ${_RESULT}
-  !macroend
-
-  Exch $0
-  Push $1
-  ClearErrors
-
-  FindFirst $1 $0 '$0\*.*'
-  IfErrors 0 +3
-    StrCpy $0 -1
-    goto end
-  StrCmp $0 '.' 0 +4
-    FindNext $1 $0
-    StrCmp $0 '..' 0 +2
-      FindNext $1 $0
-      FindClose $1
-  IfErrors 0 +3
-    StrCpy $0 0
-    goto end
-  StrCpy $0 1
-end:
-  Pop $1
-  Exch $0
-FunctionEnd
-
-
-Function SplitFirstStrPart
-  Exch $R0
-  Exch
-  Exch $R1
-  Push $R2
-  Push $R3
-  StrCpy $R3 $R1
-  StrLen $R1 $R0
-  IntOp $R1 $R1 + 1
-loop:
-  IntOp $R1 $R1 - 1
-  StrCpy $R2 $R0 1 -$R1
-  StrCmp $R1 0 exit0
-  StrCmp $R2 $R3 exit1 loop
-exit0:
-  StrCpy $R1 ""
-  Goto exit2
-exit1:
-  IntOp $R1 $R1 - 1
-  StrCmp $R1 0 0 +3
-     StrCpy $R2 ""
-     Goto +2
-  StrCpy $R2 $R0 "" -$R1
-  IntOp $R1 $R1 + 1
-  StrCpy $R0 $R0 -$R1
-  StrCpy $R1 $R2
-exit2:
-  Pop $R3
-  Pop $R2
-  Exch $R1 ;rest
-  Exch
-  Exch $R0 ;first
-FunctionEnd
-
-
-Function VersionSplit
-  !define VersionSplit `!insertmacro VersionSplitCall`
-
-  !macro VersionSplitCall _FULL _PRODUCT _BRANCH _BUILD
-    Push `${_FULL}`
-    Call VersionSplit
-    Pop ${_PRODUCT}
-    Pop ${_BRANCH}
-    Pop ${_BUILD}
-  !macroend
-
-  Pop $R0
-  Push "-"
-  Push $R0
-  Call SplitFirstStrPart
-  Pop $R0
-  Pop $R1
-  Push "."
-  Push $R1
-  Call SplitFirstStrPart
-  Push $R0
-FunctionEnd
 
 
 Function OnDirectoryPageLeave
@@ -852,7 +676,6 @@ Function GUIInit
 ; search old versions of IDEA installed from the user and admin.
   ${LogText} "Search if old versions of ${MUI_PRODUCT} were installed"
 
-user:
   StrCpy $4 0
   StrCpy $0 "HKCU"
   StrCpy $1 "Software\${MANUFACTURER}\${MUI_PRODUCT}"
@@ -1239,14 +1062,6 @@ skip_ipr:
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "NoRepair" 1
 
-  call winVersion
-  ${If} $0 == "1"
-    AccessControl::GrantOnFile \
-      "$INSTDIR" "(S-1-5-32-545)" "GenericRead + GenericExecute"
-    AccessControl::GrantOnFile \
-      "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions" "(S-1-5-32-545)" "GenericRead + GenericWrite"
-  ${EndIf}
-
   ; reset icon cache
   ${LogText} "Reset icon cache"
   System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
@@ -1286,9 +1101,9 @@ custom_silent_config:
 validate_install_dir:
   Call searchCurrentVersion
   Call silentInstallDirValidate
-set_reg_key:
   StrCpy $baseRegKey "HKCU"
   StrCmp $silentMode "admin" uac_elevate installdir_is_empty
+
 uac_elevate:
   !insertmacro UAC_RunElevated
   StrCmp 1223 $0 uac_elevation_aborted ; UAC dialog aborted by user? - continue install under user
@@ -1400,6 +1215,52 @@ undefined_location:
 Done:
 FunctionEnd
 
+; deletes the directory "$0" if it is empty (contains only "." and ".." entries)
+Function un.deleteDirIfEmpty
+  ClearErrors
+  FindFirst $R0 $R1 "$0\*.*"
+  ${If} $R1 == "."
+    FindNext $R0 $R1
+    ${If} $R1 == ".."
+      ClearErrors
+      FindNext $R0 $R1
+      ${If} ${Errors}
+        Sleep 1000
+        RMDir "$0"
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+  FindClose $R0
+FunctionEnd
+
+Function un.compareFileInstallationTime
+  StrCpy $9 ""
+get_first_file:
+  Pop $7
+  IfFileExists "$7" get_next_file 0
+  StrCmp $7 "Complete" complete get_first_file
+get_next_file:
+  Pop $8
+  StrCmp $8 "Complete" 0 +2
+  ; check if there is only one property file
+  StrCmp $9 "no changes" complete different
+  IfFileExists "$8" 0 get_next_file
+  ClearErrors
+  ${GetTime} "$7" "M" $0 $1 $2 $3 $4 $5 $6
+  ${GetTime} "$8" "M" $R0 $R1 $R2 $R3 $R4 $R5 $R6
+  StrCmp $0 $R0 0 different
+    StrCmp $1 $R1 0 different
+      StrCmp $2 $R2 0 different
+        StrCmp $4 $R4 0 different
+          StrCmp $5 $R5 0 different
+            StrCmp $6 $R6 0 different
+  StrCpy $9 "no changes"
+  Goto get_next_file
+different:
+  StrCpy $9 "Modified"
+complete:
+FunctionEnd
+
 
 Function un.onUninstSuccess
   SetErrorLevel 0
@@ -1430,7 +1291,6 @@ Function un.onInit
   IfFileExists "$INSTDIR\fsnotifier.exe" 0 end_of_uninstall
   IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
-get_reg_key:
   SetRegView 32
   Call un.getRegKey
   StrCmp $baseRegKey "HKLM" uninstall_location UAC_Done
