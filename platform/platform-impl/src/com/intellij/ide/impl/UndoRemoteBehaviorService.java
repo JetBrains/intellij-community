@@ -4,6 +4,7 @@ package com.intellij.ide.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
@@ -23,6 +24,7 @@ public class UndoRemoteBehaviorService {
   }
 
   protected boolean isFrontendUndoEnabled() {
-    return Registry.is("ide.undo.frontend.if.possible", false);
+    return Registry.is("ide.undo.frontend.if.possible", false) &&
+           !PlatformUtils.isRider();
   }
 }
