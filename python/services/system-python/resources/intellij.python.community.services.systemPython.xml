@@ -3,5 +3,7 @@
     <module name="intellij.python.community"/>
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.sdk"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.impl.venv"/>
   </dependencies>
 </idea-plugin>

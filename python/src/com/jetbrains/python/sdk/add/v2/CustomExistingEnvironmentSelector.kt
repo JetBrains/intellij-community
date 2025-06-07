@@ -6,7 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
@@ -81,7 +81,7 @@ internal abstract class CustomExistingEnvironmentSelector(
     )
   }
 
-  private fun addEnvByPath(python: PythonWithLanguageLevel) {
+  private fun addEnvByPath(python: VanillaPythonWithLanguageLevel) {
     val interpreter = ManuallyAddedSelectableInterpreter(python)
     existingEnvironments.value += interpreter
   }

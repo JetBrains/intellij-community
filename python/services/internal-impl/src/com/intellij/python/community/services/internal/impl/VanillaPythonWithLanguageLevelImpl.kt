@@ -5,9 +5,10 @@ import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.python.validatePythonAndGetVersion
-import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.concurrentLimit
-import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.createByPythonBinary
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl.Companion.concurrentLimit
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl.Companion.createByPythonBinary
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -23,10 +24,11 @@ import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
 
 @Internal
-class PythonWithLanguageLevelImpl internal constructor(
+class VanillaPythonWithLanguageLevelImpl internal constructor(
   override val pythonBinary: PythonBinary,
   override val languageLevel: LanguageLevel,
-) : PythonWithLanguageLevel, Comparable<PythonWithLanguageLevel> {
+) : VanillaPythonWithLanguageLevel {
+
   companion object {
 
     private val concurrentLimit = Semaphore(permits = 4)
@@ -35,7 +37,7 @@ class PythonWithLanguageLevelImpl internal constructor(
      * Like [createByPythonBinary] but runs in parallel up to [concurrentLimit]
      * @return python path -> python with language level sorted from highest to lowest.
      */
-    suspend fun createByPythonBinaries(pythonBinaries: Collection<PythonBinary>): Collection<Pair<PythonBinary, PyResult<PythonWithLanguageLevel>>> =
+    suspend fun createByPythonBinaries(pythonBinaries: Collection<PythonBinary>): Collection<Pair<PythonBinary, PyResult<VanillaPythonWithLanguageLevel>>> =
       coroutineScope {
         pythonBinaries.map {
           async {
@@ -46,9 +48,9 @@ class PythonWithLanguageLevelImpl internal constructor(
         }.awaitAll()
       }.sortedBy { it.first }
 
-    suspend fun createByPythonBinary(pythonBinary: PythonBinary): PyResult<PythonWithLanguageLevelImpl> {
+    suspend fun createByPythonBinary(pythonBinary: PythonBinary): PyResult<VanillaPythonWithLanguageLevelImpl> {
       val languageLevel = pythonBinary.validatePythonAndGetVersion().getOr { return it }
-      return Result.success(PythonWithLanguageLevelImpl(pythonBinary, languageLevel))
+      return Result.success(VanillaPythonWithLanguageLevelImpl(pythonBinary, languageLevel))
     }
   }
 
@@ -56,7 +58,7 @@ class PythonWithLanguageLevelImpl internal constructor(
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as PythonWithLanguageLevelImpl
+    other as VanillaPythonWithLanguageLevelImpl
 
     return pythonBinary == other.pythonBinary
   }

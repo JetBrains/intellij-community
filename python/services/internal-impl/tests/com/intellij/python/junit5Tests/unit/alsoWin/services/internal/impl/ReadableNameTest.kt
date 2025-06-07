@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.alsoWin.services.internal.impl
 
-import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.runBlocking
@@ -23,7 +23,7 @@ class ReadableNameTest {
   @Test
   fun testNoHomePath(@TempDir path: Path): Unit = runBlocking {
     val fakePython = path.resolve(PYTHON_FILE_NAME)
-    val name = PythonWithLanguageLevelImpl(fakePython, LanguageLevel.PYTHON312).getReadableName()
+    val name = VanillaPythonWithLanguageLevelImpl(fakePython, LanguageLevel.PYTHON312).getReadableName()
     assertThat("Wrong name generated", name, allOf(containsString("3.12"), containsString(fakePython.pathString)))
   }
 
@@ -33,11 +33,11 @@ class ReadableNameTest {
 
 
     var fakePython = home.resolve(PYTHON_FILE_NAME)
-    var name = PythonWithLanguageLevelImpl(fakePython, LanguageLevel.PYTHON312).getReadableName()
+    var name = VanillaPythonWithLanguageLevelImpl(fakePython, LanguageLevel.PYTHON312).getReadableName()
     assertThat("Wrong name generated", name, allOf(containsString("3.12"), matchesPattern(".*~[\\\\/]$PYTHON_FILE_NAME.*")))
 
     fakePython = home.resolve("deep").resolve(PYTHON_FILE_NAME)
-    name = PythonWithLanguageLevelImpl(fakePython, LanguageLevel.PYTHON312).getReadableName()
+    name = VanillaPythonWithLanguageLevelImpl(fakePython, LanguageLevel.PYTHON312).getReadableName()
     assertThat("Wrong name generated", name, allOf(containsString("3.12"), matchesPattern(".*~[\\\\/]deep[\\\\/]$PYTHON_FILE_NAME.*")))
   }
 }

@@ -14,8 +14,8 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
-import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
+import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.UICustomization
@@ -209,7 +209,7 @@ abstract class PythonAddInterpreterModel(
     val existingSdkPaths = existingSelectableInterpreters.mapNotNull { tryResolvePath(it.homePath) }.toSet()
 
     // Venvs are not detected manually, but must migrate to VenvService or so
-    val venvs: List<PythonWithLanguageLevel> = PythonWithLanguageLevelImpl.createByPythonBinaries(
+    val venvs: List<VanillaPythonWithLanguageLevel> = VanillaPythonWithLanguageLevelImpl.createByPythonBinaries(
       VirtualEnvSdkFlavor.getInstance().suggestLocalHomePaths(null, null)).mapNotNull { (venv, r) ->
       when (r) {
         is Result.Failure -> {
@@ -241,7 +241,7 @@ abstract class PythonAddInterpreterModel(
     state.selectedInterpreter.set(interpreter)
   }
 
-  internal fun addInterpreter(python: PythonWithLanguageLevel): PythonSelectableInterpreter {
+  internal fun addInterpreter(python: VanillaPythonWithLanguageLevel): PythonSelectableInterpreter {
     val interpreter = ManuallyAddedSelectableInterpreter(python).also { addManuallyAddedInterpreter(it) }
     return interpreter
   }
@@ -424,7 +424,7 @@ class ManuallyAddedSelectableInterpreter(
   override val homePath: String,
   override val languageLevel: LanguageLevel,
 ) : PythonSelectableInterpreter() {
-  constructor(python: PythonWithLanguageLevel) : this(python.pythonBinary.pathString, python.languageLevel)
+  constructor(python: VanillaPythonWithLanguageLevel) : this(python.pythonBinary.pathString, python.languageLevel)
 
   override fun toString(): String {
     return "ManuallyAddedSelectableInterpreter(homePath='$homePath', languageLevel=$languageLevel)"

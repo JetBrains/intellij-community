@@ -5,11 +5,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.venvReader.Directory
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -50,7 +55,7 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
  *
  * Instances could be obtained with [SystemPythonService]
  */
-class SystemPython internal constructor(private val impl: PythonWithLanguageLevel, val ui: UICustomization?) : PythonWithLanguageLevel by impl {
+class SystemPython internal constructor(private val impl: VanillaPythonWithLanguageLevel, val ui: UICustomization?) : VanillaPythonWithLanguageLevel by impl {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -96,3 +101,15 @@ data class UICustomization(
   val title: @Nls String,
   val icon: Icon? = null,
 )
+
+/**
+ * See [createVenv]
+ */
+@Internal
+@CheckReturnValue
+suspend fun createVenvFromSystemPython(
+  python: SystemPython,
+  venvDir: Directory,
+  inheritSitePackages: Boolean = false,
+  envReader: VirtualEnvReader = VirtualEnvReader.Instance,
+): PyResult<PythonBinary> = createVenv(python.pythonBinary, venvDir, inheritSitePackages, envReader)

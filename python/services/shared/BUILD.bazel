@@ -17,6 +17,7 @@ jvm_library(
     "//python/openapi:community",
     "@lib//:jetbrains-annotations",
     "//platform/eel-provider",
+    "//python/python-exec-service/execService.python",
   ],
   runtime_deps = [":shared_resources"]
 )
